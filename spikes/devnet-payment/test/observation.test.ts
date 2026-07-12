@@ -110,10 +110,12 @@ describe("createChallengeObservation", () => {
       },
       delivery: "pending",
       httpStatus: 402,
+      observationId: expect.stringMatching(/^sha256:[a-f0-9]{64}$/),
       requestCommitment: expect.stringMatching(/^sha256:[a-f0-9]{64}$/),
       settlement: "pending",
     });
-    expect(first.attemptId).toBe(first.requestCommitment);
+    expect(first.observationId).toBe(first.requestCommitment);
+    expect(first).not.toHaveProperty("attemptId");
     expect(serialized).not.toContain("private task");
     expect(serialized).not.toContain("secret-value");
     expect(serialized).not.toContain("provider.example");

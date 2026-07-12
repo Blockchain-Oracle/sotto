@@ -30,7 +30,7 @@ const binding = commitHttpRequest({
 describe("createPaymentAuthorization", () => {
   it("binds one attempt to the exact request and live payment requirement", () => {
     const authorization = createPaymentAuthorization({
-      attemptId: binding.commitment,
+      authorizationInstanceId: "authorization-1",
       binding,
       carriedRequestCommitment: binding.commitment,
       observedAt: "2026-07-12T15:59:00.000Z",
@@ -39,7 +39,7 @@ describe("createPaymentAuthorization", () => {
     });
 
     expect(authorization).toEqual({
-      attemptId: binding.commitment,
+      attemptId: expect.stringMatching(/^sha256:[a-f0-9]{64}$/),
       bindingVersion: "sotto-http-request-v1",
       expiresAt: "2026-07-12T15:59:45.000Z",
       payerParty: "sotto-payer::1220payer",
@@ -48,10 +48,30 @@ describe("createPaymentAuthorization", () => {
     });
   });
 
+  it("distinguishes repeated purchases while preserving replay identity", () => {
+    const create = (authorizationInstanceId: string) =>
+      createPaymentAuthorization({
+        authorizationInstanceId,
+        binding,
+        carriedRequestCommitment: binding.commitment,
+        observedAt: "2026-07-12T15:59:00.000Z",
+        payerParty: "sotto-payer::1220payer",
+        requirement,
+      });
+
+    const first = create("authorization-1");
+    const replay = create("authorization-1");
+    const repeatedPurchase = create("authorization-2");
+
+    expect(replay.attemptId).toBe(first.attemptId);
+    expect(repeatedPurchase.attemptId).not.toBe(first.attemptId);
+    expect(repeatedPurchase.requestCommitment).toBe(first.requestCommitment);
+  });
+
   it("rejects a carrier that does not contain the exact commitment", () => {
     expect(() =>
       createPaymentAuthorization({
-        attemptId: binding.commitment,
+        authorizationInstanceId: "authorization-1",
         binding,
         carriedRequestCommitment: `sha256:${"0".repeat(64)}`,
         observedAt: "2026-07-12T15:59:00.000Z",

@@ -12,13 +12,13 @@ export type CompatibilityVerdict = Readonly<{
 }>;
 
 export type ChallengeObservation = Readonly<{
-  attemptId: string;
   bindingVersion: "sotto-http-request-v1";
   bodySha256: string;
   challenge: CantonPaymentRequirement;
   compatibility: CompatibilityVerdict;
   delivery: "pending";
   httpStatus: 402;
+  observationId: string;
   observedAt: string;
   requestCommitment: `sha256:${string}`;
   settlement: "pending";
@@ -120,7 +120,6 @@ export function createChallengeObservation(
         : "mismatched";
 
   return {
-    attemptId: binding.commitment,
     bindingVersion: binding.version,
     bodySha256: binding.bodySha256,
     challenge: input.challenge,
@@ -132,6 +131,7 @@ export function createChallengeObservation(
     },
     delivery: "pending",
     httpStatus: 402,
+    observationId: binding.commitment,
     observedAt: observedAt.toISOString(),
     requestCommitment: binding.commitment,
     settlement: "pending",

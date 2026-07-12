@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import {
   parsePaymentChallenge,
   type CantonPaymentRequirement,
@@ -14,7 +15,7 @@ export type PaymentAuthorization = Readonly<{
 }>;
 
 type AuthorizationInput = Readonly<{
-  attemptId: string;
+  authorizationInstanceId: string;
   binding: HttpRequestCommitment;
   carriedRequestCommitment: `sha256:${string}`;
   observedAt: string;
@@ -25,8 +26,9 @@ type AuthorizationInput = Readonly<{
 export function createPaymentAuthorization(
   input: AuthorizationInput,
 ): PaymentAuthorization {
-  if (input.attemptId !== input.binding.commitment) {
-    throw new Error("Payment attempt must equal the request commitment");
+  const authorizationInstanceId = input.authorizationInstanceId.trim();
+  if (authorizationInstanceId === "" || authorizationInstanceId.length > 256) {
+    throw new Error("Payment authorization requires a bounded instance ID");
   }
   if (input.carriedRequestCommitment !== input.binding.commitment) {
     throw new Error("Payment carrier changed the request commitment");
@@ -43,9 +45,18 @@ export function createPaymentAuthorization(
     requirement.maxTimeoutSeconds,
     requirement.extra.executeBeforeSeconds,
   );
+  const attemptId = `sha256:${createHash("sha256")
+    .update(
+      JSON.stringify({
+        version: "sotto-payment-attempt-v1",
+        requestCommitment: input.binding.commitment,
+        authorizationInstanceId,
+      }),
+    )
+    .digest("hex")}`;
 
   return {
-    attemptId: input.attemptId,
+    attemptId,
     bindingVersion: input.binding.version,
     expiresAt: new Date(observedAt + lifetimeSeconds * 1_000).toISOString(),
     payerParty: input.payerParty,
