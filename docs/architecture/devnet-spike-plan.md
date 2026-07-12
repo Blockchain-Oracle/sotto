@@ -15,18 +15,19 @@ build the production marketplace or translate the prototype into runtime code.
 
 ## Phase 2 - Minimal Quality Workspace
 
-- Pin Node, pnpm, Java, DPM/Daml, TypeScript, tests, and CI from current official
-  documentation.
+- Pin Node, pnpm, Java, DPM/Daml, TypeScript, tests, and CI from current
+  official documentation.
 - Create only spike, protocol-verification, evidence, and Daml packages.
-- Add one root deterministic verification command, clean-clone CI, secret/license/
-  vulnerability/claims/contamination guards, and protected `main`.
+- Add one root deterministic verification command, clean-clone CI,
+  secret/license/ vulnerability/claims/contamination guards, and protected
+  `main`.
 - Do not select the final production process topology.
 
 ## Phase 3 - Baseline Payment And Human Wallet Capability
 
 - Complete one authentic external-party Canton DevNet `402 -> settle -> 200`.
-- Verify recipient, amount, instrument, network, expiry, and request binding before
-  signing.
+- Verify recipient, amount, instrument, network, expiry, and request binding
+  before signing.
 - Test duplicate, mutation, expiry, and unknown-outcome recovery.
 - Separately test Loop/CIP-103 party login and exact human payment capability.
 - Human-wallet failure cannot be replaced by the external-party signer result.
@@ -37,8 +38,8 @@ build the production marketplace or translate the prototype into runtime code.
 - Test policy authority, expiry, revocation, limits, rollback, concurrency, and
   reader visibility.
 - Record the signatory/observer/controller and `actAs`/`readAs` matrix.
-- Store pre-submission attempt/commitment identifiers atomically; map the resulting
-  update ID only after acceptance.
+- Store pre-submission attempt/commitment identifiers atomically; map the
+  resulting update ID only after acceptance.
 - Compare authorized and outsider ACS/event/direct/public Scan views.
 
 ## Phase 5 - Atomicity, Binding, And Bypass
@@ -57,12 +58,13 @@ build the production marketplace or translate the prototype into runtime code.
 
 ## Phase 6 - Evidence Closure
 
-- Record package/contract/update evidence, paid HTTP evidence, visibility, bypass,
-  rollback, signer, funding, custody, participant, and recovery boundaries.
+- Record package/contract/update evidence, paid HTTP evidence, visibility,
+  bypass, rollback, signer, funding, custody, participant, and recovery
+  boundaries.
 - Run verification audit.
 - Emit `NO_GO` when any gate fails; permit only remediation planning.
-- Emit `GO` only after every mandatory gate passes and the open product decisions
-  are explicitly accepted.
+- Emit `GO` only after every mandatory gate passes and the open product
+  decisions are explicitly accepted.
 - Write a separate production implementation plan only after `GO`.
 
 ## No-shipping-mock Rule

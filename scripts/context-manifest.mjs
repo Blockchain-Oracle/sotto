@@ -22,10 +22,19 @@ const requested = args.filter((_, index) => !consumed.has(index));
 if (requested.length === 0) throw new Error("Provide approved source paths");
 
 const forbiddenParts = new Set([
-  ".git", "node_modules", "dist", "build", ".next", "coverage", "raw",
-  ".playwright-mcp", "playwright-report", "test-results",
+  ".git",
+  "node_modules",
+  "dist",
+  "build",
+  ".next",
+  "coverage",
+  "raw",
+  ".playwright-mcp",
+  "playwright-report",
+  "test-results",
 ]);
-const forbiddenNames = /(^|\/)(\.env($|\.)|wallet\.json$|.*\.(pem|key|p12|dar|dalf)$)/i;
+const forbiddenNames =
+  /(^|\/)(\.env($|\.)|wallet\.json$|.*\.(pem|key|p12|dar|dalf)$)/i;
 
 function safeRelative(absolute) {
   const value = relative(sourceRoot, absolute);
@@ -37,12 +46,17 @@ function safeRelative(absolute) {
 
 function forbidden(path) {
   const parts = path.split("/");
-  return parts.some((part) => forbiddenParts.has(part)) || forbiddenNames.test(path);
+  return (
+    parts.some((part) => forbiddenParts.has(part)) || forbiddenNames.test(path)
+  );
 }
 
 async function hashFile(path) {
   const bytes = await readFile(path);
-  return { bytes: bytes.length, sha256: createHash("sha256").update(bytes).digest("hex") };
+  return {
+    bytes: bytes.length,
+    sha256: createHash("sha256").update(bytes).digest("hex"),
+  };
 }
 
 async function walk(absolute, entries) {
@@ -68,9 +82,12 @@ entries.sort((a, b) => a.destination.localeCompare(b.destination));
 const destinations = new Set();
 for (const entry of entries) {
   if (!entry.destination.startsWith(".thoughts/")) {
-    throw new Error(`Private destination must be under .thoughts: ${entry.destination}`);
+    throw new Error(
+      `Private destination must be under .thoughts: ${entry.destination}`,
+    );
   }
-  if (destinations.has(entry.destination)) throw new Error(`Duplicate: ${entry.destination}`);
+  if (destinations.has(entry.destination))
+    throw new Error(`Duplicate: ${entry.destination}`);
   destinations.add(entry.destination);
 }
 
@@ -82,4 +99,6 @@ const manifest = {
 };
 await mkdir(dirname(output), { recursive: true });
 await writeFile(output, `${JSON.stringify(manifest, null, 2)}\n`);
-process.stdout.write(`Wrote ${entries.length} exact context entries to ${output}\n`);
+process.stdout.write(
+  `Wrote ${entries.length} exact context entries to ${output}\n`,
+);

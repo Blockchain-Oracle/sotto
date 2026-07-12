@@ -1,0 +1,8 @@
+module SottoControlBootstrapTests where
+
+import Daml.Script
+import Sotto.Control.Bootstrap
+
+bootstrapStageIsExplicit : Script ()
+bootstrapStageIsExplicit = do
+  assert (QualityWorkspace == QualityWorkspace)

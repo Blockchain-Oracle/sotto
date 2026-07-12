@@ -34,8 +34,8 @@ Do not invent commands before the repository provides them.
 ## Project Context
 
 Required authority is tracked under `docs/`. Optional private depth is restored
-under ignored `.thoughts` from `context/manifest.json`; it is supporting context,
-not a replacement for tracked product authority.
+under ignored `.thoughts` from `context/manifest.json`; it is supporting
+context, not a replacement for tracked product authority.
 
 ## Skill Routing
 

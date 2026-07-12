@@ -1,0 +1,10 @@
+sdk-version: 3.5.2
+name: sotto-control-tests
+version: 0.1.0
+source: daml
+dependencies:
+  - daml-prim
+  - daml-stdlib
+  - daml-script
+data-dependencies:
+  - ../sotto-control/.daml/dist/sotto-control-0.1.0.dar
