@@ -1,0 +1,5 @@
+module Sotto.Control.Bootstrap where
+
+data ResearchStage
+  = QualityWorkspace
+  deriving (Eq, Show)

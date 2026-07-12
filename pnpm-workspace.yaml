@@ -1,0 +1,9 @@
+packages:
+  - packages/*
+  - spikes/*
+
+allowBuilds:
+  esbuild: true
+
+saveExact: true
+strictPeerDependencies: true

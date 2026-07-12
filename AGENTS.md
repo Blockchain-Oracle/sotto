@@ -30,8 +30,10 @@ context being present.
 - Marketplace, Add API, Composer, Scan, transaction evidence, CLI, buyer MCP,
   skill, and private bounded agent-control direction are accepted.
 - One Canton-party-backed owner account is the first-release account model.
-- A wallet session, Sotto application session, and autonomous signer are distinct.
-- API enablement, Canton merchant readiness, and marketplace listing are distinct.
+- A wallet session, Sotto application session, and autonomous signer are
+  distinct.
+- API enablement, Canton merchant readiness, and marketplace listing are
+  distinct.
 - Reuse existing Canton x402 packages and credit their source.
 - Never claim global Canton coverage, private Canton Coin settlement,
   non-custody, atomicity, or ledger-enforced limits without exact evidence.
@@ -64,8 +66,8 @@ Production planning requires:
 ## Security Rules
 
 - Raw signer keys never enter browsers, models, logs, evidence, or Git.
-- Server-side API probing must defend against SSRF, redirect abuse, DNS rebinding,
-  oversized responses, unsafe content, and unbounded timeouts.
+- Server-side API probing must defend against SSRF, redirect abuse, DNS
+  rebinding, oversized responses, unsafe content, and unbounded timeouts.
 - Browser-submitted price, recipient, network, scheme, and compatibility are
   never authoritative.
 - Secrets live only in ignored local files or deployment secret stores.
@@ -88,11 +90,14 @@ Production planning requires:
 
 ## Current Commands
 
-The repository has no application toolchain yet. Valid current checks are:
+Use Node 24.18.0, pnpm 11.12.0, Java 21.0.11, DPM 1.0.21, and Daml SDK 3.5.2.
+The deterministic local and CI gate is:
 
 ```text
-node scripts/context-sync.mjs verify --source <archive-root>
-git diff --check
+pnpm install --frozen-lockfile
+pnpm verify
 ```
 
-Add commands here only after the workspace actually provides them.
+Focused commands are `pnpm test`, `pnpm typecheck`, `pnpm lint`,
+`cd daml && dpm build --all`, and `cd daml/sotto-control-tests && dpm test`.
+Live DevNet execution is intentionally outside `pnpm verify`.

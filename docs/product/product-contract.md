@@ -3,9 +3,9 @@
 ## Objective
 
 Sotto makes real Canton x402 APIs discoverable, usable, and auditable. Providers
-publish already-payable resources, buyers and agents invoke them, and the product
-connects HTTP challenge, authorization, Canton settlement, API delivery, and
-privacy-safe evidence.
+publish already-payable resources, buyers and agents invoke them, and the
+product connects HTTP challenge, authorization, Canton settlement, API delivery,
+and privacy-safe evidence.
 
 ## Users
 
@@ -35,9 +35,9 @@ and a path into Composer.
 ### Add API
 
 Accept an HTTPS origin or endpoint, discover supported metadata, perform a
-server-side live probe, and validate a real x402 `402 Payment Required` response.
-Compatibility, origin ownership, merchant readiness, and publication are
-separate checks. Browser-submitted payment fields are not authority.
+server-side live probe, and validate a real x402 `402 Payment Required`
+response. Compatibility, origin ownership, merchant readiness, and publication
+are separate checks. Browser-submitted payment fields are not authority.
 
 ### Owner Session
 
@@ -54,7 +54,8 @@ states. A successful state must contain the real paid provider response.
 ### Agent Interfaces
 
 The buyer MCP server, thin CLI, and skill use the same catalog, purchasing core,
-status model, and errors. No interface exposes a raw key or generic signing tool.
+status model, and errors. No interface exposes a raw key or generic signing
+tool.
 
 ### Private Bounded Agent Control
 
@@ -86,7 +87,8 @@ and reconciliation states.
 - No bounded-authority claim ships before bypass testing.
 - Public Scan does not reveal private request/response context.
 - No seed data appears in runtime metrics.
-- A new Sotto DAR and real `402 -> payment -> 200` path run on Five North DevNet.
+- A new Sotto DAR and real `402 -> payment -> 200` path run on Five North
+  DevNet.
 
 ## Non-goals
 

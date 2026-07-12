@@ -1,0 +1,11 @@
+{
+  "name": "@sotto/devnet-payment-spike",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "start": "tsx src/main.ts"
+  }
+}

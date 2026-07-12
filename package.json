@@ -1,0 +1,43 @@
+{
+  "name": "sotto",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=24.18.0 <25",
+    "pnpm": "11.12.0"
+  },
+  "packageManager": "pnpm@11.12.0",
+  "scripts": {
+    "build": "node scripts/build-workspaces.mjs",
+    "check:claims": "node scripts/check-claims.mjs",
+    "check:contamination": "node scripts/check-contamination.mjs",
+    "check:context": "node scripts/check-context.mjs",
+    "check:env": "node scripts/check-env.mjs",
+    "check:files": "node scripts/check-file-length.mjs",
+    "check:licenses": "node scripts/check-licenses.mjs",
+    "check:source": "node scripts/check-source.mjs",
+    "check:toolchain": "node scripts/check-toolchain.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint . --max-warnings 0",
+    "spike:preflight": "tsx spikes/devnet-payment/src/main.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit --pretty false",
+    "verify": "node scripts/verify.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@secretlint/secretlint-rule-preset-recommend": "13.0.2",
+    "@types/node": "24.13.3",
+    "eslint": "10.7.0",
+    "globals": "17.7.0",
+    "prettier": "3.9.5",
+    "secretlint": "13.0.2",
+    "tsx": "4.23.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.63.0",
+    "vitest": "4.1.10"
+  }
+}

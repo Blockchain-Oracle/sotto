@@ -3,7 +3,8 @@
 ## Accepted
 
 - The active product is Sotto Canton x402, not payroll.
-- The prior payroll repository is a separate archive, not an implementation base.
+- The prior payroll repository is a separate archive, not an implementation
+  base.
 - Required product surfaces are marketplace, Add API, provider/resource detail,
   Composer, Scan, transaction evidence, statistics/health, owner session, thin
   CLI, buyer MCP, skill, and operator moderation.
@@ -13,8 +14,8 @@
 - First release uses one Canton-party-backed owner account, without teams.
 - Sotto sessions use replay-safe party-control proof, not email OTP.
 - Human wallet and autonomous signer paths are separate.
-- No ledger-enforced claim ships before live-price, funding, atomicity, and bypass
-  proof.
+- No ledger-enforced claim ships before live-price, funding, atomicity, and
+  bypass proof.
 - Coolify is the eventual application host; Five North is the mandatory ledger.
 - Product research, specification, stories/design, planning, implementation, and
   verification remain separate Context Engineering stages.
@@ -61,4 +62,5 @@ decisions. Code, prototypes, and research cannot approve themselves.
 - Payroll GitHub archive: `Blockchain-Oracle/sotto-payroll-archive`.
 - Active GitHub product: fresh `Blockchain-Oracle/sotto` history.
 - Relevant private context is migrated through an exact checksum manifest; mixed
-  historical `.thoughts`, raw clones, secrets, and payroll agent reports are not.
+  historical `.thoughts`, raw clones, secrets, and payroll agent reports are
+  not.

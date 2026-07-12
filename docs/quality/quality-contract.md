@@ -39,7 +39,8 @@ actions by commit SHA.
   defenses.
 - Bind payments to canonical request data and deterministic idempotency.
 - Keep production database/Redis private when those services are selected.
-- Redact prompts, results, secrets, auth headers, raw payment payloads, and keys.
+- Redact prompts, results, secrets, auth headers, raw payment payloads, and
+  keys.
 
 ## Reliability
 
@@ -58,7 +59,8 @@ actions by commit SHA.
 
 ## Containers And Release
 
-- Build independently health-checkable non-root images after topology is decided.
+- Build independently health-checkable non-root images after topology is
+  decided.
 - Verify graceful shutdown, migration/recovery, image vulnerability policy, and
   accidentally included secret/development files.
 - Coolify release requires TLS, private services, backup/restore, restart
@@ -70,7 +72,8 @@ actions by commit SHA.
 
 - Conventional commits and protected `main`.
 - Target 200 hand-written source lines, warning above 200, hard cap 300.
-- Generated bindings, migrations, lockfiles, snapshots, fixtures, and build output
-  are excluded from the source-line cap.
+- Generated bindings, migrations, lockfiles, snapshots, fixtures, and build
+  output are excluded from the source-line cap.
 - README and product copy describe only implemented, verified behavior.
-- Third-party code requires license compatibility, attribution, and a source pin.
+- Third-party code requires license compatibility, attribution, and a source
+  pin.

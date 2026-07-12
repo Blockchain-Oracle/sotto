@@ -66,6 +66,19 @@ thin CLI, buyer MCP, skill, and internal listing moderation.
 - [Quality contract](docs/quality/quality-contract.md)
 - [Agent router](AGENTS.md)
 
-The prior payroll product is preserved separately at commit `c29e4da` and will
-be archived as `Blockchain-Oracle/sotto-payroll-archive`. Its code and deployed
-DAR are not evidence for this product.
+The prior payroll product is preserved at commit `c29e4da` in the archived
+[Sotto payroll repository](https://github.com/Blockchain-Oracle/sotto-payroll-archive).
+Its code and deployed DAR are not evidence for this product.
+
+## Development
+
+The spike workspace pins Node 24.18.0, pnpm 11.12.0, Java 21.0.11, DPM 1.0.21,
+and Daml SDK 3.5.2. Run every deterministic local gate from the repository root:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm verify
+```
+
+Live Five North payment evidence is a separate manual gate and requires the
+credentials named, without values, in `.env.example`.
