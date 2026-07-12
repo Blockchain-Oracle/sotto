@@ -103,9 +103,10 @@ describe("createChallengeObservation", () => {
         recipient: "provider::1220abc",
         requestHash: "sha256:request",
       },
+      headers: [["content-type", "application/json"]] as const,
       method: "POST",
       observedAt: "2026-07-12T15:59:00.000Z",
-      requestBody: '{"prompt":"private task"}',
+      requestBody: new TextEncoder().encode('{"prompt":"private task"}'),
       resourceUrl: "https://provider.example/private?token=secret-value",
     };
 
@@ -115,11 +116,13 @@ describe("createChallengeObservation", () => {
 
     expect(first).toEqual(second);
     expect(first).toMatchObject({
+      bindingVersion: "sotto-http-request-v1",
       delivery: "pending",
       httpStatus: 402,
+      requestCommitment: expect.stringMatching(/^sha256:[a-f0-9]{64}$/),
       settlement: "pending",
     });
-    expect(first.attemptId).toMatch(/^sha256:[a-f0-9]{64}$/);
+    expect(first.attemptId).toBe(first.requestCommitment);
     expect(serialized).not.toContain("private task");
     expect(serialized).not.toContain("secret-value");
     expect(serialized).not.toContain("provider.example");

@@ -23,7 +23,8 @@
     "format:check": "prettier --check .",
     "lint": "eslint . --max-warnings 0",
     "spike:preflight": "tsx spikes/devnet-payment/src/main.ts",
-    "test": "vitest run",
+    "test": "node scripts/build-workspaces.mjs && vitest run",
+    "test:unit": "vitest run",
     "typecheck": "tsc --noEmit --pretty false",
     "verify": "node scripts/verify.mjs"
   },

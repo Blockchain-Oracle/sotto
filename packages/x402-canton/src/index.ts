@@ -1,3 +1,5 @@
+export * from "./request-binding.js";
+
 export type PaymentChallenge = Readonly<{
   amount: string;
   asset: string;

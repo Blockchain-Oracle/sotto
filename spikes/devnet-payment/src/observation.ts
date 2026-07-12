@@ -1,23 +1,28 @@
-import { createHash } from "node:crypto";
 import {
+  commitHttpRequest,
   parsePaymentChallenge,
   type PaymentChallenge,
 } from "@sotto/x402-canton";
 
 export type ChallengeObservation = Readonly<{
   attemptId: string;
+  bindingVersion: "sotto-http-request-v1";
+  bodySha256: string;
   challenge: PaymentChallenge;
   delivery: "pending";
   httpStatus: 402;
   observedAt: string;
+  requestCommitment: `sha256:${string}`;
   settlement: "pending";
 }>;
 
 type ObservationInput = Readonly<{
+  additionalAuthoritativeHeaders?: ReadonlyArray<string>;
   challenge: PaymentChallenge;
+  headers?: ReadonlyArray<readonly [string, string]>;
   method: string;
   observedAt: string;
-  requestBody?: string;
+  requestBody?: Uint8Array;
   resourceUrl: string;
 }>;
 
@@ -102,21 +107,28 @@ export function createChallengeObservation(
   if (Number.isNaN(observedAt.getTime())) {
     throw new Error("Observation requires an ISO timestamp");
   }
-  const canonicalRequest = JSON.stringify({
-    body: input.requestBody ?? "",
+  const binding = commitHttpRequest({
+    ...(input.additionalAuthoritativeHeaders === undefined
+      ? {}
+      : {
+          additionalAuthoritativeHeaders:
+            input.additionalAuthoritativeHeaders,
+        }),
+    ...(input.requestBody === undefined ? {} : { body: input.requestBody }),
+    ...(input.headers === undefined ? {} : { headers: input.headers }),
     method: input.method.toUpperCase(),
     url: new URL(input.resourceUrl).toString(),
   });
-  const attemptId = `sha256:${createHash("sha256")
-    .update(canonicalRequest)
-    .digest("hex")}`;
 
   return {
-    attemptId,
+    attemptId: binding.commitment,
+    bindingVersion: binding.version,
+    bodySha256: binding.bodySha256,
     challenge: input.challenge,
     delivery: "pending",
     httpStatus: 402,
     observedAt: observedAt.toISOString(),
+    requestCommitment: binding.commitment,
     settlement: "pending",
   };
 }

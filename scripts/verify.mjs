@@ -31,9 +31,9 @@ const runPnpm = (label, ...args) => run(label, pnpm[0], [...pnpm[1], ...args]);
 runPnpm("toolchain", "check:toolchain");
 runPnpm("format", "format:check");
 runPnpm("lint", "lint");
-runPnpm("typecheck", "typecheck");
-runPnpm("unit tests", "test");
 runPnpm("build", "build");
+runPnpm("typecheck", "typecheck");
+runPnpm("unit tests", "test:unit");
 for (const check of [
   "check:files",
   "check:source",

@@ -40,7 +40,7 @@ describe("observeHttpChallenge", () => {
       fetcher,
       method: "POST",
       now: new Date("2026-07-12T15:59:00.000Z"),
-      requestBody: '{"prompt":"private"}',
+      requestBody: new TextEncoder().encode('{"prompt":"private"}'),
       resourceUrl: "https://provider.example/resource",
       timeoutMs: 2_000,
     });

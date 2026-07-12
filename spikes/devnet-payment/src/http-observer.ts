@@ -13,7 +13,7 @@ type ObserveInput = Readonly<{
   fetcher: Fetcher;
   method: string;
   now?: Date;
-  requestBody?: string;
+  requestBody?: Uint8Array;
   resourceUrl: string;
   timeoutMs?: number;
 }>;
@@ -35,7 +35,9 @@ export async function observeHttpChallenge(
     throw new Error("HTTP observation timeout must be 1-10000ms");
   }
   const response = await input.fetcher(url.toString(), {
-    ...(input.requestBody === undefined ? {} : { body: input.requestBody }),
+    ...(input.requestBody === undefined
+      ? {}
+      : { body: Buffer.from(input.requestBody) }),
     method: input.method.toUpperCase(),
     redirect: "error",
     signal: AbortSignal.timeout(timeoutMs),
