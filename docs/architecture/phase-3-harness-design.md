@@ -10,8 +10,8 @@ inputs for the real Five North payment without claiming settlement.
 
 1. Build a canonical description of the configured HTTP request and assign a
    stable attempt identifier.
-2. Fetch the configured resource and require an authentic `402 Payment
-   Required` response.
+2. Fetch the configured resource and require an authentic `402 Payment Required`
+   response.
 3. Parse the x402 v2 challenge and select only the `exact` requirement for the
    configured Canton DevNet network.
 4. Validate the amount, asset, recipient, expiry, and request binding before any
