@@ -1,7 +1,25 @@
+import { createHash } from "node:crypto";
 import {
   parsePaymentChallenge,
   type PaymentChallenge,
 } from "@sotto/x402-canton";
+
+export type ChallengeObservation = Readonly<{
+  attemptId: string;
+  challenge: PaymentChallenge;
+  delivery: "pending";
+  httpStatus: 402;
+  observedAt: string;
+  settlement: "pending";
+}>;
+
+type ObservationInput = Readonly<{
+  challenge: PaymentChallenge;
+  method: string;
+  observedAt: string;
+  requestBody?: string;
+  resourceUrl: string;
+}>;
 
 type PaymentRequired = Readonly<{
   accepts: ReadonlyArray<unknown>;
@@ -72,4 +90,30 @@ export function selectCantonRequirement(
     throw new Error("Payment requirement is expired");
   }
   return challenge;
+}
+
+export function createChallengeObservation(
+  input: ObservationInput,
+): ChallengeObservation {
+  const observedAt = new Date(input.observedAt);
+  if (Number.isNaN(observedAt.getTime())) {
+    throw new Error("Observation requires an ISO timestamp");
+  }
+  const canonicalRequest = JSON.stringify({
+    body: input.requestBody ?? "",
+    method: input.method.toUpperCase(),
+    url: new URL(input.resourceUrl).toString(),
+  });
+  const attemptId = `sha256:${createHash("sha256")
+    .update(canonicalRequest)
+    .digest("hex")}`;
+
+  return {
+    attemptId,
+    challenge: input.challenge,
+    delivery: "pending",
+    httpStatus: 402,
+    observedAt: observedAt.toISOString(),
+    settlement: "pending",
+  };
 }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  createChallengeObservation,
   decodePaymentRequired,
   selectCantonRequirement,
 } from "../src/observation.js";
@@ -82,5 +83,39 @@ describe("selectCantonRequirement", () => {
         new Date("2026-07-12T15:59:00.000Z"),
       ),
     ).toThrow("requestHash");
+  });
+});
+
+describe("createChallengeObservation", () => {
+  it("creates deterministic redacted evidence with split outcomes", () => {
+    const input = {
+      challenge: {
+        amount: "1.25",
+        asset: "CC",
+        expiresAt: "2026-07-12T16:00:00.000Z",
+        network: "canton:devnet",
+        recipient: "provider::1220abc",
+        requestHash: "sha256:request",
+      },
+      method: "POST",
+      observedAt: "2026-07-12T15:59:00.000Z",
+      requestBody: '{"prompt":"private task"}',
+      resourceUrl: "https://provider.example/private?token=secret-value",
+    };
+
+    const first = createChallengeObservation(input);
+    const second = createChallengeObservation(input);
+    const serialized = JSON.stringify(first);
+
+    expect(first).toEqual(second);
+    expect(first).toMatchObject({
+      delivery: "pending",
+      httpStatus: 402,
+      settlement: "pending",
+    });
+    expect(first.attemptId).toMatch(/^sha256:[a-f0-9]{64}$/);
+    expect(serialized).not.toContain("private task");
+    expect(serialized).not.toContain("secret-value");
+    expect(serialized).not.toContain("provider.example");
   });
 });
