@@ -24,14 +24,16 @@ const paymentRequired = Buffer.from(JSON.stringify(requirement)).toString(
 describe("observeHttpChallenge", () => {
   it("requires URL authorization before making a bounded unpaid request", async () => {
     const authorizeUrl = vi.fn(async () => undefined);
-    const fetcher = vi.fn(async (_url: string, _init: RequestInit) =>
-      Promise.resolve(
+    const fetcher = vi.fn(async (_url: string, _init: RequestInit) => {
+      void _url;
+      void _init;
+      return Promise.resolve(
         new Response(null, {
           headers: { "PAYMENT-REQUIRED": paymentRequired },
           status: 402,
         }),
-      ),
-    );
+      );
+    });
 
     const observation = await observeHttpChallenge({
       authorizeUrl,
