@@ -4,17 +4,22 @@ import { observeHttpChallenge } from "../src/http-observer.js";
 const requirement = {
   accepts: [
     {
-      amount: "1.25",
+      amount: "12500000000",
       asset: "CC",
       extra: {
-        expiresAt: "2026-07-12T16:00:00.000Z",
-        requestHash: "sha256:request",
+        assetTransferMethod: "transfer-factory",
+        executeBeforeSeconds: 60,
+        feePayer: "facilitator::1220fee",
+        instrumentId: { admin: "DSO::1220dso", id: "Amulet" },
+        synchronizerId: "global-domain::1220sync",
       },
+      maxTimeoutSeconds: 60,
       network: "canton:devnet",
       payTo: "provider::1220abc",
       scheme: "exact",
     },
   ],
+  resource: { url: "https://provider.example/resource" },
   x402Version: 2,
 };
 const paymentRequired = Buffer.from(JSON.stringify(requirement)).toString(
@@ -59,6 +64,10 @@ describe("observeHttpChallenge", () => {
     const requestHeaders = fetcher.mock.calls[0]?.[1].headers;
     expect(new Headers(requestHeaders).has("PAYMENT-SIGNATURE")).toBe(false);
     expect(observation).toMatchObject({
+      compatibility: {
+        exactRequestBinding: "not-proven",
+        resourceUrlBinding: "matched",
+      },
       delivery: "pending",
       httpStatus: 402,
       settlement: "pending",

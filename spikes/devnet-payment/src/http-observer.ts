@@ -53,7 +53,8 @@ export async function observeHttpChallenge(
     throw new Error("HTTP 402 requires a v2 PAYMENT-REQUIRED header");
   }
   const now = input.now ?? new Date();
-  const challenge = selectCantonRequirement(decodePaymentRequired(header), now);
+  const paymentRequired = decodePaymentRequired(header);
+  const challenge = selectCantonRequirement(paymentRequired);
   return createChallengeObservation({
     challenge,
     method: input.method,
@@ -62,5 +63,6 @@ export async function observeHttpChallenge(
       ? {}
       : { requestBody: input.requestBody }),
     resourceUrl: url.toString(),
+    upstreamResourceUrl: paymentRequired.resource.url,
   });
 }

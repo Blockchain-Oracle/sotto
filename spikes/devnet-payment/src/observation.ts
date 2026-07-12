@@ -1,14 +1,22 @@
 import {
   commitHttpRequest,
   parsePaymentChallenge,
-  type PaymentChallenge,
+  type CantonPaymentRequirement,
 } from "@sotto/x402-canton";
+
+export type CompatibilityVerdict = Readonly<{
+  exactRequestBinding: "not-proven";
+  paymentFields: "valid";
+  resourceUrlBinding: "absent" | "matched" | "mismatched";
+  wire: "compatible";
+}>;
 
 export type ChallengeObservation = Readonly<{
   attemptId: string;
   bindingVersion: "sotto-http-request-v1";
   bodySha256: string;
-  challenge: PaymentChallenge;
+  challenge: CantonPaymentRequirement;
+  compatibility: CompatibilityVerdict;
   delivery: "pending";
   httpStatus: 402;
   observedAt: string;
@@ -18,17 +26,18 @@ export type ChallengeObservation = Readonly<{
 
 type ObservationInput = Readonly<{
   additionalAuthoritativeHeaders?: ReadonlyArray<string>;
-  challenge: PaymentChallenge;
+  challenge: CantonPaymentRequirement;
   headers?: ReadonlyArray<readonly [string, string]>;
   method: string;
   observedAt: string;
   requestBody?: Uint8Array;
   resourceUrl: string;
+  upstreamResourceUrl?: string;
 }>;
 
 type PaymentRequired = Readonly<{
   accepts: ReadonlyArray<unknown>;
-  resource?: unknown;
+  resource: Readonly<{ url: string }>;
   x402Version: 2;
 }>;
 
@@ -37,14 +46,6 @@ function objectValue(value: unknown, label: string): Record<string, unknown> {
     throw new Error(`${label} must be an object`);
   }
   return value as Record<string, unknown>;
-}
-
-function requiredString(value: Record<string, unknown>, field: string): string {
-  const candidate = value[field];
-  if (typeof candidate !== "string" || candidate.trim() === "") {
-    throw new Error(`Payment requirement requires ${field}`);
-  }
-  return candidate;
 }
 
 export function decodePaymentRequired(header: string): PaymentRequired {
@@ -65,17 +66,21 @@ export function decodePaymentRequired(header: string): PaymentRequired {
   if (!Array.isArray(input.accepts) || input.accepts.length === 0) {
     throw new Error("Payment required challenge must contain accepts");
   }
+  const resource = objectValue(input.resource, "Payment required resource");
+  const resourceUrl = resource.url;
+  if (typeof resourceUrl !== "string" || resourceUrl.trim() === "") {
+    throw new Error("Payment required resource requires url");
+  }
   return {
     accepts: input.accepts,
-    ...(input.resource === undefined ? {} : { resource: input.resource }),
+    resource: { url: resourceUrl },
     x402Version: 2,
   };
 }
 
 export function selectCantonRequirement(
   paymentRequired: PaymentRequired,
-  now = new Date(),
-): PaymentChallenge {
+): CantonPaymentRequirement {
   const matching = paymentRequired.accepts.filter((candidate) => {
     const value = objectValue(candidate, "Payment requirement");
     return value.scheme === "exact" && value.network === "canton:devnet";
@@ -84,20 +89,7 @@ export function selectCantonRequirement(
     throw new Error("Expected exactly one exact canton:devnet requirement");
   }
 
-  const requirement = objectValue(matching[0], "Payment requirement");
-  const extra = objectValue(requirement.extra, "Payment requirement extra");
-  const challenge = parsePaymentChallenge({
-    amount: requiredString(requirement, "amount"),
-    asset: requiredString(requirement, "asset"),
-    expiresAt: requiredString(extra, "expiresAt"),
-    network: requiredString(requirement, "network"),
-    recipient: requiredString(requirement, "payTo"),
-    requestHash: requiredString(extra, "requestHash"),
-  });
-  if (Date.parse(challenge.expiresAt) <= now.getTime()) {
-    throw new Error("Payment requirement is expired");
-  }
-  return challenge;
+  return parsePaymentChallenge(matching[0]);
 }
 
 export function createChallengeObservation(
@@ -118,12 +110,26 @@ export function createChallengeObservation(
     method: input.method.toUpperCase(),
     url: new URL(input.resourceUrl).toString(),
   });
+  const upstreamResourceUrl = input.upstreamResourceUrl;
+  const resourceUrlBinding =
+    upstreamResourceUrl === undefined
+      ? "absent"
+      : new URL(upstreamResourceUrl).toString() ===
+          new URL(input.resourceUrl).toString()
+        ? "matched"
+        : "mismatched";
 
   return {
     attemptId: binding.commitment,
     bindingVersion: binding.version,
     bodySha256: binding.bodySha256,
     challenge: input.challenge,
+    compatibility: {
+      exactRequestBinding: "not-proven",
+      paymentFields: "valid",
+      resourceUrlBinding,
+      wire: "compatible",
+    },
     delivery: "pending",
     httpStatus: 402,
     observedAt: observedAt.toISOString(),

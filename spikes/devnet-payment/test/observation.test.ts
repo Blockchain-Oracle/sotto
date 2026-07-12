@@ -6,11 +6,14 @@ import {
 } from "../src/observation.js";
 
 const cantonRequirement = {
-  amount: "1.25",
+  amount: "12500000000",
   asset: "CC",
   extra: {
-    expiresAt: "2026-07-12T16:00:00.000Z",
-    requestHash: "sha256:request",
+    assetTransferMethod: "transfer-factory",
+    executeBeforeSeconds: 60,
+    feePayer: "facilitator::1220fee",
+    instrumentId: { admin: "DSO::1220dso", id: "Amulet" },
+    synchronizerId: "global-domain::1220sync",
   },
   maxTimeoutSeconds: 60,
   network: "canton:devnet",
@@ -47,67 +50,49 @@ describe("decodePaymentRequired", () => {
 
 describe("selectCantonRequirement", () => {
   it("selects only exact canton:devnet and preserves signer-bound fields", () => {
-    const selected = selectCantonRequirement(
-      {
-        accepts: [
-          { ...cantonRequirement, network: "eip155:8453" },
-          cantonRequirement,
-        ],
-        x402Version: 2,
-      },
-      new Date("2026-07-12T15:59:00.000Z"),
-    );
-
-    expect(selected).toEqual({
-      amount: "1.25",
-      asset: "CC",
-      expiresAt: "2026-07-12T16:00:00.000Z",
-      network: "canton:devnet",
-      recipient: "provider::1220abc",
-      requestHash: "sha256:request",
+    const selected = selectCantonRequirement({
+      accepts: [
+        { ...cantonRequirement, network: "eip155:8453" },
+        cantonRequirement,
+      ],
+      x402Version: 2,
     });
+
+    expect(selected).toEqual(cantonRequirement);
+    expect(selected).not.toHaveProperty("expiresAt");
+    expect(selected).not.toHaveProperty("requestHash");
   });
 
-  it("rejects an expired requirement", () => {
+  it("rejects ambiguous exact Canton DevNet requirements", () => {
     expect(() =>
-      selectCantonRequirement(
-        { accepts: [cantonRequirement], x402Version: 2 },
-        new Date("2026-07-12T16:00:00.000Z"),
-      ),
-    ).toThrow("expired");
+      selectCantonRequirement({
+        accepts: [cantonRequirement, cantonRequirement],
+        x402Version: 2,
+      }),
+    ).toThrow("exactly one");
   });
 
-  it("rejects a requirement without request binding", () => {
-    const unbound = {
-      ...cantonRequirement,
-      extra: { expiresAt: cantonRequirement.extra.expiresAt },
-    };
-
+  it("rejects a challenge without Canton DevNet", () => {
     expect(() =>
-      selectCantonRequirement(
-        { accepts: [unbound], x402Version: 2 },
-        new Date("2026-07-12T15:59:00.000Z"),
-      ),
-    ).toThrow("requestHash");
+      selectCantonRequirement({
+        accepts: [{ ...cantonRequirement, network: "canton:mainnet" }],
+        x402Version: 2,
+      }),
+    ).toThrow("canton:devnet");
   });
 });
 
 describe("createChallengeObservation", () => {
   it("creates deterministic redacted evidence with split outcomes", () => {
     const input = {
-      challenge: {
-        amount: "1.25",
-        asset: "CC",
-        expiresAt: "2026-07-12T16:00:00.000Z",
-        network: "canton:devnet",
-        recipient: "provider::1220abc",
-        requestHash: "sha256:request",
-      },
+      challenge: cantonRequirement,
       headers: [["content-type", "application/json"]] as const,
       method: "POST",
       observedAt: "2026-07-12T15:59:00.000Z",
       requestBody: new TextEncoder().encode('{"prompt":"private task"}'),
       resourceUrl: "https://provider.example/private?token=secret-value",
+      upstreamResourceUrl:
+        "https://provider.example/private?token=secret-value",
     };
 
     const first = createChallengeObservation(input);
@@ -117,6 +102,12 @@ describe("createChallengeObservation", () => {
     expect(first).toEqual(second);
     expect(first).toMatchObject({
       bindingVersion: "sotto-http-request-v1",
+      compatibility: {
+        exactRequestBinding: "not-proven",
+        paymentFields: "valid",
+        resourceUrlBinding: "matched",
+        wire: "compatible",
+      },
       delivery: "pending",
       httpStatus: 402,
       requestCommitment: expect.stringMatching(/^sha256:[a-f0-9]{64}$/),
