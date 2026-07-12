@@ -37,4 +37,63 @@ describe("commitHttpRequest", () => {
 
     expect(paid.commitment).toBe(unpaid.commitment);
   });
+
+  it.each([
+    ["method", { method: "PUT" }],
+    ["path", { url: "https://example.com/other?b=2&a=1" }],
+    ["query", { url: "https://example.com/pay?a=1&b=2" }],
+    ["content type", { headers: [["content-type", "text/plain"]] }],
+    ["body", { body: new TextEncoder().encode('{"task":"cafe"}') }],
+  ])("changes the commitment after a %s mutation", (_name, mutation) => {
+    const original = commitHttpRequest(baseInput);
+    const changed = commitHttpRequest({ ...baseInput, ...mutation });
+
+    expect(changed.commitment).not.toBe(original.commitment);
+  });
+
+  it("binds sorted resource-specific authoritative headers", () => {
+    const result = commitHttpRequest({
+      ...baseInput,
+      additionalAuthoritativeHeaders: ["x-task-mode", "accept"],
+      headers: [
+        ...baseInput.headers,
+        ["X-Task-Mode", " precise "],
+        ["Accept", " application/json "],
+      ],
+    });
+    const canonical = new TextDecoder().decode(result.canonicalBytes);
+
+    expect(canonical.indexOf('"name":"accept"')).toBeLessThan(
+      canonical.indexOf('"name":"content-encoding"'),
+    );
+    expect(canonical).toContain(
+      '{"name":"x-task-mode","value":"precise"}',
+    );
+  });
+
+  it.each([
+    ["non-HTTPS URL", { url: "http://example.com/pay" }, "HTTPS"],
+    ["URL userinfo", { url: "https://user@example.com/pay" }, "userinfo"],
+    ["URL fragment", { url: "https://example.com/pay#private" }, "fragment"],
+    ["invalid method", { method: "PO ST" }, "method"],
+    [
+      "duplicate authoritative header",
+      {
+        headers: [
+          ["Content-Type", "application/json"],
+          ["content-type", "text/plain"],
+        ],
+      },
+      "Duplicate",
+    ],
+    [
+      "forbidden authoritative header",
+      { additionalAuthoritativeHeaders: ["authorization"] },
+      "forbidden",
+    ],
+  ])("rejects %s", (_name, mutation, message) => {
+    expect(() => commitHttpRequest({ ...baseInput, ...mutation })).toThrow(
+      message,
+    );
+  });
 });
