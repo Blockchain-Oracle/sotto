@@ -111,8 +111,7 @@ export function createChallengeObservation(
     ...(input.additionalAuthoritativeHeaders === undefined
       ? {}
       : {
-          additionalAuthoritativeHeaders:
-            input.additionalAuthoritativeHeaders,
+          additionalAuthoritativeHeaders: input.additionalAuthoritativeHeaders,
         }),
     ...(input.requestBody === undefined ? {} : { body: input.requestBody }),
     ...(input.headers === undefined ? {} : { headers: input.headers }),

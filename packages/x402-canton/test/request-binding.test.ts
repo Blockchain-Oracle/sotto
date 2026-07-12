@@ -66,9 +66,7 @@ describe("commitHttpRequest", () => {
     expect(canonical.indexOf('"name":"accept"')).toBeLessThan(
       canonical.indexOf('"name":"content-encoding"'),
     );
-    expect(canonical).toContain(
-      '{"name":"x-task-mode","value":"precise"}',
-    );
+    expect(canonical).toContain('{"name":"x-task-mode","value":"precise"}');
   });
 
   it.each([

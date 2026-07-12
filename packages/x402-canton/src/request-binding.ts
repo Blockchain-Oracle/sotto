@@ -74,9 +74,7 @@ export function commitHttpRequest(
     throw new Error("Canonical request URL must not contain a fragment");
   }
 
-  const names = authoritativeNames(
-    input.additionalAuthoritativeHeaders ?? [],
-  );
+  const names = authoritativeNames(input.additionalAuthoritativeHeaders ?? []);
   const authoritative = new Set(names);
   const values = new Map<string, string>();
   for (const [rawName, rawValue] of input.headers ?? []) {
