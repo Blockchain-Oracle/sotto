@@ -44,12 +44,15 @@ describe("commitHttpRequest", () => {
     ["query", { url: "https://example.com/pay?a=1&b=2" }],
     ["content type", { headers: [["content-type", "text/plain"]] }],
     ["body", { body: new TextEncoder().encode('{"task":"cafe"}') }],
-  ])("changes the commitment after a %s mutation", (_name, mutation) => {
-    const original = commitHttpRequest(baseInput);
-    const changed = commitHttpRequest({ ...baseInput, ...mutation });
+  ] as const)(
+    "changes the commitment after a %s mutation",
+    (_name, mutation) => {
+      const original = commitHttpRequest(baseInput);
+      const changed = commitHttpRequest({ ...baseInput, ...mutation });
 
-    expect(changed.commitment).not.toBe(original.commitment);
-  });
+      expect(changed.commitment).not.toBe(original.commitment);
+    },
+  );
 
   it("binds sorted resource-specific authoritative headers", () => {
     const result = commitHttpRequest({
@@ -89,7 +92,7 @@ describe("commitHttpRequest", () => {
       { additionalAuthoritativeHeaders: ["authorization"] },
       "forbidden",
     ],
-  ])("rejects %s", (_name, mutation, message) => {
+  ] as const)("rejects %s", (_name, mutation, message) => {
     expect(() => commitHttpRequest({ ...baseInput, ...mutation })).toThrow(
       message,
     );
