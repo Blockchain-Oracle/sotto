@@ -43,6 +43,9 @@ function requiredString(value: Record<string, unknown>, field: string): string {
 }
 
 export function decodePaymentRequired(header: string): PaymentRequired {
+  if (Buffer.byteLength(header, "utf8") > 16_384) {
+    throw new Error("PAYMENT-REQUIRED exceeds 16384 bytes");
+  }
   let decoded: unknown;
   try {
     decoded = JSON.parse(Buffer.from(header, "base64").toString("utf8"));

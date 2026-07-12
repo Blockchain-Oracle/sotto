@@ -37,6 +37,12 @@ describe("decodePaymentRequired", () => {
 
     expect(() => decodePaymentRequired(header)).toThrow("x402Version 2");
   });
+
+  it("rejects an oversized PAYMENT-REQUIRED header before decoding", () => {
+    expect(() => decodePaymentRequired("A".repeat(16_385))).toThrow(
+      "exceeds 16384 bytes",
+    );
+  });
 });
 
 describe("selectCantonRequirement", () => {
