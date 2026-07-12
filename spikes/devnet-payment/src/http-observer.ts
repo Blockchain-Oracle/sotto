@@ -41,7 +41,9 @@ export async function observeHttpChallenge(
     signal: AbortSignal.timeout(timeoutMs),
   });
   if (response.status !== 402) {
-    throw new Error(`Paid provider expected HTTP 402, received ${response.status}`);
+    throw new Error(
+      `Paid provider expected HTTP 402, received ${response.status}`,
+    );
   }
 
   const header = response.headers.get("PAYMENT-REQUIRED");
