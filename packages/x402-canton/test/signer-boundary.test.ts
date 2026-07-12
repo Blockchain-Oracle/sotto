@@ -29,7 +29,7 @@ const binding = commitHttpRequest({
   url: "https://provider.example/resource",
 });
 const authorization = createPaymentAuthorization({
-  attemptId: binding.commitment,
+  authorizationInstanceId: "authorization-1",
   binding,
   carriedRequestCommitment: binding.commitment,
   observedAt: "2026-07-12T15:59:00.000Z",
