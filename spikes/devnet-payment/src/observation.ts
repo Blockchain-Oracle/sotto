@@ -79,7 +79,7 @@ export function decodePaymentRequired(header: string): PaymentRequired {
 }
 
 export function selectCantonRequirement(
-  paymentRequired: PaymentRequired,
+  paymentRequired: Pick<PaymentRequired, "accepts">,
 ): CantonPaymentRequirement {
   const matching = paymentRequired.accepts.filter((candidate) => {
     const value = objectValue(candidate, "Payment requirement");

@@ -19,7 +19,7 @@ const cantonRequirement = {
   network: "canton:devnet",
   payTo: "provider::1220abc",
   scheme: "exact",
-};
+} as const;
 
 describe("decodePaymentRequired", () => {
   it("decodes an x402 v2 PAYMENT-REQUIRED header", () => {
