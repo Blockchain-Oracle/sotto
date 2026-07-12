@@ -17,8 +17,10 @@ Accepted on 2026-07-12 for the DevNet evidence spike only.
 ## Reasons
 
 Node 24 is the current LTS line and is accepted by Vitest 4. pnpm is pinned in
-`packageManager` so the lockfile and CI use the same major. TypeScript 6.0.3 is
-the newest release supported by the selected `typescript-eslint` release.
+`packageManager`; Node 24's bundled Corepack launches that exact version in CI.
+The pnpm setup action is intentionally not used because its 11.7 bootstrap could
+not switch safely to the pnpm 11.12 lockfile. TypeScript 6.0.3 is the newest
+release supported by the selected `typescript-eslint` release.
 
 Daml manifests pin SDK 3.5.2, matching the current Five North toolchain
 research. DPM requires Java 17 or newer; Java 21 is the current
