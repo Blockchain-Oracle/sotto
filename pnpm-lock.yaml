@@ -46,7 +46,11 @@ importers:
 
   packages/x402-canton: {}
 
-  spikes/devnet-payment: {}
+  spikes/devnet-payment:
+    dependencies:
+      '@sotto/x402-canton':
+        specifier: workspace:*
+        version: link:../../packages/x402-canton
 
 packages:
 

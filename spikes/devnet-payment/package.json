@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "license": "Apache-2.0",
+  "dependencies": {
+    "@sotto/x402-canton": "workspace:*"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "start": "tsx src/main.ts"
