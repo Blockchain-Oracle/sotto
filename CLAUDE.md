@@ -1,0 +1,43 @@
+# CLAUDE.md
+
+## Project Snapshot
+
+Sotto is the Canton-focused marketplace, execution surface, and evidence layer
+for x402-paid APIs. The repository is currently executing the clean split and
+Five North DevNet spike. No production runtime exists yet.
+
+## Working Rules
+
+- Read `AGENTS.md` first; it is the canonical project router.
+- Follow the tracked product contract, decisions, spike plan, and quality
+  contract in the order listed there.
+- Research, specification, stories/design, planning, implementation, and
+  verification are separate stages.
+- Do not import payroll code, prototype fixtures, raw research clones, secrets,
+  generated output, or archived product actors.
+- Never simulate successful payment, settlement, DevNet deployment, contract
+  visibility, or product activity.
+- Keep wallet sessions, Sotto sessions, human approval, and autonomous signer
+  authority distinct.
+
+## Commands
+
+The application toolchain does not exist yet. Current valid checks are:
+
+```text
+node scripts/context-sync.mjs verify --source <archive-root>
+git diff --check
+```
+
+Do not invent commands before the repository provides them.
+
+## Project Context
+
+Required authority is tracked under `docs/`. Optional private depth is restored
+under ignored `.thoughts` from `context/manifest.json`; it is supporting context,
+not a replacement for tracked product authority.
+
+## Skill Routing
+
+Use `.claude/skills/hackathon-idea-scout/SKILL.md` only for a new research-first
+hackathon idea comparison. It does not override the accepted Sotto direction.

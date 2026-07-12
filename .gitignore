@@ -1,0 +1,34 @@
+# Private context and credentials
+.thoughts/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.wallet
+wallet.json
+
+# Dependencies and build output
+node_modules/
+dist/
+build/
+.next/
+coverage/
+playwright-report/
+test-results/
+
+# Daml output and local state
+.daml/
+.dpm/
+*.dar
+*.dalf
+.ledger-state/
+.evidence-private/
+
+# Tooling and operating system
+.DS_Store
+*.log
+.pnpm-store/
+.turbo/
+.cache/

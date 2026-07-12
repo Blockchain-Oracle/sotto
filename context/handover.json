@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "capturedOn": "2026-07-12",
+  "archive": {
+    "originalRepositoryId": 1287676370,
+    "originalNodeId": "R_kgDOTMBh0g",
+    "originalFullName": "Blockchain-Oracle/sotto",
+    "originalDefaultBranch": "main",
+    "originalDefaultBranchSha": "c29e4da31e37b90385aa875b70928364b4251193",
+    "localTag": "sotto-payroll-archive-2026-07-12",
+    "finalFullName": "Blockchain-Oracle/sotto-payroll-archive",
+    "finalDefaultBranchSha": "b38a02a7247dbe4d9c838b7dbb3e8c67be2092f3",
+    "archived": true
+  },
+  "active": {
+    "localWorkspace": "sotto-x402",
+    "fullName": "Blockchain-Oracle/sotto",
+    "repositoryId": 1298314969,
+    "nodeId": "R_kgDOTWK22Q",
+    "freshHistoryRequired": true
+  },
+  "context": {
+    "manifestVersion": 1,
+    "entryCount": 117,
+    "sourceAndDestinationGitleaksVersion": "8.30.1",
+    "sourceAndDestinationGitleaksResult": "no leaks found"
+  },
+  "githubMutationApplied": true
+}

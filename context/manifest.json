@@ -1,0 +1,709 @@
+{
+  "version": 1,
+  "sourceWorkspace": "sotto-payroll-archive",
+  "archiveCommit": "c29e4da31e37b90385aa875b70928364b4251193",
+  "entries": [
+    {
+      "source": ".thoughts/decisions/2026-07-12-sotto-x402-decision-register.md",
+      "destination": ".thoughts/decisions/2026-07-12-sotto-x402-decision-register.md",
+      "bytes": 16048,
+      "sha256": "24627001144a548bd40722aed8e6057584619bfe29b7093d3754b89e336c9c30"
+    },
+    {
+      "source": ".thoughts/design/2026-07-12-sotto-canton-x402-designer-brief.md",
+      "destination": ".thoughts/design/2026-07-12-sotto-canton-x402-designer-brief.md",
+      "bytes": 6780,
+      "sha256": "dc1b2249106978caa255211e5c800354eba268d9f63f31964184eaf60d43fa61"
+    },
+    {
+      "source": ".thoughts/design/2026-07-12-sotto-canton-x402-designer-handback.md",
+      "destination": ".thoughts/design/2026-07-12-sotto-canton-x402-designer-handback.md",
+      "bytes": 4621,
+      "sha256": "bf5e873604f4f6e62cf6ad86026da5c282e8d4790c8b8e1fabe60fb173084dc2"
+    },
+    {
+      "source": ".thoughts/design/2026-07-12-sotto-x402-surface-map/01-global-shell.md",
+      "destination": ".thoughts/design/2026-07-12-sotto-x402-surface-map/01-global-shell.md",
+      "bytes": 3113,
+      "sha256": "afa06a2c71883c5e16d5bb41fb5d35210c5c0dcad817554f99b9f604172dd8cd"
+    },
+    {
+      "source": ".thoughts/design/2026-07-12-sotto-x402-surface-map/02-marketplace-provider-resource.md",
+      "destination": ".thoughts/design/2026-07-12-sotto-x402-surface-map/02-marketplace-provider-resource.md",
+      "bytes": 4339,
+      "sha256": "87566a0aa8505d9cd2024e81e43efee06a4e37677146d9b68370e9b1ec6d9bec"
+    },
+    {
+      "source": ".thoughts/design/2026-07-12-sotto-x402-surface-map/03-add-api-provider-management.md",
+      "destination": ".thoughts/design/2026-07-12-sotto-x402-surface-map/03-add-api-provider-management.md",
+      "bytes": 4526,
+      "sha256": "17b22c4ab12d95631983828b203e5352d92851b037084d89985f2281db3d6495"
+    },
+    {
+      "source": ".thoughts/design/2026-07-12-sotto-x402-surface-map/04-composer.md",
+      "destination": ".thoughts/design/2026-07-12-sotto-x402-surface-map/04-composer.md",
+      "bytes": 4571,
+      "sha256": "93f07062beb530c04661efc49f132f8e5e01a9446d38a15e6cb02acb8618c071"
+    },
+    {
+      "source": ".thoughts/design/2026-07-12-sotto-x402-surface-map/04a-composer-states.md",
+      "destination": ".thoughts/design/2026-07-12-sotto-x402-surface-map/04a-composer-states.md",
+      "bytes": 3280,
+      "sha256": "0d70a7350cdaf3ec45ad33f9f846e9618dd4690f19e4fcd0495cc1d2c5d5d81e"
+    },
+    {
+      "source": ".thoughts/design/2026-07-12-sotto-x402-surface-map/05-scan-transaction.md",
+      "destination": ".thoughts/design/2026-07-12-sotto-x402-surface-map/05-scan-transaction.md",
+      "bytes": 3971,
+      "sha256": "87b1e3c744241ba3f37753ede4c9614b1d0ef35b8b35748b3aebefc7e22bbcc9"
+    },
+    {
+      "source": ".thoughts/design/2026-07-12-sotto-x402-surface-map/06-statistics-health.md",
+      "destination": ".thoughts/design/2026-07-12-sotto-x402-surface-map/06-statistics-health.md",
+      "bytes": 2384,
+      "sha256": "cc5506ce910516cd9be8244bf4b84ca85520681f4545b106e0c7fc38772022e3"
+    },
+    {
+      "source": ".thoughts/design/2026-07-12-sotto-x402-surface-map/07-owner-session.md",
+      "destination": ".thoughts/design/2026-07-12-sotto-x402-surface-map/07-owner-session.md",
+      "bytes": 3415,
+      "sha256": "2452269479f355c8d127db074b635ceaeb46d00c4b9622243dfc0d627bd077c8"
+    },
+    {
+      "source": ".thoughts/design/2026-07-12-sotto-x402-surface-map/08-operator-moderation.md",
+      "destination": ".thoughts/design/2026-07-12-sotto-x402-surface-map/08-operator-moderation.md",
+      "bytes": 2482,
+      "sha256": "9c44d537c33341769a36fcb9ba8bd051907dd70a942f08c0fbde5a071220520c"
+    },
+    {
+      "source": ".thoughts/design/2026-07-12-sotto-x402-surface-map/09-data-shapes.md",
+      "destination": ".thoughts/design/2026-07-12-sotto-x402-surface-map/09-data-shapes.md",
+      "bytes": 4003,
+      "sha256": "5cf827c66acfed74003ddce2cfb4b2029b790173f41e975218e6977e0097d9da"
+    },
+    {
+      "source": ".thoughts/design/2026-07-12-sotto-x402-surface-map/10-responsive-copy-decisions.md",
+      "destination": ".thoughts/design/2026-07-12-sotto-x402-surface-map/10-responsive-copy-decisions.md",
+      "bytes": 5122,
+      "sha256": "236a6a06b266bac411dc7345e299f25a8733a84f81c9f7d55252884a4e1c1142"
+    },
+    {
+      "source": ".thoughts/design/2026-07-12-sotto-x402-surface-map/index.md",
+      "destination": ".thoughts/design/2026-07-12-sotto-x402-surface-map/index.md",
+      "bytes": 5325,
+      "sha256": "990a33aff946af3af1210016e7fca45689bf704e65a766017635f895ad899f47"
+    },
+    {
+      "source": ".thoughts/governance/2026-07-12-approval-drift-postmortem.md",
+      "destination": ".thoughts/governance/2026-07-12-approval-drift-postmortem.md",
+      "bytes": 4012,
+      "sha256": "caa56f78c71b039b44d516d5a47f35b8ecf449a4ebd61eacbcb6993270d07671"
+    },
+    {
+      "source": ".thoughts/plans/2026-07-12-sotto-x402-split-spike/01-clean-split.md",
+      "destination": ".thoughts/plans/2026-07-12-sotto-x402-split-spike/01-clean-split.md",
+      "bytes": 6804,
+      "sha256": "1b01ead32dc71e41bb1a3698cde6346c30b1e378bfb3e8a536409a25cb64ade6"
+    },
+    {
+      "source": ".thoughts/plans/2026-07-12-sotto-x402-split-spike/02-quality-workspace.md",
+      "destination": ".thoughts/plans/2026-07-12-sotto-x402-split-spike/02-quality-workspace.md",
+      "bytes": 3595,
+      "sha256": "5d0dbd48359e7ef388a475a571e4ef3f4980c41b08be9a7874aae6d9ccc02486"
+    },
+    {
+      "source": ".thoughts/plans/2026-07-12-sotto-x402-split-spike/03-baseline-payment.md",
+      "destination": ".thoughts/plans/2026-07-12-sotto-x402-split-spike/03-baseline-payment.md",
+      "bytes": 4704,
+      "sha256": "1973ae22de493ea92f763dfee194a4363593748249cc4516c25cd4136cf7d45c"
+    },
+    {
+      "source": ".thoughts/plans/2026-07-12-sotto-x402-split-spike/04-daml-privacy.md",
+      "destination": ".thoughts/plans/2026-07-12-sotto-x402-split-spike/04-daml-privacy.md",
+      "bytes": 4404,
+      "sha256": "1ad5f6feeed2051d6d3ee61337e73131374ff42b9518c41b99f8211e15fe225d"
+    },
+    {
+      "source": ".thoughts/plans/2026-07-12-sotto-x402-split-spike/05-atomicity-bypass.md",
+      "destination": ".thoughts/plans/2026-07-12-sotto-x402-split-spike/05-atomicity-bypass.md",
+      "bytes": 6210,
+      "sha256": "eaab52b4e4ff70f1a66962d2739d673cd08fe9357de60fcc45ca91214a045d9c"
+    },
+    {
+      "source": ".thoughts/plans/2026-07-12-sotto-x402-split-spike/06-evidence-decisions.md",
+      "destination": ".thoughts/plans/2026-07-12-sotto-x402-split-spike/06-evidence-decisions.md",
+      "bytes": 3436,
+      "sha256": "b002540f31a7be85b0da96a0781bbeaeb2f466e29b513053cd26aaca5d4fe4bc"
+    },
+    {
+      "source": ".thoughts/plans/2026-07-12-sotto-x402-split-spike/index.md",
+      "destination": ".thoughts/plans/2026-07-12-sotto-x402-split-spike/index.md",
+      "bytes": 5800,
+      "sha256": "f96f809c64e1ee169bda72f9d5b41533e41f86253db7e2b7ea4b67710e60fbef"
+    },
+    {
+      "source": ".thoughts/prototype-discovery/2026-07-12-sotto-canton-x402-prototype.md",
+      "destination": ".thoughts/prototype-discovery/2026-07-12-sotto-canton-x402-prototype.md",
+      "bytes": 8208,
+      "sha256": "b593251ba09e3eb5627c4dd3c1d9752ee45c23151b91352b84a3a3b9dbe40cf4"
+    },
+    {
+      "source": ".thoughts/prototype-reintegration/2026-07-12-sotto-canton-x402.md",
+      "destination": ".thoughts/prototype-reintegration/2026-07-12-sotto-canton-x402.md",
+      "bytes": 8501,
+      "sha256": "f19f4a806c4265f37a3198d93a836e97a20f3184b9a4304a3b3c69df95303c82"
+    },
+    {
+      "source": ".thoughts/prototypes/2026-07-12-sotto-x402/index.html",
+      "destination": ".thoughts/prototypes/2026-07-12-sotto-x402/index.html",
+      "bytes": 452,
+      "sha256": "ffef78e9c7a5111e63832758c9f6be376935b464677ab1ccfe0e5ec8f4397293"
+    },
+    {
+      "source": ".thoughts/prototypes/2026-07-12-sotto-x402/package.json",
+      "destination": ".thoughts/prototypes/2026-07-12-sotto-x402/package.json",
+      "bytes": 578,
+      "sha256": "71517d82abdbd1b238b5df5da715faf2aa321498b0317db58fd3690c37cea1ff"
+    },
+    {
+      "source": ".thoughts/prototypes/2026-07-12-sotto-x402/pnpm-lock.yaml",
+      "destination": ".thoughts/prototypes/2026-07-12-sotto-x402/pnpm-lock.yaml",
+      "bytes": 37601,
+      "sha256": "9cf59786842a7f7965298f0bf6a455aa861bf3dc11e76c5a703913903c6cc209"
+    },
+    {
+      "source": ".thoughts/prototypes/2026-07-12-sotto-x402/README.md",
+      "destination": ".thoughts/prototypes/2026-07-12-sotto-x402/README.md",
+      "bytes": 1696,
+      "sha256": "b220bbfe4e92c20f3f95630dca80a6d92b44691586ad3dfb83616e1e42c799a6"
+    },
+    {
+      "source": ".thoughts/prototypes/2026-07-12-sotto-x402/src/App.tsx",
+      "destination": ".thoughts/prototypes/2026-07-12-sotto-x402/src/App.tsx",
+      "bytes": 3096,
+      "sha256": "8ac4ff858cb8da410c58e11612d56fd34c67d09ea4696a52f3eea252bbb88ffe"
+    },
+    {
+      "source": ".thoughts/prototypes/2026-07-12-sotto-x402/src/components/Modal.tsx",
+      "destination": ".thoughts/prototypes/2026-07-12-sotto-x402/src/components/Modal.tsx",
+      "bytes": 752,
+      "sha256": "e9fd2f71163453d43f5c79a62456d146a2a7db91814e0da8f0c80ef39a6c632b"
+    },
+    {
+      "source": ".thoughts/prototypes/2026-07-12-sotto-x402/src/components/ResourceList.tsx",
+      "destination": ".thoughts/prototypes/2026-07-12-sotto-x402/src/components/ResourceList.tsx",
+      "bytes": 2879,
+      "sha256": "617d8a50db441dba1246f09213b9a6871aab9df78d3b9e8b175995051704759a"
+    },
+    {
+      "source": ".thoughts/prototypes/2026-07-12-sotto-x402/src/components/SearchModal.tsx",
+      "destination": ".thoughts/prototypes/2026-07-12-sotto-x402/src/components/SearchModal.tsx",
+      "bytes": 1407,
+      "sha256": "45f3e453d3f73d6eddaa18548b73d80dadc6f60196255ed307c0e2434c9c0de6"
+    },
+    {
+      "source": ".thoughts/prototypes/2026-07-12-sotto-x402/src/components/Shell.tsx",
+      "destination": ".thoughts/prototypes/2026-07-12-sotto-x402/src/components/Shell.tsx",
+      "bytes": 2521,
+      "sha256": "41e2302e4c7ea9aec984c1be41d03bb4219c58416260742acc6fca7285db445a"
+    },
+    {
+      "source": ".thoughts/prototypes/2026-07-12-sotto-x402/src/components/Ui.tsx",
+      "destination": ".thoughts/prototypes/2026-07-12-sotto-x402/src/components/Ui.tsx",
+      "bytes": 2311,
+      "sha256": "217d3fa6249172a9655a8ca8addcea853bd731c5f9d385c13fb6b9df85853325"
+    },
+    {
+      "source": ".thoughts/prototypes/2026-07-12-sotto-x402/src/components/WalletModal.tsx",
+      "destination": ".thoughts/prototypes/2026-07-12-sotto-x402/src/components/WalletModal.tsx",
+      "bytes": 1859,
+      "sha256": "dce4fcebd27c65d7d46bfbe837e312465bc4078b5b15295513ba2bbee344e710"
+    },
+    {
+      "source": ".thoughts/prototypes/2026-07-12-sotto-x402/src/data.ts",
+      "destination": ".thoughts/prototypes/2026-07-12-sotto-x402/src/data.ts",
+      "bytes": 3204,
+      "sha256": "c1de47dd24cb7017402b452a16bd541304c092042b3513e06d55338e64c4bf00"
+    },
+    {
+      "source": ".thoughts/prototypes/2026-07-12-sotto-x402/src/main.tsx",
+      "destination": ".thoughts/prototypes/2026-07-12-sotto-x402/src/main.tsx",
+      "bytes": 447,
+      "sha256": "1607d220c84866af17b01329917591521c8931db878defce7c1a2ae1e34c3f71"
+    },
+    {
+      "source": ".thoughts/prototypes/2026-07-12-sotto-x402/src/pages/AddApiPage.tsx",
+      "destination": ".thoughts/prototypes/2026-07-12-sotto-x402/src/pages/AddApiPage.tsx",
+      "bytes": 5204,
+      "sha256": "10b9830be3fba8167b8615708f18b931f4e4af01052ccfb9890960e3c6899e75"
+    },
+    {
+      "source": ".thoughts/prototypes/2026-07-12-sotto-x402/src/pages/ComposerPage.tsx",
+      "destination": ".thoughts/prototypes/2026-07-12-sotto-x402/src/pages/ComposerPage.tsx",
+      "bytes": 6918,
+      "sha256": "298c091f83ff864e3e082680c27d74fe0a083a3b2a9c98c09baf967bceb5ed75"
+    },
+    {
+      "source": ".thoughts/prototypes/2026-07-12-sotto-x402/src/pages/ManagePage.tsx",
+      "destination": ".thoughts/prototypes/2026-07-12-sotto-x402/src/pages/ManagePage.tsx",
+      "bytes": 2167,
+      "sha256": "76d1594ca66a842ae8122ebd7ab3c2cce0861a11b1b7006915fafae32dd6a8ae"
+    },
+    {
+      "source": ".thoughts/prototypes/2026-07-12-sotto-x402/src/pages/MarketplacePage.tsx",
+      "destination": ".thoughts/prototypes/2026-07-12-sotto-x402/src/pages/MarketplacePage.tsx",
+      "bytes": 2163,
+      "sha256": "eec121ea2fb21396480efab4fd8c5acab8c48fb90fe3a33feb555a884679941e"
+    },
+    {
+      "source": ".thoughts/prototypes/2026-07-12-sotto-x402/src/pages/OperatorPage.tsx",
+      "destination": ".thoughts/prototypes/2026-07-12-sotto-x402/src/pages/OperatorPage.tsx",
+      "bytes": 1991,
+      "sha256": "ba9b1b6fec1b792e925ce25531836829ef8ac4c8fe91804860a62d4f48d166a5"
+    },
+    {
+      "source": ".thoughts/prototypes/2026-07-12-sotto-x402/src/pages/ProviderPage.tsx",
+      "destination": ".thoughts/prototypes/2026-07-12-sotto-x402/src/pages/ProviderPage.tsx",
+      "bytes": 1817,
+      "sha256": "1eb5b8c1ae71803e896b0773ef608dc5d07daf7788e2ce3d76c909d95a638b97"
+    },
+    {
+      "source": ".thoughts/prototypes/2026-07-12-sotto-x402/src/pages/ResourcePage.tsx",
+      "destination": ".thoughts/prototypes/2026-07-12-sotto-x402/src/pages/ResourcePage.tsx",
+      "bytes": 3649,
+      "sha256": "e48a332a96db31622370cbacc86ba2d74b4b06d61283ab7fd958486fb43b3ffb"
+    },
+    {
+      "source": ".thoughts/prototypes/2026-07-12-sotto-x402/src/pages/ScanPage.tsx",
+      "destination": ".thoughts/prototypes/2026-07-12-sotto-x402/src/pages/ScanPage.tsx",
+      "bytes": 2465,
+      "sha256": "38c1abb471bef1aaefea7e7c3f0bf77a0877cdc400bae235e3de1894d9143789"
+    },
+    {
+      "source": ".thoughts/prototypes/2026-07-12-sotto-x402/src/pages/StatsPage.tsx",
+      "destination": ".thoughts/prototypes/2026-07-12-sotto-x402/src/pages/StatsPage.tsx",
+      "bytes": 3015,
+      "sha256": "43b88a55ab0918bacc140210a0c0a783f40bcb17d832a1dcaf5a0b060416ad9b"
+    },
+    {
+      "source": ".thoughts/prototypes/2026-07-12-sotto-x402/src/pages/TransactionPage.tsx",
+      "destination": ".thoughts/prototypes/2026-07-12-sotto-x402/src/pages/TransactionPage.tsx",
+      "bytes": 3464,
+      "sha256": "9492a673bbf0d0b8d9fead54dc5322b01c67537e798cce3207e1040948be664f"
+    },
+    {
+      "source": ".thoughts/prototypes/2026-07-12-sotto-x402/src/router.ts",
+      "destination": ".thoughts/prototypes/2026-07-12-sotto-x402/src/router.ts",
+      "bytes": 987,
+      "sha256": "6e09e100afe6ae00c6195340925c01de1a2cecda11da1c3367df96aea80de886"
+    },
+    {
+      "source": ".thoughts/prototypes/2026-07-12-sotto-x402/src/styles/base.css",
+      "destination": ".thoughts/prototypes/2026-07-12-sotto-x402/src/styles/base.css",
+      "bytes": 4374,
+      "sha256": "778a4ba4e13318db94959ebd5037d43c120e6c4143163e2cceb7d67aa7c3d1e4"
+    },
+    {
+      "source": ".thoughts/prototypes/2026-07-12-sotto-x402/src/styles/components.css",
+      "destination": ".thoughts/prototypes/2026-07-12-sotto-x402/src/styles/components.css",
+      "bytes": 10368,
+      "sha256": "470fe3571b30ec198d1fd86fd655b1012a2fe7d2a9e8ea74787d28590d592f2c"
+    },
+    {
+      "source": ".thoughts/prototypes/2026-07-12-sotto-x402/src/styles/pages.css",
+      "destination": ".thoughts/prototypes/2026-07-12-sotto-x402/src/styles/pages.css",
+      "bytes": 28296,
+      "sha256": "ff24f65979e57a78028971f7ebf0974e05e9addf22618afae1d24c28a3c053cc"
+    },
+    {
+      "source": ".thoughts/prototypes/2026-07-12-sotto-x402/src/styles/responsive.css",
+      "destination": ".thoughts/prototypes/2026-07-12-sotto-x402/src/styles/responsive.css",
+      "bytes": 8878,
+      "sha256": "20f6f471318539b720a84631fe44b9e6d6c5243f352b6bfcd4f377cac723fe74"
+    },
+    {
+      "source": ".thoughts/prototypes/2026-07-12-sotto-x402/src/styles/shell.css",
+      "destination": ".thoughts/prototypes/2026-07-12-sotto-x402/src/styles/shell.css",
+      "bytes": 4061,
+      "sha256": "f39464f59e5a604aa9d9c79b7bc2f87d1fc99ceb78d8c32efd5ae24427b507e9"
+    },
+    {
+      "source": ".thoughts/prototypes/2026-07-12-sotto-x402/src/types.ts",
+      "destination": ".thoughts/prototypes/2026-07-12-sotto-x402/src/types.ts",
+      "bytes": 733,
+      "sha256": "edab1c39f25c0fb2dba4ebfeef697c9ab67e844b82dfc30259d1d3953cb1511e"
+    },
+    {
+      "source": ".thoughts/prototypes/2026-07-12-sotto-x402/tsconfig.json",
+      "destination": ".thoughts/prototypes/2026-07-12-sotto-x402/tsconfig.json",
+      "bytes": 527,
+      "sha256": "83efc1798334967d5a907f26b8cba31fa213f16b5ac0ed5c02fd38e7cf0ceb66"
+    },
+    {
+      "source": ".thoughts/prototypes/2026-07-12-sotto-x402/vite.config.ts",
+      "destination": ".thoughts/prototypes/2026-07-12-sotto-x402/vite.config.ts",
+      "bytes": 189,
+      "sha256": "c13378b84c01ad91b1b9f8495eef9b6e8347bd21b1071b39edbcf95858567718"
+    },
+    {
+      "source": ".thoughts/quality/2026-07-12-sotto-canton-x402-quality-profile.md",
+      "destination": ".thoughts/quality/2026-07-12-sotto-canton-x402-quality-profile.md",
+      "bytes": 11055,
+      "sha256": "89583685431afe9e2f0739884ccd596a5c86ff765ba9f76312a49e53bfab968a"
+    },
+    {
+      "source": ".thoughts/research/2026-07-11-canton-x402-scan-reality.md",
+      "destination": ".thoughts/research/2026-07-11-canton-x402-scan-reality.md",
+      "bytes": 10959,
+      "sha256": "3cd2e9cc49d9410d6a012155fabbf57094e4462007d17466b4710cb8ec25e3eb"
+    },
+    {
+      "source": ".thoughts/research/2026-07-11-x402-registration-discovery-architecture.md",
+      "destination": ".thoughts/research/2026-07-11-x402-registration-discovery-architecture.md",
+      "bytes": 11726,
+      "sha256": "dfec88e0f025d156df0332405147f03d4a489fbcbb19904fb130cd5cc2356137"
+    },
+    {
+      "source": ".thoughts/research/2026-07-12-cli-mcp-skill-wallet-ui-reference.md",
+      "destination": ".thoughts/research/2026-07-12-cli-mcp-skill-wallet-ui-reference.md",
+      "bytes": 15713,
+      "sha256": "81480c81c1963cd69b1483777738f3b01856deba1238cf88caa526f24ba12313"
+    },
+    {
+      "source": ".thoughts/research/2026-07-12-coolify-casper-deployment-reality.md",
+      "destination": ".thoughts/research/2026-07-12-coolify-casper-deployment-reality.md",
+      "bytes": 7793,
+      "sha256": "85800a4d38b9a279def26305071469b9e916d86e28502ed3aef20ce15e0fe077"
+    },
+    {
+      "source": ".thoughts/research/2026-07-12-devnet-seaport-submission-requirement.md",
+      "destination": ".thoughts/research/2026-07-12-devnet-seaport-submission-requirement.md",
+      "bytes": 9797,
+      "sha256": "ab8a592d33f05b86e00a378284cbaada83def1d75a23926fd3398ca2a2242de2"
+    },
+    {
+      "source": ".thoughts/research/2026-07-12-monorepo-nixpacks-container-build-reality.md",
+      "destination": ".thoughts/research/2026-07-12-monorepo-nixpacks-container-build-reality.md",
+      "bytes": 9793,
+      "sha256": "0633ef75bdc700f910f57d7da5e9c5bc69c7415fb10bcdd42695a5d07b7ca565"
+    },
+    {
+      "source": ".thoughts/research/2026-07-12-repository-archive-clean-split-reality.md",
+      "destination": ".thoughts/research/2026-07-12-repository-archive-clean-split-reality.md",
+      "bytes": 11236,
+      "sha256": "e1ee9549fca616f0ea322e4902f1d9d0ae1289d3f84479a7bd10316f747eaee8"
+    },
+    {
+      "source": ".thoughts/research/2026-07-12-sotto-composer-canton-wallet-model.md",
+      "destination": ".thoughts/research/2026-07-12-sotto-composer-canton-wallet-model.md",
+      "bytes": 12005,
+      "sha256": "ff11727a26cd34e9fbf795e1ef0def17785083c24c964aa89ff118cd5c7a6974"
+    },
+    {
+      "source": ".thoughts/research/2026-07-12-sotto-identity-authority-session-reality.md",
+      "destination": ".thoughts/research/2026-07-12-sotto-identity-authority-session-reality.md",
+      "bytes": 10097,
+      "sha256": "4e6d6dce2f2cefc67b1534616d5077a3441ae6ace449d4a3f0885f5fb3df48dc"
+    },
+    {
+      "source": ".thoughts/research/2026-07-12-x402scan-agentcash-interaction-model.md",
+      "destination": ".thoughts/research/2026-07-12-x402scan-agentcash-interaction-model.md",
+      "bytes": 13681,
+      "sha256": "0f50d28f56a821722c8746e2bf2bcb1bcc2ea171e4bf03cede27f15c73eb25c0"
+    },
+    {
+      "source": ".thoughts/specs/2026-07-12-sotto-canton-x402-grounded-spec.md",
+      "destination": ".thoughts/specs/2026-07-12-sotto-canton-x402-grounded-spec.md",
+      "bytes": 10451,
+      "sha256": "71186cc2dce4ef1ed71cdcc4bd6d6f9bf44aebbf464053e6701ca4a7b2672add"
+    },
+    {
+      "source": ".thoughts/stories/2026-07-12-sotto-x402/01-browse-marketplace.md",
+      "destination": ".thoughts/stories/2026-07-12-sotto-x402/01-browse-marketplace.md",
+      "bytes": 1268,
+      "sha256": "af8741cae98a74954e0f8c1f6f9030fa739ec23d1f044f73221323f554b41565"
+    },
+    {
+      "source": ".thoughts/stories/2026-07-12-sotto-x402/02-search-and-filter.md",
+      "destination": ".thoughts/stories/2026-07-12-sotto-x402/02-search-and-filter.md",
+      "bytes": 1138,
+      "sha256": "275ae234eea40468483872d54ca1b5cd81d4b9ad44fb4dbca0d64032a59cea79"
+    },
+    {
+      "source": ".thoughts/stories/2026-07-12-sotto-x402/03-provider-detail.md",
+      "destination": ".thoughts/stories/2026-07-12-sotto-x402/03-provider-detail.md",
+      "bytes": 1013,
+      "sha256": "884bd8d3351639a6aeee2476d4ae8fb5fcea444c46ee67ec3b312808cb8f4fb2"
+    },
+    {
+      "source": ".thoughts/stories/2026-07-12-sotto-x402/04-resource-detail.md",
+      "destination": ".thoughts/stories/2026-07-12-sotto-x402/04-resource-detail.md",
+      "bytes": 1052,
+      "sha256": "e9a2760b4df962b0ff4b8934bbb20ef90342ce88a634b3e66536f0b55736acca"
+    },
+    {
+      "source": ".thoughts/stories/2026-07-12-sotto-x402/05-add-api-audit.md",
+      "destination": ".thoughts/stories/2026-07-12-sotto-x402/05-add-api-audit.md",
+      "bytes": 1104,
+      "sha256": "234e333647b171aced19b650c3aab781f4130476e43a75178e5a2e79ec2077df"
+    },
+    {
+      "source": ".thoughts/stories/2026-07-12-sotto-x402/06-registration-failures.md",
+      "destination": ".thoughts/stories/2026-07-12-sotto-x402/06-registration-failures.md",
+      "bytes": 1027,
+      "sha256": "b41a7b08767ef0bbd56fa89922aa67a750f3149caa0800dddc4136ff4dd3b629"
+    },
+    {
+      "source": ".thoughts/stories/2026-07-12-sotto-x402/07-prove-origin-ownership.md",
+      "destination": ".thoughts/stories/2026-07-12-sotto-x402/07-prove-origin-ownership.md",
+      "bytes": 864,
+      "sha256": "cc1df5289bc3281ed7919a79e116fd18bedba70db4b9d6ad3bd5609ea9a17871"
+    },
+    {
+      "source": ".thoughts/stories/2026-07-12-sotto-x402/08-manage-listing.md",
+      "destination": ".thoughts/stories/2026-07-12-sotto-x402/08-manage-listing.md",
+      "bytes": 945,
+      "sha256": "bb16055c46a09c9f2717ca7620f40d085e956ba6ad5eaf7d3816d3ada4cf52a2"
+    },
+    {
+      "source": ".thoughts/stories/2026-07-12-sotto-x402/09-resource-health.md",
+      "destination": ".thoughts/stories/2026-07-12-sotto-x402/09-resource-health.md",
+      "bytes": 934,
+      "sha256": "f182a8632dc92e03105931a76eeb74226b149ab2a5980fabe5b9ccf230998f47"
+    },
+    {
+      "source": ".thoughts/stories/2026-07-12-sotto-x402/10-open-in-composer.md",
+      "destination": ".thoughts/stories/2026-07-12-sotto-x402/10-open-in-composer.md",
+      "bytes": 906,
+      "sha256": "d2cbd21aefef06cff760f3de794d1b0d570b7e8df5bc6114f38653c46a698630"
+    },
+    {
+      "source": ".thoughts/stories/2026-07-12-sotto-x402/11-prepare-composer-call.md",
+      "destination": ".thoughts/stories/2026-07-12-sotto-x402/11-prepare-composer-call.md",
+      "bytes": 1074,
+      "sha256": "96f976f600c24244f334ae0d35fd107e1a5bcb409e12e516d558002d3765641a"
+    },
+    {
+      "source": ".thoughts/stories/2026-07-12-sotto-x402/12-human-wallet-purchase.md",
+      "destination": ".thoughts/stories/2026-07-12-sotto-x402/12-human-wallet-purchase.md",
+      "bytes": 958,
+      "sha256": "d9f3f177a0faeef67f3ca3993874d5280908fedab196ee7a9b82e6e2fc2747e6"
+    },
+    {
+      "source": ".thoughts/stories/2026-07-12-sotto-x402/13-execution-lifecycle.md",
+      "destination": ".thoughts/stories/2026-07-12-sotto-x402/13-execution-lifecycle.md",
+      "bytes": 1085,
+      "sha256": "d3bb8684ed0053535df80254c3a017a1816dd38ff0d4723629376b76c3c5ea6e"
+    },
+    {
+      "source": ".thoughts/stories/2026-07-12-sotto-x402/14-private-receipt.md",
+      "destination": ".thoughts/stories/2026-07-12-sotto-x402/14-private-receipt.md",
+      "bytes": 1103,
+      "sha256": "75bb94d4194c65960cbad4e495295c257ba6b466046dc77ff6c5a0f1d73f003b"
+    },
+    {
+      "source": ".thoughts/stories/2026-07-12-sotto-x402/15-scan-feed.md",
+      "destination": ".thoughts/stories/2026-07-12-sotto-x402/15-scan-feed.md",
+      "bytes": 1047,
+      "sha256": "554e053d6264164f9ec77c29e8d7cdfe28ced2a995c2b592e9f707633a3074f9"
+    },
+    {
+      "source": ".thoughts/stories/2026-07-12-sotto-x402/16-transaction-evidence.md",
+      "destination": ".thoughts/stories/2026-07-12-sotto-x402/16-transaction-evidence.md",
+      "bytes": 1058,
+      "sha256": "515f3f1f290dade549a28c88227671ee92d3d14a298e016e4d2e36c06416358b"
+    },
+    {
+      "source": ".thoughts/stories/2026-07-12-sotto-x402/17-public-statistics.md",
+      "destination": ".thoughts/stories/2026-07-12-sotto-x402/17-public-statistics.md",
+      "bytes": 1040,
+      "sha256": "be5c061f967924586b19bb35f6e8d83e9e9d369cd0d8a102aa85c2a46aca2bfc"
+    },
+    {
+      "source": ".thoughts/stories/2026-07-12-sotto-x402/18-cli-setup.md",
+      "destination": ".thoughts/stories/2026-07-12-sotto-x402/18-cli-setup.md",
+      "bytes": 1115,
+      "sha256": "2c483dc85745788312ac546455dc4e6365ccc8facfbd21785e3e3c1057c65cba"
+    },
+    {
+      "source": ".thoughts/stories/2026-07-12-sotto-x402/19-cli-purchase.md",
+      "destination": ".thoughts/stories/2026-07-12-sotto-x402/19-cli-purchase.md",
+      "bytes": 1023,
+      "sha256": "23160c78ecd939a2ffd50a5cb9d82dc2a4fe2e722d196263560c896bd0f209fe"
+    },
+    {
+      "source": ".thoughts/stories/2026-07-12-sotto-x402/20-mcp-setup.md",
+      "destination": ".thoughts/stories/2026-07-12-sotto-x402/20-mcp-setup.md",
+      "bytes": 1006,
+      "sha256": "5523042754753fa3b66fd4f388a0a20e19b82121fd3fbb0fbb517c0b27b22b15"
+    },
+    {
+      "source": ".thoughts/stories/2026-07-12-sotto-x402/21-mcp-purchase.md",
+      "destination": ".thoughts/stories/2026-07-12-sotto-x402/21-mcp-purchase.md",
+      "bytes": 1098,
+      "sha256": "1773278e1586075b94187ece4e101a24c414ed74c885a137ee84528043addbdc"
+    },
+    {
+      "source": ".thoughts/stories/2026-07-12-sotto-x402/22-skill-guidance.md",
+      "destination": ".thoughts/stories/2026-07-12-sotto-x402/22-skill-guidance.md",
+      "bytes": 1087,
+      "sha256": "6c51ea83624f14e8589d07c34e1eba38984f475e76fd934cf17cb8551ed572d5"
+    },
+    {
+      "source": ".thoughts/stories/2026-07-12-sotto-x402/23-create-agent-authority.md",
+      "destination": ".thoughts/stories/2026-07-12-sotto-x402/23-create-agent-authority.md",
+      "bytes": 1025,
+      "sha256": "75c9f9bd76a1570dfa363b272c50cdeb29a563977350fbc33e07dc5db904d446"
+    },
+    {
+      "source": ".thoughts/stories/2026-07-12-sotto-x402/24-enforce-agent-authority.md",
+      "destination": ".thoughts/stories/2026-07-12-sotto-x402/24-enforce-agent-authority.md",
+      "bytes": 1040,
+      "sha256": "6d7c445051afd400b9739e49e4b3c3c9c64c712a7a24c256ed51d5d04ad71dc6"
+    },
+    {
+      "source": ".thoughts/stories/2026-07-12-sotto-x402/25-operator-moderation.md",
+      "destination": ".thoughts/stories/2026-07-12-sotto-x402/25-operator-moderation.md",
+      "bytes": 1047,
+      "sha256": "dbb8c61b282e4b8caa9eea52cd19b4c654e4ef67c770b3bc7d1329832898bf9c"
+    },
+    {
+      "source": ".thoughts/stories/2026-07-12-sotto-x402/26-ambiguous-recovery.md",
+      "destination": ".thoughts/stories/2026-07-12-sotto-x402/26-ambiguous-recovery.md",
+      "bytes": 1115,
+      "sha256": "f04f1b132d7dee412291f16cd971af93732ff145e75b31e5a75bf64e0992a358"
+    },
+    {
+      "source": ".thoughts/stories/2026-07-12-sotto-x402/27-devnet-daml-proof.md",
+      "destination": ".thoughts/stories/2026-07-12-sotto-x402/27-devnet-daml-proof.md",
+      "bytes": 1185,
+      "sha256": "cef3fcf58baf52fbcd38a2272dd28ba1c7e0593e7afb4d77700a9c3423318639"
+    },
+    {
+      "source": ".thoughts/stories/2026-07-12-sotto-x402/28-live-x402-smoke.md",
+      "destination": ".thoughts/stories/2026-07-12-sotto-x402/28-live-x402-smoke.md",
+      "bytes": 1033,
+      "sha256": "2b59d50cac171ba42198ec98527656716bcf2e3a2eb8488b38b98e7af8836377"
+    },
+    {
+      "source": ".thoughts/stories/2026-07-12-sotto-x402/29-owner-session.md",
+      "destination": ".thoughts/stories/2026-07-12-sotto-x402/29-owner-session.md",
+      "bytes": 1182,
+      "sha256": "58b702a7debc573d004eea1a731c87b776f24199a3816af2a5c61bc3037a96b8"
+    },
+    {
+      "source": ".thoughts/stories/2026-07-12-sotto-x402/30-coolify-deployment.md",
+      "destination": ".thoughts/stories/2026-07-12-sotto-x402/30-coolify-deployment.md",
+      "bytes": 1330,
+      "sha256": "ce0f8054137a1b92bed3baf3844647c6751efcf475be6e34c56c54a713c7a360"
+    },
+    {
+      "source": ".thoughts/stories/2026-07-12-sotto-x402/index.md",
+      "destination": ".thoughts/stories/2026-07-12-sotto-x402/index.md",
+      "bytes": 3573,
+      "sha256": "8c94c7b66cef4647b01e0177f4dc61a40a2c98eaca2116be794338a023e585e7"
+    },
+    {
+      "source": ".thoughts/wiki/canton-mcp-and-ai-tooling.md",
+      "destination": ".thoughts/wiki/canton-mcp-and-ai-tooling.md",
+      "bytes": 14336,
+      "sha256": "97c4cbb2bea54841582f92d614f11627e609bb37606178fb0218487fc1bff2ec"
+    },
+    {
+      "source": ".thoughts/wiki/canton-overview.md",
+      "destination": ".thoughts/wiki/canton-overview.md",
+      "bytes": 15494,
+      "sha256": "0c2896a2ec948644ce976ab6caecbdf706d6dcb8c6bc608a3b9e3a3ab57c7cfd"
+    },
+    {
+      "source": ".thoughts/wiki/daml-language.md",
+      "destination": ".thoughts/wiki/daml-language.md",
+      "bytes": 17027,
+      "sha256": "86ed713a1d383fc8d91e1692e38daf67238b3fe3ff13d74fcf7a178d4d5c9148"
+    },
+    {
+      "source": ".thoughts/wiki/dapp-frontend-integration.md",
+      "destination": ".thoughts/wiki/dapp-frontend-integration.md",
+      "bytes": 18399,
+      "sha256": "404cd985688d7aca527d46f0825458a56e5f06ae8657783475c473013f0f1238"
+    },
+    {
+      "source": ".thoughts/wiki/external-parties.md",
+      "destination": ".thoughts/wiki/external-parties.md",
+      "bytes": 14668,
+      "sha256": "7e187d639fbd5818301512ca6977f9ffd3f21cc0fc3b17186aa2912e52e65b7e"
+    },
+    {
+      "source": ".thoughts/wiki/glossary.md",
+      "destination": ".thoughts/wiki/glossary.md",
+      "bytes": 14306,
+      "sha256": "71d73199917be00f6aa593dc581ee7c5429f5555ae768e92fb80163260de378a"
+    },
+    {
+      "source": ".thoughts/wiki/hackathon-brief.md",
+      "destination": ".thoughts/wiki/hackathon-brief.md",
+      "bytes": 11632,
+      "sha256": "9cd5a7339a0788f8beae42face61e3b00dac5df642572ff36e48686311335d90"
+    },
+    {
+      "source": ".thoughts/wiki/index.md",
+      "destination": ".thoughts/wiki/index.md",
+      "bytes": 13116,
+      "sha256": "4d46c447f4b5db408781e90c0d7b8896154f51891fc6a4245a219b0addeb438c"
+    },
+    {
+      "source": ".thoughts/wiki/ledger-api-and-auth.md",
+      "destination": ".thoughts/wiki/ledger-api-and-auth.md",
+      "bytes": 15404,
+      "sha256": "2ebfc2b502aba0b3c636bd8e2817128ae99205d14f9fdef155b8d809432a64b6"
+    },
+    {
+      "source": ".thoughts/wiki/log.md",
+      "destination": ".thoughts/wiki/log.md",
+      "bytes": 32576,
+      "sha256": "1d0e290a8803413a5103533bc476eb3464ceb38ca9742fef506c7e46ee158d54"
+    },
+    {
+      "source": ".thoughts/wiki/privacy-model.md",
+      "destination": ".thoughts/wiki/privacy-model.md",
+      "bytes": 14928,
+      "sha256": "38ed9feb65c324a6cc9402fd9fdf09912f53bdec1525dacf2a95068cecdb4e78"
+    },
+    {
+      "source": ".thoughts/wiki/sdks-and-tooling.md",
+      "destination": ".thoughts/wiki/sdks-and-tooling.md",
+      "bytes": 17694,
+      "sha256": "eb64fe4881d70f769f4d45cb7fc8aa52994ce3a99800a425a483a0317a967357"
+    },
+    {
+      "source": ".thoughts/wiki/seaport-devnet.md",
+      "destination": ".thoughts/wiki/seaport-devnet.md",
+      "bytes": 11904,
+      "sha256": "c2fbafbc0df1294b20c06baf596e8b4d90cb75f1f515980f670ff17c65134e81"
+    },
+    {
+      "source": ".thoughts/wiki/token-standard.md",
+      "destination": ".thoughts/wiki/token-standard.md",
+      "bytes": 14797,
+      "sha256": "1c3501d55db1bee5c2ddeef7393e5f2a1bc899d3f62ef35cebb8ac393265cc07"
+    },
+    {
+      "source": ".thoughts/wiki/tracks-deep-dive.md",
+      "destination": ".thoughts/wiki/tracks-deep-dive.md",
+      "bytes": 17718,
+      "sha256": "97eea43abd8e8cf1d000adf625dc5e9dcb92d1545c8472f3cfb389e7e6368735"
+    },
+    {
+      "source": ".thoughts/wiki/x402-canton.md",
+      "destination": ".thoughts/wiki/x402-canton.md",
+      "bytes": 5029,
+      "sha256": "ece0bca326cb4aa0641181b3e9ac2e8cfb3c4e16bf7a6710c1d10b3ab6f0f6c3"
+    },
+    {
+      "source": ".thoughts/wiki/x402scan-patterns.md",
+      "destination": ".thoughts/wiki/x402scan-patterns.md",
+      "bytes": 4625,
+      "sha256": "cd71ca74145f94832badd24419ab6ccb726d17c260aa971508e7f909a31eca1d"
+    }
+  ]
+}
