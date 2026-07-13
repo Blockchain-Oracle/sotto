@@ -13,19 +13,23 @@ the accepted transfer.
 
 ## Source And Evidence
 
-- Implementation commit: `01d2d2acad4596fdae9c55601399902fb95543e7`.
+- Reviewed implementation commit: `ba1173c92f6bca30abd2692365671e00344c845b`.
+- Initial post-run snapshot: `01d2d2acad4596fdae9c55601399902fb95543e7`.
 - Structured redacted evidence:
   [devnet-spike-evidence.json](devnet-spike-evidence.json).
 - A non-shared, cache-disabled clone of the implementation commit passed a
-  frozen install, 93 tests across 17 files, every repository guard, both Daml
+  frozen install, 104 tests across 17 files, every repository guard, both Daml
   builds, and five Daml Script suites.
 - The research DAR is `sotto-control` 0.1.0, built with Daml SDK 3.5.2. Node
   24.18.0, pnpm 11.12.0, Java 21.0.11, and DPM 1.0.21 are pinned.
 
 The live transactions were executed from the preceding uncommitted worktree. The
-implementation commit is the first immutable post-run snapshot and includes
-route-binding and rejection-oracle hardening. The exact source commit at live
-execution time is therefore unavailable and is not retroactively claimed.
+initial post-run commit is the first immutable snapshot; the reviewed
+implementation commit adds route binding, exact rejection oracles, exact
+AmuletRules identity, pre-submission request-binding enforcement, and exact
+Sotto package identity. The exact source commit at live execution time is
+therefore unavailable, and none of this hardening is retroactively claimed as
+live evidence.
 
 The evidence bundle contains no credential, access token, raw key, prepared
 transaction, request body, or paid response body.

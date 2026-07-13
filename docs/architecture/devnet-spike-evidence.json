@@ -3,7 +3,8 @@
   "recordedAt": "2026-07-13T08:59:29Z",
   "verdict": "NO_GO",
   "source": {
-    "implementationCommit": "01d2d2acad4596fdae9c55601399902fb95543e7",
+    "implementationCommit": "ba1173c92f6bca30abd2692365671e00344c845b",
+    "initialPostRunCommit": "01d2d2acad4596fdae9c55601399902fb95543e7",
     "liveRunSourceCommit": "not-available",
     "relationshipToLiveRun": "post-run hardened snapshot; the exact pre-run uncommitted worktree cannot be reconstructed as an immutable commit",
     "cleanCloneVerification": {
@@ -11,7 +12,7 @@
       "damlScriptSuitesPassed": 5,
       "frozenInstall": "passed",
       "testFilesPassed": 17,
-      "testsPassed": 93,
+      "testsPassed": 104,
       "verdict": "passed"
     },
     "toolchain": {
