@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { commitBoundedPurchase } from "../src/index.js";
+import {
+  commitBoundedPurchase,
+  type BoundedPurchaseCommitmentInput,
+} from "../src/index.js";
 import {
   createPurchaseInput,
   mutateChallenge,
@@ -142,5 +145,19 @@ describe("commitBoundedPurchase security validation", () => {
     vi.advanceTimersByTime(600_001);
 
     expect(() => commitBoundedPurchase(input)).toThrow("stale");
+  });
+
+  it("rejects a structurally forged payment observation", () => {
+    const input = createPurchaseInput();
+    const forged = {
+      ...input,
+      paymentObservation: {
+        challengeId: `sha256:${"0".repeat(64)}`,
+        httpStatus: 402,
+        observedAt: "2026-07-13T10:00:00.000Z",
+      },
+    } as BoundedPurchaseCommitmentInput;
+
+    expect(() => commitBoundedPurchase(forged)).toThrow("not authenticated");
   });
 });

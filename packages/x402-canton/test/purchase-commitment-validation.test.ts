@@ -100,19 +100,6 @@ const invalidCases: ReadonlyArray<readonly [string, Mutation, string]> = [
     "authorizationInstanceId",
   ],
   [
-    "forged payment observation",
-    (input) =>
-      ({
-        ...input,
-        paymentObservation: {
-          challengeId: `sha256:${"0".repeat(64)}`,
-          httpStatus: 402,
-          observedAt: "2026-07-13T10:00:00.000Z",
-        },
-      }) as BoundedPurchaseCommitmentInput,
-    "not authenticated",
-  ],
-  [
     "oversized decoded challenge",
     (input) => ({
       ...input,
