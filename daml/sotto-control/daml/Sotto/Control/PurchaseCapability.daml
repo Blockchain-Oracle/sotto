@@ -122,7 +122,11 @@ template BoundedPurchaseCapability
             assertMsg "receiver holdings are empty" (not (null receiverHoldingCids))
             assertMsg "receiver holdings contain duplicates"
               (allUnique receiverHoldingCids)
+            assertMsg "sender change contains duplicates"
+              (allUnique transferResult.senderChangeCids)
             changeViews <- mapA (\cid -> view <$> fetch cid) transferResult.senderChangeCids
+            assertMsg "sender change instrument does not match"
+              (all (\holding -> holding.instrumentId == instrumentId) changeViews)
             let totalInput = sum (map (.amount) inputViews)
             let totalChange = sum (map (.amount) changeViews)
             let totalDebit = totalInput - totalChange

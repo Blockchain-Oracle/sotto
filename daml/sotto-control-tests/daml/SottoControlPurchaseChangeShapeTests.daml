@@ -1,0 +1,25 @@
+module SottoControlPurchaseChangeShapeTests where
+
+import Daml.Script
+import SottoControlPurchaseTestSupport
+import SottoControlTokenStandardMock
+
+senderChangeShape : Script ()
+senderChangeShape = do
+  wrongInstrument <- createPurchaseFixtureWith
+    (CompleteWithWrongChangeInstrument with changeAmount = 2.75)
+    "Amulet"
+    5.0
+    2.25
+  wrongInstrumentOptions <- purchaseOptions wrongInstrument
+  submitMustFail wrongInstrumentOptions (purchaseCommands wrongInstrument)
+  assertPurchaseUnchanged wrongInstrument
+
+  duplicateChange <- createPurchaseFixtureWith
+    (CompleteWithDuplicateChange with changeAmount = 1.5)
+    "Amulet"
+    5.0
+    2.25
+  duplicateChangeOptions <- purchaseOptions duplicateChange
+  submitMustFail duplicateChangeOptions (purchaseCommands duplicateChange)
+  assertPurchaseUnchanged duplicateChange
