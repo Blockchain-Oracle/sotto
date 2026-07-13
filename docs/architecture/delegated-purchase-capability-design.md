@@ -167,10 +167,15 @@ enter its serializable surface.
    revision state.
 5. Exercise the pinned Token Standard transfer interface inside the choice.
 6. Pattern-match the Token Standard result. Only
-   `TransferInstructionResult_Completed` with the expected receiver holdings may
-   create the reduced replacement capability and private purchase context.
-   `Pending` and `Failed` abort the parent choice so every nested effect rolls
-   back.
+   `TransferInstructionResult_Completed` from the pinned factory may create the
+   reduced replacement capability and private purchase context. The capability
+   computes total payer debit from payer-visible input and sender-change
+   holdings. A parent choice authorized by agent and payer cannot fetch a new
+   holding whose only stakeholders are provider and registry admin, so exact
+   receiver holding/amount validation belongs to the prepared-transaction
+   verifier in step 7. Adding provider or registry-admin authority to the root
+   would invalidate the agent-only boundary. `Pending` and `Failed` abort the
+   parent choice so every nested effect rolls back.
 7. Decode the prepared transaction and verify the root exercise, complete
    commitment, trusted factory/admin, transfer effects, recipient holdings,
    bounded total payer debit, package/interface identities, synchronizer, and
@@ -252,8 +257,10 @@ Any reused source requires its compatible license, attribution, and exact pin.
   transfer effects, wrong package/interface identifiers, or hash mismatch.
 - Bound prepared bytes, node count, tree depth, and decode/hash time; oversized,
   over-deep, and timeout cases must make zero signing calls.
-- Verify expected admin, receiver holdings and amount, maximum fee/total debit,
-  and absence of unapproved value effects.
+- Verify expected admin and maximum fee/total debit in the Daml path. Verify
+  receiver holdings and amount plus absence of unapproved value effects in the
+  prepared-transaction verifier, where the complete create effects are available
+  without adding root authorization.
 - Keep all deterministic quality, security, source, license, and Daml gates
   green.
 

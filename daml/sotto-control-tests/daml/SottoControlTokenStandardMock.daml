@@ -3,6 +3,7 @@ module SottoControlTokenStandardMock where
 import Splice.Api.Token.HoldingV1 qualified as Holding
 import Splice.Api.Token.MetadataV1 qualified as Metadata
 import Splice.Api.Token.TransferInstructionV1 qualified as Transfer
+import DA.Foldable (forA_)
 
 data FactoryMode
   = Complete
@@ -84,6 +85,8 @@ template MockTransferFactory
         CompleteWrongReceiver -> complete arg.transfer.sender arg.transfer.amount
         where
           complete receiver amount = do
+            forA_ arg.transfer.inputHoldingCids $ \holdingCid ->
+              exercise holdingCid Archive
             holdingCid <- create MockHolding with
               admin
               owner = receiver

@@ -1,0 +1,77 @@
+module SottoControlPurchaseCapabilityTests where
+
+import DA.Time (addRelTime, hours)
+import Daml.Script
+import Splice.Api.Token.HoldingV1 qualified as Holding
+import Splice.Api.Token.MetadataV1 qualified as Metadata
+import Splice.Api.Token.TransferInstructionV1 qualified as Transfer
+import Sotto.Control.PurchaseCapability
+import SottoControlTokenStandardMock
+
+agentOnlyCompletedPurchase : Script ()
+agentOnlyCompletedPurchase = do
+  payer <- allocateParty "sotto-capability-payer"
+  agent <- allocateParty "sotto-capability-agent"
+  provider <- allocateParty "sotto-capability-provider"
+  admin <- allocateParty "sotto-token-admin"
+  now <- getTime
+  let instrumentId = Holding.InstrumentId with admin; id = "Amulet"
+  factoryCid <- submit admin do
+    createCmd MockTransferFactory with admin; mode = Complete
+  holdingCid <- submit admin do
+    createCmd MockHolding with
+      admin
+      owner = payer
+      instrumentId
+      amount = 2.0
+  let factoryInterfaceCid =
+        toInterfaceContractId @Transfer.TransferFactory factoryCid
+  let holdingInterfaceCid = toInterfaceContractId @Holding.Holding holdingCid
+  capabilityCid <- submit payer do
+    createCmd BoundedPurchaseCapability with
+      payer
+      agent
+      resourceBindingVersion = "sotto-resource-v1"
+      allowedResourceHash = "sha256:resource"
+      allowedRecipient = provider
+      instrumentId
+      perCallLimit = 2.0
+      remainingAllowance = 5.0
+      maximumTotalDebit = 2.0
+      expiresAt = addRelTime now (hours 2)
+      revision = 0
+      paused = False
+      transferFactoryCid = factoryInterfaceCid
+      expectedAdmin = admin
+  Some factoryDisclosure <- queryDisclosure admin factoryCid
+  Some holdingDisclosure <- queryDisclosure payer holdingCid
+
+  result <- submit (actAs agent <> discloseMany [factoryDisclosure, holdingDisclosure]) do
+    exerciseCmd capabilityCid Purchase with
+      attemptId = "sha256:attempt"
+      purchaseCommitment = "sha256:purchase"
+      requestCommitment = "sha256:request"
+      challengeId = "sha256:challenge"
+      resourceHash = "sha256:resource"
+      recipient = provider
+      amount = 2.0
+      requestedAt = now
+      executeBefore = addRelTime now (hours 1)
+      inputHoldingCids = [holdingInterfaceCid]
+      extraArgs = Metadata.ExtraArgs with
+        context = Metadata.emptyChoiceContext
+        meta = Metadata.emptyMetadata
+      expectedRevision = 0
+
+  None <- queryContractId payer capabilityCid
+  None <- queryContractId payer holdingCid
+  Some reduced <- queryContractId payer result.capabilityCid
+  assert (reduced.remainingAllowance == 3.0)
+  assert (reduced.revision == 1)
+  Some context <- queryContractId provider result.contextCid
+  assert (context.purchaseCommitment == "sha256:purchase")
+  assert (context.totalDebit == 2.0)
+  [(_, receiverHolding)] <- query @MockHolding provider
+  assert (receiverHolding.owner == provider)
+  assert (receiverHolding.amount == 2.0)
+  pure ()

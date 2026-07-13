@@ -1,0 +1,144 @@
+module Sotto.Control.PurchaseCapability where
+
+import Splice.Api.Token.HoldingV1 qualified as Holding
+import Splice.Api.Token.MetadataV1 qualified as Metadata
+import Splice.Api.Token.TransferInstructionV1 qualified as Transfer
+
+data PurchaseResult = PurchaseResult with
+  capabilityCid : ContractId BoundedPurchaseCapability
+  contextCid : ContractId PurchaseContext
+  receiverHoldingCids : [ContractId Holding.Holding]
+  totalDebit : Decimal
+    deriving (Eq, Show)
+
+template PurchaseContext
+  with
+    payer : Party
+    agent : Party
+    provider : Party
+    attemptId : Text
+    purchaseCommitment : Text
+    requestCommitment : Text
+    challengeId : Text
+    resourceHash : Text
+    capabilityRevision : Int
+    amount : Decimal
+    totalDebit : Decimal
+  where
+    signatory payer
+    observer agent, provider
+    ensure
+      attemptId /= ""
+        && purchaseCommitment /= ""
+        && requestCommitment /= ""
+        && challengeId /= ""
+        && resourceHash /= ""
+        && capabilityRevision >= 0
+        && amount > 0.0
+        && totalDebit >= amount
+
+template BoundedPurchaseCapability
+  with
+    payer : Party
+    agent : Party
+    resourceBindingVersion : Text
+    allowedResourceHash : Text
+    allowedRecipient : Party
+    instrumentId : Holding.InstrumentId
+    perCallLimit : Decimal
+    remainingAllowance : Decimal
+    maximumTotalDebit : Decimal
+    expiresAt : Time
+    revision : Int
+    paused : Bool
+    transferFactoryCid : ContractId Transfer.TransferFactory
+    expectedAdmin : Party
+  where
+    signatory payer
+    observer agent
+    ensure
+      resourceBindingVersion == "sotto-resource-v1"
+        && allowedResourceHash /= ""
+        && perCallLimit > 0.0
+        && remainingAllowance >= 0.0
+        && maximumTotalDebit >= perCallLimit
+        && revision >= 0
+        && expectedAdmin == instrumentId.admin
+
+    choice Purchase : PurchaseResult
+      with
+        attemptId : Text
+        purchaseCommitment : Text
+        requestCommitment : Text
+        challengeId : Text
+        resourceHash : Text
+        recipient : Party
+        amount : Decimal
+        requestedAt : Time
+        executeBefore : Time
+        inputHoldingCids : [ContractId Holding.Holding]
+        extraArgs : Metadata.ExtraArgs
+        expectedRevision : Int
+      controller agent
+      do
+        now <- getTime
+        assertMsg "capability is paused" (not paused)
+        assertMsg "capability is expired" (now < expiresAt)
+        assertMsg "capability revision does not match" (expectedRevision == revision)
+        assertMsg "resource does not match" (resourceHash == allowedResourceHash)
+        assertMsg "recipient does not match" (recipient == allowedRecipient)
+        assertMsg "amount must be positive" (amount > 0.0)
+        assertMsg "amount exceeds per-call limit" (amount <= perCallLimit)
+        assertMsg "amount exceeds remaining allowance" (amount <= remainingAllowance)
+        inputViews <- mapA (\cid -> view <$> fetch cid) inputHoldingCids
+        transferResult <- exercise transferFactoryCid Transfer.TransferFactory_Transfer with
+          expectedAdmin
+          transfer = Transfer.Transfer with
+            sender = payer
+            receiver = recipient
+            amount
+            instrumentId
+            requestedAt
+            executeBefore
+            inputHoldingCids
+            meta = Metadata.emptyMetadata
+          extraArgs
+        case transferResult.output of
+          Transfer.TransferInstructionResult_Pending{} ->
+            abort "transfer must complete atomically"
+          Transfer.TransferInstructionResult_Failed ->
+            abort "transfer failed"
+          Transfer.TransferInstructionResult_Completed{receiverHoldingCids} -> do
+            changeViews <- mapA (\cid -> view <$> fetch cid) transferResult.senderChangeCids
+            let totalInput = sum (map (.amount) inputViews)
+            let totalChange = sum (map (.amount) changeViews)
+            let totalDebit = totalInput - totalChange
+            assertMsg "total debit exceeds capability" (totalDebit <= maximumTotalDebit)
+            contextCid <- create PurchaseContext with
+              payer
+              agent
+              provider = recipient
+              attemptId
+              purchaseCommitment
+              requestCommitment
+              challengeId
+              resourceHash
+              capabilityRevision = revision
+              amount
+              totalDebit
+            capabilityCid <- create this with
+              remainingAllowance = remainingAllowance - amount
+              revision = revision + 1
+            pure PurchaseResult with
+              capabilityCid
+              contextCid
+              receiverHoldingCids
+              totalDebit
+
+    choice Pause : ContractId BoundedPurchaseCapability
+      controller payer
+      do create this with paused = True; revision = revision + 1
+
+    choice Revoke : ()
+      controller payer
+      do pure ()
