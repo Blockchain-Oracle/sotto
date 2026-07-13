@@ -7,6 +7,8 @@ import DA.Foldable (forA_)
 
 data FactoryMode
   = Complete
+  | CompleteEmptyReceiver
+  | CompleteDuplicateReceiver
   | CompleteWrongAmount
   | CompleteWrongReceiver
   | CompleteWithChange with changeAmount : Decimal
@@ -84,33 +86,42 @@ template MockTransferFactory
               senderChangeCids = []
               meta = Metadata.emptyMetadata
           Complete -> complete arg.transfer.receiver arg.transfer.amount None
+          CompleteEmptyReceiver -> do
+            archiveInputs
+            completed [] []
+          CompleteDuplicateReceiver -> do
+            archiveInputs
+            receiverCid <- createHolding arg.transfer.receiver arg.transfer.amount
+            completed [receiverCid, receiverCid] []
           CompleteWrongAmount -> complete arg.transfer.receiver (arg.transfer.amount + 1.0) None
           CompleteWrongReceiver -> complete arg.transfer.sender arg.transfer.amount None
           CompleteWithChange{changeAmount} ->
             complete arg.transfer.receiver arg.transfer.amount (Some changeAmount)
         where
-          complete receiver amount changeAmount = do
-            forA_ arg.transfer.inputHoldingCids $ \holdingCid ->
-              exercise holdingCid Archive
+          archiveInputs = forA_ arg.transfer.inputHoldingCids $ \holdingCid ->
+            exercise holdingCid Archive
+          createHolding owner amount = do
             holdingCid <- create MockHolding with
               admin
-              owner = receiver
+              owner
               instrumentId = arg.transfer.instrumentId
               amount
+            pure (toInterfaceContractId @Holding.Holding holdingCid)
+          completed receiverHoldingCids senderChangeCids =
+            pure Transfer.TransferInstructionResult with
+              output = Transfer.TransferInstructionResult_Completed with
+                receiverHoldingCids
+              senderChangeCids
+              meta = Metadata.emptyMetadata
+          complete receiver amount changeAmount = do
+            archiveInputs
+            receiverCid <- createHolding receiver amount
             senderChangeCids <- case changeAmount of
               None -> pure []
               Some senderChangeAmount -> do
-                senderChangeCid <- create MockHolding with
-                  admin
-                  owner = arg.transfer.sender
-                  instrumentId = arg.transfer.instrumentId
-                  amount = senderChangeAmount
-                pure [toInterfaceContractId @Holding.Holding senderChangeCid]
-            pure Transfer.TransferInstructionResult with
-              output = Transfer.TransferInstructionResult_Completed with
-                receiverHoldingCids = [toInterfaceContractId @Holding.Holding holdingCid]
-              senderChangeCids
-              meta = Metadata.emptyMetadata
+                senderChangeCid <- createHolding arg.transfer.sender senderChangeAmount
+                pure [senderChangeCid]
+            completed [receiverCid] senderChangeCids
 
       transferFactory_publicFetchImpl _ arg = do
         assertMsg "unexpected transfer factory admin" (arg.expectedAdmin == admin)
