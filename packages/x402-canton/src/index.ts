@@ -14,5 +14,9 @@ export {
 } from "./purchase-capability-observation.js";
 export * from "./purchase-commitment.js";
 export * from "./purchase-evidence.js";
+export {
+  readBoundedPurchaseLedgerIntent,
+  type BoundedPurchaseLedgerIntent,
+} from "./purchase-ledger-intent.js";
 export * from "./request-binding.js";
 export * from "./signer-boundary.js";
