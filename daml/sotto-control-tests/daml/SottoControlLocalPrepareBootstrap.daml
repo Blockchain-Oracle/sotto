@@ -33,7 +33,7 @@ localPrepareBootstrap = do
   provider <- allocateParty "sotto-local-prepare-provider"
   admin <- allocateParty "sotto-local-prepare-admin"
   createdAt <- getTime
-  let requestedAt = createdAt
+  let requestedAt = addRelTime createdAt (seconds (-1))
   let executeBefore = addRelTime createdAt (hours 1)
   let expiresAt = addRelTime createdAt (hours 2)
   let instrumentId = "Amulet"
@@ -68,7 +68,6 @@ localPrepareBootstrap = do
       paused = False
       transferFactoryCid
       expectedAdmin = admin
-  passTime (seconds 1)
   pure LocalPrepareBootstrapOutput with
     payer
     agent
