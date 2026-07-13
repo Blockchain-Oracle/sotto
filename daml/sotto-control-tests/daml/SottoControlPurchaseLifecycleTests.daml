@@ -9,15 +9,33 @@ import SottoControlTokenStandardMock
 pauseAndRevokeLifecycle : Script ()
 pauseAndRevokeLifecycle = do
   fixture <- createPurchaseFixture Complete "Amulet"
+  Some original <- queryContractId fixture.payer fixture.capabilityCid
+
+  submitMustFail fixture.agent do createCmd original
+  submitMustFail fixture.provider do createCmd original
+  submitMustFail fixture.outsider do createCmd original
 
   submitMustFail fixture.agent do
+    exerciseCmd fixture.capabilityCid Pause
+  submitMustFail fixture.provider do
+    exerciseCmd fixture.capabilityCid Pause
+  submitMustFail fixture.outsider do
     exerciseCmd fixture.capabilityCid Pause
 
   pausedCid <- submit fixture.payer do
     exerciseCmd fixture.capabilityCid Pause
+  None <- queryContractId fixture.payer fixture.capabilityCid
   Some paused <- queryContractId fixture.payer pausedCid
   assert paused.paused
   assert (paused.revision == 1)
+  assert (paused.allowedResourceHash == original.allowedResourceHash)
+  assert (paused.allowedRecipient == original.allowedRecipient)
+  assert (paused.instrumentId == original.instrumentId)
+  assert (paused.perCallLimit == original.perCallLimit)
+  assert (paused.remainingAllowance == original.remainingAllowance)
+  assert (paused.maximumTotalDebit == original.maximumTotalDebit)
+  assert (paused.transferFactoryCid == original.transferFactoryCid)
+  assert (paused.expectedAdmin == original.expectedAdmin)
 
   options <- purchaseOptions fixture
   submitMustFail options $ purchaseAt
@@ -33,7 +51,19 @@ pauseAndRevokeLifecycle = do
 
   submitMustFail fixture.agent do
     exerciseCmd pausedCid Revoke
+  submitMustFail fixture.provider do
+    exerciseCmd pausedCid Revoke
+  submitMustFail fixture.outsider do
+    exerciseCmd pausedCid Revoke
   submit fixture.payer do
     exerciseCmd pausedCid Revoke
   None <- queryContractId fixture.payer pausedCid
+  submitMustFail options $ purchaseAt
+    fixture
+    pausedCid
+    fixture.holdingInterfaceCid
+    fixture.now
+    (addRelTime fixture.now (hours 1))
+    1
+  Some _ <- queryContractId fixture.payer fixture.holdingCid
   pure ()
