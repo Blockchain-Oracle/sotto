@@ -8,7 +8,10 @@ import {
 } from "../src/index.js";
 import { purchaseCommandInputs } from "./transfer-factory-observation.fixtures.js";
 
-const preparedHash = Buffer.alloc(32, 7).toString("base64");
+const preparedHash = Buffer.concat([
+  Buffer.from([0x12, 0x20]),
+  Buffer.alloc(32, 7),
+]).toString("base64");
 const preparedTransaction = Buffer.from("prepared-protobuf").toString("base64");
 
 function response(overrides: Record<string, unknown> = {}): Uint8Array {
@@ -70,7 +73,11 @@ describe("prepared Purchase observation envelope", () => {
     ],
     [
       "short hash",
-      { preparedTransactionHash: Buffer.alloc(31).toString("base64") },
+      { preparedTransactionHash: Buffer.alloc(33).toString("base64") },
+    ],
+    [
+      "wrong multihash prefix",
+      { preparedTransactionHash: Buffer.alloc(34, 7).toString("base64") },
     ],
     ["noncanonical hash", { preparedTransactionHash: `${preparedHash}\n` }],
     ["expanded transaction object", { preparedTransaction: {} }],

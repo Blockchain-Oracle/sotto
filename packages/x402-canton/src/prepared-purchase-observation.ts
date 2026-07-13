@@ -118,10 +118,11 @@ function parseResponse(bytes: Uint8Array): Readonly<{
   const hash = canonicalDisclosureBlob(
     root.preparedTransactionHash,
     "prepared transaction hash",
-    32,
+    34,
   );
-  if (hash.bytes !== 32) {
-    throw new Error("prepared transaction hash must contain 32 bytes");
+  const hashBytes = Buffer.from(hash.value, "base64");
+  if (hash.bytes !== 34 || hashBytes[0] !== 0x12 || hashBytes[1] !== 0x20) {
+    throw new Error("prepared transaction hash must be a SHA-256 multihash");
   }
   return Object.freeze({
     preparedTransaction: new Uint8Array(
