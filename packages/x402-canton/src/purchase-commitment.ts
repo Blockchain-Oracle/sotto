@@ -1,6 +1,7 @@
 import type { HttpRequestCommitment } from "./request-binding.js";
 import type { PaymentRequiredObservation } from "./payment-observation.js";
 import {
+  BOUNDED_PURCHASE_CAPABILITY_TEMPLATE,
   FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID,
   RESOURCE_BINDING_VERSION,
   TOKEN_TRANSFER_FACTORY_INTERFACE_ID,
@@ -10,13 +11,16 @@ import { sha256Hex } from "./purchase-commitment-primitives.js";
 
 export const PURCHASE_COMMITMENT_VERSION = "sotto-purchase-v2" as const;
 export {
+  BOUNDED_PURCHASE_CAPABILITY_TEMPLATE,
   FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID,
   RESOURCE_BINDING_VERSION,
   TOKEN_TRANSFER_FACTORY_INTERFACE_ID,
 };
 
 export type PurchaseCapabilitySnapshot = Readonly<{
+  agentParty: string;
   contractId: string;
+  templateId: string;
   expiresAt: string;
   maximumTotalDebitAtomic: string;
   perCallLimitAtomic: string;
@@ -138,7 +142,9 @@ export function commitBoundedPurchase(
       synchronizerId: requirement.extra.synchronizerId,
     },
     capability: {
+      agentParty: input.capability.agentParty,
       contractId: input.capability.contractId,
+      templateId: input.capability.templateId,
       revision: input.capability.revision,
       resourceBindingVersion: input.capability.resourceBindingVersion,
       resourceHash: input.capability.resourceHash,

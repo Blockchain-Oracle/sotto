@@ -50,10 +50,30 @@ export const validLedgerMutations: ReadonlyArray<
     ),
   ],
   [
+    "capability agent",
+    (input) => ({
+      ...input,
+      capability: {
+        ...input.capability,
+        agentParty: "sotto-agent-2::1220agent",
+      },
+    }),
+  ],
+  [
     "capability CID",
     (input) => ({
       ...input,
       capability: { ...input.capability, contractId: "00capability8" },
+    }),
+  ],
+  [
+    "capability template",
+    (input) => ({
+      ...input,
+      capability: {
+        ...input.capability,
+        templateId: `${"b".repeat(64)}:Sotto.Control.PurchaseCapability:BoundedPurchaseCapability`,
+      },
     }),
   ],
   [

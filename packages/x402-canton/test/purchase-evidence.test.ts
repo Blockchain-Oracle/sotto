@@ -54,8 +54,11 @@ describe("bounded purchase evidence", () => {
       "authorization-7",
       "00capability7",
       "00tokenfactory7",
+      "sotto-agent",
       "sotto-payer",
       "sotto-provider",
+      "Sotto.Control.PurchaseCapability",
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       "canonicalBytes",
       "challengeBytes",
     ]) {

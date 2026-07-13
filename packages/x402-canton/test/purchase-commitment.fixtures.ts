@@ -11,9 +11,11 @@ import {
 
 export const RESOURCE_URL =
   "https://provider.example/paid/weather?units=metric";
+export const AGENT = "sotto-agent::1220agent";
 export const PAYER = "sotto-payer::1220payer";
 export const PROVIDER = "sotto-provider::1220provider";
 export const DSO = "DSO::1220dso";
+export const CAPABILITY_TEMPLATE_ID = `${"a".repeat(64)}:Sotto.Control.PurchaseCapability:BoundedPurchaseCapability`;
 
 export type ChallengeFixture = {
   accepts: Array<{
@@ -98,7 +100,9 @@ export function createPurchaseInput(): BoundedPurchaseCommitmentInput {
     authorizationInstanceId: "authorization-7",
     binding,
     capability: {
+      agentParty: AGENT,
       contractId: "00capability7",
+      templateId: CAPABILITY_TEMPLATE_ID,
       revision: "7",
       resourceBindingVersion: "sotto-resource-v1",
       resourceHash: routeHash(RESOURCE_URL),

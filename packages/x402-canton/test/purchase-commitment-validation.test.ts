@@ -50,7 +50,9 @@ function validInput(): BoundedPurchaseCommitmentInput {
     authorizationInstanceId: "authorization-7",
     binding,
     capability: {
+      agentParty: "sotto-agent::1220agent",
       contractId: "00capability7",
+      templateId: `${"a".repeat(64)}:Sotto.Control.PurchaseCapability:BoundedPurchaseCapability`,
       revision: "7",
       resourceBindingVersion: "sotto-resource-v1",
       resourceHash:

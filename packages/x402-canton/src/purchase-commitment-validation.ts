@@ -22,6 +22,12 @@ export const RESOURCE_BINDING_VERSION = "sotto-resource-v1" as const;
 export const FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID =
   "23f47481dab6b1ec01339d6e14494d85bb2844c25f45b26fc5c9ef4cd4942d1f:Splice.ExternalPartyAmuletRules:ExternalPartyAmuletRules" as const;
 export const MAX_PURCHASE_WINDOW_SECONDS = 600;
+export const BOUNDED_PURCHASE_CAPABILITY_TEMPLATE =
+  "Sotto.Control.PurchaseCapability:BoundedPurchaseCapability" as const;
+
+const BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_PATTERN = new RegExp(
+  `^[a-f0-9]{64}:${BOUNDED_PURCHASE_CAPABILITY_TEMPLATE.replaceAll(".", "\\.")}$`,
+);
 
 export type ValidatedPurchaseInput = Readonly<{
   challengeId: `sha256:${string}`;
@@ -80,6 +86,7 @@ export function validateBoundedPurchaseInput(
   exactKeys(
     capability,
     [
+      "agentParty",
       "contractId",
       "expiresAt",
       "maximumTotalDebitAtomic",
@@ -89,11 +96,24 @@ export function validateBoundedPurchaseInput(
       "resourceBindingVersion",
       "resourceHash",
       "revision",
+      "templateId",
     ],
     "capability",
   );
+  identifier(input.capability.agentParty, "capability agentParty", 512);
   identifier(input.capability.contractId, "capability contractId");
+  identifier(input.capability.templateId, "capability templateId", 256);
+  if (
+    !BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_PATTERN.test(
+      input.capability.templateId,
+    )
+  ) {
+    throw new Error("capability templateId is not the approved template");
+  }
   identifier(input.capability.recipient, "capability recipient");
+  if (input.capability.agentParty === input.payerParty) {
+    throw new Error("capability agent must differ from payer");
+  }
   if (
     !REVISION_PATTERN.test(input.capability.revision) ||
     BigInt(input.capability.revision) > 9_223_372_036_854_775_807n

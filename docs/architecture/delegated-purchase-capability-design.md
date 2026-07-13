@@ -94,8 +94,8 @@ Define one versioned `sotto-purchase-v2` commitment over:
   authoritative headers, and exact body digest;
 - challenge identity and observed time;
 - payer, recipient, instrument, amount, synchronizer, and execution expiry;
-- capability contract ID, revision, allowed resource, per-call limit, and
-  remaining allowance;
+- capability contract ID, full approved template ID, revision, committed agent
+  Party, allowed resource, per-call limit, and remaining allowance;
 - trusted Token Standard factory/admin identity and maximum total payer debit;
 - authorization-instance identifier and payment-attempt identifier.
 
@@ -115,9 +115,9 @@ members:
 3. `challenge` with x402 version, challenge ID, observed time, execution expiry,
    network, scheme, transfer method, payer, recipient, amount, asset, fee payer,
    instrument, and synchronizer;
-4. `capability` with contract ID, revision, resource-binding version, resource
-   hash, recipient, per-call limit, remaining allowance, maximum total debit,
-   and expiry;
+4. `capability` with agent Party, contract ID, full template ID, revision,
+   resource-binding version, resource hash, recipient, per-call limit, remaining
+   allowance, maximum total debit, and expiry;
 5. `tokenFactory` with interface ID, factory contract ID, implementation
    template ID, and trusted expected admin;
 6. authorization-instance ID and attempt ID.
