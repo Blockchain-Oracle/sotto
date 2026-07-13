@@ -18,6 +18,7 @@ type CanonicalRequest = {
   url: string;
   version: string;
 };
+type CanonicalMutation = (value: CanonicalRequest) => void;
 
 function selfHash(canonical: string): HttpRequestCommitment {
   const canonicalBytes = new TextEncoder().encode(canonical);
@@ -46,6 +47,35 @@ function forgeBinding(
   });
 }
 
+const forgedCases: ReadonlyArray<readonly [string, CanonicalMutation, string]> =
+  [
+    ["lowercase method", (value) => void (value.method = "get"), "method"],
+    [
+      "non-HTTPS URL",
+      (value) => void (value.url = "http://provider.example/paid/weather"),
+      "HTTPS",
+    ],
+    [
+      "duplicate header",
+      (value) => void value.headers.push({ ...value.headers[0]! }),
+      "headers",
+    ],
+    [
+      "forbidden header",
+      (value) =>
+        void value.headers.push({
+          name: "authorization",
+          value: "Bearer hidden",
+        }),
+      "headers",
+    ],
+    [
+      "header injection",
+      (value) => void (value.headers[0]!.value = "safe\r\ninjected: yes"),
+      "headers",
+    ],
+  ];
+
 describe("bounded purchase request-binding validation", () => {
   it("refuses to canonicalize authoritative header injection", () => {
     expect(() =>
@@ -57,36 +87,7 @@ describe("bounded purchase request-binding validation", () => {
     ).toThrow("header value");
   });
 
-  it.each([
-    [
-      "lowercase method",
-      (value: CanonicalRequest) => (value.method = "get"),
-      "method",
-    ],
-    [
-      "non-HTTPS URL",
-      (value: CanonicalRequest) =>
-        (value.url = "http://provider.example/paid/weather"),
-      "HTTPS",
-    ],
-    [
-      "duplicate header",
-      (value: CanonicalRequest) => value.headers.push({ ...value.headers[0]! }),
-      "headers",
-    ],
-    [
-      "forbidden header",
-      (value: CanonicalRequest) =>
-        value.headers.push({ name: "authorization", value: "Bearer hidden" }),
-      "headers",
-    ],
-    [
-      "header injection",
-      (value: CanonicalRequest) =>
-        (value.headers[0]!.value = "safe\r\ninjected: yes"),
-      "headers",
-    ],
-  ] as const)("rejects a self-hashed %s", (_name, mutate, message) => {
+  it.each(forgedCases)("rejects a self-hashed %s", (_name, mutate, message) => {
     expect(() => commitBoundedPurchase(forgeBinding(mutate))).toThrow(message);
   });
 
