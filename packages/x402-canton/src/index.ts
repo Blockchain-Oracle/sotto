@@ -17,6 +17,15 @@ export {
   type PurchaseCapabilityAcsReader,
   type PurchaseCapabilityObservation,
 } from "./purchase-capability-observation.js";
+export {
+  createPreparedPurchaseObserver,
+  MAX_PREPARE_RESPONSE_BYTES,
+  PREPARE_SUBMISSION_PATH,
+  PREPARE_SUBMISSION_TIMEOUT_MS,
+  type PreparedPurchaseObservation,
+  type PreparedPurchaseReader,
+  type PreparedPurchaseTransportRequest,
+} from "./prepared-purchase-observation.js";
 export * from "./purchase-commitment.js";
 export * from "./purchase-evidence.js";
 export {

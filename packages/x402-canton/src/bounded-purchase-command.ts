@@ -19,6 +19,12 @@ import type {
   BoundedPurchasePrepareRequest,
 } from "./bounded-purchase-command-types.js";
 
+type PrepareRequestState = Readonly<{
+  intent: BoundedPurchaseLedgerIntent;
+}> & { claimed: boolean };
+
+const prepareRequestStates = new WeakMap<object, PrepareRequestState>();
+
 function purchaseChoiceArgument(
   intent: BoundedPurchaseLedgerIntent,
   holdingIds: readonly string[],
@@ -101,5 +107,29 @@ export function buildBoundedPurchasePrepareRequest(
     holdingObservation,
   );
   claimPurchaseHoldingObservation(holdingObservation, intent);
+  prepareRequestStates.set(request, { intent, claimed: false });
   return request;
+}
+
+/** @internal Prepare transport only; a failed prepare requires reacquisition. */
+export function claimBoundedPurchasePrepareRequest(
+  candidate: unknown,
+): Readonly<{
+  intent: BoundedPurchaseLedgerIntent;
+  request: BoundedPurchasePrepareRequest;
+}> {
+  if (typeof candidate !== "object" || candidate === null) {
+    throw new Error("bounded prepare request is not authenticated");
+  }
+  const state = prepareRequestStates.get(candidate);
+  if (state === undefined) {
+    throw new Error("bounded prepare request is not authenticated");
+  }
+  if (state.claimed)
+    throw new Error("bounded prepare request is already claimed");
+  state.claimed = true;
+  return Object.freeze({
+    intent: state.intent,
+    request: candidate as BoundedPurchasePrepareRequest,
+  });
 }
