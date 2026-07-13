@@ -18,6 +18,10 @@ export {
   type PurchaseCapabilityObservation,
 } from "./purchase-capability-observation.js";
 export {
+  APPROVED_BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_ID,
+  SOTTO_CONTROL_PACKAGE_ID,
+} from "./purchase-capability-event.js";
+export {
   createPreparedPurchaseObserver,
   MAX_PREPARE_RESPONSE_BYTES,
   MAX_PREPARED_TRANSACTION_BYTES,
