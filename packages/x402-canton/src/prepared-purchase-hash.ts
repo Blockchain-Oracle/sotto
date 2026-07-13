@@ -1,0 +1,75 @@
+import { timingSafeEqual } from "node:crypto";
+import {
+  claimPreparedPurchaseObservation,
+  type PreparedPurchaseObservation,
+  type PreparedPurchaseState,
+} from "./prepared-purchase-observation.js";
+
+export type PreparedPurchaseHashDependencies = Readonly<{
+  recomputeOfficialHash: (
+    preparedTransaction: Uint8Array,
+  ) => Promise<Uint8Array>;
+  recomputePrecheckHash?: (
+    preparedTransaction: Uint8Array,
+  ) => Promise<Uint8Array>;
+}>;
+
+declare const hashVerifiedPreparedPurchaseBrand: unique symbol;
+export type HashVerifiedPreparedPurchase = Readonly<{
+  observationId: `sha256:${string}`;
+  preparedTransactionHash: string;
+  verifiedAt: string;
+  readonly [hashVerifiedPreparedPurchaseBrand]: true;
+}>;
+
+const states = new WeakMap<object, PreparedPurchaseState>();
+
+function digest(value: unknown, label: string): Uint8Array {
+  if (!(value instanceof Uint8Array) || value.byteLength !== 32) {
+    throw new Error(`${label} must return exactly 32 bytes`);
+  }
+  return value;
+}
+
+function requireMatch(
+  expected: Uint8Array,
+  actual: Uint8Array,
+  label: string,
+): void {
+  if (!timingSafeEqual(Buffer.from(expected), Buffer.from(actual))) {
+    throw new Error(`${label} does not match the participant digest`);
+  }
+}
+
+export async function verifyPreparedPurchaseHash(
+  observation: PreparedPurchaseObservation,
+  dependencies: PreparedPurchaseHashDependencies,
+): Promise<HashVerifiedPreparedPurchase> {
+  const state = claimPreparedPurchaseObservation(observation);
+  const participant = new Uint8Array(
+    Buffer.from(state.preparedTransactionHash, "base64"),
+  );
+  if (dependencies.recomputePrecheckHash !== undefined) {
+    const precheck = digest(
+      await dependencies.recomputePrecheckHash(
+        new Uint8Array(state.preparedTransaction),
+      ),
+      "prepared hash precheck",
+    );
+    requireMatch(participant, precheck, "prepared hash precheck");
+  }
+  const official = digest(
+    await dependencies.recomputeOfficialHash(
+      new Uint8Array(state.preparedTransaction),
+    ),
+    "official prepared hash recomputation",
+  );
+  requireMatch(participant, official, "official prepared hash recomputation");
+  const result = Object.freeze({
+    observationId: observation.observationId,
+    preparedTransactionHash: state.preparedTransactionHash,
+    verifiedAt: new Date().toISOString(),
+  }) as HashVerifiedPreparedPurchase;
+  states.set(result, state);
+  return result;
+}

@@ -39,7 +39,7 @@ export type PreparedPurchaseObservation = Readonly<{
   readonly [preparedPurchaseObservationBrand]: true;
 }>;
 
-type PreparedPurchaseState = Readonly<{
+export type PreparedPurchaseState = Readonly<{
   capturedAt: number;
   intent: BoundedPurchaseLedgerIntent;
   prepareRequest: BoundedPurchasePrepareRequest;
@@ -48,6 +48,24 @@ type PreparedPurchaseState = Readonly<{
 }> & { claimed: boolean };
 
 const states = new WeakMap<object, PreparedPurchaseState>();
+
+/** @internal Hash/effects gates only; a failed gate requires a new prepare. */
+export function claimPreparedPurchaseObservation(
+  candidate: unknown,
+): PreparedPurchaseState {
+  if (typeof candidate !== "object" || candidate === null) {
+    throw new Error("prepared Purchase observation is not authenticated");
+  }
+  const state = states.get(candidate);
+  if (state === undefined) {
+    throw new Error("prepared Purchase observation is not authenticated");
+  }
+  if (state.claimed) {
+    throw new Error("prepared Purchase observation is already claimed");
+  }
+  state.claimed = true;
+  return state;
+}
 
 function parseResponse(bytes: Uint8Array): Readonly<{
   preparedTransaction: Uint8Array;

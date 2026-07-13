@@ -27,6 +27,11 @@ export {
   type PreparedPurchaseReader,
   type PreparedPurchaseTransportRequest,
 } from "./prepared-purchase-observation.js";
+export {
+  verifyPreparedPurchaseHash,
+  type HashVerifiedPreparedPurchase,
+  type PreparedPurchaseHashDependencies,
+} from "./prepared-purchase-hash.js";
 export * from "./purchase-commitment.js";
 export * from "./purchase-evidence.js";
 export {
