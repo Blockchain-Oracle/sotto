@@ -130,7 +130,7 @@ describe("Five North capability authority", () => {
     ).toThrow("already claimed");
   });
 
-  it("queries only the pinned factory implementation for the DSO", () => {
+  it("queries the factory by package name and validates its pinned implementation", () => {
     expect(transferFactoryContractsBody(dso, 42)).toEqual({
       filter: {
         filtersByParty: {
@@ -141,7 +141,8 @@ describe("Five North capability authority", () => {
                   TemplateFilter: {
                     value: {
                       includeCreatedEventBlob: false,
-                      templateId: FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID,
+                      templateId:
+                        "#splice-amulet:Splice.ExternalPartyAmuletRules:ExternalPartyAmuletRules",
                     },
                   },
                 },

@@ -1,6 +1,5 @@
 import {
   BOUNDED_PURCHASE_CAPABILITY_QUERY_ID,
-  FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID,
   HOLDING_INTERFACE_QUERY_ID,
 } from "@sotto/x402-canton";
 
@@ -10,6 +9,8 @@ export const TRANSFER_PREAPPROVAL_PROPOSAL_QUERY_ID =
   "#splice-wallet:Splice.Wallet.TransferPreapproval:TransferPreapprovalProposal" as const;
 export const TRANSFER_PREAPPROVAL_QUERY_ID =
   "#splice-amulet:Splice.AmuletRules:TransferPreapproval" as const;
+const TRANSFER_FACTORY_QUERY_ID =
+  "#splice-amulet:Splice.ExternalPartyAmuletRules:ExternalPartyAmuletRules" as const;
 
 export function boundedPrepareBody(value: unknown, label: string): string {
   let body: string;
@@ -117,7 +118,7 @@ export function transferFactoryContractsBody(
       {
         TemplateFilter: {
           value: {
-            templateId: FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID,
+            templateId: TRANSFER_FACTORY_QUERY_ID,
             includeCreatedEventBlob: false,
           },
         },
