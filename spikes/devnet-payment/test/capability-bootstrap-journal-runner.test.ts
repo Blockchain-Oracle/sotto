@@ -84,12 +84,25 @@ describe("journaled capability bootstrap", () => {
       });
 
     const outcomes = await Promise.allSettled([run(), run()]);
-    expect(
-      outcomes.filter(({ status }) => status === "fulfilled"),
-    ).toHaveLength(1);
-    expect(outcomes.filter(({ status }) => status === "rejected")).toHaveLength(
-      1,
+    const fulfilled = outcomes.filter(
+      (outcome) => outcome.status === "fulfilled",
     );
+    const rejected = outcomes.filter(
+      (outcome) => outcome.status === "rejected",
+    );
+    expect(fulfilled.length).toBeGreaterThanOrEqual(1);
+    expect(fulfilled.map(({ value }) => value)).toEqual(
+      fulfilled.map(() => ({
+        commandId: setup.request.commandId,
+        contractId: setup.contractId,
+        offset: 42,
+        outcome: "submitted",
+        updateId: `1220${"b".repeat(64)}`,
+      })),
+    );
+    for (const outcome of rejected) {
+      expect(String(outcome.reason)).toContain("lease");
+    }
     expect(submit).toHaveBeenCalledTimes(1);
   });
 
@@ -114,6 +127,7 @@ describe("journaled capability bootstrap", () => {
     await expect(
       recoverJournaledCapabilityBootstrap({
         readActiveCapabilities: vi.fn(async () => [setup.active]),
+        sourceCommit,
         workspaceRoot,
       }),
     ).resolves.toMatchObject({
@@ -121,6 +135,59 @@ describe("journaled capability bootstrap", () => {
       outcome: "recovered",
     });
     expect(submit).toHaveBeenCalledTimes(1);
+  });
+
+  it("resumes an identical intent-only start with one submission", async () => {
+    const setup = fixture();
+    await initializeCapabilityBootstrapJournal({
+      request: setup.request,
+      sourceCommit,
+      workspaceRoot,
+    });
+    vi.setSystemTime(now + 60_000);
+    const rebuiltRequest = buildBoundedCapabilityBootstrap(input);
+    expect(rebuiltRequest).toEqual(setup.request);
+    const submit = vi.fn(async () => setup.response);
+
+    await expect(
+      startJournaledCapabilityBootstrap({
+        readActiveCapabilities: vi
+          .fn()
+          .mockResolvedValueOnce([])
+          .mockResolvedValueOnce([setup.active]),
+        request: rebuiltRequest,
+        sourceCommit,
+        submit,
+        workspaceRoot,
+      }),
+    ).resolves.toMatchObject({
+      contractId: setup.contractId,
+      outcome: "submitted",
+    });
+    expect(submit).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejects a different source for an existing intent before ledger access", async () => {
+    const setup = fixture();
+    await initializeCapabilityBootstrapJournal({
+      request: setup.request,
+      sourceCommit,
+      workspaceRoot,
+    });
+    const readActiveCapabilities = vi.fn();
+    const submit = vi.fn();
+
+    await expect(
+      startJournaledCapabilityBootstrap({
+        readActiveCapabilities,
+        request: setup.request,
+        sourceCommit: "b".repeat(40),
+        submit,
+        workspaceRoot,
+      }),
+    ).rejects.toThrow("intent does not match");
+    expect(readActiveCapabilities).not.toHaveBeenCalled();
+    expect(submit).not.toHaveBeenCalled();
   });
 
   it("returns one durable terminal result across repeat recovery", async () => {
@@ -139,6 +206,7 @@ describe("journaled capability bootstrap", () => {
     const recover = () =>
       recoverJournaledCapabilityBootstrap({
         readActiveCapabilities: vi.fn(async () => [setup.active]),
+        sourceCommit,
         workspaceRoot,
       });
 
@@ -159,7 +227,7 @@ describe("journaled capability bootstrap", () => {
     expect(submit).toHaveBeenCalledTimes(1);
   });
 
-  it("fails closed when durable resolution no longer matches ACS", async () => {
+  it("returns durable resolution after the original capability leaves ACS", async () => {
     const setup = fixture();
     const submit = vi.fn(async () => setup.response);
     await startJournaledCapabilityBootstrap({
@@ -173,12 +241,21 @@ describe("journaled capability bootstrap", () => {
       workspaceRoot,
     });
 
+    const readActiveCapabilities = vi.fn(async () => []);
     await expect(
       recoverJournaledCapabilityBootstrap({
-        readActiveCapabilities: vi.fn(async () => []),
+        readActiveCapabilities,
+        sourceCommit,
         workspaceRoot,
       }),
-    ).rejects.toThrow("outcome is unresolved");
+    ).resolves.toEqual({
+      commandId: setup.request.commandId,
+      contractId: setup.contractId,
+      offset: 42,
+      outcome: "submitted",
+      updateId: `1220${"b".repeat(64)}`,
+    });
+    expect(readActiveCapabilities).not.toHaveBeenCalled();
     expect(submit).toHaveBeenCalledTimes(1);
   });
 
@@ -194,6 +271,7 @@ describe("journaled capability bootstrap", () => {
     await expect(
       recoverJournaledCapabilityBootstrap({
         readActiveCapabilities,
+        sourceCommit,
         workspaceRoot,
       }),
     ).rejects.toThrow("submission was not started");

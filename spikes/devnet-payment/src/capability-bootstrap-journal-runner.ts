@@ -1,4 +1,6 @@
+import { isDeepStrictEqual } from "node:util";
 import {
+  exportBoundedCapabilityBootstrapIntent,
   restoreBoundedCapabilityBootstrapIntent,
   type BoundedCapabilityBootstrapRequest,
 } from "@sotto/x402-canton";
@@ -20,6 +22,63 @@ type LiveBootstrapDependencies = Readonly<{
   workspaceRoot: string;
 }>;
 
+function isAlreadyExists(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "EEXIST"
+  );
+}
+
+async function initializeOrAdopt(input: {
+  request: BoundedCapabilityBootstrapRequest;
+  sourceCommit: string;
+  workspaceRoot: string;
+}) {
+  try {
+    return await initializeCapabilityBootstrapJournal(input);
+  } catch (error) {
+    if (!isAlreadyExists(error)) throw error;
+    const state = await loadCapabilityBootstrapJournalState(
+      input.workspaceRoot,
+    );
+    const candidate = exportBoundedCapabilityBootstrapIntent(
+      input.request,
+      input.sourceCommit,
+    );
+    if (
+      candidate.sourceCommit !== state.intent.sourceCommit ||
+      !isDeepStrictEqual(candidate.request, state.intent.request)
+    ) {
+      throw new Error("existing bootstrap journal intent does not match", {
+        cause: error,
+      });
+    }
+    return Object.freeze({ operationId: state.operationId });
+  }
+}
+
+async function recoverAndPersist(input: {
+  assertOwned: () => Promise<void>;
+  readActiveCapabilities: () => Promise<unknown>;
+  state: Awaited<ReturnType<typeof loadCapabilityBootstrapJournalState>>;
+  workspaceRoot: string;
+}) {
+  if (input.state.resolution !== null) return input.state.resolution;
+  const result = await recoverBoundedCapabilityBootstrap({
+    intent: input.state.intent,
+    readActiveCapabilities: input.readActiveCapabilities,
+  });
+  await input.assertOwned();
+  await markCapabilityBootstrapResolved({
+    ...result,
+    operationId: input.state.operationId,
+    workspaceRoot: input.workspaceRoot,
+  });
+  return result;
+}
+
 export async function startJournaledCapabilityBootstrap(
   input: LiveBootstrapDependencies &
     Readonly<{
@@ -28,7 +87,7 @@ export async function startJournaledCapabilityBootstrap(
       submit: (request: BoundedCapabilityBootstrapRequest) => Promise<unknown>;
     }>,
 ) {
-  const initialized = await initializeCapabilityBootstrapJournal({
+  const initialized = await initializeOrAdopt({
     request: input.request,
     sourceCommit: input.sourceCommit,
     workspaceRoot: input.workspaceRoot,
@@ -37,8 +96,23 @@ export async function startJournaledCapabilityBootstrap(
     operationId: initialized.operationId,
     workspaceRoot: input.workspaceRoot,
     action: async (assertOwned) => {
+      const state = await loadCapabilityBootstrapJournalState(
+        input.workspaceRoot,
+      );
+      if (state.operationId !== initialized.operationId) {
+        throw new Error("bootstrap durable operation changed");
+      }
+      if (state.submissionStarted) {
+        return recoverAndPersist({
+          assertOwned,
+          readActiveCapabilities: input.readActiveCapabilities,
+          state,
+          workspaceRoot: input.workspaceRoot,
+        });
+      }
+      const request = restoreBoundedCapabilityBootstrapIntent(state.intent);
       const result = await runBoundedCapabilityBootstrap({
-        persistIntent: async (request) => {
+        persistIntent: async (candidate) => {
           const loaded = await loadCapabilityBootstrapJournalIntent(
             input.workspaceRoot,
           );
@@ -47,7 +121,7 @@ export async function startJournaledCapabilityBootstrap(
           );
           if (
             loaded.operationId !== initialized.operationId ||
-            persisted.commandId !== request.commandId
+            !isDeepStrictEqual(persisted, candidate)
           ) {
             throw new Error("bootstrap durable intent does not match request");
           }
@@ -60,10 +134,10 @@ export async function startJournaledCapabilityBootstrap(
           });
         },
         readActiveCapabilities: input.readActiveCapabilities,
-        request: input.request,
-        submit: async (request) => {
+        request,
+        submit: async (candidate) => {
           await assertOwned();
-          return input.submit(request);
+          return input.submit(candidate);
         },
       });
       await markCapabilityBootstrapResolved({
@@ -77,13 +151,17 @@ export async function startJournaledCapabilityBootstrap(
 }
 
 export async function recoverJournaledCapabilityBootstrap(
-  input: LiveBootstrapDependencies,
+  input: LiveBootstrapDependencies & Readonly<{ sourceCommit: string }>,
 ) {
   const state = await loadCapabilityBootstrapJournalState(input.workspaceRoot);
+  if (state.resolution !== null) return state.resolution;
   if (!state.submissionStarted) {
     throw new Error(
       "bootstrap submission was not started; recovery cannot submit",
     );
+  }
+  if (state.intent.sourceCommit !== input.sourceCommit) {
+    throw new Error("bootstrap recovery source commit does not match");
   }
   return withCapabilityBootstrapLease({
     operationId: state.operationId,
@@ -93,25 +171,21 @@ export async function recoverJournaledCapabilityBootstrap(
       const current = await loadCapabilityBootstrapJournalState(
         input.workspaceRoot,
       );
-      const result = await recoverBoundedCapabilityBootstrap({
-        intent: current.intent,
-        readActiveCapabilities: input.readActiveCapabilities,
-      });
-      if (current.resolution !== null) {
-        if (
-          current.resolution.commandId !== result.commandId ||
-          current.resolution.contractId !== result.contractId
-        ) {
-          throw new Error("bootstrap terminal result does not match ACS");
-        }
-        return current.resolution;
+      if (current.operationId !== state.operationId) {
+        throw new Error("bootstrap durable operation changed");
       }
-      await markCapabilityBootstrapResolved({
-        ...result,
-        operationId: current.operationId,
+      if (
+        current.resolution === null &&
+        current.intent.sourceCommit !== input.sourceCommit
+      ) {
+        throw new Error("bootstrap recovery source commit changed");
+      }
+      return recoverAndPersist({
+        assertOwned,
+        readActiveCapabilities: input.readActiveCapabilities,
+        state: current,
         workspaceRoot: input.workspaceRoot,
       });
-      return result;
     },
   });
 }
