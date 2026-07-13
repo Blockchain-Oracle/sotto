@@ -1,0 +1,43 @@
+module SottoControlPurchaseCardinalityTests where
+
+import DA.Time (addRelTime, hours)
+import Daml.Script
+import SottoControlPurchaseTestSupport
+import SottoControlTokenStandardMock
+
+holdingCardinalityAndProvenance : Script ()
+holdingCardinalityAndProvenance = do
+  tooManyInputs <- createPurchaseFixtureWith Complete "Amulet" 2.0 2.25
+  extraInputs <- createAdditionalInputs tooManyInputs 16 0.01
+  let inputTemplateCids =
+        tooManyInputs.holdingCid :: map fst extraInputs
+  let inputInterfaceCids =
+        tooManyInputs.holdingInterfaceCid :: map snd extraInputs
+  inputOptions <- purchaseOptionsForHoldings tooManyInputs inputTemplateCids
+  submitMustFail inputOptions $ purchaseWithInputs
+    tooManyInputs
+    tooManyInputs.capabilityCid
+    inputInterfaceCids
+    tooManyInputs.now
+    (addRelTime tooManyInputs.now (hours 1))
+    0
+
+  tooManyReceivers <- createPurchaseFixture
+    (CompleteWithReceiverCount with receiverCount = 17) "Amulet"
+  receiverOptions <- purchaseOptions tooManyReceivers
+  submitMustFail receiverOptions (purchaseCommands tooManyReceivers)
+  assertPurchaseUnchanged tooManyReceivers
+
+  tooManyChanges <- createPurchaseFixtureWith
+    (CompleteWithChangeCount with changeCount = 17; changeAmount = 0.01)
+    "Amulet"
+    2.17
+    2.25
+  changeOptions <- purchaseOptions tooManyChanges
+  submitMustFail changeOptions (purchaseCommands tooManyChanges)
+  assertPurchaseUnchanged tooManyChanges
+
+  inputAsReceiver <- createPurchaseFixture CompleteWithInputAsReceiver "Amulet"
+  inputAsReceiverOptions <- purchaseOptions inputAsReceiver
+  submitMustFail inputAsReceiverOptions (purchaseCommands inputAsReceiver)
+  assertPurchaseUnchanged inputAsReceiver

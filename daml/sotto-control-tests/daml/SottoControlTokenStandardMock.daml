@@ -16,6 +16,9 @@ data FactoryMode
   | CompleteWithWrongChangeOwner with changeAmount : Decimal
   | CompleteWithDuplicateChange with changeAmount : Decimal
   | CompleteWithOverlappingChange
+  | CompleteWithInputAsReceiver
+  | CompleteWithReceiverCount with receiverCount : Int
+  | CompleteWithChangeCount with changeCount : Int; changeAmount : Decimal
   | Pending
   | Failed
   deriving (Eq, Show)
@@ -37,6 +40,19 @@ template MockHolding
         amount
         lock = None
         meta = Metadata.emptyMetadata
+
+createMockHoldings
+  : Party
+  -> Party
+  -> Holding.InstrumentId
+  -> Decimal
+  -> Int
+  -> Update [ContractId Holding.Holding]
+createMockHoldings admin owner instrumentId amount count =
+  if count <= 0 then pure [] else do
+    holdingCid <- create MockHolding with admin; owner; instrumentId; amount
+    rest <- createMockHoldings admin owner instrumentId amount (count - 1)
+    pure (toInterfaceContractId @Holding.Holding holdingCid :: rest)
 
 failedResult : Transfer.TransferInstructionResult
 failedResult = Transfer.TransferInstructionResult with
@@ -121,6 +137,20 @@ template MockTransferFactory
             archiveInputs
             receiverCid <- createHolding arg.transfer.receiver arg.transfer.amount
             completed [receiverCid] [receiverCid]
+          CompleteWithInputAsReceiver -> do
+            archiveInputs
+            completed arg.transfer.inputHoldingCids []
+          CompleteWithReceiverCount{receiverCount} -> do
+            archiveInputs
+            receiverCids <- createMockHoldings admin arg.transfer.receiver
+              arg.transfer.instrumentId arg.transfer.amount receiverCount
+            completed receiverCids []
+          CompleteWithChangeCount{changeCount; changeAmount} -> do
+            archiveInputs
+            receiverCid <- createHolding arg.transfer.receiver arg.transfer.amount
+            changeCids <- createMockHoldings admin arg.transfer.sender
+              arg.transfer.instrumentId changeAmount changeCount
+            completed [receiverCid] changeCids
         where
           archiveInputs = forA_ arg.transfer.inputHoldingCids $ \holdingCid ->
             exercise holdingCid Archive

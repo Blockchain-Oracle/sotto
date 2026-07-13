@@ -9,6 +9,9 @@ allUnique = \case
   [] -> True
   value :: rest -> notElem value rest && allUnique rest
 
+maximumHoldingCount : Int
+maximumHoldingCount = 16
+
 data PurchaseResult = PurchaseResult with
   capabilityCid : ContractId BoundedPurchaseCapability
   contextCid : ContractId PurchaseContext
@@ -99,6 +102,8 @@ template BoundedPurchaseCapability
         assertMsg "amount exceeds per-call limit" (amount <= perCallLimit)
         assertMsg "amount exceeds remaining allowance" (amount <= remainingAllowance)
         assertMsg "input holdings are empty" (not (null inputHoldingCids))
+        assertMsg "too many input holdings"
+          (length inputHoldingCids <= maximumHoldingCount)
         assertMsg "input holdings contain duplicates" (allUnique inputHoldingCids)
         inputViews <- mapA (\cid -> view <$> fetch cid) inputHoldingCids
         assertMsg "input holding owner does not match"
@@ -126,8 +131,14 @@ template BoundedPurchaseCapability
             abort "transfer failed"
           Transfer.TransferInstructionResult_Completed{receiverHoldingCids} -> do
             assertMsg "receiver holdings are empty" (not (null receiverHoldingCids))
+            assertMsg "too many receiver holdings"
+              (length receiverHoldingCids <= maximumHoldingCount)
             assertMsg "receiver holdings contain duplicates"
               (allUnique receiverHoldingCids)
+            assertMsg "receiver holdings overlap inputs"
+              (all (\cid -> notElem cid inputHoldingCids) receiverHoldingCids)
+            assertMsg "too many sender change holdings"
+              (length transferResult.senderChangeCids <= maximumHoldingCount)
             assertMsg "sender change contains duplicates"
               (allUnique transferResult.senderChangeCids)
             assertMsg "receiver and sender change overlap"
