@@ -1,0 +1,100 @@
+module SottoControlTokenStandardMock where
+
+import Splice.Api.Token.HoldingV1 qualified as Holding
+import Splice.Api.Token.MetadataV1 qualified as Metadata
+import Splice.Api.Token.TransferInstructionV1 qualified as Transfer
+
+data FactoryMode
+  = Complete
+  | CompleteWrongAmount
+  | CompleteWrongReceiver
+  | Pending
+  | Failed
+  deriving (Eq, Show)
+
+template MockHolding
+  with
+    admin : Party
+    owner : Party
+    instrumentId : Holding.InstrumentId
+    amount : Decimal
+  where
+    signatory admin
+    observer owner
+
+    interface instance Holding.Holding for MockHolding where
+      view = Holding.HoldingView with
+        owner
+        instrumentId
+        amount
+        lock = None
+        meta = Metadata.emptyMetadata
+
+failedResult : Transfer.TransferInstructionResult
+failedResult = Transfer.TransferInstructionResult with
+  output = Transfer.TransferInstructionResult_Failed
+  senderChangeCids = []
+  meta = Metadata.emptyMetadata
+
+template MockTransferInstruction
+  with
+    admin : Party
+    transfer : Transfer.Transfer
+  where
+    signatory admin
+    observer transfer.sender, transfer.receiver
+
+    interface instance Transfer.TransferInstruction for MockTransferInstruction where
+      view = Transfer.TransferInstructionView with
+        originalInstructionCid = None
+        transfer
+        status = Transfer.TransferPendingReceiverAcceptance
+        meta = Metadata.emptyMetadata
+
+      transferInstruction_acceptImpl _ _ = pure failedResult
+      transferInstruction_rejectImpl _ _ = pure failedResult
+      transferInstruction_withdrawImpl _ _ = pure failedResult
+      transferInstruction_updateImpl _ _ = pure failedResult
+
+template MockTransferFactory
+  with
+    admin : Party
+    mode : FactoryMode
+  where
+    signatory admin
+
+    interface instance Transfer.TransferFactory for MockTransferFactory where
+      view = Transfer.TransferFactoryView with
+        admin
+        meta = Metadata.emptyMetadata
+
+      transferFactory_transferImpl _ arg = case mode of
+        Failed -> pure failedResult
+        Pending -> do
+          instructionCid <- create MockTransferInstruction with
+            admin
+            transfer = arg.transfer
+          pure Transfer.TransferInstructionResult with
+            output = Transfer.TransferInstructionResult_Pending with
+              transferInstructionCid = toInterfaceContractId @Transfer.TransferInstruction instructionCid
+            senderChangeCids = []
+            meta = Metadata.emptyMetadata
+        Complete -> complete arg.transfer.receiver arg.transfer.amount
+        CompleteWrongAmount -> complete arg.transfer.receiver (arg.transfer.amount + 1.0)
+        CompleteWrongReceiver -> complete arg.transfer.sender arg.transfer.amount
+        where
+          complete receiver amount = do
+            holdingCid <- create MockHolding with
+              admin
+              owner = receiver
+              instrumentId = arg.transfer.instrumentId
+              amount
+            pure Transfer.TransferInstructionResult with
+              output = Transfer.TransferInstructionResult_Completed with
+                receiverHoldingCids = [toInterfaceContractId @Holding.Holding holdingCid]
+              senderChangeCids = []
+              meta = Metadata.emptyMetadata
+
+      transferFactory_publicFetchImpl _ _ = pure Transfer.TransferFactoryView with
+        admin
+        meta = Metadata.emptyMetadata

@@ -218,8 +218,14 @@ Use current official Canton and Daml sources, not remembered APIs:
   `splice-api-token-transfer-instruction-v1` version `1.0.0`, package ID
   `55ba4deb0ad4662c4168b39859738a0e91388d252286480c7331b3f71a517281`, from the
   Apache-2.0 `canton-network/splice` tag `0.6.1` and commit
-  `f9d605c84498384ec2d5138d62af2f40b14882ff`. The official DAR SHA-256 is
-  `e4c73aa7ae73fb2fc330b938ffb99f568792321640ba4b9472902aa8d742c994`.
+  `f9d605c84498384ec2d5138d62af2f40b14882ff`. Its direct Holding and Metadata
+  interface dependencies are pinned from that same commit. The official DAR file
+  SHA-256 values are:
+  - Transfer Instruction:
+    `e4c73aa7ae73fb2fc330b938ffb99f568792321640ba4b9472902aa8d742c994`;
+  - Holding: `ef75f8eb41a65810221784fdb78bb9dfac7cb22245aba14fa7cb7f69c34e0175`;
+  - Metadata:
+    `455eb160cb5abd4ae9918a6fbb9dad471f721adda39f0e5c76feef08d05637fc`.
 - Prepared-transaction verification should use the smaller pinned
   `@canton-network/core-tx-visualizer@1.7.0` and
   `@canton-network/core-ledger-proto@1.7.0` surfaces. The official internal

@@ -8,4 +8,6 @@ dependencies:
   - daml-script
 data-dependencies:
   - ../sotto-control/.daml/dist/sotto-control-0.1.0.dar
+  - ../../.cache/daml/splice-api-token-holding-v1-1.0.0.dar
+  - ../../.cache/daml/splice-api-token-metadata-v1-1.0.0.dar
   - ../../.cache/daml/splice-api-token-transfer-instruction-v1-1.0.0.dar
