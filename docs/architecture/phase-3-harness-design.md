@@ -70,10 +70,21 @@ The selected narrow baseline adapter uses only supported Five North surfaces:
 3. validator Scan-proxy responses for the current `AmuletRules` and open mining
    round disclosures;
 4. a Ledger API `AmuletRules_Transfer` from the payer holding to the provider,
-   carrying the request commitment in public-safe metadata;
+   using a deterministic command ID derived from both the payment attempt and
+   exact HTTP request commitment;
 5. update-ID reconciliation before the original HTTP request is retried;
-6. provider delivery only when the payment reference, payer, recipient, amount,
-   and request commitment match the accepted settlement record.
+6. provider delivery only when the payment reference, deterministic command ID,
+   payer, recipient, amount, and request commitment match the accepted
+   settlement record.
+
+The live package rejected an output `meta` field with `INVALID_ARGUMENT`, and a
+known successful Five North transaction confirms that the deployed
+`TransferOutput` wire type contains only `receiver`, `receiverFeeRatio`, and
+`amount`. Sotto therefore does not invent a metadata extension. The command ID
+is the public-safe correlation field returned on the accepted transaction; its
+hash commits to both the attempt ID and request commitment, and the provider
+also compares the proof commitment with the challenge it issued. This proves
+application-level request binding, not a new ledger-enforced transfer policy.
 
 This adapter can earn a real Five North settlement and HTTP delivery result. It
 does **not** satisfy the external-party signer gate: both sandbox parties are
