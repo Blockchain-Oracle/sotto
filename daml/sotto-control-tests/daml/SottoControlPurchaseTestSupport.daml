@@ -1,6 +1,6 @@
 module SottoControlPurchaseTestSupport where
 
-import DA.Time (addRelTime, hours)
+import DA.Time (addRelTime, hours, seconds)
 import Daml.Script
 import Splice.Api.Token.HoldingV1 qualified as Holding
 import Splice.Api.Token.MetadataV1 qualified as Metadata
@@ -81,6 +81,7 @@ createPurchaseFixtureWithOwner
       paused = False
       transferFactoryCid = factoryInterfaceCid
       expectedAdmin = admin
+  passTime (seconds 1)
   pure PurchaseFixture with
     payer
     agent

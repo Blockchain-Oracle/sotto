@@ -1,6 +1,6 @@
 module SottoControlPurchaseAuthorityTests where
 
-import DA.Time (addRelTime, hours)
+import DA.Time (addRelTime, hours, seconds)
 import Daml.Script
 import Splice.Api.Token.HoldingV1 qualified as Holding
 import Splice.Api.Token.MetadataV1 qualified as Metadata
@@ -38,6 +38,7 @@ agentCannotTransferPayerFundsDirectly = do
   let extraArgs = Metadata.ExtraArgs with
         context = Metadata.emptyChoiceContext
         meta = Metadata.emptyMetadata
+  passTime (seconds 1)
 
   submitMustFail (actAs agent <> disclosed) do
     exerciseCmd factoryInterfaceCid Transfer.TransferFactory_Transfer with

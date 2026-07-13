@@ -8,6 +8,18 @@ import SottoControlTokenStandardMock
 
 timeRevisionAndReplay : Script ()
 timeRevisionAndReplay = do
+  equalRequested <- createPurchaseFixture Complete "Amulet"
+  equalOptions <- purchaseOptions equalRequested
+  ledgerNow <- getTime
+  submitMustFail equalOptions $ purchaseAt
+    equalRequested
+    equalRequested.capabilityCid
+    equalRequested.holdingInterfaceCid
+    ledgerNow
+    (addRelTime ledgerNow (hours 1))
+    0
+  assertPurchaseUnchanged equalRequested
+
   futureRequested <- createPurchaseFixture Complete "Amulet"
   futureOptions <- purchaseOptions futureRequested
   submitMustFail futureOptions $ purchaseAt

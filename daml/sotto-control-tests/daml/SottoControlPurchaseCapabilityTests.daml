@@ -1,6 +1,6 @@
 module SottoControlPurchaseCapabilityTests where
 
-import DA.Time (addRelTime, hours)
+import DA.Time (addRelTime, hours, seconds)
 import Daml.Script
 import Splice.Api.Token.HoldingV1 qualified as Holding
 import Splice.Api.Token.MetadataV1 qualified as Metadata
@@ -45,6 +45,7 @@ agentOnlyCompletedPurchase = do
       expectedAdmin = admin
   Some factoryDisclosure <- queryDisclosure admin factoryCid
   Some holdingDisclosure <- queryDisclosure payer holdingCid
+  passTime (seconds 1)
 
   result <- submit (actAs agent <> discloseMany [factoryDisclosure, holdingDisclosure]) do
     exerciseCmd capabilityCid Purchase with

@@ -93,7 +93,12 @@ template MockTransferFactory
         meta = Metadata.emptyMetadata
 
       transferFactory_transferImpl _ arg = do
+        now <- getTime
         assertMsg "unexpected transfer factory admin" (arg.expectedAdmin == admin)
+        assertMsg "requested time is not in the past"
+          (arg.transfer.requestedAt < now)
+        assertMsg "execution window is closed"
+          (now < arg.transfer.executeBefore)
         case mode of
           Failed -> pure failedResult
           Pending -> do
