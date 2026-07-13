@@ -9,7 +9,7 @@ import {
   readPurchaseHoldingObservation,
 } from "../src/purchase-holding-observation.js";
 import {
-  HOLDING_IMPLEMENTATION_PACKAGE_ID,
+  HOLDING_TEMPLATE_PACKAGE_ID,
   authenticatedPurchaseIntent,
   holdingEntry,
   holdingReader,
@@ -41,6 +41,14 @@ describe("purchase holding validation", () => {
       }),
     ],
     [
+      "implementation package",
+      holdingEntry("00holding", "0.3250000000", {
+        interfaceView: {
+          implementationPackageId: HOLDING_TEMPLATE_PACKAGE_ID,
+        },
+      }),
+    ],
+    [
       "view failed",
       holdingEntry("00holding", "0.3250000000", {
         interfaceView: { viewStatus: { code: 7 } },
@@ -56,7 +64,21 @@ describe("purchase holding validation", () => {
       "template",
       holdingEntry("00holding", "0.3250000000", {
         createdEvent: {
-          templateId: `${HOLDING_IMPLEMENTATION_PACKAGE_ID}:`,
+          templateId: `${HOLDING_TEMPLATE_PACKAGE_ID}:Other:Holding`,
+        },
+      }),
+    ],
+    [
+      "packageName",
+      holdingEntry("00holding", "0.3250000000", {
+        createdEvent: { packageName: "other-package" },
+      }),
+    ],
+    [
+      "template",
+      holdingEntry("00holding", "0.3250000000", {
+        createdEvent: {
+          templateId: `${HOLDING_TEMPLATE_PACKAGE_ID}:`,
         },
       }),
     ],

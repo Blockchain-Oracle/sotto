@@ -7,9 +7,11 @@ import { createPurchaseInput, PAYER } from "./purchase-commitment.fixtures.js";
 export const HOLDING_INTERFACE_PACKAGE_ID =
   "718a0f77e505a8de22f188bd4c87fe74101274e9d4cb1bfac7d09aec7158d35b";
 export const HOLDING_IMPLEMENTATION_PACKAGE_ID =
+  "73e9ffdb6b0bc19a5f67372b118103926da11547ab9109eccae47e4e4cc35d6f";
+export const HOLDING_TEMPLATE_PACKAGE_ID =
   "23f47481dab6b1ec01339d6e14494d85bb2844c25f45b26fc5c9ef4cd4942d1f";
 export const HOLDING_INTERFACE_ID = `${HOLDING_INTERFACE_PACKAGE_ID}:Splice.Api.Token.HoldingV1:Holding`;
-export const HOLDING_TEMPLATE_ID = `${HOLDING_IMPLEMENTATION_PACKAGE_ID}:Splice.Amulet:Amulet`;
+export const HOLDING_TEMPLATE_ID = `${HOLDING_TEMPLATE_PACKAGE_ID}:Splice.Amulet:Amulet`;
 
 export function authenticatedPurchaseIntent() {
   return readBoundedPurchaseLedgerIntent(

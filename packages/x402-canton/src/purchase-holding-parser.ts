@@ -10,6 +10,7 @@ import type { BoundedPurchaseLedgerIntent } from "./purchase-ledger-intent.js";
 import { snapshotStrictJsonObject } from "./strict-json-value.js";
 import {
   FIVE_NORTH_HOLDING_IMPLEMENTATION_PACKAGE_ID,
+  FIVE_NORTH_HOLDING_TEMPLATE_PACKAGE_ID,
   HOLDING_INTERFACE_ID,
   MAX_HOLDING_ACS_ENTRIES,
   MAX_HOLDING_ACS_RESPONSE_BYTES,
@@ -78,11 +79,13 @@ function parseEntry(
   const contractId = identifier(event.contractId, "holding contractId");
   const templateId = identifier(event.templateId, "holding templateId", 512);
   if (
-    !new RegExp(
-      `^${FIVE_NORTH_HOLDING_IMPLEMENTATION_PACKAGE_ID}:[^:\\s]+:[^:\\s]+$`,
-    ).test(templateId)
+    templateId !==
+    `${FIVE_NORTH_HOLDING_TEMPLATE_PACKAGE_ID}:Splice.Amulet:Amulet`
   ) {
     throw new Error("holding templateId package is not approved");
+  }
+  if (event.packageName !== "splice-amulet") {
+    throw new Error("holding packageName is not approved");
   }
   const view = matchingView(event);
   const valueView = objectValue(view.viewValue, "holding viewValue");

@@ -258,6 +258,16 @@ Use current official Canton and Daml sources, not remembered APIs:
   `bc6a3587e7ea94230ba0c36c638945282c52b304`. Runtime discovery must require the
   exact package ID, name, and version; it rejects a package that merely reuses
   the same name and version with a different package ID.
+- Five North currently renders payer Holding interface views through
+  `splice-amulet` version `0.1.21`, package ID
+  `73e9ffdb6b0bc19a5f67372b118103926da11547ab9109eccae47e4e4cc35d6f`, from the
+  Apache-2.0 `canton-network/splice` tag `0.6.11` and commit
+  `fd93f86ac42ce3a08985dcd0baae530b4f235f60`. The release DAR SHA-256 is
+  `c26e1a4064afc9329167f90ad6f7e6f7236bc395fe480d1f113adc4e0168124c`. Existing
+  payer contracts retain their exact 0.1.20 creation-template package ID
+  `23f47481dab6b1ec01339d6e14494d85bb2844c25f45b26fc5c9ef4cd4942d1f`. Sotto pins
+  creation template and interface implementation independently; package-upgrade
+  rendering must never be accepted from semver or equality assumptions alone.
 - Prepared-transaction structural decoding uses exactly pinned
   `@canton-network/core-ledger-proto@1.7.0` with recursive unknown-field
   rejection. Its schema predates some Canton 3.5.6 fields, so encountering an
@@ -373,6 +383,10 @@ nor Redis cache may replace the live registry and disclosure checks.
   exhaustion, duplicate attempt, and concurrent consumption.
 - Decode sanitized prepared transactions and reject additional roots, changed
   transfer effects, wrong package/interface identifiers, or hash mismatch.
+- Reject an empty command package-selection preference before signing. Pin the
+  reviewed package-upgrade interpretation from current Five North package
+  preference evidence, or prove equivalent exact child-effect validation; a
+  later DAR upload must not silently change the nested interface exercise.
 - Bound prepared bytes, node count, tree depth, and decode/hash time; oversized,
   over-deep, and timeout cases must make zero signing calls.
 - Keep the hot path to one strict protobuf decode plus bounded linear

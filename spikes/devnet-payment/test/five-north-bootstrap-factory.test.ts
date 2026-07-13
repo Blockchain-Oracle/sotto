@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   FIVE_NORTH_HOLDING_IMPLEMENTATION_PACKAGE_ID,
+  FIVE_NORTH_HOLDING_TEMPLATE_PACKAGE_ID,
   FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID,
   HOLDING_INTERFACE_ID,
   SOTTO_CONTROL_PACKAGE_ID,
@@ -62,7 +63,8 @@ function holdingEntry() {
       JsActiveContract: {
         createdEvent: {
           contractId: "00holding",
-          templateId: `${FIVE_NORTH_HOLDING_IMPLEMENTATION_PACKAGE_ID}:Splice.Amulet:Amulet`,
+          templateId: `${FIVE_NORTH_HOLDING_TEMPLATE_PACKAGE_ID}:Splice.Amulet:Amulet`,
+          packageName: "splice-amulet",
           createdEventBlob: Buffer.from("holding").toString("base64"),
           interfaceViews: [
             {
