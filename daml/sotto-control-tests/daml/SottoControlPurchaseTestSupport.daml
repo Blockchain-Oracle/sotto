@@ -22,7 +22,11 @@ data PurchaseFixture = PurchaseFixture with
   capabilityCid : ContractId BoundedPurchaseCapability
 
 createPurchaseFixture : FactoryMode -> Text -> Script PurchaseFixture
-createPurchaseFixture mode holdingInstrument = do
+createPurchaseFixture mode holdingInstrument =
+  createPurchaseFixtureWith mode holdingInstrument 2.0 2.0
+
+createPurchaseFixtureWith : FactoryMode -> Text -> Decimal -> Decimal -> Script PurchaseFixture
+createPurchaseFixtureWith mode holdingInstrument holdingAmount maximumTotalDebit = do
   payer <- allocateParty "sotto-fixture-payer"
   agent <- allocateParty "sotto-fixture-agent"
   provider <- allocateParty "sotto-fixture-provider"
@@ -38,7 +42,7 @@ createPurchaseFixture mode holdingInstrument = do
       admin
       owner = payer
       instrumentId = actualHoldingInstrument
-      amount = 2.0
+      amount = holdingAmount
   let factoryInterfaceCid =
         toInterfaceContractId @Transfer.TransferFactory factoryCid
   let holdingInterfaceCid = toInterfaceContractId @Holding.Holding holdingCid
@@ -52,7 +56,7 @@ createPurchaseFixture mode holdingInstrument = do
       instrumentId
       perCallLimit = 2.0
       remainingAllowance = 5.0
-      maximumTotalDebit = 2.0
+      maximumTotalDebit
       expiresAt = addRelTime now (hours 2)
       revision = 0
       paused = False

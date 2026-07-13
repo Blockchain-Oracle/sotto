@@ -9,6 +9,7 @@ data FactoryMode
   = Complete
   | CompleteWrongAmount
   | CompleteWrongReceiver
+  | CompleteWithChange with changeAmount : Decimal
   | Pending
   | Failed
   deriving (Eq, Show)
@@ -82,11 +83,13 @@ template MockTransferFactory
                 transferInstructionCid = toInterfaceContractId @Transfer.TransferInstruction instructionCid
               senderChangeCids = []
               meta = Metadata.emptyMetadata
-          Complete -> complete arg.transfer.receiver arg.transfer.amount
-          CompleteWrongAmount -> complete arg.transfer.receiver (arg.transfer.amount + 1.0)
-          CompleteWrongReceiver -> complete arg.transfer.sender arg.transfer.amount
+          Complete -> complete arg.transfer.receiver arg.transfer.amount None
+          CompleteWrongAmount -> complete arg.transfer.receiver (arg.transfer.amount + 1.0) None
+          CompleteWrongReceiver -> complete arg.transfer.sender arg.transfer.amount None
+          CompleteWithChange{changeAmount} ->
+            complete arg.transfer.receiver arg.transfer.amount (Some changeAmount)
         where
-          complete receiver amount = do
+          complete receiver amount changeAmount = do
             forA_ arg.transfer.inputHoldingCids $ \holdingCid ->
               exercise holdingCid Archive
             holdingCid <- create MockHolding with
@@ -94,10 +97,19 @@ template MockTransferFactory
               owner = receiver
               instrumentId = arg.transfer.instrumentId
               amount
+            senderChangeCids <- case changeAmount of
+              None -> pure []
+              Some senderChangeAmount -> do
+                senderChangeCid <- create MockHolding with
+                  admin
+                  owner = arg.transfer.sender
+                  instrumentId = arg.transfer.instrumentId
+                  amount = senderChangeAmount
+                pure [toInterfaceContractId @Holding.Holding senderChangeCid]
             pure Transfer.TransferInstructionResult with
               output = Transfer.TransferInstructionResult_Completed with
                 receiverHoldingCids = [toInterfaceContractId @Holding.Holding holdingCid]
-              senderChangeCids = []
+              senderChangeCids
               meta = Metadata.emptyMetadata
 
       transferFactory_publicFetchImpl _ arg = do

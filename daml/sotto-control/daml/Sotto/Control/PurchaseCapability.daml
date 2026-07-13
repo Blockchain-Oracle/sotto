@@ -115,6 +115,7 @@ template BoundedPurchaseCapability
             let totalInput = sum (map (.amount) inputViews)
             let totalChange = sum (map (.amount) changeViews)
             let totalDebit = totalInput - totalChange
+            assertMsg "total debit is below principal" (totalDebit >= amount)
             assertMsg "total debit exceeds capability" (totalDebit <= maximumTotalDebit)
             contextCid <- create PurchaseContext with
               payer

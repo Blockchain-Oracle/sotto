@@ -1,0 +1,41 @@
+module SottoControlPurchaseDebitTests where
+
+import Daml.Script
+import SottoControlPurchaseTestSupport
+import SottoControlTokenStandardMock
+
+feeAndTotalDebitBounds : Script ()
+feeAndTotalDebitBounds = do
+  exact <- createPurchaseFixtureWith
+    (CompleteWithChange with changeAmount = 2.75)
+    "Amulet"
+    5.0
+    2.25
+  exactOptions <- purchaseOptions exact
+  exactResult <- submit exactOptions (purchaseCommands exact)
+  assert (exactResult.totalDebit == 2.25)
+  Some exactContext <- queryContractId exact.provider exactResult.contextCid
+  assert (exactContext.amount == 2.0)
+  assert (exactContext.totalDebit == 2.25)
+  Some exactCapability <- queryContractId exact.payer exactResult.capabilityCid
+  assert (exactCapability.remainingAllowance == 3.0)
+  [(_, senderChange)] <- query @MockHolding exact.payer
+  assert (senderChange.amount == 2.75)
+
+  aboveCap <- createPurchaseFixtureWith
+    (CompleteWithChange with changeAmount = 2.74)
+    "Amulet"
+    5.0
+    2.25
+  aboveCapOptions <- purchaseOptions aboveCap
+  submitMustFail aboveCapOptions (purchaseCommands aboveCap)
+  assertPurchaseUnchanged aboveCap
+
+  belowPrincipal <- createPurchaseFixtureWith
+    (CompleteWithChange with changeAmount = 3.01)
+    "Amulet"
+    5.0
+    2.25
+  belowPrincipalOptions <- purchaseOptions belowPrincipal
+  submitMustFail belowPrincipalOptions (purchaseCommands belowPrincipal)
+  assertPurchaseUnchanged belowPrincipal
