@@ -1,0 +1,52 @@
+module SottoControlTestSupport where
+
+import Daml.Script
+import Sotto.Control.PrivacyProbe
+
+data ProbeParties = ProbeParties with
+  owner : Party
+  agent : Party
+  payer : Party
+  provider : Party
+  outsider : Party
+
+testResourceHash : Text
+testResourceHash = "sha256:resource"
+
+testRequestCommitment : Text
+testRequestCommitment = "sha256:request"
+
+allocateProbeParties : Script ProbeParties
+allocateProbeParties = do
+  owner <- allocateParty "sotto-owner"
+  agent <- allocateParty "sotto-agent"
+  payer <- allocateParty "sotto-payer"
+  provider <- allocateParty "sotto-provider"
+  outsider <- allocateParty "sotto-outsider"
+  pure ProbeParties with owner; agent; payer; provider; outsider
+
+createPolicy : ProbeParties -> Time -> Decimal -> Decimal -> Script (ContractId PurchasePolicyProbe)
+createPolicy ProbeParties{owner; agent; payer; provider} expiresAt perCallLimit remainingLimit =
+  submit payer do
+    createCmd PurchasePolicyProbe with
+      owner
+      agent
+      payer
+      allowedResourceHash = testResourceHash
+      allowedRecipient = provider
+      perCallLimit
+      remainingLimit
+      expiresAt
+      revision = 0
+      paused = False
+      usedAttemptIds = []
+
+consumePolicy : ProbeParties -> ContractId PurchasePolicyProbe -> Text -> Decimal -> Script ConsumeResult
+consumePolicy ProbeParties{agent; payer; provider} policyCid attemptId amount =
+  submit (actAs [agent, payer]) do
+    exerciseCmd policyCid Consume with
+      attemptId
+      requestCommitment = testRequestCommitment
+      resourceHash = testResourceHash
+      recipient = provider
+      amount

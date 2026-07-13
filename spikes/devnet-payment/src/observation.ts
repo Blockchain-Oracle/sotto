@@ -5,7 +5,7 @@ import {
 } from "@sotto/x402-canton";
 
 export type CompatibilityVerdict = Readonly<{
-  exactRequestBinding: "not-proven";
+  exactRequestBinding: "absent" | "matched" | "mismatched" | "not-proven";
   paymentFields: "valid";
   resourceUrlBinding: "absent" | "matched" | "mismatched";
   wire: "compatible";
@@ -118,13 +118,21 @@ export function createChallengeObservation(
           new URL(input.resourceUrl).toString()
         ? "matched"
         : "mismatched";
+  const exactRequestBinding =
+    input.challenge.extra.assetTransferMethod !== "amulet-rules-transfer"
+      ? "not-proven"
+      : input.challenge.extra.memo === undefined
+        ? "absent"
+        : input.challenge.extra.memo === binding.commitment
+          ? "matched"
+          : "mismatched";
 
   return {
     bindingVersion: binding.version,
     bodySha256: binding.bodySha256,
     challenge: input.challenge,
     compatibility: {
-      exactRequestBinding: "not-proven",
+      exactRequestBinding,
       paymentFields: "valid",
       resourceUrlBinding,
       wire: "compatible",

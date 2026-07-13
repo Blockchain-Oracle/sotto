@@ -1,0 +1,80 @@
+module SottoControlFailureTests where
+
+import DA.Time (addRelTime, hours)
+import Daml.Script
+import Sotto.Control.PrivacyProbe
+import SottoControlTestSupport
+
+limitsExpiryRollbackAndStaleCid : Script ()
+limitsExpiryRollbackAndStaleCid = do
+  parties@ProbeParties{owner; agent; payer; provider; outsider} <- allocateProbeParties
+  now <- getTime
+  policyCid <- createPolicy parties (addRelTime now (hours 1)) 3.0 5.0
+
+  submitMustFail (actAs [agent, payer]) do
+    exerciseCmd policyCid Consume with
+      attemptId = "attempt-over-limit"
+      requestCommitment = testRequestCommitment
+      resourceHash = testResourceHash
+      recipient = provider
+      amount = 4.0
+  submitMustFail (actAs [agent, payer]) do
+    exerciseCmd policyCid Consume with
+      attemptId = "attempt-wrong-recipient"
+      requestCommitment = testRequestCommitment
+      resourceHash = testResourceHash
+      recipient = outsider
+      amount = 1.0
+  Some unchanged <- queryContractId payer policyCid
+  assert (unchanged.remainingLimit == 5.0)
+  noContexts <- query @PurchaseContextProbe payer
+  assert (null noContexts)
+
+  result <- consumePolicy parties policyCid "attempt-current" 2.0
+  submitMustFail (actAs [agent, payer]) do
+    exerciseCmd policyCid Consume with
+      attemptId = "attempt-concurrent-loser"
+      requestCommitment = testRequestCommitment
+      resourceHash = testResourceHash
+      recipient = provider
+      amount = 1.0
+  Some current <- queryContractId payer result.policyCid
+  assert (current.remainingLimit == 3.0)
+  contexts <- query @PurchaseContextProbe payer
+  assert (length contexts == 1)
+
+  concurrentCid <- createPolicy parties (addRelTime now (hours 1)) 3.0 5.0
+  (first, second) <- concurrently $
+    (,)
+      <$> trySubmit (actAs [agent, payer]) (exerciseCmd concurrentCid Consume with
+        attemptId = "attempt-concurrent-a"
+        requestCommitment = testRequestCommitment
+        resourceHash = testResourceHash
+        recipient = provider
+        amount = 1.0)
+      <*> trySubmit (actAs [agent, payer]) (exerciseCmd concurrentCid Consume with
+        attemptId = "attempt-concurrent-b"
+        requestCommitment = testRequestCommitment
+        resourceHash = testResourceHash
+        recipient = provider
+        amount = 1.0)
+  concurrentResult <- case (first, second) of
+    (Right accepted, Left _) -> pure accepted
+    (Left _, Right accepted) -> pure accepted
+    _ -> abort "concurrent policy consumption must accept exactly one command"
+  Some concurrentPolicy <- queryContractId payer concurrentResult.policyCid
+  assert (concurrentPolicy.remainingLimit == 4.0)
+
+  expiringCid <- createPolicy parties (addRelTime now (hours 1)) 3.0 5.0
+  passTime (hours 2)
+  submitMustFail (actAs [agent, payer]) do
+    exerciseCmd expiringCid Consume with
+      attemptId = "attempt-expired"
+      requestCommitment = testRequestCommitment
+      resourceHash = testResourceHash
+      recipient = provider
+      amount = 1.0
+  Some expiredUnchanged <- queryContractId payer expiringCid
+  assert (expiredUnchanged.remainingLimit == 5.0)
+  submit owner do exerciseCmd expiringCid Revoke
+  pure ()

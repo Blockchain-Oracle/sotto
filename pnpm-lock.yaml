@@ -48,6 +48,9 @@ importers:
 
   spikes/devnet-payment:
     dependencies:
+      '@sotto/evidence':
+        specifier: workspace:*
+        version: link:../../packages/evidence
       '@sotto/x402-canton':
         specifier: workspace:*
         version: link:../../packages/x402-canton

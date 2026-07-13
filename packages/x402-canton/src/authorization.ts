@@ -6,7 +6,7 @@ import {
 import type { HttpRequestCommitment } from "./request-binding.js";
 
 export type PaymentAuthorization = Readonly<{
-  attemptId: string;
+  attemptId: `sha256:${string}`;
   bindingVersion: "sotto-http-request-v1";
   expiresAt: string;
   payerParty: string;
@@ -53,7 +53,7 @@ export function createPaymentAuthorization(
         authorizationInstanceId,
       }),
     )
-    .digest("hex")}`;
+    .digest("hex")}` as const;
 
   return {
     attemptId,

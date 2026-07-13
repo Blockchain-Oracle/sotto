@@ -68,4 +68,4 @@ run("Daml tests", dpm, ["test"], {
   env: toolEnv,
 });
 run("whitespace", "git", ["diff", "--check"]);
-process.stdout.write("\nAll deterministic Phase 2 gates passed.\n");
+process.stdout.write("\nAll deterministic workspace gates passed.\n");

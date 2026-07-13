@@ -32,3 +32,4 @@ test-results/
 .pnpm-store/
 .turbo/
 .cache/
+tmp/

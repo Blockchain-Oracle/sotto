@@ -5,6 +5,7 @@
   "type": "module",
   "license": "Apache-2.0",
   "dependencies": {
+    "@sotto/evidence": "workspace:*",
     "@sotto/x402-canton": "workspace:*"
   },
   "scripts": {

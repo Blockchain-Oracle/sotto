@@ -1,0 +1,32 @@
+module SottoControlVisibilityTests where
+
+import DA.Time (addRelTime, hours)
+import Daml.Script
+import Sotto.Control.PrivacyProbe
+import SottoControlTestSupport
+
+stakeholderVisibility : Script ()
+stakeholderVisibility = do
+  parties@ProbeParties{owner; agent; payer; provider; outsider} <- allocateProbeParties
+  now <- getTime
+  policyCid <- createPolicy parties (addRelTime now (hours 1)) 3.0 5.0
+  result <- consumePolicy parties policyCid "attempt-private" 2.0
+
+  Some _ <- queryContractId payer result.policyCid
+  Some _ <- queryContractId owner result.policyCid
+  Some _ <- queryContractId agent result.policyCid
+  None <- queryContractId provider result.policyCid
+  None <- queryContractId outsider result.policyCid
+
+  Some _ <- queryContractId payer result.contextCid
+  Some _ <- queryContractId owner result.contextCid
+  Some _ <- queryContractId agent result.contextCid
+  Some context <- queryContractId provider result.contextCid
+  None <- queryContractId outsider result.contextCid
+  assert (context.attemptId == "attempt-private")
+  assert (context.requestCommitment == testRequestCommitment)
+  outsiderPolicies <- query @PurchasePolicyProbe outsider
+  outsiderContexts <- query @PurchaseContextProbe outsider
+  assert (null outsiderPolicies)
+  assert (null outsiderContexts)
+  pure ()

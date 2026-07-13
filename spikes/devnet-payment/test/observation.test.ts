@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { commitHttpRequest } from "@sotto/x402-canton";
 import {
   createChallengeObservation,
   decodePaymentRequired,
@@ -83,6 +84,30 @@ describe("selectCantonRequirement", () => {
 });
 
 describe("createChallengeObservation", () => {
+  it("proves the Sotto direct challenge carries the exact request commitment", () => {
+    const resourceUrl = "https://provider.example/paid/weather";
+    const requestCommitment = commitHttpRequest({
+      method: "GET",
+      url: resourceUrl,
+    }).commitment;
+    const observation = createChallengeObservation({
+      challenge: {
+        ...cantonRequirement,
+        extra: {
+          ...cantonRequirement.extra,
+          assetTransferMethod: "amulet-rules-transfer",
+          memo: requestCommitment,
+        },
+      },
+      method: "GET",
+      observedAt: "2026-07-13T08:00:00.000Z",
+      resourceUrl,
+      upstreamResourceUrl: resourceUrl,
+    });
+
+    expect(observation.compatibility.exactRequestBinding).toBe("matched");
+  });
+
   it("creates deterministic redacted evidence with split outcomes", () => {
     const input = {
       challenge: cantonRequirement,
