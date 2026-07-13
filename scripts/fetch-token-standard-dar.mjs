@@ -1,7 +1,9 @@
 import { createHash } from "node:crypto";
-import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { mkdir, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+
+import { readBoundedFile, readBoundedResponse } from "./bounded-download.mjs";
 
 const SOURCE_ROOT =
   "https://raw.githubusercontent.com/canton-network/splice/f9d605c84498384ec2d5138d62af2f40b14882ff/daml/dars";
@@ -28,8 +30,8 @@ function digest(bytes) {
 
 async function verifiedExisting(artifact, destination) {
   try {
-    const bytes = await readFile(destination);
-    if (bytes.byteLength > MAX_BYTES || digest(bytes) !== artifact.sha256) {
+    const bytes = await readBoundedFile(destination, MAX_BYTES);
+    if (digest(bytes) !== artifact.sha256) {
       throw new Error(`Cached ${artifact.file} failed its pinned SHA-256`);
     }
     return true;
@@ -51,10 +53,7 @@ async function verifyArtifact(artifact) {
       `${artifact.file} download failed: HTTP ${response.status}`,
     );
   }
-  const bytes = new Uint8Array(await response.arrayBuffer());
-  if (bytes.byteLength > MAX_BYTES) {
-    throw new Error(`${artifact.file} exceeds ${MAX_BYTES} bytes`);
-  }
+  const bytes = await readBoundedResponse(response, MAX_BYTES, artifact.file);
   if (digest(bytes) !== artifact.sha256) {
     throw new Error(`${artifact.file} failed its pinned SHA-256`);
   }
