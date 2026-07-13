@@ -1,13 +1,18 @@
-import { createHash } from "node:crypto";
-import {
-  parsePaymentChallenge,
-  type CantonPaymentRequirement,
-} from "./payment-requirement.js";
 import type { HttpRequestCommitment } from "./request-binding.js";
+import {
+  FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID,
+  RESOURCE_BINDING_VERSION,
+  TOKEN_TRANSFER_FACTORY_INTERFACE_ID,
+  validateBoundedPurchaseInput,
+} from "./purchase-commitment-validation.js";
+import { sha256Hex } from "./purchase-commitment-primitives.js";
 
 export const PURCHASE_COMMITMENT_VERSION = "sotto-purchase-v2" as const;
-export const TOKEN_TRANSFER_FACTORY_INTERFACE_ID =
-  "55ba4deb0ad4662c4168b39859738a0e91388d252286480c7331b3f71a517281:Splice.Api.Token.TransferInstructionV1:TransferFactory" as const;
+export {
+  FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID,
+  RESOURCE_BINDING_VERSION,
+  TOKEN_TRANSFER_FACTORY_INTERFACE_ID,
+};
 
 export type PurchaseCapabilitySnapshot = Readonly<{
   contractId: string;
@@ -16,6 +21,7 @@ export type PurchaseCapabilitySnapshot = Readonly<{
   perCallLimitAtomic: string;
   recipient: string;
   remainingAllowanceAtomic: string;
+  resourceBindingVersion: typeof RESOURCE_BINDING_VERSION;
   resourceHash: `sha256:${string}`;
   revision: string;
 }>;
@@ -29,7 +35,9 @@ export type BoundedPurchaseCommitmentInput = Readonly<{
   observedAt: string;
   payerParty: string;
   tokenFactory: Readonly<{
+    contractId: string;
     expectedAdmin: string;
+    implementationTemplateId: typeof FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID;
     interfaceId: typeof TOKEN_TRANSFER_FACTORY_INTERFACE_ID;
   }>;
 }>;
@@ -43,45 +51,11 @@ export type BoundedPurchaseCommitment = Readonly<{
   version: typeof PURCHASE_COMMITMENT_VERSION;
 }>;
 
-function sha256(value: string | Uint8Array): string {
-  return createHash("sha256").update(value).digest("hex");
-}
-
-function objectValue(value: unknown, label: string): Record<string, unknown> {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    throw new Error(`${label} must be an object`);
-  }
-  return value as Record<string, unknown>;
-}
-
-function selectRequirement(
-  challengeBytes: Uint8Array,
-  expectedNetwork: string,
-): CantonPaymentRequirement {
-  const decoded: unknown = JSON.parse(new TextDecoder().decode(challengeBytes));
-  const challenge = objectValue(decoded, "Payment required challenge");
-  if (challenge.x402Version !== 2 || !Array.isArray(challenge.accepts)) {
-    throw new Error("Payment required challenge must use x402Version 2");
-  }
-  const matches = challenge.accepts.filter((candidate) => {
-    const value = objectValue(candidate, "Payment requirement");
-    return value.scheme === "exact" && value.network === expectedNetwork;
-  });
-  if (matches.length !== 1) {
-    throw new Error("Expected exactly one matching Canton requirement");
-  }
-  const requirement = parsePaymentChallenge(matches[0]);
-  if (requirement.extra.assetTransferMethod !== "transfer-factory") {
-    throw new Error("Bounded purchase requires transfer-factory");
-  }
-  return requirement;
-}
-
 function deriveAttemptId(
   requestCommitment: string,
   authorizationInstanceId: string,
 ): `sha256:${string}` {
-  return `sha256:${sha256(
+  return `sha256:${sha256Hex(
     JSON.stringify({
       version: "sotto-payment-attempt-v1",
       requestCommitment,
@@ -93,19 +67,8 @@ function deriveAttemptId(
 export function commitBoundedPurchase(
   input: BoundedPurchaseCommitmentInput,
 ): BoundedPurchaseCommitment {
-  const requirement = selectRequirement(
-    input.challengeBytes,
-    input.expectedNetwork,
-  );
-  const observedAt = new Date(input.observedAt);
-  const lifetimeSeconds = Math.min(
-    requirement.maxTimeoutSeconds,
-    requirement.extra.executeBeforeSeconds,
-  );
-  const expiresAt = new Date(
-    observedAt.getTime() + lifetimeSeconds * 1_000,
-  ).toISOString();
-  const challengeId = `sha256:${sha256(input.challengeBytes)}` as const;
+  const { expiresAt, requirement } = validateBoundedPurchaseInput(input);
+  const challengeId = `sha256:${sha256Hex(input.challengeBytes)}` as const;
   const attemptId = deriveAttemptId(
     input.binding.commitment,
     input.authorizationInstanceId,
@@ -140,6 +103,7 @@ export function commitBoundedPurchase(
     capability: {
       contractId: input.capability.contractId,
       revision: input.capability.revision,
+      resourceBindingVersion: input.capability.resourceBindingVersion,
       resourceHash: input.capability.resourceHash,
       recipient: input.capability.recipient,
       perCallLimitAtomic: input.capability.perCallLimitAtomic,
@@ -149,6 +113,8 @@ export function commitBoundedPurchase(
     },
     tokenFactory: {
       interfaceId: input.tokenFactory.interfaceId,
+      contractId: input.tokenFactory.contractId,
+      implementationTemplateId: input.tokenFactory.implementationTemplateId,
       expectedAdmin: input.tokenFactory.expectedAdmin,
     },
     authorizationInstanceId: input.authorizationInstanceId,
@@ -159,7 +125,7 @@ export function commitBoundedPurchase(
     attemptId,
     canonicalBytes,
     challengeId,
-    commitment: `sha256:${sha256(canonicalBytes)}`,
+    commitment: `sha256:${sha256Hex(canonicalBytes)}`,
     expiresAt,
     version: PURCHASE_COMMITMENT_VERSION,
   };

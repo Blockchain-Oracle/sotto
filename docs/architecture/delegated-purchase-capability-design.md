@@ -113,9 +113,11 @@ members:
 3. `challenge` with x402 version, challenge ID, observed time, execution expiry,
    network, scheme, transfer method, payer, recipient, amount, asset, fee payer,
    instrument, and synchronizer;
-4. `capability` with contract ID, revision, resource hash, recipient, per-call
-   limit, remaining allowance, maximum total debit, and expiry;
-5. `tokenFactory` with interface ID and trusted expected admin;
+4. `capability` with contract ID, revision, resource-binding version, resource
+   hash, recipient, per-call limit, remaining allowance, maximum total debit,
+   and expiry;
+5. `tokenFactory` with interface ID, factory contract ID, implementation
+   template ID, and trusted expected admin;
 6. authorization-instance ID and attempt ID.
 
 The challenge ID is SHA-256 of the exact decoded `PAYMENT-REQUIRED` header bytes
@@ -126,6 +128,20 @@ integer strings. Times use UTC ISO 8601 with exactly millisecond precision.
 Party, contract, package/interface, and synchronizer identifiers are preserved
 exactly after bounded validation. Canonicalization performs no locale-dependent
 sorting or implicit numeric conversion.
+
+`sotto-resource-v1` hashes the UTF-8 bytes of fixed-order JSON containing the
+canonical request origin and pathname. It deliberately excludes query and method
+because the capability controls a route while `sotto-http-request-v1` binds each
+complete request. Remaining allowance and per-call limit track transfer
+principal in atomic instrument units. Maximum total debit caps the net reduction
+of payer-owned holdings in that instrument, including payer-paid fees; it is not
+the gross value of input holdings consumed and recreated.
+
+The selected requirement's memo must equal the canonical request commitment, and
+its fee payer must equal the authorized payer. The challenge ID still binds the
+complete decoded challenge bytes. Neither a standalone caller assertion nor an
+uncommitted requirement object may substitute for the authenticated challenge
+carrier.
 
 ## Autonomous Purchase Flow
 
