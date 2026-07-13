@@ -1,5 +1,6 @@
 import {
   BOUNDED_PURCHASE_CAPABILITY_QUERY_ID,
+  FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID,
   HOLDING_INTERFACE_QUERY_ID,
 } from "@sotto/x402-canton";
 
@@ -105,6 +106,27 @@ export function holdingContractsBody(
   );
 }
 
+export function transferFactoryContractsBody(
+  dsoParty: string,
+  activeAtOffset: number,
+): unknown {
+  return activeContractsBody(
+    cantonParty(dsoParty, "TransferFactory DSO"),
+    activeAtOffset,
+    [
+      {
+        TemplateFilter: {
+          value: {
+            templateId: FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID,
+            includeCreatedEventBlob: false,
+          },
+        },
+      },
+    ],
+    true,
+  );
+}
+
 export function preferredWalletPackageBody(
   receiverParty: string,
   validatorParty: string,
@@ -117,6 +139,25 @@ export function preferredWalletPackageBody(
           cantonParty(receiverParty, "preapproval receiver", true),
           cantonParty(validatorParty, "validator operator"),
         ],
+      },
+    ],
+  };
+}
+
+export function preferredSottoPackageBody(
+  payerParty: string,
+  agentParty: string,
+): unknown {
+  const payer = cantonParty(payerParty, "capability payer", true);
+  const agent = cantonParty(agentParty, "capability agent", true);
+  if (payer === agent) {
+    throw new Error("capability payer and agent must be distinct");
+  }
+  return {
+    packageVettingRequirements: [
+      {
+        packageName: "sotto-control",
+        parties: [payer, agent],
       },
     ],
   };

@@ -5,7 +5,10 @@ import {
   type BoundedCapabilityBootstrapRequest,
 } from "./bounded-capability-bootstrap.js";
 import { boundedCapabilityBootstrapState } from "./bounded-capability-bootstrap-state.js";
-import { parsePurchaseCapabilityCreatedEvent } from "./purchase-capability-event.js";
+import {
+  parsePurchaseCapabilityCreatedEvent,
+  SOTTO_CONTROL_PACKAGE_ID,
+} from "./purchase-capability-event.js";
 import {
   canonicalTime,
   exactKeys,
@@ -37,7 +40,16 @@ function restoredInput(value: unknown): {
   const raw = objectValue(value, "persisted bootstrap request");
   exactKeys(
     raw,
-    ["actAs", "commandId", "commands", "readAs", "userId", "workflowId"],
+    [
+      "actAs",
+      "commandId",
+      "commands",
+      "packageIdSelectionPreference",
+      "readAs",
+      "synchronizerId",
+      "userId",
+      "workflowId",
+    ],
     "persisted bootstrap request",
   );
   if (
@@ -50,6 +62,13 @@ function restoredInput(value: unknown): {
     raw.workflowId !== "sotto-capability-bootstrap-v1"
   ) {
     throw new Error("persisted bootstrap request shape does not match");
+  }
+  if (
+    !Array.isArray(raw.packageIdSelectionPreference) ||
+    raw.packageIdSelectionPreference.length !== 1 ||
+    raw.packageIdSelectionPreference[0] !== SOTTO_CONTROL_PACKAGE_ID
+  ) {
+    throw new Error("persisted bootstrap package preference does not match");
   }
   const wrapper = objectValue(raw.commands[0], "persisted bootstrap command");
   exactKeys(wrapper, ["CreateCommand"], "persisted bootstrap command");
@@ -89,6 +108,10 @@ function restoredInput(value: unknown): {
       payerParty: snapshot.payerParty,
       perCallLimitAtomic: snapshot.perCallLimitAtomic,
       remainingAllowanceAtomic: snapshot.remainingAllowanceAtomic,
+      synchronizerId: identifier(
+        raw.synchronizerId,
+        "persisted bootstrap synchronizer ID",
+      ),
       transferFactoryContractId: snapshot.transferFactoryContractId,
       userId: identifier(raw.userId, "persisted bootstrap user ID", 256),
     },

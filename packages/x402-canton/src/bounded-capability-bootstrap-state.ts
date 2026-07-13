@@ -8,6 +8,8 @@ export type ExpectedBootstrapCapability = Omit<
 export type BoundedCapabilityBootstrapState = Readonly<{
   commandId: string;
   expected: ExpectedBootstrapCapability;
+  packageId: string;
+  synchronizerId: string;
   validatedAt: string;
 }>;
 

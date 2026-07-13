@@ -22,6 +22,7 @@ const input = {
   payerParty: "sotto-spike-payer::1220participant",
   perCallLimitAtomic: "2500000000",
   remainingAllowanceAtomic: "10000000000",
+  synchronizerId: "global-domain::1220synchronizer",
   transferFactoryContractId: "00transferfactory",
   userId: "ledger-user-6",
 } as const;
@@ -39,7 +40,14 @@ function fixture() {
     templateId: create.templateId,
   };
   return {
-    active: { contractEntry: { JsActiveContract: { createdEvent: event } } },
+    active: {
+      contractEntry: {
+        JsActiveContract: {
+          createdEvent: event,
+          synchronizerId: input.synchronizerId,
+        },
+      },
+    },
     contractId,
     request,
     response: {
@@ -47,6 +55,7 @@ function fixture() {
         commandId: request.commandId,
         events: [{ CreatedEvent: event }],
         offset: 42,
+        synchronizerId: input.synchronizerId,
         updateId: `1220${"b".repeat(64)}`,
       },
     },

@@ -1,6 +1,7 @@
 import {
   APPROVED_BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_ID,
   parsePurchaseCapabilityCreatedEvent,
+  SOTTO_CONTROL_PACKAGE_ID,
 } from "./purchase-capability-event.js";
 import {
   boundedCapabilityBootstrapState,
@@ -35,6 +36,7 @@ export type BoundedCapabilityBootstrapInput = Readonly<{
   payerParty: string;
   perCallLimitAtomic: string;
   remainingAllowanceAtomic: string;
+  synchronizerId: string;
   transferFactoryContractId: string;
   userId: string;
 }>;
@@ -99,6 +101,10 @@ export function buildBoundedCapabilityBootstrapAt(
     input.transferFactoryContractId,
     "transfer factory contract ID",
   );
+  const synchronizerId = identifier(
+    input.synchronizerId,
+    "bootstrap synchronizer ID",
+  );
   const userId = identifier(input.userId, "bootstrap user ID", 256);
   const createArguments = Object.freeze({
     payer,
@@ -125,6 +131,8 @@ export function buildBoundedCapabilityBootstrapAt(
   const commandId = `sotto-capability-bootstrap-v1-${sha256Hex(
     JSON.stringify({
       templateId: APPROVED_BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_ID,
+      packageId: SOTTO_CONTROL_PACKAGE_ID,
+      synchronizerId,
       createArguments,
     }),
   )}`;
@@ -134,6 +142,10 @@ export function buildBoundedCapabilityBootstrapAt(
     userId,
     commandId,
     workflowId: "sotto-capability-bootstrap-v1" as const,
+    synchronizerId,
+    packageIdSelectionPreference: Object.freeze([
+      SOTTO_CONTROL_PACKAGE_ID,
+    ]) as readonly [string],
     commands: Object.freeze([
       Object.freeze({
         CreateCommand: Object.freeze({
@@ -162,6 +174,8 @@ export function buildBoundedCapabilityBootstrapAt(
       templateId: APPROVED_BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_ID,
       transferFactoryContractId: transferFactoryCid,
     },
+    packageId: SOTTO_CONTROL_PACKAGE_ID,
+    synchronizerId,
     validatedAt: new Date(nowMilliseconds).toISOString(),
   });
   return request;
@@ -199,6 +213,7 @@ export function assertBoundedCapabilityBootstrapFresh(request: unknown): void {
 function reconcileAgainstExpected(
   value: unknown,
   expected: ExpectedBootstrapCapability,
+  synchronizerId: string,
 ) {
   if (!Array.isArray(value) || value.length > MAXIMUM_ACS_ENTRIES) {
     throw new Error("bootstrap ACS result exceeds count limit");
@@ -215,7 +230,10 @@ function reconcileAgainstExpected(
       "bootstrap ACS active contract",
     );
     const snapshot = parsePurchaseCapabilityCreatedEvent(active.createdEvent);
-    if (matchesExpectedBootstrapCapability(snapshot, expected)) {
+    if (
+      active.synchronizerId === synchronizerId &&
+      matchesExpectedBootstrapCapability(snapshot, expected)
+    ) {
       matchingContractIds.push(snapshot.contractId);
     }
   }
@@ -229,10 +247,8 @@ export function reconcileBoundedCapabilityBootstrapAcs(
   value: unknown,
   request: unknown,
 ) {
-  return reconcileAgainstExpected(
-    value,
-    boundedCapabilityBootstrapState(request).expected,
-  );
+  const state = boundedCapabilityBootstrapState(request);
+  return reconcileAgainstExpected(value, state.expected, state.synchronizerId);
 }
 
 export function parseBoundedCapabilityBootstrapResponse(
@@ -256,6 +272,9 @@ export function parseBoundedCapabilityBootstrapResponse(
   const responseCommandId = transaction.commandId ?? transaction.command_id;
   if (responseCommandId !== state.commandId) {
     throw new Error("bootstrap transaction command ID does not match");
+  }
+  if (transaction.synchronizerId !== state.synchronizerId) {
+    throw new Error("bootstrap transaction synchronizer does not match");
   }
   const offset = transaction.offset;
   if (!Number.isSafeInteger(offset) || (offset as number) < 0) {

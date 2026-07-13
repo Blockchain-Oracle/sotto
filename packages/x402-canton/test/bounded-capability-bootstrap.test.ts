@@ -20,6 +20,7 @@ const input = {
   payerParty: "sotto-spike-payer::1220participant",
   perCallLimitAtomic: "2500000000",
   remainingAllowanceAtomic: "10000000000",
+  synchronizerId: "global-domain::1220synchronizer",
   transferFactoryContractId: "00transferfactory",
   userId: "ledger-user-6",
 } as const;
@@ -39,8 +40,12 @@ describe("bounded capability bootstrap", () => {
 
     expect(request.actAs).toEqual([input.payerParty]);
     expect(request.readAs).toEqual([]);
+    expect(request.synchronizerId).toBe(input.synchronizerId);
+    expect(request.packageIdSelectionPreference).toEqual([
+      APPROVED_BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_ID.split(":")[0],
+    ]);
     expect(request.commandId).toBe(
-      "sotto-capability-bootstrap-v1-1f50d8e426d15688922a48a525ef2b0f89380a51fbdd590377b6abcd8ef0af1d",
+      "sotto-capability-bootstrap-v1-e9db1381afd43d39258b1a021aefb6fbc325f4c84b264feaf476bf330a531abe",
     );
     expect(buildBoundedCapabilityBootstrap(input)).toEqual(request);
     expect(request.commands).toEqual([
@@ -140,6 +145,7 @@ describe("bounded capability bootstrap", () => {
           },
         ],
         offset: 42,
+        synchronizerId: input.synchronizerId,
         updateId,
       },
     };
@@ -175,6 +181,17 @@ describe("bounded capability bootstrap", () => {
         request,
       ),
     ).toThrow("update ID");
+    expect(() =>
+      parseBoundedCapabilityBootstrapResponse(
+        {
+          transaction: {
+            ...response.transaction,
+            synchronizerId: "other-synchronizer",
+          },
+        },
+        request,
+      ),
+    ).toThrow("synchronizer");
   });
 
   it("reconciles zero, exact, and unexpected active capabilities", () => {
@@ -189,7 +206,12 @@ describe("bounded capability bootstrap", () => {
       observers: [input.agentParty],
     };
     const entry = (createdEvent: unknown) => ({
-      contractEntry: { JsActiveContract: { createdEvent } },
+      contractEntry: {
+        JsActiveContract: {
+          createdEvent,
+          synchronizerId: input.synchronizerId,
+        },
+      },
     });
 
     expect(reconcileBoundedCapabilityBootstrapAcs([], request)).toEqual({
@@ -234,5 +256,17 @@ describe("bounded capability bootstrap", () => {
         request: { ...intent.request, commandId: "tampered" },
       }),
     ).toThrow("does not match");
+    expect(() =>
+      restoreBoundedCapabilityBootstrapIntent({
+        ...intent,
+        request: { ...intent.request, synchronizerId: "other-synchronizer" },
+      }),
+    ).toThrow("does not match");
+    expect(() =>
+      restoreBoundedCapabilityBootstrapIntent({
+        ...intent,
+        request: { ...intent.request, packageIdSelectionPreference: [] },
+      }),
+    ).toThrow("package preference");
   });
 });

@@ -15,6 +15,7 @@ const input = {
   payerParty: "sotto-spike-payer::1220participant",
   perCallLimitAtomic: "2500000000",
   remainingAllowanceAtomic: "10000000000",
+  synchronizerId: "global-domain::1220synchronizer",
   transferFactoryContractId: "00transferfactory",
   userId: "ledger-user-6",
 } as const;
@@ -35,6 +36,7 @@ describe("capability bootstrap recovery", () => {
     const active = {
       contractEntry: {
         JsActiveContract: {
+          synchronizerId: input.synchronizerId,
           createdEvent: {
             contractId: "00capability",
             createArgument: request.commands[0]!.CreateCommand.createArguments,
