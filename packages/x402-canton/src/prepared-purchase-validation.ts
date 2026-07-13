@@ -1,6 +1,7 @@
 import { PreparedTransaction } from "@canton-network/core-ledger-proto";
 import type { BoundedPurchasePrepareRequest } from "./bounded-purchase-command-types.js";
 import { validatePreparedPurchaseGraph } from "./prepared-purchase-graph.js";
+import type { PreparedStructureBudget } from "./prepared-purchase-limits.js";
 import type { BoundedPurchaseLedgerIntent } from "./purchase-ledger-intent.js";
 import { validatePreparedPurchaseMetadata } from "./prepared-purchase-metadata.js";
 
@@ -21,6 +22,7 @@ export function inspectPreparedPurchaseStructure(
   if (prepared.transaction === undefined || prepared.metadata === undefined) {
     throw new Error("prepared transaction or metadata is absent");
   }
-  validatePreparedPurchaseMetadata(prepared.metadata, intent, request);
-  validatePreparedPurchaseGraph(prepared.transaction, intent, request);
+  const budget: PreparedStructureBudget = { items: 0 };
+  validatePreparedPurchaseMetadata(prepared.metadata, intent, request, budget);
+  validatePreparedPurchaseGraph(prepared.transaction, intent, request, budget);
 }

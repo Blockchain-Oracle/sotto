@@ -2,6 +2,10 @@ import type { Metadata } from "@canton-network/core-ledger-proto";
 import type { BoundedPurchasePrepareRequest } from "./bounded-purchase-command-types.js";
 import type { BoundedPurchaseLedgerIntent } from "./purchase-ledger-intent.js";
 import { canonicalTime, identifier } from "./purchase-commitment-primitives.js";
+import {
+  type PreparedStructureBudget,
+  validatePreparedValue,
+} from "./prepared-purchase-limits.js";
 
 export const MAX_PREPARED_INPUT_CONTRACTS = 4_096;
 export const MAX_PREPARED_EVENT_BLOB_BYTES = 1_048_576;
@@ -11,7 +15,10 @@ function timestampMicros(value: string, label: string): bigint {
   return BigInt(canonicalTime(value, label)) * 1000n;
 }
 
-function validateInputContracts(metadata: Metadata): void {
+function validateInputContracts(
+  metadata: Metadata,
+  budget: PreparedStructureBudget,
+): void {
   if (metadata.inputContracts.length > MAX_PREPARED_INPUT_CONTRACTS) {
     throw new Error("prepared Purchase has too many input contracts");
   }
@@ -30,6 +37,7 @@ function validateInputContracts(metadata: Metadata): void {
       throw new Error("prepared input contract IDs must be unique");
     }
     contractIds.add(contractId);
+    validatePreparedValue(input.contract.v1.argument, budget);
     if (input.eventBlob.byteLength > MAX_PREPARED_EVENT_BLOB_BYTES) {
       throw new Error("prepared input event blob exceeds byte limit");
     }
@@ -44,6 +52,7 @@ export function validatePreparedPurchaseMetadata(
   metadata: Metadata,
   intent: BoundedPurchaseLedgerIntent,
   request: BoundedPurchasePrepareRequest,
+  budget: PreparedStructureBudget,
 ): void {
   const submitter = metadata.submitterInfo;
   if (
@@ -84,5 +93,5 @@ export function validatePreparedPurchaseMetadata(
   ) {
     throw new Error("prepared ledger-time bounds are invalid");
   }
-  validateInputContracts(metadata);
+  validateInputContracts(metadata, budget);
 }

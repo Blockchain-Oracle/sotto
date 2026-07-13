@@ -4,6 +4,11 @@ import type {
   Exercise,
 } from "@canton-network/core-ledger-proto";
 import type { BoundedPurchasePrepareRequest } from "./bounded-purchase-command-types.js";
+import {
+  consumePreparedStructure,
+  type PreparedStructureBudget,
+  validatePreparedValue,
+} from "./prepared-purchase-limits.js";
 import type { BoundedPurchaseLedgerIntent } from "./purchase-ledger-intent.js";
 import { identifier } from "./purchase-commitment-primitives.js";
 import { validatePreparedPurchaseRoot } from "./prepared-purchase-root.js";
@@ -23,7 +28,10 @@ function canonicalNodeId(value: string, label: string): number {
   return result;
 }
 
-function nodeDetails(node: DamlTransaction_Node): Readonly<{
+function nodeDetails(
+  node: DamlTransaction_Node,
+  budget: PreparedStructureBudget,
+): Readonly<{
   children: readonly string[];
   exercise?: Exercise;
   seeded: boolean;
@@ -37,6 +45,8 @@ function nodeDetails(node: DamlTransaction_Node): Readonly<{
   }
   if (value.oneofKind === "exercise") {
     identifier(value.exercise.lfVersion, "prepared exercise LF version", 32);
+    validatePreparedValue(value.exercise.chosenValue, budget);
+    validatePreparedValue(value.exercise.exerciseResult, budget);
     return {
       children: value.exercise.children,
       exercise: value.exercise,
@@ -45,6 +55,7 @@ function nodeDetails(node: DamlTransaction_Node): Readonly<{
   }
   if (value.oneofKind === "create") {
     identifier(value.create.lfVersion, "prepared create LF version", 32);
+    validatePreparedValue(value.create.argument, budget);
     return { children: [], seeded: true };
   }
   if (value.oneofKind === "fetch") {
@@ -86,6 +97,7 @@ export function validatePreparedPurchaseGraph(
   transaction: DamlTransaction,
   intent: BoundedPurchaseLedgerIntent,
   request: BoundedPurchasePrepareRequest,
+  budget: PreparedStructureBudget,
 ): void {
   identifier(transaction.version, "prepared transaction version", 32);
   if (
@@ -103,13 +115,14 @@ export function validatePreparedPurchaseGraph(
     const numericId = canonicalNodeId(node.nodeId, "prepared node ID");
     if (nodes.has(node.nodeId))
       throw new Error("prepared node IDs must be unique");
-    const details = nodeDetails(node);
+    const details = nodeDetails(node, budget);
     if (new Set(details.children).size !== details.children.length) {
       throw new Error("prepared child references must be unique");
     }
     edges += details.children.length;
     if (edges > MAX_PREPARED_EDGES)
       throw new Error("prepared graph has too many edges");
+    consumePreparedStructure(budget, details.children.length);
     if (details.seeded) seeded.add(numericId);
     nodes.set(node.nodeId, details);
     indegree.set(node.nodeId, 0);
