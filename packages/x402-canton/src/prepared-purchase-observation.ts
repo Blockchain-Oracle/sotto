@@ -3,20 +3,18 @@ import { claimBoundedPurchasePrepareRequest } from "./bounded-purchase-command.j
 import type { BoundedPurchasePrepareRequest } from "./bounded-purchase-command-types.js";
 import {
   canonicalTime,
+  exactKeys,
   objectValue,
 } from "./purchase-commitment-primitives.js";
 import type { BoundedPurchaseLedgerIntent } from "./purchase-ledger-intent.js";
 import { canonicalDisclosureBlob } from "./purchase-disclosure-validation.js";
 import { assertStrictJson } from "./strict-json.js";
-import {
-  snapshotStrictJsonObject,
-  type StrictJsonObject,
-} from "./strict-json-value.js";
 
 export const PREPARE_SUBMISSION_PATH =
   "/v2/interactive-submission/prepare" as const;
 export const PREPARE_SUBMISSION_TIMEOUT_MS = 10_000;
 export const MAX_PREPARE_RESPONSE_BYTES = 8_388_608;
+export const MAX_PREPARED_TRANSACTION_BYTES = 6_291_456;
 
 export type PreparedPurchaseTransportRequest = Readonly<{
   path: typeof PREPARE_SUBMISSION_PATH;
@@ -44,14 +42,14 @@ type PreparedPurchaseState = Readonly<{
   capturedAt: number;
   intent: BoundedPurchaseLedgerIntent;
   prepareRequest: BoundedPurchasePrepareRequest;
-  preparedTransaction: StrictJsonObject;
+  preparedTransaction: Uint8Array;
   preparedTransactionHash: string;
 }> & { claimed: boolean };
 
 const states = new WeakMap<object, PreparedPurchaseState>();
 
 function parseResponse(bytes: Uint8Array): Readonly<{
-  preparedTransaction: StrictJsonObject;
+  preparedTransaction: Uint8Array;
   preparedTransactionHash: string;
 }> {
   if (
@@ -71,24 +69,52 @@ function parseResponse(bytes: Uint8Array): Readonly<{
   }
   assertStrictJson(source, 64, 65_536);
   const root = objectValue(JSON.parse(source), "prepare response");
-  const keys = Object.keys(root);
-  const allowed = new Set([
-    "preparedTransaction",
-    "preparedTransactionHash",
-    "hashingSchemeVersion",
-    "costEstimation",
-  ]);
-  if (
-    keys.some((key) => !allowed.has(key)) ||
-    !("preparedTransaction" in root) ||
-    !("preparedTransactionHash" in root) ||
-    !("hashingSchemeVersion" in root)
-  ) {
-    throw new Error("prepare response keys must match the approved contract");
+  exactKeys(
+    root,
+    [
+      "preparedTransaction",
+      "preparedTransactionHash",
+      "hashingSchemeVersion",
+      "hashingDetails",
+      "costEstimation",
+    ],
+    "prepare response",
+  );
+  if (root.hashingDetails !== null) {
+    throw new Error("prepare hashing details must be absent");
+  }
+  if (root.costEstimation !== null) {
+    const cost = objectValue(root.costEstimation, "prepare cost estimation");
+    exactKeys(
+      cost,
+      [
+        "estimationTimestamp",
+        "confirmationRequestTrafficCostEstimation",
+        "confirmationResponseTrafficCostEstimation",
+        "totalTrafficCostEstimation",
+      ],
+      "prepare cost estimation",
+    );
+    if (
+      typeof cost.estimationTimestamp !== "string" ||
+      Buffer.byteLength(cost.estimationTimestamp, "utf8") > 64 ||
+      [
+        cost.confirmationRequestTrafficCostEstimation,
+        cost.confirmationResponseTrafficCostEstimation,
+        cost.totalTrafficCostEstimation,
+      ].some((value) => !Number.isSafeInteger(value) || (value as number) < 0)
+    ) {
+      throw new Error("prepare cost estimation is invalid");
+    }
   }
   if (root.hashingSchemeVersion !== "HASHING_SCHEME_VERSION_V2") {
     throw new Error("prepare response must use hashing scheme V2");
   }
+  const transaction = canonicalDisclosureBlob(
+    root.preparedTransaction,
+    "prepared transaction",
+    MAX_PREPARED_TRANSACTION_BYTES,
+  );
   const hash = canonicalDisclosureBlob(
     root.preparedTransactionHash,
     "prepared transaction hash",
@@ -97,18 +123,9 @@ function parseResponse(bytes: Uint8Array): Readonly<{
   if (hash.bytes !== 32) {
     throw new Error("prepared transaction hash must contain 32 bytes");
   }
-  if ("costEstimation" in root) {
-    objectValue(root.costEstimation, "prepare cost estimation");
-  }
   return Object.freeze({
-    preparedTransaction: snapshotStrictJsonObject(
-      root.preparedTransaction,
-      "prepared transaction",
-      {
-        maximumBytes: MAX_PREPARE_RESPONSE_BYTES,
-        maximumDepth: 64,
-        maximumNodes: 65_536,
-      },
+    preparedTransaction: new Uint8Array(
+      Buffer.from(transaction.value, "base64"),
     ),
     preparedTransactionHash: hash.value,
   });
@@ -147,7 +164,7 @@ export function createPreparedPurchaseObserver(
       claimed: false,
       intent: authenticated.intent,
       prepareRequest: authenticated.request,
-      preparedTransaction: parsed.preparedTransaction,
+      preparedTransaction: new Uint8Array(parsed.preparedTransaction),
       preparedTransactionHash: parsed.preparedTransactionHash,
     });
     return observation;

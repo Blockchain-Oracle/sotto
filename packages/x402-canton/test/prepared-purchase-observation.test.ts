@@ -9,21 +9,16 @@ import {
 import { purchaseCommandInputs } from "./transfer-factory-observation.fixtures.js";
 
 const preparedHash = Buffer.alloc(32, 7).toString("base64");
+const preparedTransaction = Buffer.from("prepared-protobuf").toString("base64");
 
 function response(overrides: Record<string, unknown> = {}): Uint8Array {
   return new TextEncoder().encode(
     JSON.stringify({
-      preparedTransaction: {
-        transaction: {
-          version: "2.1",
-          roots: ["0"],
-          nodes: [],
-          nodeSeeds: [],
-        },
-        metadata: {},
-      },
+      preparedTransaction,
       preparedTransactionHash: preparedHash,
       hashingSchemeVersion: "HASHING_SCHEME_VERSION_V2",
+      hashingDetails: null,
+      costEstimation: null,
       ...overrides,
     }),
   );
@@ -78,6 +73,12 @@ describe("prepared Purchase observation envelope", () => {
       { preparedTransactionHash: Buffer.alloc(31).toString("base64") },
     ],
     ["noncanonical hash", { preparedTransactionHash: `${preparedHash}\n` }],
+    ["expanded transaction object", { preparedTransaction: {} }],
+    [
+      "noncanonical transaction",
+      { preparedTransaction: `${preparedTransaction}\n` },
+    ],
+    ["unexpected hashing details", { hashingDetails: "debug" }],
     ["unknown field", { unexpected: true }],
   ])("rejects a %s", async (_name, mutation) => {
     const { intent, holdings, registry } = await purchaseCommandInputs();

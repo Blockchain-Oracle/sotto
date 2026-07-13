@@ -20,6 +20,7 @@ export {
 export {
   createPreparedPurchaseObserver,
   MAX_PREPARE_RESPONSE_BYTES,
+  MAX_PREPARED_TRANSACTION_BYTES,
   PREPARE_SUBMISSION_PATH,
   PREPARE_SUBMISSION_TIMEOUT_MS,
   type PreparedPurchaseObservation,
