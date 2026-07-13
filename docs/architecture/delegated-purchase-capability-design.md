@@ -250,11 +250,27 @@ Use current official Canton and Daml sources, not remembered APIs:
   - Holding: `ef75f8eb41a65810221784fdb78bb9dfac7cb22245aba14fa7cb7f69c34e0175`;
   - Metadata:
     `455eb160cb5abd4ae9918a6fbb9dad471f721adda39f0e5c76feef08d05637fc`.
-- Prepared-transaction verification should use the smaller pinned
-  `@canton-network/core-tx-visualizer@1.7.0` and
-  `@canton-network/core-ledger-proto@1.7.0` surfaces. The official internal
-  signing controller signs a supplied hash without performing Sotto's semantic
-  validation and is not an acceptable verifier.
+- Prepared-transaction structural decoding uses exactly pinned
+  `@canton-network/core-ledger-proto@1.7.0` with recursive unknown-field
+  rejection. Its schema predates some Canton 3.5.6 fields, so encountering an
+  unsupported field is a hard `NOT SIGNABLE` result rather than permission to
+  discard it.
+- Exactly pinned `@canton-network/core-tx-visualizer@1.7.0`, from the Apache-2.0
+  Canton Wallet source commit `13822ef748fc6245042eb20d4460b42b8ff3ce3f`, may
+  provide only a fast hash precheck. It is not the authoritative signer
+  boundary.
+- Authoritative prepared-transaction hashing must match the Apache-2.0 Canton
+  `v3.5.6` implementation at commit `5ec182991db5d26c7c78920101467f3101ff6c11`.
+  The participant response and the local verifier compare the canonical raw
+  32-byte digest. The locally installed Canton JAR has a separate license and
+  must not be committed, redistributed, or packaged.
+- Canton hashing scheme V2 does not bind `maxRecordTime` or the global-key
+  mapping. Purchase expiry therefore remains enforced by the committed Daml
+  `executeBefore` value and ledger-time bounds. A future V3 path may bind
+  `maxRecordTime` only after exact participant and source compatibility is
+  proven.
+- The official internal signing controller signs a supplied hash without
+  performing Sotto's semantic validation and is not an acceptable verifier.
 - Token Standard interface definitions must be brought in through a reproducible
   pinned package or DAR dependency with the resulting Daml lock information
   tracked. Generated DARs themselves remain excluded from Git.
@@ -276,6 +292,10 @@ Any reused source requires its compatible license, attribution, and exact pin.
   transfer effects, wrong package/interface identifiers, or hash mismatch.
 - Bound prepared bytes, node count, tree depth, and decode/hash time; oversized,
   over-deep, and timeout cases must make zero signing calls.
+- Keep the hot path to one strict protobuf decode plus bounded linear
+  `O(nodes + edges + values)` inspection. Run the official hash implementation
+  as a persistent bounded helper rather than starting a JVM for each purchase;
+  the visualizer precheck cannot replace this helper.
 - Verify expected admin and maximum fee/total debit in the Daml path. Verify
   receiver holdings and amount plus absence of unapproved value effects in the
   prepared-transaction verifier, where the complete create effects are available

@@ -10,6 +10,7 @@
     "build": "tsc -p tsconfig.build.json"
   },
   "dependencies": {
-    "@canton-network/core-ledger-proto": "1.7.0"
+    "@canton-network/core-ledger-proto": "1.7.0",
+    "@canton-network/core-tx-visualizer": "1.7.0"
   }
 }

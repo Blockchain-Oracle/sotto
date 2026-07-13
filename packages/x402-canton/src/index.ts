@@ -32,6 +32,7 @@ export {
   type HashVerifiedPreparedPurchase,
   type PreparedPurchaseHashDependencies,
 } from "./prepared-purchase-hash.js";
+export { recomputeWalletPreparedHashPrecheck } from "./prepared-purchase-wallet-precheck.js";
 export * from "./purchase-commitment.js";
 export * from "./purchase-evidence.js";
 export {
