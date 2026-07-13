@@ -18,7 +18,7 @@ const completeEnvironment = {
   POLICY_OUTSIDER_PARTY: "policy-outsider::1220bbb",
   POLICY_OWNER_PARTY: "policy-owner::1220ccc",
   PROVIDER_PARTY: "provider::1220def",
-  SOTTO_CONTROL_PACKAGE_ID: "f72d7eb3",
+  SOTTO_CONTROL_PACKAGE_ID: "f".repeat(64),
   SOTTO_PURCHASE_ID: "phase3-baseline-1",
   X402_RELAY_URL: "https://relay.example",
 };
@@ -44,7 +44,7 @@ describe("readSpikeConfig", () => {
         agentParty: "policy-agent::1220aaa",
         outsiderParty: "policy-outsider::1220bbb",
         ownerParty: "policy-owner::1220ccc",
-        packageId: "f72d7eb3",
+        packageId: "f".repeat(64),
       },
       relay: { url: "https://relay.example" },
     });
@@ -65,6 +65,18 @@ describe("readSpikeConfig", () => {
       }).network.tokenUrl,
     ).toBe("https://issuer.example/application/o/token/");
   });
+
+  it.each(["f72d7eb3", "G".repeat(64)])(
+    "rejects invalid Sotto package ID %s",
+    (packageId) => {
+      expect(() =>
+        readSpikeConfig({
+          ...completeEnvironment,
+          SOTTO_CONTROL_PACKAGE_ID: packageId,
+        }),
+      ).toThrow("SOTTO_CONTROL_PACKAGE_ID");
+    },
+  );
 
   it("produces a preflight summary without secret or party values", () => {
     const summary = JSON.stringify(

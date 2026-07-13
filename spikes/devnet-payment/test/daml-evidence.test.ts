@@ -7,6 +7,9 @@ import {
 } from "../src/daml-evidence.js";
 
 describe("Daml live evidence", () => {
+  const packageId = "f".repeat(64);
+  const policyTemplate = `${packageId}:Sotto.Control.PrivacyProbe:PurchasePolicyProbe`;
+
   it("extracts one exact Sotto contract from a ledger-effects transaction", () => {
     const response = {
       transaction: {
@@ -16,8 +19,7 @@ describe("Daml live evidence", () => {
               contractId: "policy-cid",
               createArgument: { remainingLimit: "0.7500000000" },
               packageName: "sotto-control",
-              templateId:
-                "f72d7eb3:Sotto.Control.PrivacyProbe:PurchasePolicyProbe",
+              templateId: policyTemplate,
             },
           },
         ],
@@ -25,18 +27,39 @@ describe("Daml live evidence", () => {
     };
 
     expect(
-      findCreatedContract(response, "sotto-control", "PurchasePolicyProbe"),
+      findCreatedContract(response, packageId, "PurchasePolicyProbe"),
     ).toEqual({
       contractId: "policy-cid",
       createArgument: { remainingLimit: "0.7500000000" },
     });
   });
 
+  it("rejects a same-named contract from another package", () => {
+    const response = {
+      transaction: {
+        events: [
+          {
+            CreatedEvent: {
+              contractId: "policy-cid",
+              createArgument: { remainingLimit: "0.7500000000" },
+              packageName: "sotto-control",
+              templateId: `wrong:${policyTemplate}`,
+            },
+          },
+        ],
+      },
+    };
+
+    expect(() =>
+      findCreatedContract(response, packageId, "PurchasePolicyProbe"),
+    ).toThrow("Expected one");
+  });
+
   it("builds a party-scoped template ACS request at an exact offset", () => {
     expect(
       buildActiveContractRequest(
         "sotto-policy-owner::1220participant",
-        "#sotto-control:Sotto.Control.PrivacyProbe:PurchasePolicyProbe",
+        policyTemplate,
         42,
       ),
     ).toMatchObject({
@@ -49,8 +72,7 @@ describe("Daml live evidence", () => {
                 identifierFilter: {
                   TemplateFilter: {
                     value: {
-                      templateId:
-                        "#sotto-control:Sotto.Control.PrivacyProbe:PurchasePolicyProbe",
+                      templateId: policyTemplate,
                     },
                   },
                 },

@@ -1,4 +1,5 @@
 import { atomicPurchaseCommandId } from "./atomic-purchase.js";
+import { sottoTemplateId } from "./daml-template-ids.js";
 import type { SettlementProof } from "./provider.js";
 import {
   reconcileSettlementTransaction,
@@ -13,6 +14,7 @@ export type AtomicReconciliationExpectation = Omit<
     agentParty: string;
     ownerParty: string;
     policyCid: string;
+    policyPackageId: string;
     policyRevision: string;
     remainingLimit: string;
     resourceHash: `sha256:${string}`;
@@ -42,7 +44,18 @@ export function reconcileAtomicPurchaseTransaction(
   const exercises = events
     .map((event) => record(record(event)?.ExercisedEvent))
     .filter((event) => event !== undefined);
-  const consumes = exercises.filter((event) => event.choice === "Consume");
+  const policyTemplate = sottoTemplateId(
+    expected.policyPackageId,
+    "PurchasePolicyProbe",
+  );
+  const contextTemplate = sottoTemplateId(
+    expected.policyPackageId,
+    "PurchaseContextProbe",
+  );
+  const consumes = exercises.filter(
+    (event) =>
+      event.choice === "Consume" && event.templateId === policyTemplate,
+  );
   if (consumes.length !== 1) return false;
   const consume = consumes[0];
   const argument = record(consume?.choiceArgument);
@@ -58,12 +71,12 @@ export function reconcileAtomicPurchaseTransaction(
   }
   const created = events
     .map((event) => record(record(event)?.CreatedEvent))
-    .filter((event) => event?.packageName === "sotto-control");
-  const contexts = created.filter((event) =>
-    String(event?.templateId).endsWith(":PurchaseContextProbe"),
+    .filter((event) => event !== undefined);
+  const contexts = created.filter(
+    (event) => event.templateId === contextTemplate,
   );
-  const policies = created.filter((event) =>
-    String(event?.templateId).endsWith(":PurchasePolicyProbe"),
+  const policies = created.filter(
+    (event) => event.templateId === policyTemplate,
   );
   if (contexts.length !== 1 || policies.length !== 1) return false;
   const context = record(contexts[0]?.createArgument);

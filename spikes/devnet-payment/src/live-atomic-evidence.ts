@@ -3,14 +3,10 @@ import {
   activeContracts,
   buildActiveContractRequest,
 } from "./daml-evidence.js";
+import { sottoTemplateId } from "./daml-template-ids.js";
 
 type Client = ReturnType<typeof createFiveNorthClient>;
 type Readers = Readonly<Record<string, string>>;
-
-const policyTemplate =
-  "#sotto-control:Sotto.Control.PrivacyProbe:PurchasePolicyProbe";
-const contextTemplate =
-  "#sotto-control:Sotto.Control.PrivacyProbe:PurchaseContextProbe";
 
 async function queryContracts(
   client: Client,
@@ -41,10 +37,12 @@ export function buildRollbackRequest(
 
 export async function policyIsActive(
   client: Client,
+  packageId: string,
   party: string,
   policyCid: string,
   offset: number,
 ): Promise<boolean> {
+  const policyTemplate = sottoTemplateId(packageId, "PurchasePolicyProbe");
   return (await queryContracts(client, party, policyTemplate, offset)).some(
     (contract) => contract.contractId === policyCid,
   );
@@ -54,9 +52,18 @@ export async function readAtomicVisibility(input: {
   attemptId: string;
   client: Client;
   offset: number;
+  packageId: string;
   readers: Readers;
   reducedPolicyCid: string;
 }) {
+  const policyTemplate = sottoTemplateId(
+    input.packageId,
+    "PurchasePolicyProbe",
+  );
+  const contextTemplate = sottoTemplateId(
+    input.packageId,
+    "PurchaseContextProbe",
+  );
   const visibility: Record<string, { context: number; policy: number }> = {};
   for (const [role, party] of Object.entries(input.readers)) {
     const policies = await queryContracts(

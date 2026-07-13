@@ -38,6 +38,8 @@ const requestCommitment = commitHttpRequest({
 }).commitment;
 const proof = { attemptId, requestCommitment, updateId } as SettlementProof;
 const expected = {
+  amuletRulesContractId: state.amuletRules.contract.contract_id,
+  amuletRulesTemplateId: state.amuletRules.contract.template_id,
   amount: atomicToDecimal("2500000000"),
   dsoParty,
   payerParty: config.payer.party,

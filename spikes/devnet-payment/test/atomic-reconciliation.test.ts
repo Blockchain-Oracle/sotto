@@ -11,21 +11,27 @@ const proof = {
   updateId: `1220${"c".repeat(64)}`,
 } as const;
 const expected = {
+  amuletRulesContractId: "amulet-rules-cid",
+  amuletRulesTemplateId: "amulet-package:Splice.AmuletRules:AmuletRules",
   agentParty: "sotto-policy-agent::1220participant",
   amount: "0.2500000000",
   dsoParty: "DSO::1220dso",
   ownerParty: "sotto-policy-owner::1220participant",
   payerParty: "sotto-spike-payer::1220participant",
   policyCid: "policy-cid",
+  policyPackageId: "f".repeat(64),
   policyRevision: "0",
   providerParty: "sotto-spike-provider::1220participant",
   remainingLimit: "0.7500000000",
   resourceHash: `sha256:${"d".repeat(64)}`,
   synchronizerId: "global-domain::1220sync",
 } as const satisfies AtomicReconciliationExpectation;
+const policyTemplate = `${expected.policyPackageId}:Sotto.Control.PrivacyProbe:PurchasePolicyProbe`;
+const contextTemplate = `${expected.policyPackageId}:Sotto.Control.PrivacyProbe:PurchaseContextProbe`;
 
 const transfer = {
   choice: "AmuletRules_Transfer",
+  contractId: expected.amuletRulesContractId,
   choiceArgument: {
     expectedDso: expected.dsoParty,
     transfer: {
@@ -46,6 +52,7 @@ const transfer = {
       { tag: "TransferResultAmulet", value: "provider-holding-cid" },
     ],
   },
+  templateId: expected.amuletRulesTemplateId,
 };
 const consume = {
   choice: "Consume",
@@ -57,6 +64,7 @@ const consume = {
     resourceHash: expected.resourceHash,
   },
   contractId: expected.policyCid,
+  templateId: policyTemplate,
 };
 const context = {
   createArgument: {
@@ -71,7 +79,7 @@ const context = {
     resourceHash: expected.resourceHash,
   },
   packageName: "sotto-control",
-  templateId: "package:Sotto.Control.PrivacyProbe:PurchaseContextProbe",
+  templateId: contextTemplate,
 };
 const reducedPolicy = {
   createArgument: {
@@ -85,7 +93,7 @@ const reducedPolicy = {
     usedAttemptIds: [proof.attemptId],
   },
   packageName: "sotto-control",
-  templateId: "package:Sotto.Control.PrivacyProbe:PurchasePolicyProbe",
+  templateId: policyTemplate,
 };
 
 function transaction(events: unknown[]) {
@@ -139,6 +147,52 @@ describe("reconcileAtomicPurchaseTransaction", () => {
       ),
     ],
   ])("rejects a transaction missing the %s effect", (_name, events) => {
+    expect(
+      reconcileAtomicPurchaseTransaction(transaction(events), proof, expected),
+    ).toBe(false);
+  });
+
+  it.each([
+    [
+      "consumed policy",
+      exactEvents.map((event) =>
+        "ExercisedEvent" in event && event.ExercisedEvent === consume
+          ? {
+              ExercisedEvent: {
+                ...consume,
+                templateId: `wrong:${policyTemplate}`,
+              },
+            }
+          : event,
+      ),
+    ],
+    [
+      "created context",
+      exactEvents.map((event) =>
+        "CreatedEvent" in event && event.CreatedEvent === context
+          ? {
+              CreatedEvent: {
+                ...context,
+                templateId: `wrong:${contextTemplate}`,
+              },
+            }
+          : event,
+      ),
+    ],
+    [
+      "reduced policy",
+      exactEvents.map((event) =>
+        "CreatedEvent" in event && event.CreatedEvent === reducedPolicy
+          ? {
+              CreatedEvent: {
+                ...reducedPolicy,
+                templateId: `wrong:${policyTemplate}`,
+              },
+            }
+          : event,
+      ),
+    ],
+  ])("rejects the wrong package for the %s", (_name, events) => {
     expect(
       reconcileAtomicPurchaseTransaction(transaction(events), proof, expected),
     ).toBe(false);

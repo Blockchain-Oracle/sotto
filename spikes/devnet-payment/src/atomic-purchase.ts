@@ -16,6 +16,7 @@ type AtomicPurchaseInput = Omit<SettlementInput, "providerParty"> &
   Readonly<{
     parties: Parties;
     policyCid: string;
+    policyPackageId: string;
     resourceHash: `sha256:${string}`;
   }>;
 
@@ -55,6 +56,7 @@ export function buildAtomicPurchaseRequest(input: AtomicPurchaseInput) {
     amount: atomicToDecimal(authorization.requirement.amount),
     attemptId: authorization.attemptId,
     commandId: atomicPurchaseCommandId(authorization),
+    packageId: input.policyPackageId,
     parties,
     policyCid: input.policyCid,
     requestCommitment: authorization.requestCommitment,

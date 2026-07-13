@@ -10,12 +10,15 @@ const parties = {
   payer: "sotto-spike-payer::1220participant",
   provider: "sotto-spike-provider::1220participant",
 };
+const packageId = "f".repeat(64);
+const policyTemplate = `${packageId}:Sotto.Control.PrivacyProbe:PurchasePolicyProbe`;
 
 describe("Sotto Daml command construction", () => {
   it("creates the research policy with payer authority", () => {
     const request = buildCreatePolicyRequest({
       commandId: "sotto-policy-create-1",
       expiresAt: "2026-07-13T10:00:00.000Z",
+      packageId,
       parties,
       resourceHash: `sha256:${"a".repeat(64)}`,
       userId: "6",
@@ -24,8 +27,7 @@ describe("Sotto Daml command construction", () => {
     expect(request.actAs).toEqual([parties.payer]);
     expect(request.commands[0]).toMatchObject({
       CreateCommand: {
-        templateId:
-          "#sotto-control:Sotto.Control.PrivacyProbe:PurchasePolicyProbe",
+        templateId: policyTemplate,
         createArguments: {
           agent: parties.agent,
           allowedRecipient: parties.provider,
@@ -43,6 +45,7 @@ describe("Sotto Daml command construction", () => {
       amount: "0.2500000000",
       attemptId: `sha256:${"b".repeat(64)}`,
       commandId: "sotto-policy-consume-1",
+      packageId,
       parties,
       policyCid: "policy-cid",
       requestCommitment: `sha256:${"c".repeat(64)}`,
@@ -59,7 +62,21 @@ describe("Sotto Daml command construction", () => {
           recipient: parties.provider,
         },
         contractId: "policy-cid",
+        templateId: policyTemplate,
       },
     });
+  });
+
+  it("rejects a non-hash package identifier", () => {
+    expect(() =>
+      buildCreatePolicyRequest({
+        commandId: "sotto-policy-create-invalid",
+        expiresAt: "2026-07-13T10:00:00.000Z",
+        packageId: "#sotto-control",
+        parties,
+        resourceHash: `sha256:${"a".repeat(64)}`,
+        userId: "6",
+      }),
+    ).toThrow("package ID");
   });
 });

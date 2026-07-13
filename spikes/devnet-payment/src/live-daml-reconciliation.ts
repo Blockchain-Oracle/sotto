@@ -6,6 +6,7 @@ import {
   buildActiveContractRequest,
   findCreatedContract,
 } from "./daml-evidence.js";
+import { sottoTemplateId } from "./daml-template-ids.js";
 import { createFiveNorthClient } from "./five-north.js";
 
 const updatePattern = /^1220[0-9a-f]{64}$/;
@@ -36,17 +37,17 @@ const consumeTransaction = await client.getTransaction(
 );
 const originalPolicy = findCreatedContract(
   createTransaction,
-  "sotto-control",
+  config.policy.packageId,
   "PurchasePolicyProbe",
 );
 const reducedPolicy = findCreatedContract(
   consumeTransaction,
-  "sotto-control",
+  config.policy.packageId,
   "PurchasePolicyProbe",
 );
 const context = findCreatedContract(
   consumeTransaction,
-  "sotto-control",
+  config.policy.packageId,
   "PurchaseContextProbe",
 );
 const requestCommitment = commitHttpRequest({
@@ -72,10 +73,14 @@ if (
   throw new Error("Accepted Sotto Daml state does not match the paid attempt");
 }
 
-const policyTemplate =
-  "#sotto-control:Sotto.Control.PrivacyProbe:PurchasePolicyProbe";
-const contextTemplate =
-  "#sotto-control:Sotto.Control.PrivacyProbe:PurchaseContextProbe";
+const policyTemplate = sottoTemplateId(
+  config.policy.packageId,
+  "PurchasePolicyProbe",
+);
+const contextTemplate = sottoTemplateId(
+  config.policy.packageId,
+  "PurchaseContextProbe",
+);
 const offset = await client.getLedgerEnd();
 const readers = {
   agent: config.policy.agentParty,

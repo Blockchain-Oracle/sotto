@@ -12,6 +12,7 @@ import { findCreatedContract } from "./daml-evidence.js";
 import { createFiveNorthClient } from "./five-north.js";
 import { matchesLedgerRejection } from "./ledger-rejection.js";
 import { observeHttpChallenge } from "./http-observer.js";
+import { requireMatchedRequestBinding } from "./observation.js";
 import {
   buildRollbackRequest,
   policyIsActive,
@@ -24,8 +25,6 @@ import {
   type SettlementProof,
 } from "./provider.js";
 import { atomicToDecimal } from "./settlement.js";
-
-const amount = "2500000000";
 const config = readSpikeConfig(process.env);
 const client = createFiveNorthClient(config.network);
 const initialState = await client.loadSettlementState(config.payer.party);
@@ -40,19 +39,21 @@ const parties = {
   provider: config.provider.party,
 } as const;
 const expectedBase = {
+  amuletRulesContractId: initialState.amuletRules.contract.contract_id,
+  amuletRulesTemplateId: initialState.amuletRules.contract.template_id,
   agentParty: parties.agent,
-  amount: atomicToDecimal(amount),
+  amount: atomicToDecimal("2500000000"),
   dsoParty,
   ownerParty: parties.owner,
   payerParty: parties.payer,
   policyRevision: "0",
+  policyPackageId: config.policy.packageId,
   providerParty: parties.provider,
   remainingLimit: "0.7500000000",
   synchronizerId: initialState.amuletRules.domain_id,
 } as const;
 let policyCid: string | undefined;
 let resourceHash: `sha256:${string}` | undefined;
-
 async function verifySettlement(proof: SettlementProof): Promise<boolean> {
   if (policyCid === undefined || resourceHash === undefined) return false;
   try {
@@ -69,9 +70,8 @@ async function verifySettlement(proof: SettlementProof): Promise<boolean> {
     return false;
   }
 }
-
 const handler = createPaidResourceHandler({
-  amount,
+  amount: "2500000000",
   dsoParty,
   maxTimeoutSeconds: 120,
   payerParty: parties.payer,
@@ -85,7 +85,6 @@ const server = await startPaidProvider({
   port: 8_788,
   resourceUrl: config.provider.resourceUrl,
 });
-
 try {
   const observation = await observeHttpChallenge({
     authorizeUrl: async (url) => {
@@ -103,6 +102,7 @@ try {
     resourceUrl: config.provider.resourceUrl,
     timeoutMs: 10_000,
   });
+  requireMatchedRequestBinding(observation);
   const binding = commitHttpRequest({
     method: "GET",
     url: config.provider.resourceUrl,
@@ -125,6 +125,7 @@ try {
     buildCreatePolicyRequest({
       commandId: `sotto-atomic-policy-${attemptHash}`,
       expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+      packageId: config.policy.packageId,
       parties,
       resourceHash,
       userId,
@@ -136,7 +137,7 @@ try {
   );
   policyCid = findCreatedContract(
     policyTransaction,
-    "sotto-control",
+    config.policy.packageId,
     "PurchasePolicyProbe",
   ).contractId;
   const purchase = buildAtomicPurchaseRequest({
@@ -147,6 +148,7 @@ try {
     parties,
     payerHolding: initialState.payerHolding,
     policyCid,
+    policyPackageId: config.policy.packageId,
     resourceHash,
     userId,
   });
@@ -168,6 +170,7 @@ try {
   const rollbackOffset = await client.getLedgerEnd();
   const rollbackPreservedPolicy = await policyIsActive(
     client,
+    config.policy.packageId,
     parties.payer,
     policyCid,
     rollbackOffset,
@@ -188,6 +191,7 @@ try {
       parties,
       payerHolding: afterRollback.payerHolding,
       policyCid,
+      policyPackageId: config.policy.packageId,
       resourceHash,
       userId,
     }),
@@ -212,12 +216,12 @@ try {
   }
   const reducedPolicy = findCreatedContract(
     acceptedTransaction,
-    "sotto-control",
+    config.policy.packageId,
     "PurchasePolicyProbe",
   );
   const context = findCreatedContract(
     acceptedTransaction,
-    "sotto-control",
+    config.policy.packageId,
     "PurchaseContextProbe",
   );
   const signature = encodeSettlementProof(proof);
@@ -247,6 +251,7 @@ try {
     attemptId: proof.attemptId,
     client,
     offset: evidenceOffset,
+    packageId: config.policy.packageId,
     readers,
     reducedPolicyCid: reducedPolicy.contractId,
   });

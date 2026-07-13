@@ -11,6 +11,17 @@ export type CompatibilityVerdict = Readonly<{
   wire: "compatible";
 }>;
 
+export function requireMatchedRequestBinding(observation: {
+  compatibility: CompatibilityVerdict;
+}): void {
+  if (
+    observation.compatibility.exactRequestBinding !== "matched" ||
+    observation.compatibility.resourceUrlBinding !== "matched"
+  ) {
+    throw new Error("Provider challenge did not bind the exact request");
+  }
+}
+
 export type ChallengeObservation = Readonly<{
   bindingVersion: "sotto-http-request-v1";
   bodySha256: string;

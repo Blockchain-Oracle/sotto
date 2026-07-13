@@ -2,6 +2,8 @@ import type { SettlementProof } from "./provider.js";
 import { settlementCommandId } from "./settlement.js";
 
 export type ReconciliationExpectation = Readonly<{
+  amuletRulesContractId: string;
+  amuletRulesTemplateId: string;
   amount: string;
   commandId?: string;
   dsoParty: string;
@@ -34,7 +36,12 @@ export function reconcileSettlementTransaction(
 
   const transfers = transaction.events
     .map((entry) => record(record(entry)?.ExercisedEvent))
-    .filter((event) => event?.choice === "AmuletRules_Transfer");
+    .filter(
+      (event) =>
+        event?.choice === "AmuletRules_Transfer" &&
+        event.contractId === expected.amuletRulesContractId &&
+        event.templateId === expected.amuletRulesTemplateId,
+    );
   if (transfers.length !== 1) {
     return false;
   }

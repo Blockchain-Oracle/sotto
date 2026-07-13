@@ -1,3 +1,8 @@
+import {
+  sottoTemplateId,
+  type SottoTemplateEntity,
+} from "./daml-template-ids.js";
+
 function record(value: unknown): Record<string, unknown> | undefined {
   return typeof value === "object" && value !== null && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -32,21 +37,17 @@ export function buildActiveContractRequest(
 
 export function findCreatedContract(
   response: unknown,
-  packageName: string,
-  entityName: string,
+  packageId: string,
+  entityName: SottoTemplateEntity,
 ) {
   const events = record(record(response)?.transaction)?.events;
   if (!Array.isArray(events)) {
     throw new Error("Transaction requires events");
   }
+  const templateId = sottoTemplateId(packageId, entityName);
   const matches = events
     .map((event) => record(record(event)?.CreatedEvent))
-    .filter(
-      (event) =>
-        event?.packageName === packageName &&
-        typeof event.templateId === "string" &&
-        event.templateId.endsWith(`:${entityName}`),
-    );
+    .filter((event) => event?.templateId === templateId);
   if (matches.length !== 1) {
     throw new Error(`Expected one created ${entityName} contract`);
   }

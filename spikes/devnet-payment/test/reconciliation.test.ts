@@ -12,6 +12,8 @@ const proof = {
   updateId: `1220${"c".repeat(64)}`,
 } as const;
 const expected = {
+  amuletRulesContractId: "amulet-rules-cid",
+  amuletRulesTemplateId: "amulet-package:Splice.AmuletRules:AmuletRules",
   amount: "0.2500000000",
   dsoParty: "DSO::1220dso",
   payerParty: "sotto-spike-payer::1220participant",
@@ -33,6 +35,7 @@ function commandId(value: typeof proof): string {
 
 const transferEvent = {
   choice: "AmuletRules_Transfer",
+  contractId: expected.amuletRulesContractId,
   choiceArgument: {
     expectedDso: expected.dsoParty,
     transfer: {
@@ -53,6 +56,7 @@ const transferEvent = {
       { tag: "TransferResultAmulet", value: "provider-holding-cid" },
     ],
   },
+  templateId: expected.amuletRulesTemplateId,
 };
 
 function transaction(event: unknown = transferEvent) {
@@ -118,6 +122,19 @@ describe("reconcileSettlementTransaction", () => {
 
     expect(
       reconcileSettlementTransaction(transaction(mutated), proof, expected),
+    ).toBe(false);
+  });
+
+  it.each([
+    ["contract", { contractId: "attacker-rules-cid" }],
+    ["template", { templateId: "attacker-package:Fake.Module:AmuletRules" }],
+  ])("rejects a same-named transfer from the wrong %s", (_name, mutation) => {
+    expect(
+      reconcileSettlementTransaction(
+        transaction({ ...transferEvent, ...mutation }),
+        proof,
+        expected,
+      ),
     ).toBe(false);
   });
 });

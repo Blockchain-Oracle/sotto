@@ -6,6 +6,7 @@ import {
 import { readSpikeConfig } from "./config.js";
 import { createFiveNorthClient } from "./five-north.js";
 import { observeHttpChallenge } from "./http-observer.js";
+import { requireMatchedRequestBinding } from "./observation.js";
 import {
   createPaidResourceHandler,
   encodeSettlementProof,
@@ -24,6 +25,8 @@ if (typeof dsoParty !== "string") {
   throw new Error("AmuletRules requires the DSO party");
 }
 const expected = {
+  amuletRulesContractId: state.amuletRules.contract.contract_id,
+  amuletRulesTemplateId: state.amuletRules.contract.template_id,
   amount: atomicToDecimal(amount),
   dsoParty,
   payerParty: config.payer.party,
@@ -76,12 +79,7 @@ try {
     resourceUrl: config.provider.resourceUrl,
     timeoutMs: 10_000,
   });
-  if (
-    observation.compatibility.exactRequestBinding !== "matched" ||
-    observation.compatibility.resourceUrlBinding !== "matched"
-  ) {
-    throw new Error("Provider challenge did not bind the exact request");
-  }
+  requireMatchedRequestBinding(observation);
   const binding = commitHttpRequest({
     method: "GET",
     url: config.provider.resourceUrl,

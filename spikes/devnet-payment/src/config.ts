@@ -1,3 +1,5 @@
+import { requirePackageId } from "./daml-template-ids.js";
+
 type Environment = Readonly<Record<string, string | undefined>>;
 
 export type SpikeConfig = Readonly<{
@@ -69,7 +71,10 @@ export function readSpikeConfig(environment: Environment): SpikeConfig {
       agentParty: required(environment, "POLICY_AGENT_PARTY"),
       outsiderParty: required(environment, "POLICY_OUTSIDER_PARTY"),
       ownerParty: required(environment, "POLICY_OWNER_PARTY"),
-      packageId: required(environment, "SOTTO_CONTROL_PACKAGE_ID"),
+      packageId: requirePackageId(
+        required(environment, "SOTTO_CONTROL_PACKAGE_ID"),
+        "SOTTO_CONTROL_PACKAGE_ID",
+      ),
     },
     provider: {
       party: required(environment, "PROVIDER_PARTY"),

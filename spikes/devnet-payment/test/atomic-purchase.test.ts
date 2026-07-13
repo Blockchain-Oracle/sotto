@@ -15,6 +15,8 @@ const agent = "sotto-policy-agent::1220participant";
 const owner = "sotto-policy-owner::1220participant";
 const dso = "DSO::1220dso";
 const synchronizer = "global-domain::1220sync";
+const policyPackageId = "f".repeat(64);
+const policyTemplate = `${policyPackageId}:Sotto.Control.PrivacyProbe:PurchasePolicyProbe`;
 const binding = commitHttpRequest({
   method: "GET",
   url: "https://provider.example/paid/weather",
@@ -81,6 +83,7 @@ function build() {
       owner: payer,
     },
     policyCid: "policy-cid",
+    policyPackageId,
     resourceHash: `sha256:${"a".repeat(64)}`,
     userId: "6",
   });
@@ -104,6 +107,7 @@ describe("buildAtomicPurchaseRequest", () => {
           requestCommitment: authorization.requestCommitment,
         },
         contractId: "policy-cid",
+        templateId: policyTemplate,
       },
     });
     expect(request.commands[1]).toMatchObject({
@@ -142,6 +146,7 @@ function buildInput(): Parameters<typeof buildAtomicPurchaseRequest>[0] {
       owner: payer,
     },
     policyCid: "policy-cid",
+    policyPackageId,
     resourceHash: `sha256:${"a".repeat(64)}`,
     userId: "6",
   };

@@ -10,12 +10,12 @@ import {
   buildActiveContractRequest,
   findCreatedContract,
 } from "./daml-evidence.js";
+import { sottoTemplateId } from "./daml-template-ids.js";
 import { createFiveNorthClient } from "./five-north.js";
 import { matchesLedgerRejection } from "./ledger-rejection.js";
 
 const updatePattern = /^1220[0-9a-f]{64}$/;
 const attemptPattern = /^sha256:[0-9a-f]{64}$/;
-const packagePattern = /^[0-9a-f]{64}$/;
 const [paymentUpdateId, attemptId] = process.argv.slice(2);
 if (
   paymentUpdateId === undefined ||
@@ -27,9 +27,6 @@ if (
 }
 
 const config = readSpikeConfig(process.env);
-if (!packagePattern.test(config.policy.packageId)) {
-  throw new Error("SOTTO_CONTROL_PACKAGE_ID must be a package hash");
-}
 const client = createFiveNorthClient(config.network);
 const userId = await client.getUserId();
 const parties = {
@@ -47,10 +44,14 @@ const resourceHash = `sha256:${createHash("sha256")
   .update(`${resourceUrl.origin}${resourceUrl.pathname}`)
   .digest("hex")}` as const;
 const attemptHash = attemptId.slice("sha256:".length);
-const policyTemplate =
-  "#sotto-control:Sotto.Control.PrivacyProbe:PurchasePolicyProbe";
-const contextTemplate =
-  "#sotto-control:Sotto.Control.PrivacyProbe:PurchaseContextProbe";
+const policyTemplate = sottoTemplateId(
+  config.policy.packageId,
+  "PurchasePolicyProbe",
+);
+const contextTemplate = sottoTemplateId(
+  config.policy.packageId,
+  "PurchaseContextProbe",
+);
 
 async function queryContracts(
   party: string,
@@ -89,6 +90,7 @@ const createResult = await client.submitSettlement(
   buildCreatePolicyRequest({
     commandId: `sotto-policy-create-${attemptHash}`,
     expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+    packageId: config.policy.packageId,
     parties,
     resourceHash,
     userId,
@@ -100,7 +102,7 @@ const createTransaction = await client.getTransaction(
 );
 const originalPolicy = findCreatedContract(
   createTransaction,
-  "sotto-control",
+  config.policy.packageId,
   "PurchasePolicyProbe",
 );
 const consumeResult = await client.submitSettlement(
@@ -108,6 +110,7 @@ const consumeResult = await client.submitSettlement(
     amount: "0.2500000000",
     attemptId: attemptId as `sha256:${string}`,
     commandId: `sotto-policy-consume-${attemptHash}`,
+    packageId: config.policy.packageId,
     parties,
     policyCid: originalPolicy.contractId,
     requestCommitment,
@@ -121,12 +124,12 @@ const consumeTransaction = await client.getTransaction(
 );
 const reducedPolicy = findCreatedContract(
   consumeTransaction,
-  "sotto-control",
+  config.policy.packageId,
   "PurchasePolicyProbe",
 );
 const context = findCreatedContract(
   consumeTransaction,
-  "sotto-control",
+  config.policy.packageId,
   "PurchaseContextProbe",
 );
 
@@ -143,6 +146,7 @@ async function requireRejected(
         amount,
         attemptId: id as `sha256:${string}`,
         commandId,
+        packageId: config.policy.packageId,
         parties,
         policyCid,
         requestCommitment,

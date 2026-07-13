@@ -3,6 +3,7 @@ import { commitHttpRequest } from "@sotto/x402-canton";
 import {
   createChallengeObservation,
   decodePaymentRequired,
+  requireMatchedRequestBinding,
   selectCantonRequirement,
 } from "../src/observation.js";
 
@@ -106,7 +107,43 @@ describe("createChallengeObservation", () => {
     });
 
     expect(observation.compatibility.exactRequestBinding).toBe("matched");
+    expect(() => requireMatchedRequestBinding(observation)).not.toThrow();
   });
+
+  it.each(["exactRequestBinding", "resourceUrlBinding"] as const)(
+    "rejects a non-matched %s before live authorization",
+    (field) => {
+      const resourceUrl = "https://provider.example/paid/weather";
+      const requestCommitment = commitHttpRequest({
+        method: "GET",
+        url: resourceUrl,
+      }).commitment;
+      const observation = createChallengeObservation({
+        challenge: {
+          ...cantonRequirement,
+          extra: {
+            ...cantonRequirement.extra,
+            assetTransferMethod: "amulet-rules-transfer",
+            memo: requestCommitment,
+          },
+        },
+        method: "GET",
+        observedAt: "2026-07-13T08:00:00.000Z",
+        resourceUrl,
+        upstreamResourceUrl: resourceUrl,
+      });
+
+      expect(() =>
+        requireMatchedRequestBinding({
+          ...observation,
+          compatibility: {
+            ...observation.compatibility,
+            [field]: "mismatched",
+          },
+        }),
+      ).toThrow("bind the exact request");
+    },
+  );
 
   it("creates deterministic redacted evidence with split outcomes", () => {
     const input = {

@@ -37,7 +37,7 @@ const policyTransaction = await client.getTransaction(
 );
 const originalPolicy = findCreatedContract(
   policyTransaction,
-  "sotto-control",
+  config.policy.packageId,
   "PurchasePolicyProbe",
 );
 const atomicTransaction = await client.getTransaction(
@@ -57,12 +57,15 @@ const proof: SettlementProof = {
   updateId: atomicUpdateId,
 };
 const expectation = {
+  amuletRulesContractId: state.amuletRules.contract.contract_id,
+  amuletRulesTemplateId: state.amuletRules.contract.template_id,
   agentParty: config.policy.agentParty,
   amount: "0.2500000000",
   dsoParty,
   ownerParty: config.policy.ownerParty,
   payerParty: config.payer.party,
   policyCid: originalPolicy.contractId,
+  policyPackageId: config.policy.packageId,
   policyRevision: "0",
   providerParty: config.provider.party,
   remainingLimit: "0.7500000000",
@@ -76,7 +79,7 @@ if (
 }
 const reducedPolicy = findCreatedContract(
   atomicTransaction,
-  "sotto-control",
+  config.policy.packageId,
   "PurchasePolicyProbe",
 );
 if (reducedPolicy.createArgument.remainingLimit !== "0.7500000000") {
@@ -112,6 +115,7 @@ const offset = await client.getLedgerEnd();
 if (
   !(await policyIsActive(
     client,
+    config.policy.packageId,
     config.payer.party,
     reducedPolicy.contractId,
     offset,

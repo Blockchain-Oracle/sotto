@@ -1,3 +1,5 @@
+import { sottoTemplateId } from "./daml-template-ids.js";
+
 type PolicyParties = Readonly<{
   agent: string;
   owner: string;
@@ -5,12 +7,10 @@ type PolicyParties = Readonly<{
   provider: string;
 }>;
 
-const moduleName = "Sotto.Control.PrivacyProbe";
-const policyTemplate = `#sotto-control:${moduleName}:PurchasePolicyProbe`;
-
 type CreatePolicyInput = Readonly<{
   commandId: string;
   expiresAt: string;
+  packageId: string;
   parties: PolicyParties;
   resourceHash: `sha256:${string}`;
   userId: string;
@@ -20,6 +20,7 @@ type ConsumePolicyInput = Readonly<{
   amount: string;
   attemptId: `sha256:${string}`;
   commandId: string;
+  packageId: string;
   parties: PolicyParties;
   policyCid: string;
   requestCommitment: `sha256:${string}`;
@@ -29,6 +30,10 @@ type ConsumePolicyInput = Readonly<{
 
 export function buildCreatePolicyRequest(input: CreatePolicyInput) {
   const { parties } = input;
+  const policyTemplate = sottoTemplateId(
+    input.packageId,
+    "PurchasePolicyProbe",
+  );
   return {
     actAs: [parties.payer],
     readAs: [],
@@ -60,6 +65,10 @@ export function buildCreatePolicyRequest(input: CreatePolicyInput) {
 
 export function buildConsumePolicyRequest(input: ConsumePolicyInput) {
   const { parties } = input;
+  const policyTemplate = sottoTemplateId(
+    input.packageId,
+    "PurchasePolicyProbe",
+  );
   return {
     actAs: [parties.agent, parties.payer],
     readAs: [parties.owner],
