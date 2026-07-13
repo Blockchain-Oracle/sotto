@@ -53,6 +53,49 @@ export type BoundedPurchaseCommitment = Readonly<{
   version: typeof PURCHASE_COMMITMENT_VERSION;
 }>;
 
+type AuthenticPurchaseState = Readonly<{
+  attemptId: string;
+  bodyHash: string;
+  challengeId: string;
+  commitment: string;
+  expiresAt: string;
+  requestCommitment: string;
+  version: string;
+}>;
+
+const authenticPurchaseResults = new WeakMap<object, AuthenticPurchaseState>();
+
+export function assertAuthenticBoundedPurchase(
+  input: unknown,
+): asserts input is BoundedPurchaseCommitment {
+  if (typeof input !== "object" || input === null) {
+    throw new Error("bounded purchase commitment is not authenticated");
+  }
+  const state = authenticPurchaseResults.get(input);
+  if (state === undefined) {
+    throw new Error("bounded purchase commitment is not authenticated");
+  }
+  const value = input as BoundedPurchaseCommitment;
+  let canonicalCommitment: string;
+  try {
+    canonicalCommitment = `sha256:${sha256Hex(value.canonicalBytes)}`;
+  } catch {
+    throw new Error("bounded purchase commitment was mutated");
+  }
+  if (
+    canonicalCommitment !== state.commitment ||
+    value.attemptId !== state.attemptId ||
+    value.bodyHash !== state.bodyHash ||
+    value.challengeId !== state.challengeId ||
+    value.commitment !== state.commitment ||
+    value.expiresAt !== state.expiresAt ||
+    value.requestCommitment !== state.requestCommitment ||
+    value.version !== state.version
+  ) {
+    throw new Error("bounded purchase commitment was mutated");
+  }
+}
+
 function deriveAttemptId(purchase: unknown): `sha256:${string}` {
   return `sha256:${sha256Hex(
     JSON.stringify({
@@ -116,7 +159,7 @@ export function commitBoundedPurchase(
   const attemptId = deriveAttemptId(purchase);
   const canonical = JSON.stringify({ ...purchase, attemptId });
   const canonicalBytes = new TextEncoder().encode(canonical);
-  return {
+  const result: BoundedPurchaseCommitment = Object.freeze({
     attemptId,
     bodyHash: `sha256:${input.binding.bodySha256}`,
     canonicalBytes,
@@ -125,5 +168,15 @@ export function commitBoundedPurchase(
     expiresAt,
     requestCommitment: input.binding.commitment,
     version: PURCHASE_COMMITMENT_VERSION,
-  };
+  });
+  authenticPurchaseResults.set(result, {
+    attemptId: result.attemptId,
+    bodyHash: result.bodyHash,
+    challengeId: result.challengeId,
+    commitment: result.commitment,
+    expiresAt: result.expiresAt,
+    requestCommitment: result.requestCommitment,
+    version: result.version,
+  });
+  return result;
 }

@@ -1,5 +1,8 @@
 import type { BoundedPurchaseCommitment } from "./purchase-commitment.js";
-import { PURCHASE_COMMITMENT_VERSION } from "./purchase-commitment.js";
+import {
+  assertAuthenticBoundedPurchase,
+  PURCHASE_COMMITMENT_VERSION,
+} from "./purchase-commitment.js";
 import {
   exactKeys,
   objectValue,
@@ -19,6 +22,7 @@ export type BoundedPurchaseEvidence = Readonly<{
 export function createBoundedPurchaseEvidence(
   input: BoundedPurchaseCommitment,
 ): BoundedPurchaseEvidence {
+  assertAuthenticBoundedPurchase(input);
   const value = objectValue(input, "bounded purchase commitment");
   exactKeys(
     value,

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   commitBoundedPurchase,
   createBoundedPurchaseEvidence,
+  type BoundedPurchaseCommitment,
 } from "../src/index.js";
 import {
   createPurchaseInput,
@@ -66,5 +67,30 @@ describe("bounded purchase evidence", () => {
     const result = commitBoundedPurchase(createPurchaseInput());
     expect(result).not.toHaveProperty("challengeBytes");
     expect(result).not.toHaveProperty("authorizationInstanceId");
+  });
+
+  it("rejects a structurally valid but unauthenticated commitment object", () => {
+    const hash = `sha256:${"0".repeat(64)}` as const;
+    const forged = {
+      attemptId: hash,
+      bodyHash: hash,
+      canonicalBytes: new TextEncoder().encode("{}"),
+      challengeId: hash,
+      commitment: hash,
+      expiresAt: "not-a-time",
+      requestCommitment: hash,
+      version: "sotto-purchase-v2",
+    } as BoundedPurchaseCommitment;
+
+    expect(() => createBoundedPurchaseEvidence(forged)).toThrow(
+      "authenticated",
+    );
+  });
+
+  it("rejects canonical bytes mutated after commitment", () => {
+    const result = commitBoundedPurchase(createPurchaseInput());
+    result.canonicalBytes[0] = 0x5b;
+
+    expect(() => createBoundedPurchaseEvidence(result)).toThrow("mutated");
   });
 });
