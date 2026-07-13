@@ -22,7 +22,7 @@ export { RESOURCE_BINDING_VERSION } from "./resource-route.js";
 
 export const TOKEN_TRANSFER_FACTORY_INTERFACE_ID =
   "55ba4deb0ad4662c4168b39859738a0e91388d252286480c7331b3f71a517281:Splice.Api.Token.TransferInstructionV1:TransferFactory" as const;
-export const FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID =
+export const FIVE_NORTH_TRANSFER_FACTORY_CREATION_TEMPLATE_ID =
   "a5b055492fb8f08b2e7bc0fc94da6da50c39c2e1d7f24cd5ea8db12fc87c1332:Splice.ExternalPartyAmuletRules:ExternalPartyAmuletRules" as const;
 export const MAX_PURCHASE_WINDOW_SECONDS = 600;
 
@@ -138,7 +138,7 @@ export function validateBoundedPurchaseInput(
   const tokenFactory = objectValue(input.tokenFactory, "tokenFactory");
   exactKeys(
     tokenFactory,
-    ["contractId", "expectedAdmin", "implementationTemplateId", "interfaceId"],
+    ["contractId", "creationTemplateId", "expectedAdmin", "interfaceId"],
     "tokenFactory",
   );
   if (input.tokenFactory.interfaceId !== TOKEN_TRANSFER_FACTORY_INTERFACE_ID) {
@@ -146,10 +146,10 @@ export function validateBoundedPurchaseInput(
   }
   identifier(input.tokenFactory.contractId, "tokenFactory contractId");
   if (
-    input.tokenFactory.implementationTemplateId !==
-    FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID
+    input.tokenFactory.creationTemplateId !==
+    FIVE_NORTH_TRANSFER_FACTORY_CREATION_TEMPLATE_ID
   ) {
-    throw new Error("tokenFactory implementation is not approved");
+    throw new Error("tokenFactory creation template is not approved");
   }
   identifier(input.tokenFactory.expectedAdmin, "tokenFactory expected admin");
   if (capability.transferFactoryContractId !== input.tokenFactory.contractId) {

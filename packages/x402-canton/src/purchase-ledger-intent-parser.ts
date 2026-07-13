@@ -110,7 +110,7 @@ export function parseBoundedPurchaseCanonical(
   );
   const tokenFactory = exactObject(
     root.tokenFactory,
-    ["interfaceId", "contractId", "implementationTemplateId", "expectedAdmin"],
+    ["interfaceId", "contractId", "creationTemplateId", "expectedAdmin"],
     "purchase token factory",
   );
   return { root, request, challenge, instrument, capability, tokenFactory };

@@ -125,7 +125,7 @@ export function createPurchaseInput(): BoundedPurchaseCommitmentInput {
       interfaceId:
         "55ba4deb0ad4662c4168b39859738a0e91388d252286480c7331b3f71a517281:Splice.Api.Token.TransferInstructionV1:TransferFactory",
       contractId: "00tokenfactory7",
-      implementationTemplateId:
+      creationTemplateId:
         "a5b055492fb8f08b2e7bc0fc94da6da50c39c2e1d7f24cd5ea8db12fc87c1332:Splice.ExternalPartyAmuletRules:ExternalPartyAmuletRules",
       expectedAdmin: DSO,
     },

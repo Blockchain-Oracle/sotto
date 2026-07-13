@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import {
-  FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID,
+  FIVE_NORTH_TRANSFER_FACTORY_CREATION_TEMPLATE_ID,
   SOTTO_CONTROL_PACKAGE_ID,
   buildBoundedCapabilityBootstrap,
   type BoundedCapabilityBootstrapInput,
@@ -132,7 +132,7 @@ function parseFactory(value: unknown, dso: string, synchronizerId: string) {
   );
   const event = objectValue(active.createdEvent, "TransferFactory event");
   const expectedPackageId =
-    FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID.split(":")[0]!;
+    FIVE_NORTH_TRANSFER_FACTORY_CREATION_TEMPLATE_ID.split(":")[0]!;
   const argument = objectValue(
     event.createArgument,
     "TransferFactory create argument",
@@ -144,7 +144,7 @@ function parseFactory(value: unknown, dso: string, synchronizerId: string) {
   if (
     !Array.isArray(event.observers) ||
     event.observers.length !== 0 ||
-    event.templateId !== FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID ||
+    event.templateId !== FIVE_NORTH_TRANSFER_FACTORY_CREATION_TEMPLATE_ID ||
     event.packageName !== "splice-amulet" ||
     event.representativePackageId !== expectedPackageId ||
     argument.dso !== dso ||

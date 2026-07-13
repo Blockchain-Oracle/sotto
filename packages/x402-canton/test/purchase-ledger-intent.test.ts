@@ -66,7 +66,7 @@ describe("bounded purchase Ledger intent", () => {
       tokenFactory: {
         interfaceId: input.tokenFactory.interfaceId,
         contractId: input.tokenFactory.contractId,
-        implementationTemplateId: input.tokenFactory.implementationTemplateId,
+        creationTemplateId: input.tokenFactory.creationTemplateId,
         expectedAdmin: input.tokenFactory.expectedAdmin,
       },
     });

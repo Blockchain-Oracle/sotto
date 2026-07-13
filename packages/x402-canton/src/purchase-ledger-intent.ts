@@ -1,7 +1,7 @@
 import type {
   APPROVED_BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_ID,
   BoundedPurchaseCommitment,
-  FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID,
+  FIVE_NORTH_TRANSFER_FACTORY_CREATION_TEMPLATE_ID,
   PURCHASE_COMMITMENT_VERSION,
   TOKEN_TRANSFER_FACTORY_INTERFACE_ID,
 } from "./purchase-commitment.js";
@@ -52,7 +52,7 @@ export type BoundedPurchaseLedgerIntent = Readonly<{
   tokenFactory: Readonly<{
     interfaceId: typeof TOKEN_TRANSFER_FACTORY_INTERFACE_ID;
     contractId: string;
-    implementationTemplateId: typeof FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID;
+    creationTemplateId: typeof FIVE_NORTH_TRANSFER_FACTORY_CREATION_TEMPLATE_ID;
     expectedAdmin: string;
   }>;
 }>;

@@ -19,7 +19,7 @@ import {
 export type TransferFactoryResponseExpectation = Readonly<{
   choiceArgumentsDigest: `sha256:${string}`;
   expectedFactoryId?: string;
-  implementationTemplateId: string;
+  creationTemplateId: string;
   requireFactoryDisclosure: boolean;
   synchronizerId: string;
 }>;
@@ -144,9 +144,9 @@ export function parseTransferFactoryResponseWithExpectation(
     }
     if (
       contractId === factoryId &&
-      templateId !== expectation.implementationTemplateId
+      templateId !== expectation.creationTemplateId
     ) {
-      throw new Error("TransferFactory implementation template does not match");
+      throw new Error("TransferFactory creation template does not match");
     }
     const blob = canonicalDisclosureBlob(
       disclosure.createdEventBlob,
@@ -196,7 +196,7 @@ export function parseTransferFactoryResponse(
   return parseTransferFactoryResponseWithExpectation(bytes, {
     choiceArgumentsDigest,
     expectedFactoryId: intent.tokenFactory.contractId,
-    implementationTemplateId: intent.tokenFactory.implementationTemplateId,
+    creationTemplateId: intent.tokenFactory.creationTemplateId,
     requireFactoryDisclosure: false,
     synchronizerId: intent.challenge.synchronizerId,
   });

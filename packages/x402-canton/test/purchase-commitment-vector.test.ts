@@ -65,7 +65,7 @@ const tokenFactory = {
   interfaceId:
     "55ba4deb0ad4662c4168b39859738a0e91388d252286480c7331b3f71a517281:Splice.Api.Token.TransferInstructionV1:TransferFactory",
   contractId: "00tokenfactory7",
-  implementationTemplateId:
+  creationTemplateId:
     "a5b055492fb8f08b2e7bc0fc94da6da50c39c2e1d7f24cd5ea8db12fc87c1332:Splice.ExternalPartyAmuletRules:ExternalPartyAmuletRules",
   expectedAdmin: requirement.extra.instrumentId.admin,
 } as const;
@@ -105,9 +105,9 @@ describe("commitBoundedPurchase", () => {
       '"expiresAt":"2026-07-13T11:00:00.000Z"},',
       '"tokenFactory":{"interfaceId":"55ba4deb0ad4662c4168b39859738a0e91388d252286480c7331b3f71a517281:Splice.Api.Token.TransferInstructionV1:TransferFactory",',
       '"contractId":"00tokenfactory7",',
-      '"implementationTemplateId":"a5b055492fb8f08b2e7bc0fc94da6da50c39c2e1d7f24cd5ea8db12fc87c1332:Splice.ExternalPartyAmuletRules:ExternalPartyAmuletRules",',
+      '"creationTemplateId":"a5b055492fb8f08b2e7bc0fc94da6da50c39c2e1d7f24cd5ea8db12fc87c1332:Splice.ExternalPartyAmuletRules:ExternalPartyAmuletRules",',
       '"expectedAdmin":"DSO::1220dso"},"authorizationInstanceId":"authorization-7",',
-      '"attemptId":"sha256:86d3592ec49c2877e1a228a390780986bff8ee9a9bfdddd719fff58878358754"}',
+      '"attemptId":"sha256:6737a854e2ff99e1785df6225af7073a6b322e16dd6c3398026d83eb7e7e978e"}',
     ].join("");
 
     expect(new TextDecoder().decode(result.canonicalBytes)).toBe(
@@ -115,11 +115,11 @@ describe("commitBoundedPurchase", () => {
     );
     expect(result).toMatchObject({
       attemptId:
-        "sha256:86d3592ec49c2877e1a228a390780986bff8ee9a9bfdddd719fff58878358754",
+        "sha256:6737a854e2ff99e1785df6225af7073a6b322e16dd6c3398026d83eb7e7e978e",
       challengeId:
         "sha256:8fdfd64077075dba79cc71e6dd13151e77f8d33f6e22df21fa892abd7941695b",
       commitment:
-        "sha256:c76a0b62935b5a52e381e70f6559944c4e4c3a494581dce2d14ce4cd00e6b1be",
+        "sha256:b3a62341e62e00f120bff0a839da033879bb2cf6da9d5f5cd0aebbe768189d7d",
       expiresAt: "2026-07-13T10:00:45.000Z",
       version: "sotto-purchase-v2",
     });
@@ -127,7 +127,7 @@ describe("commitBoundedPurchase", () => {
     const reordered = commitBoundedPurchase({
       tokenFactory: {
         expectedAdmin: tokenFactory.expectedAdmin,
-        implementationTemplateId: tokenFactory.implementationTemplateId,
+        creationTemplateId: tokenFactory.creationTemplateId,
         contractId: tokenFactory.contractId,
         interfaceId: tokenFactory.interfaceId,
       },

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID,
+  FIVE_NORTH_TRANSFER_FACTORY_CREATION_TEMPLATE_ID,
   SOTTO_CONTROL_PACKAGE_ID,
 } from "@sotto/x402-canton";
 import {
@@ -32,9 +32,9 @@ function factoryEntry(overrides: Record<string, unknown> = {}) {
     observers: [],
     packageName: "splice-amulet",
     representativePackageId:
-      FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID.split(":")[0],
+      FIVE_NORTH_TRANSFER_FACTORY_CREATION_TEMPLATE_ID.split(":")[0],
     signatories: [dso],
-    templateId: FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID,
+    templateId: FIVE_NORTH_TRANSFER_FACTORY_CREATION_TEMPLATE_ID,
     ...(eventOverrides as Record<string, unknown> | undefined),
   };
   return {
@@ -130,7 +130,7 @@ describe("Five North capability authority", () => {
     ).toThrow("already claimed");
   });
 
-  it("queries the factory by package name and validates its pinned implementation", () => {
+  it("queries the factory by package name and validates its creation template", () => {
     expect(transferFactoryContractsBody(dso, 42)).toEqual({
       filter: {
         filtersByParty: {

@@ -54,10 +54,7 @@ describe("TransferFactory response validation", () => {
   it.each([
     ["synchronizer", { synchronizerId: "other-domain::1220sync" }],
     ["templateId", { templateId: "not-a-template-id" }],
-    [
-      "implementation template",
-      { templateId: "0".repeat(64) + ":Bad:Factory" },
-    ],
+    ["creation template", { templateId: "0".repeat(64) + ":Bad:Factory" }],
     ["base64", { createdEventBlob: "not base64!" }],
   ])("rejects invalid disclosure %s", async (expected, mutation) => {
     const { intent, holdings } = await purchaseExecutionInputs();

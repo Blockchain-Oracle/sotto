@@ -6,7 +6,7 @@ import {
   createPurchaseCapabilityObserver,
   createPurchaseHoldingObserver,
   createTransferFactoryObserver,
-  FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID,
+  FIVE_NORTH_TRANSFER_FACTORY_CREATION_TEMPLATE_ID,
   readBoundedPurchaseLedgerIntent,
   TOKEN_TRANSFER_FACTORY_INTERFACE_ID,
   type PreparedPurchaseObservation,
@@ -93,7 +93,7 @@ export async function prepareOnlyPurchase(
       tokenFactory: {
         contractId: input.tokenFactoryContractId,
         expectedAdmin: input.expectedAdmin,
-        implementationTemplateId: FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID,
+        creationTemplateId: FIVE_NORTH_TRANSFER_FACTORY_CREATION_TEMPLATE_ID,
         interfaceId: TOKEN_TRANSFER_FACTORY_INTERFACE_ID,
       },
     });

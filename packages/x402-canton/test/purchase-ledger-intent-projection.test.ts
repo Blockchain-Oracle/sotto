@@ -125,6 +125,7 @@ describe("bounded purchase Ledger intent projection", () => {
     expect(intent.challenge.instrument).toEqual({ admin, id: "TestAmulet" });
     expect(intent.tokenFactory).toMatchObject({
       contractId,
+      creationTemplateId: input.tokenFactory.creationTemplateId,
       expectedAdmin: admin,
     });
   });

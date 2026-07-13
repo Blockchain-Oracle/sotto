@@ -1,7 +1,7 @@
 import {
   APPROVED_BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_ID,
   type BoundedPurchaseCommitment,
-  FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID,
+  FIVE_NORTH_TRANSFER_FACTORY_CREATION_TEMPLATE_ID,
   PURCHASE_COMMITMENT_VERSION,
   RESOURCE_BINDING_VERSION,
   TOKEN_TRANSFER_FACTORY_INTERFACE_ID,
@@ -74,8 +74,8 @@ export function projectBoundedPurchaseLedgerIntent(
       APPROVED_BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_ID ||
     capability.resourceBindingVersion !== RESOURCE_BINDING_VERSION ||
     tokenFactory.interfaceId !== TOKEN_TRANSFER_FACTORY_INTERFACE_ID ||
-    tokenFactory.implementationTemplateId !==
-      FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID
+    tokenFactory.creationTemplateId !==
+      FIVE_NORTH_TRANSFER_FACTORY_CREATION_TEMPLATE_ID
   ) {
     throw new Error("bounded purchase canonical discriminator is unsupported");
   }
@@ -180,7 +180,7 @@ export function projectBoundedPurchaseLedgerIntent(
         tokenFactory.contractId,
         "tokenFactory contractId",
       ),
-      implementationTemplateId: FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID,
+      creationTemplateId: FIVE_NORTH_TRANSFER_FACTORY_CREATION_TEMPLATE_ID,
       expectedAdmin: identifier(
         tokenFactory.expectedAdmin,
         "tokenFactory expected admin",

@@ -27,7 +27,7 @@ export async function purchaseExecutionInputs(
 
 export function factoryDisclosure(intent: BoundedPurchaseLedgerIntent) {
   return {
-    templateId: intent.tokenFactory.implementationTemplateId,
+    templateId: intent.tokenFactory.creationTemplateId,
     contractId: intent.tokenFactory.contractId,
     createdEventBlob: Buffer.from("factory-disclosure").toString("base64"),
     synchronizerId: intent.challenge.synchronizerId,

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   FIVE_NORTH_HOLDING_IMPLEMENTATION_PACKAGE_ID,
   FIVE_NORTH_HOLDING_TEMPLATE_PACKAGE_ID,
-  FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID,
+  FIVE_NORTH_TRANSFER_FACTORY_CREATION_TEMPLATE_ID,
   HOLDING_INTERFACE_ID,
   SOTTO_CONTROL_PACKAGE_ID,
   type PurchaseHoldingAcsRequest,
@@ -99,7 +99,7 @@ function factoryResponse(overrides: Record<string, unknown> = {}) {
         choiceContextData: { values: {} },
         disclosedContracts: [
           {
-            templateId: FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID,
+            templateId: FIVE_NORTH_TRANSFER_FACTORY_CREATION_TEMPLATE_ID,
             contractId: factoryId,
             createdEventBlob: Buffer.from("factory").toString("base64"),
             synchronizerId,

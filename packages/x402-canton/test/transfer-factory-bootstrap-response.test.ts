@@ -135,7 +135,7 @@ describe("TransferFactory bootstrap response", () => {
   it.each([
     ["direct", { transferKind: "offer" }],
     [
-      "implementation",
+      "creation template",
       {
         disclosure: {
           templateId: "0".repeat(64) + ":Bad:Factory",

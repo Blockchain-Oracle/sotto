@@ -368,9 +368,9 @@ are rejected. The observation is one-use and short-lived.
 
 Each purchase reacquires its own choice context and disclosed contracts because
 the Token Standard permits choice-specific context. It must return the same
-factory ID and pinned implementation stored in the capability. Bootstrap context
-is never reused for payment preparation, and a factory change makes the old
-capability unusable until the payer creates a replacement.
+factory ID and pinned creation template stored in the capability. Bootstrap
+context is never reused for payment preparation, and a factory change makes the
+old capability unusable until the payer creates a replacement.
 
 This adds one registry call to the opt-in capability bootstrap and preserves one
 fresh registry call per autonomous purchase. It removes an unproductive ACS scan
@@ -395,10 +395,9 @@ nor Redis cache may replace the live registry and disclosure checks.
   reviewed package-upgrade interpretation from current Five North package
   preference evidence, or prove equivalent exact child-effect validation; a
   later DAR upload must not silently change the nested interface exercise.
-- Rename the current canonical `implementationTemplateId` member to the exact
-  factory-creation-template meaning before signer approval and repin the byte,
-  attempt-ID, and commitment vectors. Field-name ambiguity cannot cross the
-  signer boundary.
+- Keep canonical `creationTemplateId` pinned to the exact factory creation
+  template and separate from interface implementation/package selection. Its
+  byte, attempt-ID, and commitment vectors are independently pinned.
 - Bound prepared bytes, node count, tree depth, and decode/hash time; oversized,
   over-deep, and timeout cases must make zero signing calls.
 - Keep the hot path to one strict protobuf decode plus bounded linear

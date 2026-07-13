@@ -1,4 +1,4 @@
-import { FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID } from "./purchase-commitment-validation.js";
+import { FIVE_NORTH_TRANSFER_FACTORY_CREATION_TEMPLATE_ID } from "./purchase-commitment-validation.js";
 import { SHA256_PATTERN } from "./purchase-commitment-primitives.js";
 import {
   parseTransferFactoryResponseWithExpectation,
@@ -19,7 +19,7 @@ export function parseTransferFactoryBootstrapResponse(
   }
   const pinned: TransferFactoryResponseExpectation = {
     choiceArgumentsDigest: expectation.choiceArgumentsDigest,
-    implementationTemplateId: FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID,
+    creationTemplateId: FIVE_NORTH_TRANSFER_FACTORY_CREATION_TEMPLATE_ID,
     requireFactoryDisclosure: true,
     synchronizerId: expectation.synchronizerId,
   };

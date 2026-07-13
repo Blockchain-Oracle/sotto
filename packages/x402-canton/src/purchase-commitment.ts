@@ -8,7 +8,7 @@ import {
 } from "./purchase-capability-event.js";
 import type { PurchaseCapabilityObservation } from "./purchase-capability-observation.js";
 import {
-  FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID,
+  FIVE_NORTH_TRANSFER_FACTORY_CREATION_TEMPLATE_ID,
   RESOURCE_BINDING_VERSION,
   TOKEN_TRANSFER_FACTORY_INTERFACE_ID,
   validateBoundedPurchaseInput,
@@ -19,7 +19,7 @@ export const PURCHASE_COMMITMENT_VERSION = "sotto-purchase-v2" as const;
 export {
   APPROVED_BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_ID,
   BOUNDED_PURCHASE_CAPABILITY_TEMPLATE,
-  FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID,
+  FIVE_NORTH_TRANSFER_FACTORY_CREATION_TEMPLATE_ID,
   RESOURCE_BINDING_VERSION,
   SOTTO_CONTROL_PACKAGE_ID,
   TOKEN_TRANSFER_FACTORY_INTERFACE_ID,
@@ -37,7 +37,7 @@ export type BoundedPurchaseCommitmentInput = Readonly<{
   tokenFactory: Readonly<{
     contractId: string;
     expectedAdmin: string;
-    implementationTemplateId: typeof FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID;
+    creationTemplateId: typeof FIVE_NORTH_TRANSFER_FACTORY_CREATION_TEMPLATE_ID;
     interfaceId: typeof TOKEN_TRANSFER_FACTORY_INTERFACE_ID;
   }>;
 }>;
@@ -153,7 +153,7 @@ export function commitBoundedPurchase(
     tokenFactory: {
       interfaceId: input.tokenFactory.interfaceId,
       contractId: input.tokenFactory.contractId,
-      implementationTemplateId: input.tokenFactory.implementationTemplateId,
+      creationTemplateId: input.tokenFactory.creationTemplateId,
       expectedAdmin: input.tokenFactory.expectedAdmin,
     },
     authorizationInstanceId: input.authorizationInstanceId,

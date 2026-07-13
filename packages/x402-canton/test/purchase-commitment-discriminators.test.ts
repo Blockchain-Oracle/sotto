@@ -59,16 +59,16 @@ const rejected: ReadonlyArray<readonly [string, RejectedMutation, string]> = [
     "pinned TransferFactory",
   ],
   [
-    "factory implementation",
+    "factory creation template",
     (input) =>
       ({
         ...input,
         tokenFactory: {
           ...input.tokenFactory,
-          implementationTemplateId: "other",
+          creationTemplateId: "other",
         },
       }) as never,
-    "implementation is not approved",
+    "creation template is not approved",
   ],
 ];
 
