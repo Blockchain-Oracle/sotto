@@ -129,6 +129,11 @@ Party, contract, package/interface, and synchronizer identifiers are preserved
 exactly after bounded validation. Canonicalization performs no locale-dependent
 sorting or implicit numeric conversion.
 
+The attempt ID uses a separate `sotto-payment-attempt-v2` preimage containing
+the complete ordered purchase object before its `attemptId` member is appended.
+This avoids a circular hash while ensuring that any request, challenge, payer,
+capability, limit, expiry, or factory mutation produces a different attempt.
+
 `sotto-resource-v1` hashes the UTF-8 bytes of fixed-order JSON containing the
 canonical request origin and pathname. It deliberately excludes query and method
 because the capability controls a route while `sotto-http-request-v1` binds each

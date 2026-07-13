@@ -53,15 +53,11 @@ export type BoundedPurchaseCommitment = Readonly<{
   version: typeof PURCHASE_COMMITMENT_VERSION;
 }>;
 
-function deriveAttemptId(
-  requestCommitment: string,
-  authorizationInstanceId: string,
-): `sha256:${string}` {
+function deriveAttemptId(purchase: unknown): `sha256:${string}` {
   return `sha256:${sha256Hex(
     JSON.stringify({
-      version: "sotto-payment-attempt-v1",
-      requestCommitment,
-      authorizationInstanceId,
+      version: "sotto-payment-attempt-v2",
+      purchase,
     }),
   )}`;
 }
@@ -71,11 +67,7 @@ export function commitBoundedPurchase(
 ): BoundedPurchaseCommitment {
   const { expiresAt, requirement } = validateBoundedPurchaseInput(input);
   const challengeId = `sha256:${sha256Hex(input.challengeBytes)}` as const;
-  const attemptId = deriveAttemptId(
-    input.binding.commitment,
-    input.authorizationInstanceId,
-  );
-  const canonical = JSON.stringify({
+  const purchase = {
     version: PURCHASE_COMMITMENT_VERSION,
     authorizationMode: "bounded-capability",
     request: {
@@ -120,8 +112,9 @@ export function commitBoundedPurchase(
       expectedAdmin: input.tokenFactory.expectedAdmin,
     },
     authorizationInstanceId: input.authorizationInstanceId,
-    attemptId,
-  });
+  } as const;
+  const attemptId = deriveAttemptId(purchase);
+  const canonical = JSON.stringify({ ...purchase, attemptId });
   const canonicalBytes = new TextEncoder().encode(canonical);
   return {
     attemptId,

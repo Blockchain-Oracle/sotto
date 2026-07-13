@@ -12,6 +12,7 @@ describe("sotto-purchase-v2 mutation coverage", () => {
       const baseline = commitBoundedPurchase(input);
       const changed = commitBoundedPurchase(mutate(input));
       expect(changed.commitment).not.toBe(baseline.commitment);
+      expect(changed.attemptId).not.toBe(baseline.attemptId);
     },
   );
 
