@@ -8,6 +8,7 @@ import {
 } from "./purchase-commitment-primitives.js";
 import type { BoundedPurchaseLedgerIntent } from "./purchase-ledger-intent.js";
 import { canonicalDisclosureBlob } from "./purchase-disclosure-validation.js";
+import { inspectPreparedPurchaseStructure } from "./prepared-purchase-validation.js";
 import { assertStrictJson } from "./strict-json.js";
 
 export const PREPARE_SUBMISSION_PATH =
@@ -152,6 +153,11 @@ export function createPreparedPurchaseObserver(
           body: authenticated.request,
         }),
       ),
+    );
+    inspectPreparedPurchaseStructure(
+      parsed.preparedTransaction,
+      authenticated.intent,
+      authenticated.request,
     );
     const observedAt = new Date(capturedAt).toISOString();
     canonicalTime(observedAt, "prepared Purchase observedAt");

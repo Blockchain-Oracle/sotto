@@ -6,18 +6,20 @@ import {
   PREPARE_SUBMISSION_PATH,
   PREPARE_SUBMISSION_TIMEOUT_MS,
 } from "../src/index.js";
+import { preparedPurchaseBytes } from "./prepared-purchase.fixtures.js";
 import { purchaseCommandInputs } from "./transfer-factory-observation.fixtures.js";
 
 const preparedHash = Buffer.concat([
   Buffer.from([0x12, 0x20]),
   Buffer.alloc(32, 7),
 ]).toString("base64");
-const preparedTransaction = Buffer.from("prepared-protobuf").toString("base64");
-
-function response(overrides: Record<string, unknown> = {}): Uint8Array {
+function response(
+  transactionBytes: Uint8Array,
+  overrides: Record<string, unknown> = {},
+): Uint8Array {
   return new TextEncoder().encode(
     JSON.stringify({
-      preparedTransaction,
+      preparedTransaction: Buffer.from(transactionBytes).toString("base64"),
       preparedTransactionHash: preparedHash,
       hashingSchemeVersion: "HASHING_SCHEME_VERSION_V2",
       hashingDetails: null,
@@ -43,7 +45,8 @@ describe("prepared Purchase observation envelope", () => {
       holdings,
       registry,
     );
-    const reader = vi.fn(async () => response());
+    const transaction = preparedPurchaseBytes(intent, prepareRequest);
+    const reader = vi.fn(async () => response(transaction));
     const observe = createPreparedPurchaseObserver(reader);
 
     const observation = await observe(prepareRequest);
@@ -83,7 +86,9 @@ describe("prepared Purchase observation envelope", () => {
     ["expanded transaction object", { preparedTransaction: {} }],
     [
       "noncanonical transaction",
-      { preparedTransaction: `${preparedTransaction}\n` },
+      {
+        preparedTransaction: `${Buffer.from("prepared-protobuf").toString("base64")}\n`,
+      },
     ],
     ["unexpected hashing details", { hashingDetails: "debug" }],
     ["unknown field", { unexpected: true }],
@@ -94,8 +99,9 @@ describe("prepared Purchase observation envelope", () => {
       holdings,
       registry,
     );
+    const transaction = preparedPurchaseBytes(intent, prepareRequest);
     const observe = createPreparedPurchaseObserver(async () =>
-      response(mutation),
+      response(transaction, mutation),
     );
 
     await expect(observe(prepareRequest)).rejects.toThrow();
@@ -108,7 +114,8 @@ describe("prepared Purchase observation envelope", () => {
       holdings,
       registry,
     );
-    const reader = vi.fn(async () => response());
+    const transaction = preparedPurchaseBytes(intent, prepareRequest);
+    const reader = vi.fn(async () => response(transaction));
     const observe = createPreparedPurchaseObserver(reader);
 
     await expect(observe(structuredClone(prepareRequest))).rejects.toThrow(
