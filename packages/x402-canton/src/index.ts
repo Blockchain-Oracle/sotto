@@ -1,4 +1,9 @@
 export * from "./authorization.js";
+export { buildBoundedPurchasePrepareRequest } from "./bounded-purchase-command.js";
+export type {
+  BoundedPurchaseChoiceArgument,
+  BoundedPurchasePrepareRequest,
+} from "./bounded-purchase-command-types.js";
 export {
   capturePaymentRequiredResponse,
   MAX_PAYMENT_OBSERVATION_AGE_MS,

@@ -137,5 +137,8 @@ describe("TransferFactory observation", () => {
     expect(() =>
       claimTransferFactoryObservation(observation, intent, holdings),
     ).toThrow("already claimed");
+    expect(() =>
+      readTransferFactoryObservation(observation, intent, holdings),
+    ).toThrow("already claimed");
   });
 });

@@ -182,7 +182,9 @@ export function readPurchaseHoldingObservation(
   observation: unknown,
   intent: unknown,
 ): PurchaseHoldingExecutionMaterial {
-  return cloneMaterial(readState(observation, intent));
+  const state = readState(observation, intent);
+  if (state.claimed) throw new Error("holding observation is already claimed");
+  return cloneMaterial(state);
 }
 
 /** @internal Command construction only; a failed prepare requires reacquisition. */

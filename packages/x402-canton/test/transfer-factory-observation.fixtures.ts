@@ -1,7 +1,9 @@
 import {
   createPurchaseHoldingObserver,
+  createTransferFactoryObserver,
   type BoundedPurchaseLedgerIntent,
   type PurchaseHoldingObservation,
+  type TransferFactoryObservation,
 } from "../src/index.js";
 import {
   authenticatedPurchaseIntent,
@@ -51,4 +53,16 @@ export function factoryResponse(
 
 export function responseBytes(value: unknown): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(value));
+}
+
+export async function purchaseCommandInputs(): Promise<{
+  intent: BoundedPurchaseLedgerIntent;
+  holdings: PurchaseHoldingObservation;
+  registry: TransferFactoryObservation;
+}> {
+  const { intent, holdings } = await purchaseExecutionInputs();
+  const registry = await createTransferFactoryObserver(async () =>
+    responseBytes(factoryResponse(intent)),
+  )(intent, holdings);
+  return { intent, holdings, registry };
 }

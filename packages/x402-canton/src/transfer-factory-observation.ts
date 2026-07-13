@@ -183,7 +183,10 @@ export function readTransferFactoryObservation(
   intent: unknown,
   holdings: unknown,
 ): TransferFactoryExecutionMaterial {
-  return cloneMaterial(readState(observation, intent, holdings));
+  const state = readState(observation, intent, holdings);
+  if (state.claimed)
+    throw new Error("TransferFactory observation is already claimed");
+  return cloneMaterial(state);
 }
 
 /** @internal Command construction only; preparation failure requires reacquisition. */

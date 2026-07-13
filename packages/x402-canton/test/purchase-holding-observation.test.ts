@@ -107,6 +107,9 @@ describe("purchase holding observation", () => {
     expect(() => claimPurchaseHoldingObservation(observation, intent)).toThrow(
       "already claimed",
     );
+    expect(() => readPurchaseHoldingObservation(observation, intent)).toThrow(
+      "already claimed",
+    );
   });
 
   it("uses byte-ordinal rather than locale-dependent tie ordering", async () => {
