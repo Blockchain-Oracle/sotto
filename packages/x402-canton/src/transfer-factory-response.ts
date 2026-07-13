@@ -16,10 +16,18 @@ import {
   type TransferFactoryExecutionMaterial,
 } from "./transfer-factory-types.js";
 
-export function parseTransferFactoryResponse(
+export type TransferFactoryResponseExpectation = Readonly<{
+  choiceArgumentsDigest: `sha256:${string}`;
+  expectedFactoryId?: string;
+  implementationTemplateId: string;
+  requireFactoryDisclosure: boolean;
+  synchronizerId: string;
+}>;
+
+/** @internal Shared by pinned purchase and bootstrap discovery parsers. */
+export function parseTransferFactoryResponseWithExpectation(
   bytes: Uint8Array,
-  intent: BoundedPurchaseLedgerIntent,
-  choiceArgumentsDigest: `sha256:${string}`,
+  expectation: TransferFactoryResponseExpectation,
 ): TransferFactoryExecutionMaterial {
   if (
     !(bytes instanceof Uint8Array) ||
@@ -44,7 +52,10 @@ export function parseTransferFactoryResponse(
     "TransferFactory response",
   );
   const factoryId = identifier(root.factoryId, "TransferFactory factoryId");
-  if (factoryId !== intent.tokenFactory.contractId) {
+  if (
+    expectation.expectedFactoryId !== undefined &&
+    factoryId !== expectation.expectedFactoryId
+  ) {
     throw new Error("TransferFactory factoryId does not match the purchase");
   }
   if (root.transferKind !== "direct") {
@@ -103,12 +114,12 @@ export function parseTransferFactoryResponse(
       disclosure.synchronizerId,
       "TransferFactory disclosure synchronizerId",
     );
-    if (synchronizerId !== intent.challenge.synchronizerId) {
+    if (synchronizerId !== expectation.synchronizerId) {
       throw new Error("TransferFactory disclosure synchronizer does not match");
     }
     if (
-      contractId === intent.tokenFactory.contractId &&
-      templateId !== intent.tokenFactory.implementationTemplateId
+      contractId === factoryId &&
+      templateId !== expectation.implementationTemplateId
     ) {
       throw new Error("TransferFactory implementation template does not match");
     }
@@ -131,14 +142,37 @@ export function parseTransferFactoryResponse(
   ) {
     throw new Error("TransferFactory disclosure contractId is duplicated");
   }
+  if (
+    expectation.requireFactoryDisclosure &&
+    disclosedContracts.filter(({ contractId }) => contractId === factoryId)
+      .length !== 1
+  ) {
+    throw new Error(
+      "TransferFactory bootstrap requires exactly one matching disclosure",
+    );
+  }
   if (totalBlobBytes > MAX_TOTAL_REGISTRY_DISCLOSURE_BYTES) {
     throw new Error("TransferFactory disclosures exceed total byte limit");
   }
   return Object.freeze({
     factoryId,
     transferKind: "direct",
-    choiceArgumentsDigest,
+    choiceArgumentsDigest: expectation.choiceArgumentsDigest,
     choiceContextData,
     disclosedContracts: Object.freeze(disclosedContracts),
+  });
+}
+
+export function parseTransferFactoryResponse(
+  bytes: Uint8Array,
+  intent: BoundedPurchaseLedgerIntent,
+  choiceArgumentsDigest: `sha256:${string}`,
+): TransferFactoryExecutionMaterial {
+  return parseTransferFactoryResponseWithExpectation(bytes, {
+    choiceArgumentsDigest,
+    expectedFactoryId: intent.tokenFactory.contractId,
+    implementationTemplateId: intent.tokenFactory.implementationTemplateId,
+    requireFactoryDisclosure: false,
+    synchronizerId: intent.challenge.synchronizerId,
   });
 }
