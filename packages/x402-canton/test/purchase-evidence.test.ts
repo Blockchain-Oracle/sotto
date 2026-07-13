@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   commitBoundedPurchase,
   createBoundedPurchaseEvidence,
+  SOTTO_CONTROL_PACKAGE_ID,
   type BoundedPurchaseCommitment,
 } from "../src/index.js";
 import {
@@ -58,7 +59,7 @@ describe("bounded purchase evidence", () => {
       "sotto-payer",
       "sotto-provider",
       "Sotto.Control.PurchaseCapability",
-      "286d5149f8fe9ba476eef40c60b701e8abf70a3174571698f2d2fa0531f77808",
+      SOTTO_CONTROL_PACKAGE_ID,
       "canonicalBytes",
       "challengeBytes",
     ]) {

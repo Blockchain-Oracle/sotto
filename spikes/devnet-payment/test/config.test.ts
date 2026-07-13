@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { SOTTO_CONTROL_PACKAGE_ID } from "@sotto/x402-canton";
 import { readSpikeConfig, summarizeConfig } from "../src/config.js";
 
 const completeEnvironment = {
@@ -18,7 +19,7 @@ const completeEnvironment = {
   POLICY_OUTSIDER_PARTY: "policy-outsider::1220bbb",
   POLICY_OWNER_PARTY: "policy-owner::1220ccc",
   PROVIDER_PARTY: "provider::1220def",
-  SOTTO_CONTROL_PACKAGE_ID: "f".repeat(64),
+  SOTTO_CONTROL_PACKAGE_ID,
   SOTTO_PURCHASE_ID: "phase3-baseline-1",
   X402_RELAY_URL: "https://relay.example",
 };
@@ -44,7 +45,7 @@ describe("readSpikeConfig", () => {
         agentParty: "policy-agent::1220aaa",
         outsiderParty: "policy-outsider::1220bbb",
         ownerParty: "policy-owner::1220ccc",
-        packageId: "f".repeat(64),
+        packageId: SOTTO_CONTROL_PACKAGE_ID,
       },
       relay: { url: "https://relay.example" },
     });
@@ -77,6 +78,15 @@ describe("readSpikeConfig", () => {
       ).toThrow("SOTTO_CONTROL_PACKAGE_ID");
     },
   );
+
+  it("rejects a valid but unapproved Sotto package ID", () => {
+    expect(() =>
+      readSpikeConfig({
+        ...completeEnvironment,
+        SOTTO_CONTROL_PACKAGE_ID: "f".repeat(64),
+      }),
+    ).toThrow(/approved Sotto control package/i);
+  });
 
   it("produces a preflight summary without secret or party values", () => {
     const summary = JSON.stringify(

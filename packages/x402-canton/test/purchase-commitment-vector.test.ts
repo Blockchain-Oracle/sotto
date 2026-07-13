@@ -107,7 +107,7 @@ describe("commitBoundedPurchase", () => {
       '"contractId":"00tokenfactory7",',
       '"implementationTemplateId":"23f47481dab6b1ec01339d6e14494d85bb2844c25f45b26fc5c9ef4cd4942d1f:Splice.ExternalPartyAmuletRules:ExternalPartyAmuletRules",',
       '"expectedAdmin":"DSO::1220dso"},"authorizationInstanceId":"authorization-7",',
-      '"attemptId":"sha256:ed939f9e974d12649d363bb56ebc0816f52e36cc731bd5daf42dc48758b32309"}',
+      '"attemptId":"sha256:301d1843f5735833f701f85792d4db7c636f7a29c71841ad692e2043b85e3629"}',
     ].join("");
 
     expect(new TextDecoder().decode(result.canonicalBytes)).toBe(
@@ -115,11 +115,11 @@ describe("commitBoundedPurchase", () => {
     );
     expect(result).toMatchObject({
       attemptId:
-        "sha256:ed939f9e974d12649d363bb56ebc0816f52e36cc731bd5daf42dc48758b32309",
+        "sha256:301d1843f5735833f701f85792d4db7c636f7a29c71841ad692e2043b85e3629",
       challengeId:
         "sha256:8fdfd64077075dba79cc71e6dd13151e77f8d33f6e22df21fa892abd7941695b",
       commitment:
-        "sha256:1e82ada9425652810207bfdffc67c0499d07e5b68a942e4710d4505dbe0d9615",
+        "sha256:0d1fe887f46b714a16c11bd082a5cc5743f36d4f28ed98a91086528bd44cf9c8",
       expiresAt: "2026-07-13T10:00:45.000Z",
       version: "sotto-purchase-v2",
     });

@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { SOTTO_CONTROL_PACKAGE_ID } from "@sotto/x402-canton";
 import {
   createFiveNorthPrepareTransport,
   type FiveNorthPrepareTransport,
@@ -155,10 +156,12 @@ describe("Five North prepare-only transport", () => {
   );
 
   it("binds both ACS operations to one Sotto payer and hardcoded filters", async () => {
+    const bodies: unknown[] = [];
     const fetcher = vi.fn(async (url: string, init?: RequestInit) => {
       if (url === network.tokenUrl) return tokenResponse();
       expect(url).toBe(`${network.ledgerUrl}/v2/state/active-contracts`);
       const body = JSON.parse(String(init?.body)) as Record<string, unknown>;
+      bodies.push(body);
       expect(JSON.stringify(body)).toContain(PAYER);
       expect(JSON.stringify(body)).not.toContain("unrelated-party");
       return Response.json([]);
@@ -167,6 +170,10 @@ describe("Five North prepare-only transport", () => {
 
     await transport.readCapabilityContracts(42);
     await transport.readHoldingContracts(42);
+    expect(JSON.stringify(bodies[0])).toContain(
+      "#sotto-control:Sotto.Control.PurchaseCapability:BoundedPurchaseCapability",
+    );
+    expect(JSON.stringify(bodies[0])).not.toContain(SOTTO_CONTROL_PACKAGE_ID);
     expect(transport).not.toHaveProperty("readActiveContracts");
   });
 

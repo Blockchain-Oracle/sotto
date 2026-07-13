@@ -161,14 +161,14 @@ enter its serializable surface.
 
 The production capability constructor uses a trusted ACS reader for the exact
 requested contract and Ledger offset; direct construction is test-only. It
-accepts only package
-`286d5149f8fe9ba476eef40c60b701e8abf70a3174571698f2d2fa0531f77808` and the
+accepts only `sotto-control` 0.2.0 package
+`4d614496ec9b30b22545fd350ecb9ec999164cfb0b5953f46dbbf937f8918f57` and the
 approved capability template, derived from the current Daml source. Caller
-fields are not authoritative, and a Daml change requires a new pin. Fresh
-registry choice context and disclosed contracts are one-use preparation inputs,
-not durable identity. Canton includes disclosed events in the prepared hash, so
-the signer verifies exact roots/effects, recomputes the hash, and never reuses
-registry context.
+fields are not authoritative, and a Daml change requires a new version and pin.
+Fresh registry choice context and disclosed contracts are one-use preparation
+inputs, not durable identity. Canton includes disclosed events in the prepared
+hash, so the signer verifies exact roots/effects, recomputes the hash, and never
+reuses registry context.
 
 ## Autonomous Purchase Flow
 

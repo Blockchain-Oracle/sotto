@@ -18,6 +18,7 @@ export {
   type PurchaseCapabilityObservation,
 } from "./purchase-capability-observation.js";
 export {
+  BOUNDED_PURCHASE_CAPABILITY_QUERY_ID,
   APPROVED_BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_ID,
   SOTTO_CONTROL_PACKAGE_ID,
 } from "./purchase-capability-event.js";

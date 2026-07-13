@@ -1,3 +1,4 @@
+import { SOTTO_CONTROL_PACKAGE_ID } from "@sotto/x402-canton";
 import { requirePackageId } from "./daml-template-ids.js";
 
 type Environment = Readonly<Record<string, string | undefined>>;
@@ -47,6 +48,19 @@ function httpsUrl(
   return preserveTrailingSlash ? normalized : normalized.replace(/\/$/, "");
 }
 
+function approvedSottoPackageId(environment: Environment): string {
+  const packageId = requirePackageId(
+    required(environment, "SOTTO_CONTROL_PACKAGE_ID"),
+    "SOTTO_CONTROL_PACKAGE_ID",
+  );
+  if (packageId !== SOTTO_CONTROL_PACKAGE_ID) {
+    throw new Error(
+      "SOTTO_CONTROL_PACKAGE_ID must equal the approved Sotto control package",
+    );
+  }
+  return packageId;
+}
+
 export function readSpikeConfig(environment: Environment): SpikeConfig {
   return {
     explorer: {
@@ -71,10 +85,7 @@ export function readSpikeConfig(environment: Environment): SpikeConfig {
       agentParty: required(environment, "POLICY_AGENT_PARTY"),
       outsiderParty: required(environment, "POLICY_OUTSIDER_PARTY"),
       ownerParty: required(environment, "POLICY_OWNER_PARTY"),
-      packageId: requirePackageId(
-        required(environment, "SOTTO_CONTROL_PACKAGE_ID"),
-        "SOTTO_CONTROL_PACKAGE_ID",
-      ),
+      packageId: approvedSottoPackageId(environment),
     },
     provider: {
       party: required(environment, "PROVIDER_PARTY"),

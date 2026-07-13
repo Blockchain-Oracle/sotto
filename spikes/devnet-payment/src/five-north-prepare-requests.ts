@@ -1,5 +1,5 @@
 import {
-  APPROVED_BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_ID,
+  BOUNDED_PURCHASE_CAPABILITY_QUERY_ID,
   HOLDING_INTERFACE_QUERY_ID,
 } from "@sotto/x402-canton";
 
@@ -52,7 +52,7 @@ export function capabilityContractsBody(
     {
       TemplateFilter: {
         value: {
-          templateId: APPROVED_BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_ID,
+          templateId: BOUNDED_PURCHASE_CAPABILITY_QUERY_ID,
           includeCreatedEventBlob: false,
         },
       },
