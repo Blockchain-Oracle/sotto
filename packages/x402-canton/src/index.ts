@@ -52,6 +52,10 @@ export {
 } from "./prepared-purchase-hash.js";
 export { recomputeWalletPreparedHashPrecheck } from "./prepared-purchase-wallet-precheck.js";
 export * from "./purchase-commitment.js";
+export {
+  atomic as parseBoundedAtomic,
+  identifier as validateBoundedIdentifier,
+} from "./purchase-commitment-primitives.js";
 export * from "./purchase-evidence.js";
 export {
   readBoundedPurchaseLedgerIntent,
@@ -75,6 +79,10 @@ export {
   type PurchaseHoldingAcsReader,
   type PurchaseHoldingAcsRequest,
 } from "./purchase-holding-types.js";
+export {
+  selectPurchaseHoldingsByCriteria,
+  type PurchaseHoldingSelectionCriteria,
+} from "./purchase-holding-parser.js";
 export * from "./request-binding.js";
 export {
   commitResourceRoute,
@@ -86,6 +94,8 @@ export {
   MAX_TRANSFER_FACTORY_OBSERVATION_AGE_MS,
   type TransferFactoryObservation,
 } from "./transfer-factory-observation.js";
+export { buildTransferFactoryBootstrapProbe } from "./transfer-factory-bootstrap-choice.js";
+export { parseTransferFactoryBootstrapResponse } from "./transfer-factory-bootstrap-response.js";
 export {
   MAX_REGISTRY_RESPONSE_BYTES,
   REGISTRY_TIMEOUT_MS,

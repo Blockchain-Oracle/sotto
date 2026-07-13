@@ -1,4 +1,5 @@
 import {
+  atomic,
   damlDecimalToAtomic,
   exactKeys,
   identifier,
@@ -21,6 +22,13 @@ import {
 type ParsedPurchaseHolding = Readonly<{
   contractId: string;
   selected?: SelectedPurchaseHolding;
+}>;
+
+export type PurchaseHoldingSelectionCriteria = Readonly<{
+  debitCeilingAtomic: string;
+  instrument: Readonly<{ admin: string; id: string }>;
+  payerParty: string;
+  synchronizerId: string;
 }>;
 
 function matchingView(event: Record<string, unknown>): Record<string, unknown> {
@@ -48,7 +56,7 @@ function matchingView(event: Record<string, unknown>): Record<string, unknown> {
 
 function parseEntry(
   value: unknown,
-  intent: BoundedPurchaseLedgerIntent,
+  criteria: PurchaseHoldingSelectionCriteria,
 ): ParsedPurchaseHolding {
   const entry = objectValue(value, "holding ACS entry");
   const contractEntry = objectValue(
@@ -102,16 +110,16 @@ function parseEntry(
   if (event.witnessParties !== undefined) {
     if (
       !Array.isArray(event.witnessParties) ||
-      !event.witnessParties.includes(intent.challenge.payerParty)
+      !event.witnessParties.includes(criteria.payerParty)
     ) {
       throw new Error("holding payer is not a witness");
     }
   }
   const eligible =
-    owner === intent.challenge.payerParty &&
-    instrument.admin === intent.challenge.instrument.admin &&
-    instrument.id === intent.challenge.instrument.id &&
-    synchronizerId === intent.challenge.synchronizerId &&
+    owner === criteria.payerParty &&
+    instrument.admin === criteria.instrument.admin &&
+    instrument.id === criteria.instrument.id &&
+    synchronizerId === criteria.synchronizerId &&
     valueView.lock === null &&
     BigInt(amountAtomic) > 0n;
   if (!eligible) return { contractId };
@@ -138,6 +146,38 @@ export function selectPurchaseHoldings(
   response: unknown,
   intent: BoundedPurchaseLedgerIntent,
 ): readonly SelectedPurchaseHolding[] {
+  const maximumDebit = BigInt(intent.capability.maximumTotalDebitAtomic);
+  const remaining = BigInt(intent.capability.remainingAllowanceAtomic);
+  return selectPurchaseHoldingsByCriteria(response, {
+    debitCeilingAtomic: (maximumDebit < remaining
+      ? maximumDebit
+      : remaining
+    ).toString(),
+    instrument: intent.challenge.instrument,
+    payerParty: intent.challenge.payerParty,
+    synchronizerId: intent.challenge.synchronizerId,
+  });
+}
+
+/** @internal Bootstrap and purchase observers only. */
+export function selectPurchaseHoldingsByCriteria(
+  response: unknown,
+  criteria: PurchaseHoldingSelectionCriteria,
+): readonly SelectedPurchaseHolding[] {
+  const target = atomic(criteria.debitCeilingAtomic, "holding debit ceiling");
+  if (target <= 0n) throw new Error("holding debit ceiling must be positive");
+  const normalized = Object.freeze({
+    debitCeilingAtomic: target.toString(),
+    instrument: Object.freeze({
+      admin: identifier(criteria.instrument.admin, "holding instrument admin"),
+      id: identifier(criteria.instrument.id, "holding instrument id"),
+    }),
+    payerParty: identifier(criteria.payerParty, "holding payer Party"),
+    synchronizerId: identifier(
+      criteria.synchronizerId,
+      "holding synchronizer ID",
+    ),
+  });
   if (!Array.isArray(response) || response.length > MAX_HOLDING_ACS_ENTRIES) {
     throw new Error("holding ACS response exceeds entry limit");
   }
@@ -150,7 +190,7 @@ export function selectPurchaseHoldings(
   if (Buffer.byteLength(serialized, "utf8") > MAX_HOLDING_ACS_RESPONSE_BYTES) {
     throw new Error("holding ACS response exceeds byte limit");
   }
-  const parsed = response.map((entry) => parseEntry(entry, intent));
+  const parsed = response.map((entry) => parseEntry(entry, normalized));
   const ids = new Set(parsed.map(({ contractId }) => contractId));
   if (ids.size !== parsed.length)
     throw new Error("holding contractId is duplicated");
@@ -168,11 +208,6 @@ export function selectPurchaseHoldings(
         ? 1
         : -1;
   });
-  const target =
-    BigInt(intent.capability.maximumTotalDebitAtomic) <
-    BigInt(intent.capability.remainingAllowanceAtomic)
-      ? BigInt(intent.capability.maximumTotalDebitAtomic)
-      : BigInt(intent.capability.remainingAllowanceAtomic);
   const selected: SelectedPurchaseHolding[] = [];
   let total = 0n;
   let blobBytes = 0;
