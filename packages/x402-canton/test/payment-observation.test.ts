@@ -37,6 +37,12 @@ describe("trusted PAYMENT-REQUIRED observation", () => {
     );
   });
 
+  it("accepts exactly 16384 encoded header bytes", () => {
+    const exact = Buffer.alloc(12_288, 0x61).toString("base64");
+    expect(exact).toHaveLength(16_384);
+    expect(() => capturePaymentRequiredResponse(response(exact))).not.toThrow();
+  });
+
   it.each([
     ["non-402 response", response(header, 200), "HTTP 402"],
     [

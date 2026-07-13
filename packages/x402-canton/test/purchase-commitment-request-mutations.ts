@@ -64,6 +64,14 @@ export const validRequestMutations: ReadonlyArray<
       }),
   ],
   [
+    "request origin",
+    (input) =>
+      replaceBoundRequest(input, {
+        method: "GET",
+        url: "https://alternate-provider.example/paid/weather?units=metric",
+      }),
+  ],
+  [
     "challenge encoding",
     (input) =>
       replaceChallengeObservation(
