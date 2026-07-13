@@ -121,4 +121,14 @@ describe("commitBoundedPurchase security validation", () => {
       }),
     ).toThrow("authorizationInstanceId");
   });
+
+  it("rejects a challenge window that overflows canonical time", () => {
+    const input = mutateChallenge(createPurchaseInput(), (challenge) => {
+      challenge.accepts[0]!.maxTimeoutSeconds = Number.MAX_SAFE_INTEGER;
+      challenge.accepts[0]!.extra.executeBeforeSeconds =
+        Number.MAX_SAFE_INTEGER;
+    });
+
+    expect(() => commitBoundedPurchase(input)).toThrow("purchase window");
+  });
 });

@@ -31,6 +31,18 @@ function selfHash(canonical: string): HttpRequestCommitment {
   };
 }
 
+function selfHashBytes(
+  canonicalBytes: Uint8Array,
+  bodySha256: string,
+): HttpRequestCommitment {
+  return {
+    bodySha256,
+    canonicalBytes,
+    commitment: `sha256:${createHash("sha256").update(canonicalBytes).digest("hex")}`,
+    version: "sotto-http-request-v1",
+  };
+}
+
 function forgeBinding(
   mutate: (canonical: CanonicalRequest) => void,
   serialize: (canonical: CanonicalRequest) => string = JSON.stringify,
@@ -100,5 +112,20 @@ describe("bounded purchase request-binding validation", () => {
         ),
       ),
     ).toThrow("canonical encoding");
+  });
+
+  it("rejects a BOM-prefixed request-binding encoding", () => {
+    const input = createPurchaseInput();
+    const canonicalBytes = new Uint8Array(
+      3 + input.binding.canonicalBytes.byteLength,
+    );
+    canonicalBytes.set([0xef, 0xbb, 0xbf]);
+    canonicalBytes.set(input.binding.canonicalBytes, 3);
+    const binding = selfHashBytes(canonicalBytes, input.binding.bodySha256);
+    const forged = mutateChallenge({ ...input, binding }, (challenge) => {
+      challenge.accepts[0]!.extra.memo = binding.commitment;
+    });
+
+    expect(() => commitBoundedPurchase(forged)).toThrow("JSON is not strict");
   });
 });

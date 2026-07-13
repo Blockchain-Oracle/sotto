@@ -4,6 +4,7 @@ import {
   selectCantonRequirement,
   type ChallengeObservation,
 } from "./observation.js";
+import { MAX_REQUEST_BODY_BYTES } from "@sotto/x402-canton";
 
 type Fetcher = (url: string, init: RequestInit) => Promise<Response>;
 type UrlAuthority = (url: URL) => Promise<void>;
@@ -28,6 +29,16 @@ export async function observeHttpChallenge(
   if (input.authorizeUrl === undefined) {
     throw new Error("HTTP observation requires a URL authority check");
   }
+  if (
+    input.requestBody !== undefined &&
+    input.requestBody.byteLength > MAX_REQUEST_BODY_BYTES
+  ) {
+    throw new Error("Request body exceeds 1048576 bytes");
+  }
+  const requestBody =
+    input.requestBody === undefined
+      ? undefined
+      : Buffer.from(input.requestBody);
   await input.authorizeUrl(url);
 
   const timeoutMs = input.timeoutMs ?? 5_000;
@@ -35,9 +46,7 @@ export async function observeHttpChallenge(
     throw new Error("HTTP observation timeout must be 1-10000ms");
   }
   const response = await input.fetcher(url.toString(), {
-    ...(input.requestBody === undefined
-      ? {}
-      : { body: Buffer.from(input.requestBody) }),
+    ...(requestBody === undefined ? {} : { body: Buffer.from(requestBody) }),
     method: input.method.toUpperCase(),
     redirect: "error",
     signal: AbortSignal.timeout(timeoutMs),
@@ -59,9 +68,7 @@ export async function observeHttpChallenge(
     challenge,
     method: input.method,
     observedAt: now.toISOString(),
-    ...(input.requestBody === undefined
-      ? {}
-      : { requestBody: input.requestBody }),
+    ...(requestBody === undefined ? {} : { requestBody }),
     resourceUrl: url.toString(),
     upstreamResourceUrl: paymentRequired.resource.url,
   });

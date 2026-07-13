@@ -20,6 +20,7 @@ export const TOKEN_TRANSFER_FACTORY_INTERFACE_ID =
 export const RESOURCE_BINDING_VERSION = "sotto-resource-v1" as const;
 export const FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID =
   "23f47481dab6b1ec01339d6e14494d85bb2844c25f45b26fc5c9ef4cd4942d1f:Splice.ExternalPartyAmuletRules:ExternalPartyAmuletRules" as const;
+export const MAX_PURCHASE_WINDOW_SECONDS = 600;
 
 export type ValidatedPurchaseInput = Readonly<{
   expiresAt: string;
@@ -50,14 +51,23 @@ export function validateBoundedPurchaseInput(
   const observedAt = canonicalTime(input.observedAt, "observedAt");
   const requestUrl = validateBinding(input);
   const requirement = selectRequirement(input, requestUrl);
-  const expiresAt = new Date(
+  if (
+    requirement.maxTimeoutSeconds > MAX_PURCHASE_WINDOW_SECONDS ||
+    requirement.extra.executeBeforeSeconds > MAX_PURCHASE_WINDOW_SECONDS
+  ) {
+    throw new Error("challenge purchase window exceeds 600 seconds");
+  }
+  const expiresAtMilliseconds =
     observedAt +
-      Math.min(
-        requirement.maxTimeoutSeconds,
-        requirement.extra.executeBeforeSeconds,
-      ) *
-        1_000,
-  ).toISOString();
+    Math.min(
+      requirement.maxTimeoutSeconds,
+      requirement.extra.executeBeforeSeconds,
+    ) *
+      1_000;
+  if (!Number.isSafeInteger(expiresAtMilliseconds)) {
+    throw new Error("challenge purchase window is not representable");
+  }
+  const expiresAt = new Date(expiresAtMilliseconds).toISOString();
 
   const capability = objectValue(input.capability, "capability");
   exactKeys(

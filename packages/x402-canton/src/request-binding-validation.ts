@@ -1,4 +1,6 @@
 import {
+  MAX_AUTHORITATIVE_HEADERS,
+  MAX_REQUEST_URL_BYTES,
   REQUEST_BINDING_VERSION,
   type HttpRequestCommitment,
 } from "./request-binding.js";
@@ -28,7 +30,11 @@ const HEADER_TOKEN = /^[!#$%&'*+\-.^_`|~0-9a-z]+$/;
 type ValidatedHeader = Readonly<{ name: string; value: string }>;
 
 function validateHeaders(value: unknown): ReadonlyArray<ValidatedHeader> {
-  if (!Array.isArray(value) || value.length < 3 || value.length > 64) {
+  if (
+    !Array.isArray(value) ||
+    value.length < 3 ||
+    value.length > MAX_AUTHORITATIVE_HEADERS
+  ) {
     throw new Error("request binding headers must contain 3-64 values");
   }
   const headers = value.map((candidate, index) => {
@@ -95,6 +101,9 @@ export function validateRequestBindingCanonical(
     url.toString() !== request.url
   ) {
     throw new Error("request binding URL must be canonical HTTPS");
+  }
+  if (Buffer.byteLength(request.url, "utf8") > MAX_REQUEST_URL_BYTES) {
+    throw new Error("request binding URL exceeds 8192 bytes");
   }
   const headers = validateHeaders(request.headers);
   const canonical = JSON.stringify({

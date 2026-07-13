@@ -35,9 +35,10 @@ export function validateBinding(input: BoundedPurchaseCommitmentInput): URL {
   }
   let canonicalText: string;
   try {
-    canonicalText = new TextDecoder("utf-8", { fatal: true }).decode(
-      input.binding.canonicalBytes,
-    );
+    canonicalText = new TextDecoder("utf-8", {
+      fatal: true,
+      ignoreBOM: true,
+    }).decode(input.binding.canonicalBytes);
   } catch {
     throw new Error("request binding canonical bytes are invalid");
   }
@@ -63,9 +64,10 @@ export function selectRequirement(
   }
   let challengeText: string;
   try {
-    challengeText = new TextDecoder("utf-8", { fatal: true }).decode(
-      input.challengeBytes,
-    );
+    challengeText = new TextDecoder("utf-8", {
+      fatal: true,
+      ignoreBOM: true,
+    }).decode(input.challengeBytes);
   } catch {
     throw new Error("challenge bytes must contain strict UTF-8 JSON");
   }

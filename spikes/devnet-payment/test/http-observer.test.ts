@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { createHash } from "node:crypto";
 import { observeHttpChallenge } from "../src/http-observer.js";
 
 const requirement = {
@@ -108,5 +109,41 @@ describe("observeHttpChallenge", () => {
         resourceUrl: "https://provider.example/resource",
       }),
     ).rejects.toThrow("PAYMENT-REQUIRED header");
+  });
+
+  it("binds the immutable bytes actually sent when the caller mutates its body", async () => {
+    const body = new TextEncoder().encode("original");
+    let sent = new Uint8Array();
+    const observation = await observeHttpChallenge({
+      authorizeUrl: async () => undefined,
+      fetcher: async (_url, init) => {
+        sent = Uint8Array.from(init.body as Uint8Array);
+        body.fill(0x78);
+        return new Response(null, {
+          headers: { "PAYMENT-REQUIRED": paymentRequired },
+          status: 402,
+        });
+      },
+      method: "POST",
+      requestBody: body,
+      resourceUrl: "https://provider.example/resource",
+    });
+    expect(observation.bodySha256).toBe(
+      createHash("sha256").update(sent).digest("hex"),
+    );
+  });
+
+  it("rejects an oversized body before fetch", async () => {
+    const fetcher = vi.fn(async () => new Response(null, { status: 402 }));
+    await expect(
+      observeHttpChallenge({
+        authorizeUrl: async () => undefined,
+        fetcher,
+        method: "POST",
+        requestBody: new Uint8Array(1_048_577),
+        resourceUrl: "https://provider.example/resource",
+      }),
+    ).rejects.toThrow("body exceeds");
+    expect(fetcher).not.toHaveBeenCalled();
   });
 });

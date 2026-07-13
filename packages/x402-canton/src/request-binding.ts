@@ -2,6 +2,11 @@ import { createHash } from "node:crypto";
 import { hasControlCharacter } from "./purchase-commitment-primitives.js";
 
 export const REQUEST_BINDING_VERSION = "sotto-http-request-v1" as const;
+export const MAX_REQUEST_BODY_BYTES = 1_048_576;
+export const MAX_REQUEST_URL_BYTES = 8_192;
+export const MAX_RAW_REQUEST_HEADERS = 128;
+export const MAX_AUTHORITATIVE_HEADERS = 64;
+export const MAX_CANONICAL_REQUEST_BYTES = 65_536;
 
 const baseHeaders = [
   "content-encoding",
@@ -40,6 +45,9 @@ function sha256(value: Uint8Array): string {
 }
 
 function authoritativeNames(additional: ReadonlyArray<string>): string[] {
+  if (additional.length > MAX_AUTHORITATIVE_HEADERS - baseHeaders.length) {
+    throw new Error("Request exceeds 64 authoritative headers");
+  }
   const names = new Set<string>(baseHeaders);
   for (const rawName of additional) {
     const name = rawName.toLowerCase();
@@ -60,6 +68,32 @@ function authoritativeNames(additional: ReadonlyArray<string>): string[] {
 export function commitHttpRequest(
   input: HttpRequestBindingInput,
 ): HttpRequestCommitment {
+  if (
+    typeof input.url !== "string" ||
+    Buffer.byteLength(input.url, "utf8") > MAX_REQUEST_URL_BYTES
+  ) {
+    throw new Error("Request URL exceeds 8192 bytes");
+  }
+  if (
+    input.body !== undefined &&
+    (!(input.body instanceof Uint8Array) ||
+      input.body.byteLength > MAX_REQUEST_BODY_BYTES)
+  ) {
+    throw new Error("Request body exceeds 1048576 bytes");
+  }
+  if (
+    input.headers !== undefined &&
+    (!Array.isArray(input.headers) ||
+      input.headers.length > MAX_RAW_REQUEST_HEADERS)
+  ) {
+    throw new Error("Request exceeds 128 raw header tuples");
+  }
+  if (
+    input.additionalAuthoritativeHeaders !== undefined &&
+    !Array.isArray(input.additionalAuthoritativeHeaders)
+  ) {
+    throw new Error("Request authoritative headers must be an array");
+  }
   const method = input.method.toUpperCase();
   if (!httpToken.test(method)) {
     throw new Error(`Invalid HTTP method: ${input.method}`);
@@ -73,6 +107,9 @@ export function commitHttpRequest(
   }
   if (url.hash !== "") {
     throw new Error("Canonical request URL must not contain a fragment");
+  }
+  if (Buffer.byteLength(url.toString(), "utf8") > MAX_REQUEST_URL_BYTES) {
+    throw new Error("Request URL exceeds 8192 bytes");
   }
 
   const names = authoritativeNames(input.additionalAuthoritativeHeaders ?? []);
@@ -108,6 +145,9 @@ export function commitHttpRequest(
     bodySha256,
   });
   const canonicalBytes = new TextEncoder().encode(canonical);
+  if (canonicalBytes.byteLength > MAX_CANONICAL_REQUEST_BYTES) {
+    throw new Error("canonical request exceeds 65536 bytes");
+  }
   return {
     bodySha256,
     canonicalBytes,
