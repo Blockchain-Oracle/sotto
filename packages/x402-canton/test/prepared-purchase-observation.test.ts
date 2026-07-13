@@ -125,4 +125,54 @@ describe("prepared Purchase observation envelope", () => {
     );
     expect(reader).not.toHaveBeenCalled();
   });
+
+  it("rejects a prepare acquisition that exceeds its time budget", async () => {
+    const { intent, holdings, registry } = await purchaseCommandInputs();
+    const prepareRequest = buildBoundedPurchasePrepareRequest(
+      intent,
+      holdings,
+      registry,
+    );
+    const transaction = preparedPurchaseBytes(intent, prepareRequest);
+    const observe = createPreparedPurchaseObserver(async () => {
+      vi.advanceTimersByTime(10_001);
+      return response(transaction);
+    });
+
+    await expect(observe(prepareRequest)).rejects.toThrow(/stale/i);
+  });
+
+  it("rejects a prepare acquisition after its execution window", async () => {
+    const { intent, holdings, registry } = await purchaseCommandInputs();
+    const prepareRequest = buildBoundedPurchasePrepareRequest(
+      intent,
+      holdings,
+      registry,
+    );
+    const transaction = preparedPurchaseBytes(intent, prepareRequest);
+    const observe = createPreparedPurchaseObserver(async () => {
+      vi.setSystemTime(new Date(intent.challenge.executeBefore));
+      return response(transaction);
+    });
+
+    await expect(observe(prepareRequest)).rejects.toThrow(/execution window/i);
+  });
+
+  it("rejects a material clock rollback during preparation", async () => {
+    const { intent, holdings, registry } = await purchaseCommandInputs();
+    const prepareRequest = buildBoundedPurchasePrepareRequest(
+      intent,
+      holdings,
+      registry,
+    );
+    const transaction = preparedPurchaseBytes(intent, prepareRequest);
+    const observe = createPreparedPurchaseObserver(async () => {
+      vi.setSystemTime(new Date("2026-07-13T09:59:56.999Z"));
+      return response(transaction);
+    });
+
+    await expect(observe(prepareRequest)).rejects.toThrow(
+      /clock moved backwards/i,
+    );
+  });
 });

@@ -9,14 +9,13 @@ import {
 import type { BoundedPurchaseLedgerIntent } from "./purchase-ledger-intent.js";
 import { canonicalDisclosureBlob } from "./purchase-disclosure-validation.js";
 import { inspectPreparedPurchaseStructure } from "./prepared-purchase-validation.js";
+import { requirePreparedPurchaseFresh } from "./prepared-purchase-freshness.js";
 import { assertStrictJson } from "./strict-json.js";
 
-export const PREPARE_SUBMISSION_PATH =
-  "/v2/interactive-submission/prepare" as const;
+export const PREPARE_SUBMISSION_PATH = "/v2/interactive-submission/prepare";
 export const PREPARE_SUBMISSION_TIMEOUT_MS = 10_000;
 export const MAX_PREPARE_RESPONSE_BYTES = 8_388_608;
 export const MAX_PREPARED_TRANSACTION_BYTES = 6_291_456;
-
 export type PreparedPurchaseTransportRequest = Readonly<{
   path: typeof PREPARE_SUBMISSION_PATH;
   method: "POST";
@@ -176,7 +175,12 @@ export function createPreparedPurchaseObserver(
       authenticated.intent,
       authenticated.request,
     );
-    const observedAt = new Date(capturedAt).toISOString();
+    const completedAt = requirePreparedPurchaseFresh(
+      capturedAt,
+      authenticated.intent.challenge.executeBefore,
+      "prepared Purchase acquisition",
+    );
+    const observedAt = new Date(completedAt).toISOString();
     canonicalTime(observedAt, "prepared Purchase observedAt");
     const observation = Object.freeze({
       observationId: `sha256:${randomBytes(32).toString("hex")}`,

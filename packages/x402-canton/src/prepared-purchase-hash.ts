@@ -4,6 +4,7 @@ import {
   type PreparedPurchaseObservation,
   type PreparedPurchaseState,
 } from "./prepared-purchase-observation.js";
+import { requirePreparedPurchaseFresh } from "./prepared-purchase-freshness.js";
 
 export type PreparedPurchaseHashDependencies = Readonly<{
   recomputeOfficialHash: (
@@ -13,9 +14,6 @@ export type PreparedPurchaseHashDependencies = Readonly<{
     preparedTransaction: Uint8Array,
   ) => Promise<Uint8Array>;
 }>;
-
-export const MAX_PREPARED_PURCHASE_HASH_AGE_MS = 10_000;
-const CLOCK_ROLLBACK_TOLERANCE_MS = 5_000;
 
 declare const hashVerifiedPreparedPurchaseBrand: unique symbol;
 export type HashVerifiedPreparedPurchase = Readonly<{
@@ -45,17 +43,11 @@ function requireMatch(
 }
 
 function requireFresh(state: PreparedPurchaseState): void {
-  const now = Date.now();
-  const age = now - state.capturedAt;
-  if (age < -CLOCK_ROLLBACK_TOLERANCE_MS) {
-    throw new Error("prepared Purchase clock moved backwards");
-  }
-  if (now >= Date.parse(state.intent.challenge.executeBefore)) {
-    throw new Error("prepared Purchase execution window is closed");
-  }
-  if (age > MAX_PREPARED_PURCHASE_HASH_AGE_MS) {
-    throw new Error("prepared Purchase observation is stale");
-  }
+  requirePreparedPurchaseFresh(
+    state.capturedAt,
+    state.intent.challenge.executeBefore,
+    "prepared Purchase observation",
+  );
 }
 
 export async function verifyPreparedPurchaseHash(
