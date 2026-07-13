@@ -326,6 +326,40 @@ package adds one participant validation, one upload, one reconciliation list,
 and one exact package download. A terminal journal result performs no network
 call. No Postgres or Redis dependency is introduced at this spike gate.
 
+## TransferFactory Discovery Boundary
+
+Five North does not expose the remote Canton Coin `TransferFactory` through the
+party-scoped Ledger ACS used by Sotto. The participant rejects package-ID
+template filters in favor of package-name references, and the accepted
+package-name and interface queries return no scoped factory contract. Sotto must
+not use an any-party ACS query on the shared multi-tenant participant.
+
+Package readiness and factory authority are therefore separate gates. The
+readiness gate proves only exact `sotto-control` package presence, the preferred
+package ID/name/version for the payer and agent, synchronizer agreement, and a
+stable authenticated token subject. It cannot produce a capability bootstrap
+request or claim factory readiness.
+
+Factory authority comes from a fresh bounded Token Standard
+`POST /registry/transfer-instruction/v1/transfer-factory` response using exact
+transfer choice arguments and a fixed payer-holding observation. Before the
+factory ID may enter a payer-signed capability, Sotto must require `direct`,
+require exactly one disclosed contract whose contract ID equals the returned
+factory ID, and pin that disclosure's implementation template and synchronizer.
+The observation is one-use and short-lived.
+
+Each purchase reacquires its own choice context and disclosed contracts because
+the Token Standard permits choice-specific context. It must return the same
+factory ID and pinned implementation stored in the capability. Bootstrap context
+is never reused for payment preparation, and a factory change makes the old
+capability unusable until the payer creates a replacement.
+
+This adds one registry call to the opt-in capability bootstrap and preserves one
+fresh registry call per autonomous purchase. It removes an unproductive ACS scan
+and introduces no Postgres or Redis dependency. A later production control-plane
+may persist capability/factory status in Postgres, but neither a database row
+nor Redis cache may replace the live registry and disclosure checks.
+
 ## Deterministic Proof Before Live Spend
 
 - Pin canonical purchase bytes and hash.
