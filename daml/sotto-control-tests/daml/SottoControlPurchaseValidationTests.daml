@@ -1,0 +1,88 @@
+module SottoControlPurchaseValidationTests where
+
+import DA.Time (addRelTime, hours)
+import Daml.Script
+import Splice.Api.Token.HoldingV1 qualified as Holding
+import Splice.Api.Token.MetadataV1 qualified as Metadata
+import Sotto.Control.PurchaseCapability
+import SottoControlPurchaseTestSupport
+import SottoControlTokenStandardMock
+
+data PurchaseCase = PurchaseCase with
+  attemptId : Text
+  purchaseCommitment : Text
+  requestCommitment : Text
+  challengeId : Text
+  resourceHash : Text
+  recipient : Party
+  amount : Decimal
+  inputHoldingCids : [ContractId Holding.Holding]
+  expectedRevision : Int
+
+validCase : PurchaseFixture -> PurchaseCase
+validCase fixture = PurchaseCase with
+  attemptId = "sha256:attempt"
+  purchaseCommitment = "sha256:purchase"
+  requestCommitment = "sha256:request"
+  challengeId = "sha256:challenge"
+  resourceHash = "sha256:resource"
+  recipient = fixture.provider
+  amount = 2.0
+  inputHoldingCids = [fixture.holdingInterfaceCid]
+  expectedRevision = 0
+
+purchaseCase
+  : PurchaseFixture
+  -> ContractId BoundedPurchaseCapability
+  -> PurchaseCase
+  -> Commands PurchaseResult
+purchaseCase fixture capabilityCid PurchaseCase{..} =
+  exerciseCmd capabilityCid Purchase with
+    attemptId
+    purchaseCommitment
+    requestCommitment
+    challengeId
+    resourceHash
+    recipient
+    amount
+    requestedAt = fixture.now
+    executeBefore = addRelTime fixture.now (hours 1)
+    inputHoldingCids
+    extraArgs = Metadata.ExtraArgs with
+      context = Metadata.emptyChoiceContext
+      meta = Metadata.emptyMetadata
+    expectedRevision
+
+fieldAndLimitValidation : Script ()
+fieldAndLimitValidation = do
+  fixture <- createPurchaseFixture Complete "Amulet"
+  options <- purchaseOptions fixture
+  wrongRecipient <- allocateParty "sotto-wrong-provider"
+  let valid = validCase fixture
+  let reject purchase = submitMustFail options
+        (purchaseCase fixture fixture.capabilityCid purchase)
+  reject (valid with attemptId = "")
+  reject (valid with purchaseCommitment = "")
+  reject (valid with requestCommitment = "")
+  reject (valid with challengeId = "")
+  reject (valid with resourceHash = "sha256:wrong-resource")
+  reject (valid with recipient = wrongRecipient)
+  reject (valid with amount = 0.0)
+  reject (valid with amount = -1.0)
+  reject (valid with amount = 2.01)
+  reject (valid with inputHoldingCids = [])
+  let duplicateInputs =
+        [fixture.holdingInterfaceCid, fixture.holdingInterfaceCid]
+  reject (valid with inputHoldingCids = duplicateInputs)
+  reject (valid with expectedRevision = 1)
+  assertPurchaseUnchanged fixture
+
+  Some capability <- queryContractId fixture.payer fixture.capabilityCid
+  lowAllowanceCid <- submit fixture.payer do
+    createCmd capability with remainingAllowance = 1.0
+  submitMustFail options $ purchaseCase fixture lowAllowanceCid
+    (valid with amount = 1.5)
+  Some unchanged <- queryContractId fixture.payer lowAllowanceCid
+  assert (unchanged.remainingAllowance == 1.0)
+  Some _ <- queryContractId fixture.holdingOwner fixture.holdingCid
+  pure ()

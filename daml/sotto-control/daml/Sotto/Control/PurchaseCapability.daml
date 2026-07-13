@@ -92,6 +92,10 @@ template BoundedPurchaseCapability
         now <- getTime
         assertMsg "capability is paused" (not paused)
         assertMsg "capability is expired" (now < expiresAt)
+        assertMsg "attempt identifier is empty" (attemptId /= "")
+        assertMsg "purchase commitment is empty" (purchaseCommitment /= "")
+        assertMsg "request commitment is empty" (requestCommitment /= "")
+        assertMsg "challenge identifier is empty" (challengeId /= "")
         assertMsg "requested time is not in the past" (requestedAt < now)
         assertMsg "execution window is closed" (now < executeBefore)
         assertMsg "execution exceeds capability expiry" (executeBefore <= expiresAt)
