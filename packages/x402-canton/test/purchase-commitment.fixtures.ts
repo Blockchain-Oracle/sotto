@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import {
+  APPROVED_BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_ID,
   commitHttpRequest,
   type BoundedPurchaseCommitmentInput,
   type HttpRequestBindingInput,
@@ -8,6 +9,12 @@ import {
   capturePaymentRequiredBytesForTest,
   readPaymentRequiredObservation,
 } from "../src/payment-observation.js";
+import {
+  captureCapability,
+  replaceCapability,
+} from "./purchase-capability.fixtures.js";
+
+export { captureCapability, replaceCapability };
 
 export const RESOURCE_URL =
   "https://provider.example/paid/weather?units=metric";
@@ -15,7 +22,8 @@ export const AGENT = "sotto-agent::1220agent";
 export const PAYER = "sotto-payer::1220payer";
 export const PROVIDER = "sotto-provider::1220provider";
 export const DSO = "DSO::1220dso";
-export const CAPABILITY_TEMPLATE_ID = `${"a".repeat(64)}:Sotto.Control.PurchaseCapability:BoundedPurchaseCapability`;
+export const CAPABILITY_TEMPLATE_ID =
+  APPROVED_BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_ID;
 
 export type ChallengeFixture = {
   accepts: Array<{
@@ -57,14 +65,10 @@ export function replaceBoundRequest(
   const binding = commitHttpRequest(request);
   const url = new URL(request.url).toString();
   return mutateChallenge(
-    {
-      ...input,
-      binding,
-      capability: {
-        ...input.capability,
-        resourceHash: routeHash(url),
-      },
-    },
+    replaceCapability({ ...input, binding }, (capability) => ({
+      ...capability,
+      resourceHash: routeHash(url),
+    })),
     (challenge) => {
       challenge.resource.url = url;
       challenge.accepts[0]!.extra.memo = binding.commitment;
@@ -99,19 +103,24 @@ export function createPurchaseInput(): BoundedPurchaseCommitmentInput {
   return {
     authorizationInstanceId: "authorization-7",
     binding,
-    capability: {
+    capability: captureCapability({
       agentParty: AGENT,
       contractId: "00capability7",
+      expectedAdmin: DSO,
       templateId: CAPABILITY_TEMPLATE_ID,
+      payerParty: PAYER,
+      paused: false,
+      instrument: { admin: DSO, id: "Amulet" },
       revision: "7",
       resourceBindingVersion: "sotto-resource-v1",
       resourceHash: routeHash(RESOURCE_URL),
       recipient: PROVIDER,
       perCallLimitAtomic: "3000000000",
       remainingAllowanceAtomic: "10000000000",
-      maximumTotalDebitAtomic: "2750000000",
+      maximumTotalDebitAtomic: "3250000000",
       expiresAt: "2026-07-13T11:00:00.000Z",
-    },
+      transferFactoryContractId: "00tokenfactory7",
+    }),
     expectedNetwork: "canton:devnet",
     paymentObservation: capturePaymentRequiredBytesForTest(
       new TextEncoder().encode(JSON.stringify(challenge)),

@@ -8,18 +8,15 @@ import {
   CAPABILITY_TEMPLATE_ID,
   createPurchaseInput,
   PAYER,
+  replaceCapability,
 } from "./purchase-commitment.fixtures.js";
 
 function withAgent(agentParty: string): BoundedPurchaseCommitmentInput {
-  const input = createPurchaseInput();
-  return {
-    ...input,
-    capability: {
-      ...input.capability,
-      agentParty,
-      templateId: CAPABILITY_TEMPLATE_ID,
-    },
-  };
+  return replaceCapability(createPurchaseInput(), (capability) => ({
+    ...capability,
+    agentParty,
+    templateId: CAPABILITY_TEMPLATE_ID,
+  }));
 }
 
 describe("bounded purchase agent authority", () => {
@@ -30,7 +27,7 @@ describe("bounded purchase agent authority", () => {
     );
 
     expect(new TextDecoder().decode(first.canonicalBytes)).toContain(
-      `\"agentParty\":\"${AGENT}\"`,
+      `"agentParty":"${AGENT}"`,
     );
     expect(changed.attemptId).not.toBe(first.attemptId);
     expect(changed.commitment).not.toBe(first.commitment);
@@ -43,15 +40,13 @@ describe("bounded purchase agent authority", () => {
   });
 
   it("rejects a substituted capability template", () => {
-    const input = withAgent(AGENT);
     expect(() =>
-      commitBoundedPurchase({
-        ...input,
-        capability: {
-          ...input.capability,
+      commitBoundedPurchase(
+        replaceCapability(withAgent(AGENT), (capability) => ({
+          ...capability,
           templateId: `${"a".repeat(64)}:Other.Module:OtherTemplate`,
-        },
-      }),
+        })),
+      ),
     ).toThrow("capability templateId");
   });
 

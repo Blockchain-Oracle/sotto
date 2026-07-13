@@ -1,4 +1,6 @@
 import type { CantonPaymentRequirement } from "./payment-requirement.js";
+import type { PurchaseCapabilitySnapshot } from "./purchase-capability-event.js";
+import { readPurchaseCapabilityObservation } from "./purchase-capability-observation.js";
 import type { BoundedPurchaseCommitmentInput } from "./purchase-commitment.js";
 import { readPaymentRequiredObservation } from "./payment-observation.js";
 import {
@@ -11,8 +13,6 @@ import {
   exactKeys,
   identifier,
   objectValue,
-  REVISION_PATTERN,
-  SHA256_PATTERN,
   sha256Hex,
 } from "./purchase-commitment-primitives.js";
 
@@ -22,14 +22,9 @@ export const RESOURCE_BINDING_VERSION = "sotto-resource-v1" as const;
 export const FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID =
   "23f47481dab6b1ec01339d6e14494d85bb2844c25f45b26fc5c9ef4cd4942d1f:Splice.ExternalPartyAmuletRules:ExternalPartyAmuletRules" as const;
 export const MAX_PURCHASE_WINDOW_SECONDS = 600;
-export const BOUNDED_PURCHASE_CAPABILITY_TEMPLATE =
-  "Sotto.Control.PurchaseCapability:BoundedPurchaseCapability" as const;
-
-const BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_PATTERN = new RegExp(
-  `^[a-f0-9]{64}:${BOUNDED_PURCHASE_CAPABILITY_TEMPLATE.replaceAll(".", "\\.")}$`,
-);
 
 export type ValidatedPurchaseInput = Readonly<{
+  capability: PurchaseCapabilitySnapshot;
   challengeId: `sha256:${string}`;
   expiresAt: string;
   observedAt: string;
@@ -82,63 +77,48 @@ export function validateBoundedPurchaseInput(
   }
   const expiresAt = new Date(expiresAtMilliseconds).toISOString();
 
-  const capability = objectValue(input.capability, "capability");
-  exactKeys(
-    capability,
-    [
-      "agentParty",
-      "contractId",
-      "expiresAt",
-      "maximumTotalDebitAtomic",
-      "perCallLimitAtomic",
-      "recipient",
-      "remainingAllowanceAtomic",
-      "resourceBindingVersion",
-      "resourceHash",
-      "revision",
-      "templateId",
-    ],
-    "capability",
+  const { snapshot: capability } = readPurchaseCapabilityObservation(
+    input.capability,
   );
-  identifier(input.capability.agentParty, "capability agentParty", 512);
-  identifier(input.capability.contractId, "capability contractId");
-  identifier(input.capability.templateId, "capability templateId", 256);
-  if (
-    !BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_PATTERN.test(
-      input.capability.templateId,
-    )
-  ) {
-    throw new Error("capability templateId is not the approved template");
+  if (capability.payerParty !== input.payerParty) {
+    throw new Error("capability payer does not match challenge payer");
   }
-  identifier(input.capability.recipient, "capability recipient");
-  if (input.capability.agentParty === input.payerParty) {
+  if (capability.agentParty === capability.payerParty) {
     throw new Error("capability agent must differ from payer");
   }
+  if (capability.paused) {
+    throw new Error("capability is paused");
+  }
   if (
-    !REVISION_PATTERN.test(input.capability.revision) ||
-    BigInt(input.capability.revision) > 9_223_372_036_854_775_807n
+    capability.instrument.admin !== requirement.extra.instrumentId.admin ||
+    capability.instrument.id !== requirement.extra.instrumentId.id
   ) {
-    throw new Error("capability revision must be a bounded integer");
+    throw new Error(
+      "capability instrument does not match challenge instrument",
+    );
   }
   const amount = atomic(requirement.amount, "challenge amount");
-  const perCall = atomic(input.capability.perCallLimitAtomic, "per-call limit");
+  const perCall = atomic(capability.perCallLimitAtomic, "per-call limit");
   const remaining = atomic(
-    input.capability.remainingAllowanceAtomic,
+    capability.remainingAllowanceAtomic,
     "remaining allowance",
   );
   const maximumDebit = atomic(
-    input.capability.maximumTotalDebitAtomic,
+    capability.maximumTotalDebitAtomic,
     "maximum total debit",
   );
+  if (maximumDebit < perCall) {
+    throw new Error("maximum total debit must cover per-call limit");
+  }
   if (amount === 0n) throw new Error("challenge amount must be positive");
   if (amount > perCall) throw new Error("amount exceeds per-call limit");
   if (amount > remaining) throw new Error("amount exceeds remaining allowance");
   if (amount > maximumDebit)
     throw new Error("amount exceeds maximum total debit");
-  if (input.capability.recipient !== requirement.payTo) {
+  if (capability.recipient !== requirement.payTo) {
     throw new Error("capability recipient does not match challenge recipient");
   }
-  if (input.capability.resourceBindingVersion !== RESOURCE_BINDING_VERSION) {
+  if (capability.resourceBindingVersion !== RESOURCE_BINDING_VERSION) {
     throw new Error("capability resource binding version is unsupported");
   }
   const expectedResourceHash = `sha256:${sha256Hex(
@@ -148,14 +128,11 @@ export function validateBoundedPurchaseInput(
       pathname: requestUrl.pathname,
     }),
   )}`;
-  if (
-    !SHA256_PATTERN.test(input.capability.resourceHash) ||
-    input.capability.resourceHash !== expectedResourceHash
-  ) {
+  if (capability.resourceHash !== expectedResourceHash) {
     throw new Error("capability resource hash does not match request route");
   }
   if (
-    canonicalTime(input.capability.expiresAt, "capability expiresAt") <
+    canonicalTime(capability.expiresAt, "capability expiresAt") <
     Date.parse(expiresAt)
   ) {
     throw new Error("capability expiresAt precedes challenge expiry");
@@ -178,12 +155,19 @@ export function validateBoundedPurchaseInput(
     throw new Error("tokenFactory implementation is not approved");
   }
   identifier(input.tokenFactory.expectedAdmin, "tokenFactory expected admin");
+  if (capability.transferFactoryContractId !== input.tokenFactory.contractId) {
+    throw new Error("capability transfer factory does not match tokenFactory");
+  }
+  if (capability.expectedAdmin !== input.tokenFactory.expectedAdmin) {
+    throw new Error("capability expected admin does not match tokenFactory");
+  }
   if (
     input.tokenFactory.expectedAdmin !== requirement.extra.instrumentId.admin
   ) {
     throw new Error("tokenFactory expected admin does not match instrument");
   }
   return {
+    capability,
     challengeId: observation.challengeId,
     expiresAt,
     observedAt: observation.observedAt,

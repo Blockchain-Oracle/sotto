@@ -6,6 +6,7 @@ import {
 import {
   createPurchaseInput,
   mutateChallenge,
+  replaceCapability,
 } from "./purchase-commitment.fixtures.js";
 
 type Mutation = (
@@ -42,87 +43,21 @@ const malformed: ReadonlyArray<readonly [string, Mutation, string]> = [
   ],
   [
     "amount above remaining",
-    (input) => ({
-      ...input,
-      capability: {
-        ...input.capability,
+    (input) =>
+      replaceCapability(input, (capability) => ({
+        ...capability,
         remainingAllowanceAtomic: "2499999999",
-      },
-    }),
+      })),
     "remaining allowance",
   ],
   [
     "amount above maximum debit",
-    (input) => ({
-      ...input,
-      capability: {
-        ...input.capability,
+    (input) =>
+      replaceCapability(input, (capability) => ({
+        ...capability,
         maximumTotalDebitAtomic: "2499999999",
-      },
-    }),
+      })),
     "maximum total debit",
-  ],
-  [
-    "negative per-call limit",
-    (input) => ({
-      ...input,
-      capability: { ...input.capability, perCallLimitAtomic: "-1" },
-    }),
-    "bounded atomic",
-  ],
-  [
-    "leading-zero remaining",
-    (input) => ({
-      ...input,
-      capability: {
-        ...input.capability,
-        remainingAllowanceAtomic: "010000000000",
-      },
-    }),
-    "bounded atomic",
-  ],
-  [
-    "39-digit maximum debit",
-    (input) => ({
-      ...input,
-      capability: {
-        ...input.capability,
-        maximumTotalDebitAtomic: "9".repeat(39),
-      },
-    }),
-    "bounded atomic",
-  ],
-  [
-    "negative revision",
-    (input) => ({
-      ...input,
-      capability: { ...input.capability, revision: "-1" },
-    }),
-    "bounded integer",
-  ],
-  [
-    "leading-zero revision",
-    (input) => ({
-      ...input,
-      capability: { ...input.capability, revision: "01" },
-    }),
-    "bounded integer",
-  ],
-  [
-    "Daml Int revision overflow",
-    (input) => ({
-      ...input,
-      capability: { ...input.capability, revision: "9223372036854775808" },
-    }),
-    "bounded integer",
-  ],
-  [
-    "noncanonical capability expiry",
-    (input) => ({
-      ...input,
-      capability: { ...input.capability, expiresAt: "2026-07-13T11:00:00Z" },
-    }),
-    "capability expiresAt",
   ],
   [
     "malformed body hash",
@@ -130,29 +65,9 @@ const malformed: ReadonlyArray<readonly [string, Mutation, string]> = [
     "binding commitment",
   ],
   [
-    "malformed resource hash",
-    (input) => ({
-      ...input,
-      capability: {
-        ...input.capability,
-        resourceHash: "bad" as `sha256:${string}`,
-      },
-    }),
-    "resource hash",
-  ],
-  [
     "null capability",
     (input) => ({ ...input, capability: null }) as never,
-    "capability must be an object",
-  ],
-  [
-    "missing capability member",
-    (input) => {
-      const { recipient: _removed, ...capability } = input.capability;
-      void _removed;
-      return { ...input, capability } as never;
-    },
-    "capability keys",
+    "capability observation is not authenticated",
   ],
   [
     "missing factory member",

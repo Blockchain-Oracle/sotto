@@ -6,6 +6,12 @@ export {
   type PaymentRequiredObservation,
 } from "./payment-observation.js";
 export * from "./payment-requirement.js";
+export {
+  createPurchaseCapabilityObserver,
+  MAX_CAPABILITY_OBSERVATION_AGE_MS,
+  type PurchaseCapabilityAcsReader,
+  type PurchaseCapabilityObservation,
+} from "./purchase-capability-observation.js";
 export * from "./purchase-commitment.js";
 export * from "./purchase-evidence.js";
 export * from "./request-binding.js";

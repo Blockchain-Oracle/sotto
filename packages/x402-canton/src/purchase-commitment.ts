@@ -1,7 +1,13 @@
 import type { HttpRequestCommitment } from "./request-binding.js";
 import type { PaymentRequiredObservation } from "./payment-observation.js";
 import {
+  APPROVED_BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_ID,
   BOUNDED_PURCHASE_CAPABILITY_TEMPLATE,
+  SOTTO_CONTROL_PACKAGE_ID,
+  type PurchaseCapabilitySnapshot,
+} from "./purchase-capability-event.js";
+import type { PurchaseCapabilityObservation } from "./purchase-capability-observation.js";
+import {
   FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID,
   RESOURCE_BINDING_VERSION,
   TOKEN_TRANSFER_FACTORY_INTERFACE_ID,
@@ -11,30 +17,20 @@ import { sha256Hex } from "./purchase-commitment-primitives.js";
 
 export const PURCHASE_COMMITMENT_VERSION = "sotto-purchase-v2" as const;
 export {
+  APPROVED_BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_ID,
   BOUNDED_PURCHASE_CAPABILITY_TEMPLATE,
   FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID,
   RESOURCE_BINDING_VERSION,
+  SOTTO_CONTROL_PACKAGE_ID,
   TOKEN_TRANSFER_FACTORY_INTERFACE_ID,
 };
 
-export type PurchaseCapabilitySnapshot = Readonly<{
-  agentParty: string;
-  contractId: string;
-  templateId: string;
-  expiresAt: string;
-  maximumTotalDebitAtomic: string;
-  perCallLimitAtomic: string;
-  recipient: string;
-  remainingAllowanceAtomic: string;
-  resourceBindingVersion: typeof RESOURCE_BINDING_VERSION;
-  resourceHash: `sha256:${string}`;
-  revision: string;
-}>;
+export type { PurchaseCapabilitySnapshot };
 
 export type BoundedPurchaseCommitmentInput = Readonly<{
   authorizationInstanceId: string;
   binding: HttpRequestCommitment;
-  capability: PurchaseCapabilitySnapshot;
+  capability: PurchaseCapabilityObservation;
   expectedNetwork: `canton:${string}`;
   paymentObservation: PaymentRequiredObservation;
   payerParty: string;
@@ -112,7 +108,7 @@ function deriveAttemptId(purchase: unknown): `sha256:${string}` {
 export function commitBoundedPurchase(
   input: BoundedPurchaseCommitmentInput,
 ): BoundedPurchaseCommitment {
-  const { challengeId, expiresAt, observedAt, requirement } =
+  const { capability, challengeId, expiresAt, observedAt, requirement } =
     validateBoundedPurchaseInput(input);
   const purchase = {
     version: PURCHASE_COMMITMENT_VERSION,
@@ -142,17 +138,17 @@ export function commitBoundedPurchase(
       synchronizerId: requirement.extra.synchronizerId,
     },
     capability: {
-      agentParty: input.capability.agentParty,
-      contractId: input.capability.contractId,
-      templateId: input.capability.templateId,
-      revision: input.capability.revision,
-      resourceBindingVersion: input.capability.resourceBindingVersion,
-      resourceHash: input.capability.resourceHash,
-      recipient: input.capability.recipient,
-      perCallLimitAtomic: input.capability.perCallLimitAtomic,
-      remainingAllowanceAtomic: input.capability.remainingAllowanceAtomic,
-      maximumTotalDebitAtomic: input.capability.maximumTotalDebitAtomic,
-      expiresAt: input.capability.expiresAt,
+      agentParty: capability.agentParty,
+      contractId: capability.contractId,
+      templateId: capability.templateId,
+      revision: capability.revision,
+      resourceBindingVersion: capability.resourceBindingVersion,
+      resourceHash: capability.resourceHash,
+      recipient: capability.recipient,
+      perCallLimitAtomic: capability.perCallLimitAtomic,
+      remainingAllowanceAtomic: capability.remainingAllowanceAtomic,
+      maximumTotalDebitAtomic: capability.maximumTotalDebitAtomic,
+      expiresAt: capability.expiresAt,
     },
     tokenFactory: {
       interfaceId: input.tokenFactory.interfaceId,

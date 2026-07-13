@@ -4,6 +4,7 @@ import { commitBoundedPurchase } from "../src/index.js";
 import {
   createPurchaseInput,
   mutateChallenge,
+  replaceCapability,
 } from "./purchase-commitment.fixtures.js";
 
 type RejectedMutation = (
@@ -42,10 +43,10 @@ const rejected: ReadonlyArray<readonly [string, RejectedMutation, string]> = [
   [
     "resource-binding version",
     (input) =>
-      ({
-        ...input,
-        capability: { ...input.capability, resourceBindingVersion: "other" },
-      }) as never,
+      replaceCapability(input, (capability) => ({
+        ...capability,
+        resourceBindingVersion: "other",
+      })),
     "resource binding version",
   ],
   [

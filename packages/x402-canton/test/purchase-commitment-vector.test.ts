@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { commitHttpRequest } from "../src/request-binding.js";
 import { commitBoundedPurchase } from "../src/purchase-commitment.js";
 import { capturePaymentRequiredBytesForTest } from "../src/payment-observation.js";
+import { captureCapability } from "./purchase-commitment.fixtures.js";
+import { CAPABILITY_TEMPLATE_ID } from "./purchase-commitment.fixtures.js";
 
 const resourceUrl = "https://provider.example/paid/weather?units=metric";
 const binding = commitHttpRequest({
@@ -43,7 +45,11 @@ const paymentObservation = capturePaymentRequiredBytesForTest(
 const capability = {
   agentParty: "sotto-agent::1220agent",
   contractId: "00capability7",
-  templateId: `${"a".repeat(64)}:Sotto.Control.PurchaseCapability:BoundedPurchaseCapability`,
+  expectedAdmin: requirement.extra.instrumentId.admin,
+  templateId: CAPABILITY_TEMPLATE_ID,
+  payerParty: requirement.extra.feePayer,
+  paused: false,
+  instrument: { ...requirement.extra.instrumentId },
   revision: "7",
   resourceBindingVersion: "sotto-resource-v1",
   resourceHash:
@@ -51,8 +57,9 @@ const capability = {
   recipient: requirement.payTo,
   perCallLimitAtomic: "3000000000",
   remainingAllowanceAtomic: "10000000000",
-  maximumTotalDebitAtomic: "2750000000",
+  maximumTotalDebitAtomic: "3250000000",
   expiresAt: "2026-07-13T11:00:00.000Z",
+  transferFactoryContractId: "00tokenfactory7",
 } as const;
 const tokenFactory = {
   interfaceId:
@@ -68,7 +75,7 @@ describe("commitBoundedPurchase", () => {
     const result = commitBoundedPurchase({
       authorizationInstanceId: "authorization-7",
       binding,
-      capability,
+      capability: captureCapability(capability),
       expectedNetwork: "canton:devnet",
       paymentObservation,
       payerParty: "sotto-payer::1220payer",
@@ -89,18 +96,18 @@ describe("commitBoundedPurchase", () => {
       '"synchronizerId":"global-domain::1220sync"},',
       '"capability":{"agentParty":"sotto-agent::1220agent",',
       '"contractId":"00capability7",',
-      `"templateId":"${"a".repeat(64)}:Sotto.Control.PurchaseCapability:BoundedPurchaseCapability",`,
+      `"templateId":"${CAPABILITY_TEMPLATE_ID}",`,
       '"revision":"7",',
       '"resourceBindingVersion":"sotto-resource-v1",',
       '"resourceHash":"sha256:f8fe5b158e6d56ef4b320ace4f94600f36c6401e69604469ebc20e45f42605bc",',
       '"recipient":"sotto-provider::1220provider","perCallLimitAtomic":"3000000000",',
-      '"remainingAllowanceAtomic":"10000000000","maximumTotalDebitAtomic":"2750000000",',
+      '"remainingAllowanceAtomic":"10000000000","maximumTotalDebitAtomic":"3250000000",',
       '"expiresAt":"2026-07-13T11:00:00.000Z"},',
       '"tokenFactory":{"interfaceId":"55ba4deb0ad4662c4168b39859738a0e91388d252286480c7331b3f71a517281:Splice.Api.Token.TransferInstructionV1:TransferFactory",',
       '"contractId":"00tokenfactory7",',
       '"implementationTemplateId":"23f47481dab6b1ec01339d6e14494d85bb2844c25f45b26fc5c9ef4cd4942d1f:Splice.ExternalPartyAmuletRules:ExternalPartyAmuletRules",',
       '"expectedAdmin":"DSO::1220dso"},"authorizationInstanceId":"authorization-7",',
-      '"attemptId":"sha256:c29fd3b74e19558aa57c78be6971e48829e0eebddf936fd2349f7ce265df20c6"}',
+      '"attemptId":"sha256:ed939f9e974d12649d363bb56ebc0816f52e36cc731bd5daf42dc48758b32309"}',
     ].join("");
 
     expect(new TextDecoder().decode(result.canonicalBytes)).toBe(
@@ -108,11 +115,11 @@ describe("commitBoundedPurchase", () => {
     );
     expect(result).toMatchObject({
       attemptId:
-        "sha256:c29fd3b74e19558aa57c78be6971e48829e0eebddf936fd2349f7ce265df20c6",
+        "sha256:ed939f9e974d12649d363bb56ebc0816f52e36cc731bd5daf42dc48758b32309",
       challengeId:
         "sha256:8fdfd64077075dba79cc71e6dd13151e77f8d33f6e22df21fa892abd7941695b",
       commitment:
-        "sha256:0626dd72c52009a4c066800b6449512412aa229c81f58307079da7a064606c7a",
+        "sha256:1e82ada9425652810207bfdffc67c0499d07e5b68a942e4710d4505dbe0d9615",
       expiresAt: "2026-07-13T10:00:45.000Z",
       version: "sotto-purchase-v2",
     });
@@ -127,10 +134,14 @@ describe("commitBoundedPurchase", () => {
       payerParty: "sotto-payer::1220payer",
       expectedNetwork: "canton:devnet",
       paymentObservation,
-      capability: {
+      capability: captureCapability({
         agentParty: capability.agentParty,
         expiresAt: capability.expiresAt,
+        expectedAdmin: capability.expectedAdmin,
+        instrument: capability.instrument,
         maximumTotalDebitAtomic: capability.maximumTotalDebitAtomic,
+        paused: capability.paused,
+        payerParty: capability.payerParty,
         remainingAllowanceAtomic: capability.remainingAllowanceAtomic,
         perCallLimitAtomic: capability.perCallLimitAtomic,
         recipient: capability.recipient,
@@ -139,7 +150,8 @@ describe("commitBoundedPurchase", () => {
         revision: capability.revision,
         contractId: capability.contractId,
         templateId: capability.templateId,
-      },
+        transferFactoryContractId: capability.transferFactoryContractId,
+      }),
       binding,
       authorizationInstanceId: "authorization-7",
     });

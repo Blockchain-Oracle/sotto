@@ -1,13 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
   commitBoundedPurchase,
-  commitHttpRequest,
   type BoundedPurchaseCommitmentInput,
 } from "../src/index.js";
 import {
   capturePaymentRequiredBytesForTest,
   readPaymentRequiredObservation,
 } from "../src/payment-observation.js";
+import {
+  createPurchaseInput,
+  replaceCapability,
+} from "./purchase-commitment.fixtures.js";
 
 const resourceUrl = "https://provider.example/paid/weather?units=metric";
 const payerParty = "sotto-payer::1220payer";
@@ -45,39 +48,7 @@ function challengeBytes(
 }
 
 function validInput(): BoundedPurchaseCommitmentInput {
-  const binding = commitHttpRequest({ method: "GET", url: resourceUrl });
-  return {
-    authorizationInstanceId: "authorization-7",
-    binding,
-    capability: {
-      agentParty: "sotto-agent::1220agent",
-      contractId: "00capability7",
-      templateId: `${"a".repeat(64)}:Sotto.Control.PurchaseCapability:BoundedPurchaseCapability`,
-      revision: "7",
-      resourceBindingVersion: "sotto-resource-v1",
-      resourceHash:
-        "sha256:f8fe5b158e6d56ef4b320ace4f94600f36c6401e69604469ebc20e45f42605bc",
-      recipient: providerParty,
-      perCallLimitAtomic: "3000000000",
-      remainingAllowanceAtomic: "10000000000",
-      maximumTotalDebitAtomic: "2750000000",
-      expiresAt: "2026-07-13T11:00:00.000Z",
-    },
-    expectedNetwork: "canton:devnet",
-    paymentObservation: capturePaymentRequiredBytesForTest(
-      challengeBytes(binding.commitment),
-      "2026-07-13T10:00:00.000Z",
-    ),
-    payerParty,
-    tokenFactory: {
-      interfaceId:
-        "55ba4deb0ad4662c4168b39859738a0e91388d252286480c7331b3f71a517281:Splice.Api.Token.TransferInstructionV1:TransferFactory",
-      contractId: "00tokenfactory7",
-      implementationTemplateId:
-        "23f47481dab6b1ec01339d6e14494d85bb2844c25f45b26fc5c9ef4cd4942d1f:Splice.ExternalPartyAmuletRules:ExternalPartyAmuletRules",
-      expectedAdmin: dsoParty,
-    },
-  };
+  return createPurchaseInput();
 }
 
 type Mutation = (
@@ -130,40 +101,38 @@ const invalidCases: ReadonlyArray<readonly [string, Mutation, string]> = [
   ],
   [
     "capability resource mismatch",
-    (input) => ({
-      ...input,
-      capability: {
-        ...input.capability,
+    (input) =>
+      replaceCapability(input, (capability) => ({
+        ...capability,
         resourceHash: `sha256:${"0".repeat(64)}`,
-      },
-    }),
+      })),
     "resource hash",
   ],
   [
     "capability recipient mismatch",
-    (input) => ({
-      ...input,
-      capability: { ...input.capability, recipient: "other::party" },
-    }),
+    (input) =>
+      replaceCapability(input, (capability) => ({
+        ...capability,
+        recipient: "other::party",
+      })),
     "recipient",
   ],
   [
     "amount beyond per-call limit",
-    (input) => ({
-      ...input,
-      capability: { ...input.capability, perCallLimitAtomic: "2499999999" },
-    }),
+    (input) =>
+      replaceCapability(input, (capability) => ({
+        ...capability,
+        perCallLimitAtomic: "2499999999",
+      })),
     "per-call limit",
   ],
   [
     "capability expires before challenge",
-    (input) => ({
-      ...input,
-      capability: {
-        ...input.capability,
+    (input) =>
+      replaceCapability(input, (capability) => ({
+        ...capability,
         expiresAt: "2026-07-13T10:00:44.999Z",
-      },
-    }),
+      })),
     "capability expiresAt",
   ],
   [

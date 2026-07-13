@@ -159,12 +159,24 @@ exposes only status, capture time, and challenge hash. It expires after ten
 minutes and rejects material wall-clock rollback. Raw challenge bytes never
 enter its serializable surface.
 
+The production capability constructor uses a trusted ACS reader for the exact
+requested contract and Ledger offset; direct construction is test-only. It
+accepts only package
+`286d5149f8fe9ba476eef40c60b701e8abf70a3174571698f2d2fa0531f77808` and the
+approved capability template, derived from the current Daml source. Caller
+fields are not authoritative, and a Daml change requires a new pin. Fresh
+registry choice context and disclosed contracts are one-use preparation inputs,
+not durable identity. Canton includes disclosed events in the prepared hash, so
+the signer verifies exact roots/effects, recomputes the hash, and never reuses
+registry context.
+
 ## Autonomous Purchase Flow
 
 1. Observe a fresh authentic x402 `402` and select exactly one supported Canton
    requirement.
 2. Build the canonical HTTP request and complete purchase commitment.
-3. Prepare one root capability exercise controlled by the agent.
+3. Load the authenticated capability event plus fresh registry context and
+   prepare one root capability exercise controlled by the committed agent.
 4. In the choice, reject paused, revoked, expired, exhausted, stale, duplicate,
    or mismatched resource, recipient, amount, maximum debit, commitment, or
    revision state.
@@ -289,7 +301,5 @@ The candidate closes the authority blocker only after Five North evidence shows:
 8. reconciliation and paid retry without a second payment;
 9. exact source SHA and redacted update evidence.
 
-If the Token Standard dependency, merchant preapproval, external Party, or
-agent-only credential cannot be proven on Five North, the result remains
-`NOT PROVEN`; the implementation must not silently fall back to the shared M2M
-credential.
+If any Token Standard, merchant, external-party, or agent-credential gate fails,
+the result remains `NOT PROVEN`; never fall back to the shared M2M credential.

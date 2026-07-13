@@ -58,7 +58,7 @@ describe("bounded purchase evidence", () => {
       "sotto-payer",
       "sotto-provider",
       "Sotto.Control.PurchaseCapability",
-      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "286d5149f8fe9ba476eef40c60b701e8abf70a3174571698f2d2fa0531f77808",
       "canonicalBytes",
       "challengeBytes",
     ]) {
