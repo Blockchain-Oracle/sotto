@@ -1,0 +1,177 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-07-13T08:59:29Z",
+  "verdict": "NO_GO",
+  "source": {
+    "implementationCommit": "01d2d2acad4596fdae9c55601399902fb95543e7",
+    "liveRunSourceCommit": "not-available",
+    "relationshipToLiveRun": "post-run hardened snapshot; the exact pre-run uncommitted worktree cannot be reconstructed as an immutable commit",
+    "cleanCloneVerification": {
+      "cacheDisabled": true,
+      "damlScriptSuitesPassed": 5,
+      "frozenInstall": "passed",
+      "testFilesPassed": 17,
+      "testsPassed": 93,
+      "verdict": "passed"
+    },
+    "toolchain": {
+      "damlSdk": "3.5.2",
+      "dpm": "1.0.21",
+      "java": "21.0.11",
+      "node": "24.18.0",
+      "pnpm": "11.12.0"
+    }
+  },
+  "environment": {
+    "network": "Five North Canton DevNet",
+    "participant": "shared 5n sandbox validator",
+    "synchronizerId": "global-domain::1220be58c29e65de40bf273be1dc2b266d43a9a002ea5b18955aeef7aac881bb471a",
+    "serviceHosts": {
+      "explorer": "lighthouse.devnet.cantonloop.com",
+      "issuer": "auth.sandbox.fivenorth.io",
+      "ledgerApi": "ledger-api.validator.devnet.sandbox.fivenorth.io",
+      "validatorApi": "wallet.validator.devnet.sandbox.fivenorth.io"
+    },
+    "credentialBoundary": "shared participant-admin M2M credential with read-any and named actAs rights",
+    "payerBoundary": "participant-hosted Sotto payer",
+    "providerBoundary": "participant-hosted Sotto provider"
+  },
+  "compatibility": {
+    "httpChallenge": "x402 v2-compatible exact canton:devnet challenge",
+    "settlementAdapter": "direct Ledger API v2 AmuletRules_Transfer",
+    "preparedTransactionVerification": "not-used; the spike submitted a typed direct Ledger API command",
+    "liveBridgeRoutePreservation": "not-proven at execution; fixed and unit-tested in the post-run implementation commit",
+    "relayUsed": false,
+    "upstreamRelayEquivalence": "not-proven",
+    "externalPartySigner": "not-proven",
+    "nonCustody": "not-proven"
+  },
+  "request": {
+    "method": "GET",
+    "bindingVersion": "sotto-http-request-v1",
+    "requestCommitment": "sha256:690dd4f7d5b10a786516602e70bc90e11883ee0f16ea1c8b4cf0976fb904e1ad",
+    "resourceHash": "sha256:378ffac76ed18ec41008ada186fc638c2d97d1340281a17b13ae1f9c2fd00046",
+    "canonicalUrl": "redacted",
+    "challengeHash": "not-captured",
+    "paidResponseHash": "not-captured"
+  },
+  "baselinePayment": {
+    "attemptId": "sha256:0b12cd116a897ad29b99d8f1ef9a70fc0c8aa0e721c33f13e84dfde74e4a1204",
+    "amountAtomic": "2500000000",
+    "amountCantonCoin": "0.2500000000",
+    "commandId": "sotto-settle-0d51d8c5697bc6c78e0fdca1fd4032e38f521a78f89bfba04bfbbec73861bc79",
+    "workflowId": "sotto-x402-settlement-v1",
+    "updateId": "12208b5fae8a0600ead0fbca599484b4b44f43f9d3fde063dd0ebea2abd6966bde75",
+    "offset": 4289456,
+    "effectiveAt": "2026-07-13T06:37:38.265649Z",
+    "recordTime": "2026-07-13T06:37:38.471765Z",
+    "initialHttpStatuses": [402, 200],
+    "proofReplayHttpStatuses": [200, 200],
+    "settlementReconciled": true,
+    "attemptMutationRejected": true,
+    "recipientMutationRejected": true,
+    "requestCommitmentMutationRejected": true,
+    "updateMutationRejected": true,
+    "secondPaymentSubmitted": false,
+    "sameCommandSubmissionReplay": "not-run",
+    "unknownSubmissionOutcome": "not-live-proven",
+    "authoritativeBalanceDelta": "not-captured"
+  },
+  "damlPackage": {
+    "name": "sotto-control",
+    "version": "0.1.0",
+    "sdkVersion": "3.5.2",
+    "packageId": "f72d7eb34869dc6de68db89ecb1b1d11bef9ed1379e6a1903590f9e735cb963e",
+    "uploadMethod": "Ledger API v2 POST /v2/dars",
+    "packagePresence": "confirmed on participant",
+    "vettingMethod": "participant package presence and successful live create/exercise",
+    "localDamlTestMatrix": [
+      "controller-authorization",
+      "expiry",
+      "revocation",
+      "pause",
+      "per-call-limit",
+      "remaining-limit",
+      "duplicate-attempt",
+      "stale-contract-id",
+      "rollback",
+      "concurrent-consumption",
+      "stakeholder-visibility"
+    ],
+    "firstPolicyCreateUpdate": {
+      "commandId": "sotto-policy-create-0b12cd116a897ad29b99d8f1ef9a70fc0c8aa0e721c33f13e84dfde74e4a1204",
+      "updateId": "122028174e1f5e80933ee80366f63ca278c6134e0a77e29b8ff133ea9fd2431f58cf",
+      "recordTime": "2026-07-13T07:03:49.483950Z"
+    },
+    "firstPolicyConsumeUpdate": {
+      "commandId": "sotto-policy-consume-0b12cd116a897ad29b99d8f1ef9a70fc0c8aa0e721c33f13e84dfde74e4a1204",
+      "updateId": "12200427f26233c7f5be019d9785a28ff63e1d341ae98915d11e5cf97efed85af1b4",
+      "recordTime": "2026-07-13T07:03:52.479815Z"
+    }
+  },
+  "atomicPurchase": {
+    "attemptId": "sha256:ddf4c78367ab53edb38f73f76270ff42cfe2512e527b31afc35342a20114ea64",
+    "policyCreateCommandId": "sotto-atomic-policy-ddf4c78367ab53edb38f73f76270ff42cfe2512e527b31afc35342a20114ea64",
+    "policyCreateUpdateId": "12201d95dd4825992c4033700d8256f0755f5bd5679a60ed9fa141470c307d4eaa2c",
+    "policyCreateRecordTime": "2026-07-13T07:17:26.127217Z",
+    "commandId": "sotto-purchase-2da23155ed2c0ddde14bc8dd349993f275df4f1bbf486fd4bb94dc19ad70f2e2",
+    "workflowId": "sotto-atomic-purchase-v1",
+    "updateId": "1220a32bf2bc1e922dc6afab829b8d04de41630d23548df495cd78d75273595da7e7",
+    "offset": 4290922,
+    "effectiveAt": "2026-07-13T07:17:30.415694Z",
+    "recordTime": "2026-07-13T07:17:30.848955Z",
+    "httpStatuses": [402, 200, 200],
+    "effectsInOneUpdate": [
+      "policy-consumption",
+      "reduced-policy-creation",
+      "private-context-creation",
+      "canton-coin-transfer"
+    ],
+    "rollbackStatePreserved": true,
+    "rollbackReasonDurablyCaptured": false,
+    "reducedPolicyContractId": "00e32e7e431d20e4466fea529293d086e43bfeac5e7185a708104a21d8e935bd88ca1212208f5964421a15cf31097c298f0d6e17ea17273263e80c4c7c6c1047b51b5d0462",
+    "privateContextContractId": "001a9e05a9616f0cdde67eebadbeb1321261690642bfe15888e06debf94071e361ca12122022d61e5456ec74dd464e61b0b101a1826697e90cc8062e0a31868be49ce5bd6d"
+  },
+  "visibility": {
+    "partyScopedAcs": {
+      "agent": { "policy": 1, "context": 1 },
+      "owner": { "policy": 1, "context": 1 },
+      "payer": { "policy": 1, "context": 1 },
+      "provider": { "policy": 0, "context": 1 },
+      "outsider": { "policy": 0, "context": 0 }
+    },
+    "provesStakeholderSemantics": true,
+    "provesCredentialIsolation": false,
+    "outsiderEventLookup": "not-run",
+    "outsiderDirectLookup": "not-run",
+    "publicExplorerSettlement": "not-proven"
+  },
+  "deliveryFailure": {
+    "providerUnavailableAfterPriorSuccessfulDeliveries": true,
+    "settlementStillReconciled": true,
+    "allowanceRestored": false,
+    "secondPaymentSubmitted": false,
+    "firstDeliveryFailure": "not-proven"
+  },
+  "negativeControls": {
+    "genericTransferWithoutPolicySucceeded": true,
+    "sharedCredentialRejectedForBoundedAuthority": true,
+    "completeLiveFailureMatrix": false,
+    "exactLiveRejectionReasonsRetained": false
+  },
+  "blockingGates": [
+    "bypass-resistant signer and funding boundary",
+    "complete challenge and policy commitment at the constrained signer",
+    "Five North-compatible Loop human approval",
+    "public settlement visibility with outsider-private-context absence",
+    "explicit Q-003 through Q-006 decisions"
+  ],
+  "redaction": {
+    "rawKeysIncluded": false,
+    "clientSecretsIncluded": false,
+    "accessTokensIncluded": false,
+    "preparedTransactionsIncluded": false,
+    "requestBodiesIncluded": false,
+    "paidResponseBodiesIncluded": false
+  }
+}

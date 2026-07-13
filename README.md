@@ -15,14 +15,20 @@ This repository has fresh history and is currently the spike workspace. It does
 not yet contain a shipping marketplace, facilitator, wallet, MCP server, CLI, or
 production deployment.
 
-The immediate work is:
+The research spike has now produced:
 
-1. prove one real Canton DevNet `402 -> payment -> 200` request;
-2. deploy and exercise a new Sotto Daml package;
-3. test live-price binding, atomic policy consumption, rollback, and signer
-   bypass resistance;
-4. compare public Canton Coin settlement evidence with private Sotto context;
-5. issue an explicit `GO` or `NO_GO` before production implementation.
+1. a real Canton DevNet `402 -> payment -> 200` request;
+2. an uploaded and exercised Sotto research Daml package;
+3. one accepted update combining policy consumption, private context, and Canton
+   Coin transfer, plus a rejected rollback probe;
+4. party-scoped Daml stakeholder visibility and a post-success provider-outage
+   reconciliation check.
+
+The production gate is `NO_GO`. The available machine credential can bypass the
+policy with a generic transfer, the Loop human-payment path is on a different
+participant topology, and public explorer visibility is not proven. The
+[redacted spike result](docs/architecture/devnet-spike-result.md) records the
+evidence and remaining blockers.
 
 No mocked payment or fixture transaction can satisfy those gates.
 

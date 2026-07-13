@@ -34,12 +34,40 @@
 - Canton Coin settlement may be public through Scan; separate Sotto context can
   remain party-scoped.
 - x402scan is a behavioral/design reference but has no repository-level license.
+- Five North accepts one command transaction containing Sotto policy
+  consumption, private context creation, and the standard Canton Coin transfer.
+- The shared Five North machine credential can also submit the transfer without
+  consuming policy, so it is not a bounded signer or funding boundary.
+- Seaport Personal supports custom DAR upload but currently has no configured
+  validator; its Loop party is not hosted by the Five North spike participant.
+- The successful paid path used Sotto's direct Five North adapter and temporary
+  provider, not an upstream FTPtech relay/provider. It does not establish
+  external-party signer or upstream interoperability.
+
+## 2026-07-13 Spike Decision Inputs
+
+- Q-003: reject the shared M2M credential as the bounded-agent candidate because
+  it can authorize a generic transfer without consuming Sotto policy. Continue
+  only with a credential/funding candidate that cannot take that path, or
+  present an explicit custodian trust boundary for user acceptance.
+- Q-004: the live fixture proved Daml visibility for owner, agent, payer, and
+  the selected provider, with outsider-zero ACS. This is evidence, not a
+  production receipt-audience decision.
+- Q-005: the current Loop party is on a different participant topology and did
+  not complete the same Five North payment. Human one-call approval remains
+  unselected.
+- Q-006: no production web/API/MCP/worker/database/queue topology is selected
+  under `NO_GO`; durable first-delivery failure and recovery remain unproven.
 
 ## Open Gates
 
-- Agent signer, funding, mandate lifecycle, atomicity, and bypass model.
+- A signer/funding model whose credential cannot bypass Sotto policy through a
+  generic transfer path.
 - Private receipt reader set.
 - Compatible human one-call approval path.
+- Public explorer evidence for the accepted Canton Coin transfer.
+- Complete canonical challenge/policy commitment enforcement at the final signer
+  boundary.
 - Final web/API/MCP/worker/database/queue/Coolify topology.
 
 These questions are resolved only from the DevNet spike and explicit product
