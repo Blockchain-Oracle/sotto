@@ -1,0 +1,88 @@
+module SottoControlLocalPrepareBootstrap where
+
+import DA.Time (addRelTime, hours, seconds)
+import Daml.Script
+import Splice.Api.Token.HoldingV1 qualified as Holding
+import Splice.Api.Token.TransferInstructionV1 qualified as Transfer
+import Sotto.Control.PurchaseCapability
+import SottoControlTokenStandardMock
+
+data LocalPrepareBootstrapOutput = LocalPrepareBootstrapOutput with
+  payer : Party
+  agent : Party
+  provider : Party
+  admin : Party
+  createdAt : Time
+  requestedAt : Time
+  executeBefore : Time
+  expiresAt : Time
+  instrumentAdmin : Party
+  instrumentId : Text
+  holdingAmount : Decimal
+  mockTransferFactoryCid : ContractId MockTransferFactory
+  transferFactoryCid : ContractId Transfer.TransferFactory
+  mockHoldingCid : ContractId MockHolding
+  holdingCid : ContractId Holding.Holding
+  capabilityCid : ContractId BoundedPurchaseCapability
+    deriving (Eq, Show)
+
+localPrepareBootstrap : Script LocalPrepareBootstrapOutput
+localPrepareBootstrap = do
+  payer <- allocateParty "sotto-local-prepare-payer"
+  agent <- allocateParty "sotto-local-prepare-agent"
+  provider <- allocateParty "sotto-local-prepare-provider"
+  admin <- allocateParty "sotto-local-prepare-admin"
+  createdAt <- getTime
+  let requestedAt = createdAt
+  let executeBefore = addRelTime createdAt (hours 1)
+  let expiresAt = addRelTime createdAt (hours 2)
+  let instrumentId = "Amulet"
+  let holdingAmount = 2.0
+  let instrument = Holding.InstrumentId with
+        admin
+        id = instrumentId
+  mockTransferFactoryCid <- submit admin do
+    createCmd MockTransferFactory with admin; mode = Complete
+  let transferFactoryCid =
+        toInterfaceContractId @Transfer.TransferFactory mockTransferFactoryCid
+  mockHoldingCid <- submit admin do
+    createCmd MockHolding with
+      admin
+      owner = payer
+      instrumentId = instrument
+      amount = holdingAmount
+  let holdingCid = toInterfaceContractId @Holding.Holding mockHoldingCid
+  capabilityCid <- submit payer do
+    createCmd BoundedPurchaseCapability with
+      payer
+      agent
+      resourceBindingVersion = "sotto-resource-v1"
+      allowedResourceHash = "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      allowedRecipient = provider
+      instrumentId = instrument
+      perCallLimit = 2.0
+      remainingAllowance = 5.0
+      maximumTotalDebit = 2.0
+      expiresAt
+      revision = 0
+      paused = False
+      transferFactoryCid
+      expectedAdmin = admin
+  passTime (seconds 1)
+  pure LocalPrepareBootstrapOutput with
+    payer
+    agent
+    provider
+    admin
+    createdAt
+    requestedAt
+    executeBefore
+    expiresAt
+    instrumentAdmin = admin
+    instrumentId
+    holdingAmount
+    mockTransferFactoryCid
+    transferFactoryCid
+    mockHoldingCid
+    holdingCid
+    capabilityCid

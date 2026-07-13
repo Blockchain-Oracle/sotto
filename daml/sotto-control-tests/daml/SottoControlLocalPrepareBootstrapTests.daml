@@ -1,0 +1,36 @@
+module SottoControlLocalPrepareBootstrapTests where
+
+import Daml.Script
+import Splice.Api.Token.HoldingV1 qualified as Holding
+import Splice.Api.Token.TransferInstructionV1 qualified as Transfer
+import SottoControlLocalPrepareBootstrap
+
+localPrepareBootstrapLeavesFixtureActive : Script ()
+localPrepareBootstrapLeavesFixtureActive = do
+  output <- localPrepareBootstrap
+  assert (output.payer /= output.agent)
+  assert (output.payer /= output.provider)
+  assert (output.payer /= output.admin)
+  assert (output.instrumentAdmin == output.admin)
+  assert (output.instrumentId == "Amulet")
+  assert (output.createdAt < output.expiresAt)
+  Some factory <- queryContractId output.admin output.mockTransferFactoryCid
+  assert (factory.admin == output.admin)
+  Some factoryView <- queryInterfaceContractId @Transfer.TransferFactory
+    output.admin output.transferFactoryCid
+  assert (factoryView.admin == output.admin)
+  Some holding <- queryContractId output.payer output.mockHoldingCid
+  assert (holding.owner == output.payer)
+  assert (holding.instrumentId.admin == output.instrumentAdmin)
+  assert (holding.instrumentId.id == output.instrumentId)
+  assert (holding.amount == output.holdingAmount)
+  Some holdingView <- queryInterfaceContractId @Holding.Holding
+    output.payer output.holdingCid
+  assert (holdingView.owner == output.payer)
+  Some capability <- queryContractId output.payer output.capabilityCid
+  assert (capability.agent == output.agent)
+  assert (capability.allowedRecipient == output.provider)
+  assert (capability.transferFactoryCid == output.transferFactoryCid)
+  assert (capability.instrumentId.admin == output.instrumentAdmin)
+  assert (capability.instrumentId.id == output.instrumentId)
+  assert (capability.expiresAt == output.expiresAt)
