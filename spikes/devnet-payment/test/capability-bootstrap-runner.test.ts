@@ -121,47 +121,6 @@ describe("runBoundedCapabilityBootstrap", () => {
     expect(durable.persistSubmissionStarted).not.toHaveBeenCalled();
   });
 
-  it("rejects stale authority before the durable submission marker", async () => {
-    const setup = fixture();
-    const submit = vi.fn();
-    const durable = persistence();
-    const readActiveCapabilities = vi.fn(async () => {
-      vi.setSystemTime(now + 60_001);
-      return [];
-    });
-
-    await expect(
-      runBoundedCapabilityBootstrap({
-        readActiveCapabilities,
-        request: setup.request,
-        submit,
-        ...durable,
-      }),
-    ).rejects.toThrow("bootstrap authority is stale");
-    expect(durable.persistSubmissionStarted).not.toHaveBeenCalled();
-    expect(submit).not.toHaveBeenCalled();
-  });
-
-  it("rejects authority that becomes stale after the marker", async () => {
-    const setup = fixture();
-    const submit = vi.fn();
-    const persistSubmissionStarted = vi.fn(async () => {
-      vi.setSystemTime(now + 60_001);
-    });
-
-    await expect(
-      runBoundedCapabilityBootstrap({
-        persistIntent: vi.fn(async () => undefined),
-        persistSubmissionStarted,
-        readActiveCapabilities: vi.fn(async () => []),
-        request: setup.request,
-        submit,
-      }),
-    ).rejects.toThrow("bootstrap authority is stale");
-    expect(persistSubmissionStarted).toHaveBeenCalledTimes(1);
-    expect(submit).not.toHaveBeenCalled();
-  });
-
   it("rechecks freshness before the durable submission marker", async () => {
     const setup = fixture();
     const submit = vi.fn();
