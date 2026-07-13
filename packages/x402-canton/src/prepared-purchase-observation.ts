@@ -87,21 +87,18 @@ function parseResponse(bytes: Uint8Array): Readonly<{
   }
   assertStrictJson(source, 64, 65_536);
   const root = objectValue(JSON.parse(source), "prepare response");
+  const responseCore = { ...root };
+  delete responseCore.hashingDetails;
+  delete responseCore.costEstimation;
   exactKeys(
-    root,
-    [
-      "preparedTransaction",
-      "preparedTransactionHash",
-      "hashingSchemeVersion",
-      "hashingDetails",
-      "costEstimation",
-    ],
+    responseCore,
+    ["preparedTransaction", "preparedTransactionHash", "hashingSchemeVersion"],
     "prepare response",
   );
-  if (root.hashingDetails !== null) {
-    throw new Error("prepare hashing details must be absent");
+  if (typeof (root.hashingDetails ?? "") !== "string") {
+    throw new Error("prepare hashing details are invalid");
   }
-  if (root.costEstimation !== null) {
+  if (root.costEstimation !== undefined && root.costEstimation !== null) {
     const cost = objectValue(root.costEstimation, "prepare cost estimation");
     exactKeys(
       cost,
