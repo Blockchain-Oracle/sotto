@@ -1,0 +1,32 @@
+module SottoControlPurchaseVisibilityTests where
+
+import Daml.Script
+import Sotto.Control.PurchaseCapability
+import SottoControlPurchaseTestSupport
+import SottoControlTokenStandardMock
+
+purchaseStakeholderVisibility : Script ()
+purchaseStakeholderVisibility = do
+  fixture <- createPurchaseFixture Complete "Amulet"
+  options <- purchaseOptions fixture
+  result <- submit options (purchaseCommands fixture)
+
+  Some _ <- queryContractId fixture.payer result.capabilityCid
+  Some _ <- queryContractId fixture.agent result.capabilityCid
+  None <- queryContractId fixture.provider result.capabilityCid
+  None <- queryContractId fixture.admin result.capabilityCid
+  None <- queryContractId fixture.outsider result.capabilityCid
+
+  Some _ <- queryContractId fixture.payer result.contextCid
+  Some _ <- queryContractId fixture.agent result.contextCid
+  Some context <- queryContractId fixture.provider result.contextCid
+  None <- queryContractId fixture.admin result.contextCid
+  None <- queryContractId fixture.outsider result.contextCid
+  assert (context.attemptId == "sha256:attempt")
+  assert (context.purchaseCommitment == "sha256:purchase")
+
+  outsiderCapabilities <- query @BoundedPurchaseCapability fixture.outsider
+  outsiderContexts <- query @PurchaseContext fixture.outsider
+  assert (null outsiderCapabilities)
+  assert (null outsiderContexts)
+  pure ()
