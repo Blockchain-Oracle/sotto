@@ -91,6 +91,8 @@ template BoundedPurchaseCapability
         assertMsg "amount exceeds per-call limit" (amount <= perCallLimit)
         assertMsg "amount exceeds remaining allowance" (amount <= remainingAllowance)
         inputViews <- mapA (\cid -> view <$> fetch cid) inputHoldingCids
+        assertMsg "input holding instrument does not match"
+          (all (\holding -> holding.instrumentId == instrumentId) inputViews)
         transferResult <- exercise transferFactoryCid Transfer.TransferFactory_Transfer with
           expectedAdmin
           transfer = Transfer.Transfer with
