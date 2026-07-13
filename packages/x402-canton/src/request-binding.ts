@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { hasControlCharacter } from "./purchase-commitment-primitives.js";
 
 export const REQUEST_BINDING_VERSION = "sotto-http-request-v1" as const;
 
@@ -85,7 +86,7 @@ export function commitHttpRequest(
       }
       const value = rawValue.trim();
       if (
-        /[\u0000-\u001f\u007f]/u.test(value) ||
+        hasControlCharacter(value) ||
         Buffer.byteLength(value, "utf8") > 8_192
       ) {
         throw new Error(`Invalid authoritative header value: ${name}`);

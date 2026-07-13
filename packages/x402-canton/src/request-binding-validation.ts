@@ -4,6 +4,7 @@ import {
 } from "./request-binding.js";
 import {
   exactKeys,
+  hasControlCharacter,
   objectValue,
   RAW_SHA256_PATTERN,
 } from "./purchase-commitment-primitives.js";
@@ -41,7 +42,7 @@ function validateHeaders(value: unknown): ReadonlyArray<ValidatedHeader> {
       FORBIDDEN_HEADERS.has(name) ||
       typeof headerValue !== "string" ||
       headerValue.trim() !== headerValue ||
-      /[\u0000-\u001f\u007f]/u.test(headerValue) ||
+      hasControlCharacter(headerValue) ||
       Buffer.byteLength(headerValue, "utf8") > 8_192
     ) {
       throw new Error("request binding headers are invalid");
