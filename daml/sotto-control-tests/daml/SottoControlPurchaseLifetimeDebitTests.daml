@@ -1,0 +1,57 @@
+module SottoControlPurchaseLifetimeDebitTests where
+
+import Daml.Script
+import Splice.Api.Token.HoldingV1 qualified as Holding
+import Sotto.Control.PurchaseCapability
+import SottoControlPurchaseTestSupport
+import SottoControlPurchaseValidationTests
+import SottoControlTokenStandardMock
+
+purchaseWithDebit
+  : PurchaseFixture
+  -> ContractId BoundedPurchaseCapability
+  -> ContractId Holding.Holding
+  -> Int
+  -> Decimal
+  -> Text
+  -> Commands PurchaseResult
+purchaseWithDebit fixture capabilityCid holdingCid revision amount suffix =
+  purchaseCase fixture capabilityCid $ (validCase fixture) with
+    attemptId = "sha256:lifetime-attempt-" <> suffix
+    purchaseCommitment = "sha256:lifetime-purchase-" <> suffix
+    requestCommitment = "sha256:lifetime-request-" <> suffix
+    challengeId = "sha256:lifetime-challenge-" <> suffix
+    inputHoldingCids = [holdingCid]
+    expectedRevision = revision
+    amount
+
+lifetimeDebitIsBounded : Script ()
+lifetimeDebitIsBounded = do
+  fixture <- createPurchaseFixtureWith
+    (CompleteWithChange with changeAmount = 0.0)
+    "Amulet"
+    2.25
+    2.25
+  firstOptions <- purchaseOptions fixture
+  first <- submit firstOptions $ purchaseWithDebit fixture fixture.capabilityCid
+    fixture.holdingInterfaceCid 0 2.0 "one"
+  Some firstReduced <- queryContractId fixture.payer first.capabilityCid
+  assert (firstReduced.remainingAllowance == 2.75)
+
+  [(secondHolding, secondInterface)] <- createAdditionalInputs fixture 1 2.25
+  secondOptions <- purchaseOptionsForHoldings fixture [secondHolding]
+  second <- submit secondOptions $ purchaseWithDebit fixture first.capabilityCid
+    secondInterface 1 2.0 "two"
+  Some secondReduced <- queryContractId fixture.payer second.capabilityCid
+  assert (secondReduced.remainingAllowance == 0.5)
+
+  [(blockedHolding, blockedInterface)] <- createAdditionalInputs fixture 1 0.75
+  blockedOptions <- purchaseOptionsForHoldings fixture [blockedHolding]
+  submitMustFail blockedOptions $ purchaseWithDebit fixture second.capabilityCid
+    blockedInterface 2 0.5 "three"
+  Some stillBounded <- queryContractId fixture.payer second.capabilityCid
+  Some _ <- queryContractId fixture.payer blockedHolding
+  contexts <- query @PurchaseContext fixture.payer
+  assert (stillBounded.remainingAllowance == 0.5)
+  assert (length contexts == 2)
+  pure ()

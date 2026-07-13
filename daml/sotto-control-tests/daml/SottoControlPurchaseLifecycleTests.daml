@@ -11,6 +11,8 @@ pauseAndRevokeLifecycle = do
   fixture <- createPurchaseFixture Complete "Amulet"
   Some original <- queryContractId fixture.payer fixture.capabilityCid
 
+  submitMustFail fixture.payer do
+    createCmd original with agent = fixture.payer
   submitMustFail fixture.agent do createCmd original
   submitMustFail fixture.provider do createCmd original
   submitMustFail fixture.outsider do createCmd original

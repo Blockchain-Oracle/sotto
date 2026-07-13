@@ -18,7 +18,7 @@ feeAndTotalDebitBounds = do
   assert (exactContext.amount == 2.0)
   assert (exactContext.totalDebit == 2.25)
   Some exactCapability <- queryContractId exact.payer exactResult.capabilityCid
-  assert (exactCapability.remainingAllowance == 3.0)
+  assert (exactCapability.remainingAllowance == 2.75)
   [(_, senderChange)] <- query @MockHolding exact.payer
   assert (senderChange.amount == 2.75)
 

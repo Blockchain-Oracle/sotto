@@ -71,7 +71,7 @@ non-custodial or ledger-enforced.
 | Boundary                       | Required authority                                                  |
 | ------------------------------ | ------------------------------------------------------------------- |
 | Funded Canton Coin holding     | external payer Party; user-controlled signing authority             |
-| Purchase capability            | payer signatory; agent observer                                     |
+| Purchase capability            | payer signatory; distinct agent observer                            |
 | Capability creation/revocation | payer only                                                          |
 | Purchase choice                | agent controller only                                               |
 | Nested token transfer          | payer authority inherited only inside capability consequences       |
@@ -82,6 +82,8 @@ non-custodial or ledger-enforced.
 A compromised agent may consume every active capability it controls, subject to
 their on-ledger resource, recipient, amount, allowance, expiry, revision, and
 replay constraints. It may not spend outside those capabilities.
+Capability creation rejects an agent Party equal to the payer Party; otherwise
+the delegated-authority boundary would collapse into generic payer authority.
 
 ## Purchase Commitment
 
@@ -137,10 +139,11 @@ capability, limit, expiry, or factory mutation produces a different attempt.
 `sotto-resource-v1` hashes the UTF-8 bytes of fixed-order JSON containing the
 canonical request origin and pathname. It deliberately excludes query and method
 because the capability controls a route while `sotto-http-request-v1` binds each
-complete request. Remaining allowance and per-call limit track transfer
-principal in atomic instrument units. Maximum total debit caps the net reduction
-of payer-owned holdings in that instrument, including payer-paid fees; it is not
-the gross value of input holdings consumed and recreated.
+complete request. Per-call limit tracks transfer principal in atomic instrument
+units. Remaining allowance is the lifetime total-debit budget and decreases by
+the exact net reduction of payer-owned holdings, including payer-paid holding
+fees. Maximum total debit caps that same net reduction for one purchase; neither
+limit uses the gross value of input holdings consumed and recreated.
 
 The selected requirement's memo must equal the canonical request commitment, and
 its fee payer must equal the authorized payer. The challenge ID still binds the
@@ -209,6 +212,10 @@ header tuples at 128, authoritative headers at 64 including the three base
 headers, and canonical request bytes at 64 KiB. The observer snapshots bounded
 body bytes before its first asynchronous operation and uses independent copies
 for transport and hashing so caller mutation cannot change the commitment.
+The Daml choice caps input, receiver, and sender-change holding lists at 16
+before its quadratic uniqueness checks. One consuming capability deliberately
+serializes purchases: production parallelism may use payer-created capabilities
+with disjoint budgets, never duplicate one allowance across concurrent shards.
 
 ## Source Boundary
 
