@@ -62,6 +62,7 @@ const sdkVersion = capture(dpm, ["version", "--active"], toolEnv);
 if (sdkVersion !== "3.5.2") {
   throw new Error(`Expected Daml SDK 3.5.2, got ${sdkVersion}`);
 }
+runPnpm("Daml dependencies", "daml:deps");
 run("Daml build", dpm, ["build", "--all"], { cwd: "daml", env: toolEnv });
 run("Daml tests", dpm, ["test"], {
   cwd: "daml/sotto-control-tests",

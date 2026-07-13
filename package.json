@@ -19,6 +19,7 @@
     "check:licenses": "node scripts/check-licenses.mjs",
     "check:source": "node scripts/check-source.mjs",
     "check:toolchain": "node scripts/check-toolchain.mjs",
+    "daml:deps": "node scripts/fetch-token-standard-dar.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint . --max-warnings 0",
