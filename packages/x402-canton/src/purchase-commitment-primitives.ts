@@ -6,6 +6,19 @@ export const REVISION_PATTERN = /^(?:0|[1-9]\d{0,18})$/;
 const atomicPattern = /^(?:0|[1-9]\d{0,37})$/;
 const timestampPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
 
+function hasUnpairedSurrogate(value: string): boolean {
+  for (let index = 0; index < value.length; index++) {
+    const code = value.charCodeAt(index);
+    if (code >= 0xd800 && code <= 0xdbff) {
+      const next = value.charCodeAt(++index);
+      if (!(next >= 0xdc00 && next <= 0xdfff)) return true;
+    } else if (code >= 0xdc00 && code <= 0xdfff) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export function sha256Hex(value: string | Uint8Array): string {
   return createHash("sha256").update(value).digest("hex");
 }
@@ -41,6 +54,7 @@ export function identifier(
     typeof value !== "string" ||
     value === "" ||
     value.trim() !== value ||
+    hasUnpairedSurrogate(value) ||
     /[\u0000-\u001f\u007f]/u.test(value) ||
     Buffer.byteLength(value, "utf8") > maxBytes
   ) {

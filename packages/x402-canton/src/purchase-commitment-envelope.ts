@@ -6,11 +6,13 @@ import { REQUEST_BINDING_VERSION } from "./request-binding.js";
 import type { BoundedPurchaseCommitmentInput } from "./purchase-commitment.js";
 import {
   exactKeys,
+  identifier,
   objectValue,
   RAW_SHA256_PATTERN,
   SHA256_PATTERN,
   sha256Hex,
 } from "./purchase-commitment-primitives.js";
+import { assertStrictJson } from "./strict-json.js";
 
 export function validateBinding(input: BoundedPurchaseCommitmentInput): URL {
   const binding = objectValue(input.binding, "request binding");
@@ -30,16 +32,16 @@ export function validateBinding(input: BoundedPurchaseCommitmentInput): URL {
   ) {
     throw new Error("request binding commitment is invalid");
   }
-  let canonical: unknown;
+  let canonicalText: string;
   try {
-    canonical = JSON.parse(
-      new TextDecoder("utf-8", { fatal: true }).decode(
-        input.binding.canonicalBytes,
-      ),
+    canonicalText = new TextDecoder("utf-8", { fatal: true }).decode(
+      input.binding.canonicalBytes,
     );
   } catch {
     throw new Error("request binding canonical bytes are invalid");
   }
+  assertStrictJson(canonicalText);
+  const canonical = JSON.parse(canonicalText) as unknown;
   const request = objectValue(canonical, "request binding canonical value");
   exactKeys(
     request,
@@ -71,17 +73,22 @@ export function selectRequirement(
   ) {
     throw new Error("challenge bytes must contain 1-16384 bytes");
   }
-  let decoded: unknown;
+  let challengeText: string;
   try {
-    decoded = JSON.parse(
-      new TextDecoder("utf-8", { fatal: true }).decode(input.challengeBytes),
+    challengeText = new TextDecoder("utf-8", { fatal: true }).decode(
+      input.challengeBytes,
     );
   } catch {
     throw new Error("challenge bytes must contain strict UTF-8 JSON");
   }
+  assertStrictJson(challengeText);
+  const decoded = JSON.parse(challengeText) as unknown;
   const challenge = objectValue(decoded, "Payment required challenge");
   if (challenge.x402Version !== 2 || !Array.isArray(challenge.accepts)) {
     throw new Error("Payment required challenge must use x402Version 2");
+  }
+  if (challenge.accepts.length > 32) {
+    throw new Error("Payment required challenge allows at most 32 accepts");
   }
   const resource = objectValue(challenge.resource, "Payment required resource");
   if (
@@ -97,7 +104,46 @@ export function selectRequirement(
   if (matches.length !== 1) {
     throw new Error("Expected exactly one matching Canton requirement");
   }
+  const selected = objectValue(matches[0], "Payment requirement");
+  exactKeys(
+    selected,
+    [
+      "amount",
+      "asset",
+      "extra",
+      "maxTimeoutSeconds",
+      "network",
+      "payTo",
+      "scheme",
+    ],
+    "Payment requirement",
+  );
+  const extra = objectValue(selected.extra, "Payment requirement extra");
+  exactKeys(
+    extra,
+    [
+      "assetTransferMethod",
+      "executeBeforeSeconds",
+      "feePayer",
+      "instrumentId",
+      "memo",
+      "synchronizerId",
+    ],
+    "Payment requirement extra including memo",
+  );
+  exactKeys(
+    objectValue(extra.instrumentId, "instrumentId"),
+    ["admin", "id"],
+    "instrumentId",
+  );
   const requirement = parsePaymentChallenge(matches[0]);
+  identifier(requirement.network, "challenge network", 256);
+  identifier(requirement.asset, "challenge asset", 512);
+  identifier(requirement.payTo, "challenge recipient", 512);
+  identifier(requirement.extra.feePayer, "challenge fee payer", 512);
+  identifier(requirement.extra.instrumentId.admin, "instrument admin", 512);
+  identifier(requirement.extra.instrumentId.id, "instrument id", 512);
+  identifier(requirement.extra.synchronizerId, "challenge synchronizer", 512);
   if (requirement.extra.assetTransferMethod !== "transfer-factory") {
     throw new Error("Bounded purchase requires transfer-factory");
   }
