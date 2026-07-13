@@ -1,0 +1,66 @@
+module SottoControlPurchaseAuthorityTests where
+
+import DA.Time (addRelTime, hours)
+import Daml.Script
+import Splice.Api.Token.HoldingV1 qualified as Holding
+import Splice.Api.Token.MetadataV1 qualified as Metadata
+import Splice.Api.Token.TransferInstructionV1 qualified as Transfer
+import SottoControlTokenStandardMock
+
+agentCannotTransferPayerFundsDirectly : Script ()
+agentCannotTransferPayerFundsDirectly = do
+  payer <- allocateParty "sotto-direct-payer"
+  agent <- allocateParty "sotto-direct-agent"
+  provider <- allocateParty "sotto-direct-provider"
+  admin <- allocateParty "sotto-direct-admin"
+  wrongAdmin <- allocateParty "sotto-wrong-admin"
+  now <- getTime
+  let instrumentId = Holding.InstrumentId with admin; id = "Amulet"
+  factoryCid <- submit admin do
+    createCmd MockTransferFactory with admin; mode = Complete
+  holdingCid <- submit admin do
+    createCmd MockHolding with admin; owner = payer; instrumentId; amount = 2.0
+  let factoryInterfaceCid =
+        toInterfaceContractId @Transfer.TransferFactory factoryCid
+  let holdingInterfaceCid = toInterfaceContractId @Holding.Holding holdingCid
+  Some factoryDisclosure <- queryDisclosure admin factoryCid
+  Some holdingDisclosure <- queryDisclosure payer holdingCid
+  let disclosed = discloseMany [factoryDisclosure, holdingDisclosure]
+  let transfer = Transfer.Transfer with
+        sender = payer
+        receiver = provider
+        amount = 2.0
+        instrumentId
+        requestedAt = now
+        executeBefore = addRelTime now (hours 1)
+        inputHoldingCids = [holdingInterfaceCid]
+        meta = Metadata.emptyMetadata
+  let extraArgs = Metadata.ExtraArgs with
+        context = Metadata.emptyChoiceContext
+        meta = Metadata.emptyMetadata
+
+  submitMustFail (actAs agent <> disclosed) do
+    exerciseCmd factoryInterfaceCid Transfer.TransferFactory_Transfer with
+      expectedAdmin = admin
+      transfer
+      extraArgs
+  submitMustFail (actAs agent <> disclose factoryDisclosure) do
+    exerciseCmd factoryInterfaceCid Transfer.TransferFactory_PublicFetch with
+      expectedAdmin = wrongAdmin
+      actor = agent
+  submitMustFail (actAs payer <> disclosed) do
+    exerciseCmd factoryInterfaceCid Transfer.TransferFactory_Transfer with
+      expectedAdmin = wrongAdmin
+      transfer
+      extraArgs
+  Some _ <- queryContractId payer holdingCid
+
+  submit (actAs payer <> disclosed) do
+    exerciseCmd factoryInterfaceCid Transfer.TransferFactory_Transfer with
+      expectedAdmin = admin
+      transfer
+      extraArgs
+  None <- queryContractId payer holdingCid
+  [(_, receiverHolding)] <- query @MockHolding provider
+  assert (receiverHolding.amount == 2.0)
+  pure ()
