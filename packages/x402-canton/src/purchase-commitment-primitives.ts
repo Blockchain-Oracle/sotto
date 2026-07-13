@@ -107,3 +107,8 @@ export function damlDecimalToAtomic(value: unknown, label: string): string {
   }
   return result;
 }
+
+export function atomicToDamlDecimal(value: unknown, label: string): string {
+  const integer = atomic(value, label).toString().padStart(11, "0");
+  return `${integer.slice(0, -10)}.${integer.slice(-10)}`;
+}

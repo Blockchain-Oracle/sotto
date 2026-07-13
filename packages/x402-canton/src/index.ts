@@ -38,3 +38,15 @@ export {
 } from "./purchase-holding-types.js";
 export * from "./request-binding.js";
 export * from "./signer-boundary.js";
+export {
+  createTransferFactoryObserver,
+  MAX_TRANSFER_FACTORY_OBSERVATION_AGE_MS,
+  type TransferFactoryObservation,
+} from "./transfer-factory-observation.js";
+export {
+  MAX_REGISTRY_RESPONSE_BYTES,
+  REGISTRY_TIMEOUT_MS,
+  TRANSFER_FACTORY_REGISTRY_PATH,
+  type TransferFactoryRegistryReader,
+  type TransferFactoryRegistryRequest,
+} from "./transfer-factory-types.js";
