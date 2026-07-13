@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import {
   commitHttpRequest,
   type BoundedPurchaseCommitmentInput,
+  type HttpRequestBindingInput,
 } from "../src/index.js";
 
 export const RESOURCE_URL =
@@ -33,7 +34,7 @@ export type ChallengeFixture = {
   x402Version: number;
 };
 
-function routeHash(url: string): `sha256:${string}` {
+export function routeHash(url: string): `sha256:${string}` {
   const resource = new URL(url);
   const preimage = JSON.stringify({
     version: "sotto-resource-v1",
@@ -41,6 +42,28 @@ function routeHash(url: string): `sha256:${string}` {
     pathname: resource.pathname,
   });
   return `sha256:${createHash("sha256").update(preimage).digest("hex")}`;
+}
+
+export function replaceBoundRequest(
+  input: BoundedPurchaseCommitmentInput,
+  request: HttpRequestBindingInput,
+): BoundedPurchaseCommitmentInput {
+  const binding = commitHttpRequest(request);
+  const url = new URL(request.url).toString();
+  return mutateChallenge(
+    {
+      ...input,
+      binding,
+      capability: {
+        ...input.capability,
+        resourceHash: routeHash(url),
+      },
+    },
+    (challenge) => {
+      challenge.resource.url = url;
+      challenge.accepts[0]!.extra.memo = binding.commitment;
+    },
+  );
 }
 
 export function createPurchaseInput(): BoundedPurchaseCommitmentInput {

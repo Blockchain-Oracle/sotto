@@ -44,10 +44,12 @@ export type BoundedPurchaseCommitmentInput = Readonly<{
 
 export type BoundedPurchaseCommitment = Readonly<{
   attemptId: `sha256:${string}`;
+  bodyHash: `sha256:${string}`;
   canonicalBytes: Uint8Array;
   challengeId: `sha256:${string}`;
   commitment: `sha256:${string}`;
   expiresAt: string;
+  requestCommitment: `sha256:${string}`;
   version: typeof PURCHASE_COMMITMENT_VERSION;
 }>;
 
@@ -123,10 +125,12 @@ export function commitBoundedPurchase(
   const canonicalBytes = new TextEncoder().encode(canonical);
   return {
     attemptId,
+    bodyHash: `sha256:${input.binding.bodySha256}`,
     canonicalBytes,
     challengeId,
     commitment: `sha256:${sha256Hex(canonicalBytes)}`,
     expiresAt,
+    requestCommitment: input.binding.commitment,
     version: PURCHASE_COMMITMENT_VERSION,
   };
 }
