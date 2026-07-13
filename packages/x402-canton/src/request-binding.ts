@@ -83,7 +83,14 @@ export function commitHttpRequest(
       if (values.has(name)) {
         throw new Error(`Duplicate authoritative header value: ${name}`);
       }
-      values.set(name, rawValue.trim());
+      const value = rawValue.trim();
+      if (
+        /[\u0000-\u001f\u007f]/u.test(value) ||
+        Buffer.byteLength(value, "utf8") > 8_192
+      ) {
+        throw new Error(`Invalid authoritative header value: ${name}`);
+      }
+      values.set(name, value);
     } else if (!ignoredHeaders.has(name)) {
       continue;
     }

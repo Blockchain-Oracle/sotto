@@ -13,6 +13,7 @@ import {
   sha256Hex,
 } from "./purchase-commitment-primitives.js";
 import { assertStrictJson } from "./strict-json.js";
+import { validateRequestBindingCanonical } from "./request-binding-validation.js";
 
 export function validateBinding(input: BoundedPurchaseCommitmentInput): URL {
   const binding = objectValue(input.binding, "request binding");
@@ -42,24 +43,11 @@ export function validateBinding(input: BoundedPurchaseCommitmentInput): URL {
   }
   assertStrictJson(canonicalText);
   const canonical = JSON.parse(canonicalText) as unknown;
-  const request = objectValue(canonical, "request binding canonical value");
-  exactKeys(
-    request,
-    ["bodySha256", "headers", "method", "url", "version"],
-    "request binding canonical value",
+  return validateRequestBindingCanonical(
+    canonical,
+    canonicalText,
+    input.binding,
   );
-  if (
-    request.version !== input.binding.version ||
-    request.bodySha256 !== input.binding.bodySha256 ||
-    typeof request.url !== "string"
-  ) {
-    throw new Error("request binding canonical value is inconsistent");
-  }
-  const url = new URL(request.url);
-  if (url.toString() !== request.url) {
-    throw new Error("request binding resource URL is not canonical");
-  }
-  return url;
 }
 
 export function selectRequirement(
