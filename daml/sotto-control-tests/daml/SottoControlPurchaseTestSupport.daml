@@ -8,6 +8,9 @@ import Splice.Api.Token.TransferInstructionV1 qualified as Transfer
 import Sotto.Control.PurchaseCapability
 import SottoControlTokenStandardMock
 
+data HoldingOwnerMode = PayerOwned | OutsiderOwned
+  deriving (Eq, Show)
+
 data PurchaseFixture = PurchaseFixture with
   payer : Party
   agent : Party
@@ -19,6 +22,7 @@ data PurchaseFixture = PurchaseFixture with
   factoryCid : ContractId MockTransferFactory
   holdingCid : ContractId MockHolding
   holdingInterfaceCid : ContractId Holding.Holding
+  holdingOwner : Party
   capabilityCid : ContractId BoundedPurchaseCapability
 
 createPurchaseFixture : FactoryMode -> Text -> Script PurchaseFixture
@@ -26,7 +30,19 @@ createPurchaseFixture mode holdingInstrument =
   createPurchaseFixtureWith mode holdingInstrument 2.0 2.0
 
 createPurchaseFixtureWith : FactoryMode -> Text -> Decimal -> Decimal -> Script PurchaseFixture
-createPurchaseFixtureWith mode holdingInstrument holdingAmount maximumTotalDebit = do
+createPurchaseFixtureWith mode holdingInstrument holdingAmount maximumTotalDebit =
+  createPurchaseFixtureWithOwner
+    mode holdingInstrument holdingAmount maximumTotalDebit PayerOwned
+
+createPurchaseFixtureWithOwner
+  : FactoryMode
+  -> Text
+  -> Decimal
+  -> Decimal
+  -> HoldingOwnerMode
+  -> Script PurchaseFixture
+createPurchaseFixtureWithOwner
+    mode holdingInstrument holdingAmount maximumTotalDebit ownerMode = do
   payer <- allocateParty "sotto-fixture-payer"
   agent <- allocateParty "sotto-fixture-agent"
   provider <- allocateParty "sotto-fixture-provider"
@@ -35,12 +51,15 @@ createPurchaseFixtureWith mode holdingInstrument holdingAmount maximumTotalDebit
   now <- getTime
   let instrumentId = Holding.InstrumentId with admin; id = "Amulet"
   let actualHoldingInstrument = Holding.InstrumentId with admin; id = holdingInstrument
+  let holdingOwner = case ownerMode of
+        PayerOwned -> payer
+        OutsiderOwned -> outsider
   factoryCid <- submit admin do
     createCmd MockTransferFactory with admin; mode
   holdingCid <- submit admin do
     createCmd MockHolding with
       admin
-      owner = payer
+      owner = holdingOwner
       instrumentId = actualHoldingInstrument
       amount = holdingAmount
   let factoryInterfaceCid =
@@ -73,12 +92,13 @@ createPurchaseFixtureWith mode holdingInstrument holdingAmount maximumTotalDebit
     factoryCid
     holdingCid
     holdingInterfaceCid
+    holdingOwner
     capabilityCid
 
 purchaseOptions : PurchaseFixture -> Script SubmitOptions
-purchaseOptions PurchaseFixture{payer; agent; admin; factoryCid; holdingCid} = do
+purchaseOptions PurchaseFixture{agent; admin; factoryCid; holdingCid; holdingOwner} = do
   Some factoryDisclosure <- queryDisclosure admin factoryCid
-  Some holdingDisclosure <- queryDisclosure payer holdingCid
+  Some holdingDisclosure <- queryDisclosure holdingOwner holdingCid
   pure (actAs agent <> discloseMany [factoryDisclosure, holdingDisclosure])
 
 purchaseCommands : PurchaseFixture -> Commands PurchaseResult
@@ -116,11 +136,12 @@ purchaseAt fixture capabilityCid holdingCid requestedAt executeBefore expectedRe
     expectedRevision
 
 assertPurchaseUnchanged : PurchaseFixture -> Script ()
-assertPurchaseUnchanged PurchaseFixture{payer; provider; capabilityCid; holdingCid} = do
+assertPurchaseUnchanged
+    PurchaseFixture{payer; provider; capabilityCid; holdingCid; holdingOwner} = do
   Some capability <- queryContractId payer capabilityCid
   assert (capability.revision == 0)
   assert (capability.remainingAllowance == 5.0)
-  Some _ <- queryContractId payer holdingCid
+  Some _ <- queryContractId holdingOwner holdingCid
   contexts <- query @PurchaseContext payer
   receiverHoldings <- query @MockHolding provider
   pendingInstructions <- query @MockTransferInstruction payer

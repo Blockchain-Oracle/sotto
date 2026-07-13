@@ -98,9 +98,15 @@ template BoundedPurchaseCapability
         assertMsg "amount must be positive" (amount > 0.0)
         assertMsg "amount exceeds per-call limit" (amount <= perCallLimit)
         assertMsg "amount exceeds remaining allowance" (amount <= remainingAllowance)
+        assertMsg "input holdings are empty" (not (null inputHoldingCids))
+        assertMsg "input holdings contain duplicates" (allUnique inputHoldingCids)
         inputViews <- mapA (\cid -> view <$> fetch cid) inputHoldingCids
+        assertMsg "input holding owner does not match"
+          (all (\holding -> holding.owner == payer) inputViews)
         assertMsg "input holding instrument does not match"
           (all (\holding -> holding.instrumentId == instrumentId) inputViews)
+        assertMsg "input holding amount is negative"
+          (all (\holding -> holding.amount >= 0.0) inputViews)
         transferResult <- exercise transferFactoryCid Transfer.TransferFactory_Transfer with
           expectedAdmin
           transfer = Transfer.Transfer with
@@ -124,9 +130,16 @@ template BoundedPurchaseCapability
               (allUnique receiverHoldingCids)
             assertMsg "sender change contains duplicates"
               (allUnique transferResult.senderChangeCids)
+            assertMsg "receiver and sender change overlap"
+              (all (\cid -> notElem cid receiverHoldingCids)
+                transferResult.senderChangeCids)
             changeViews <- mapA (\cid -> view <$> fetch cid) transferResult.senderChangeCids
+            assertMsg "sender change owner does not match"
+              (all (\holding -> holding.owner == payer) changeViews)
             assertMsg "sender change instrument does not match"
               (all (\holding -> holding.instrumentId == instrumentId) changeViews)
+            assertMsg "sender change amount is negative"
+              (all (\holding -> holding.amount >= 0.0) changeViews)
             let totalInput = sum (map (.amount) inputViews)
             let totalChange = sum (map (.amount) changeViews)
             let totalDebit = totalInput - totalChange

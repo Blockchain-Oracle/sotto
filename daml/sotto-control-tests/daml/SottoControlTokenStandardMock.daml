@@ -13,7 +13,9 @@ data FactoryMode
   | CompleteWrongReceiver
   | CompleteWithChange with changeAmount : Decimal
   | CompleteWithWrongChangeInstrument with changeAmount : Decimal
+  | CompleteWithWrongChangeOwner with changeAmount : Decimal
   | CompleteWithDuplicateChange with changeAmount : Decimal
+  | CompleteWithOverlappingChange
   | Pending
   | Failed
   deriving (Eq, Show)
@@ -105,11 +107,20 @@ template MockTransferFactory
             let wrongInstrument = Holding.InstrumentId with admin; id = "WrongInstrument"
             changeCid <- createHoldingWithInstrument arg.transfer.sender wrongInstrument changeAmount
             completed [receiverCid] [changeCid]
+          CompleteWithWrongChangeOwner{changeAmount} -> do
+            archiveInputs
+            receiverCid <- createHolding arg.transfer.receiver arg.transfer.amount
+            changeCid <- createHolding arg.transfer.receiver changeAmount
+            completed [receiverCid] [changeCid]
           CompleteWithDuplicateChange{changeAmount} -> do
             archiveInputs
             receiverCid <- createHolding arg.transfer.receiver arg.transfer.amount
             changeCid <- createHolding arg.transfer.sender changeAmount
             completed [receiverCid] [changeCid, changeCid]
+          CompleteWithOverlappingChange -> do
+            archiveInputs
+            receiverCid <- createHolding arg.transfer.receiver arg.transfer.amount
+            completed [receiverCid] [receiverCid]
         where
           archiveInputs = forA_ arg.transfer.inputHoldingCids $ \holdingCid ->
             exercise holdingCid Archive
