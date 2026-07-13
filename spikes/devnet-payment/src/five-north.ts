@@ -4,43 +4,19 @@ import type {
   PayerHolding,
   ScanContract,
 } from "./settlement.js";
+import {
+  parseFiveNorthJson,
+  readFiveNorthResponse,
+} from "./five-north-response.js";
 
 type Fetcher = (url: string, init?: RequestInit) => Promise<Response>;
+const JSON_RESPONSE_LIMIT = 2_000_000;
 
 async function boundedJson(response: Response): Promise<unknown> {
-  const bytes = new Uint8Array(await response.arrayBuffer());
-  if (bytes.byteLength > 2_000_000) {
-    throw new Error("Five North response exceeds 2000000 bytes");
-  }
-  const text = new TextDecoder().decode(bytes);
-  let payload: unknown;
-  try {
-    payload = JSON.parse(text);
-  } catch {
-    if (!response.ok) {
-      throw new Error(`Five North request failed with HTTP ${response.status}`);
-    }
-    throw new Error("Five North response is not JSON");
-  }
-  if (!response.ok) {
-    const failure =
-      typeof payload === "object" && payload !== null && !Array.isArray(payload)
-        ? (payload as Record<string, unknown>)
-        : {};
-    const code = [failure.code, failure.error, failure.status].find(
-      (value): value is string => typeof value === "string",
-    );
-    const message = [
-      failure.message,
-      failure.cause,
-      failure.error_description,
-    ].find((value): value is string => typeof value === "string");
-    const detail = [code, message].filter(Boolean).join(": ").slice(0, 500);
-    throw new Error(
-      `Five North request failed with HTTP ${response.status}${detail === "" ? "" : ` (${detail})`}`,
-    );
-  }
-  return payload;
+  return parseFiveNorthJson(
+    await readFiveNorthResponse(response, JSON_RESPONSE_LIMIT),
+    "Five North response",
+  );
 }
 
 function objectValue(value: unknown, label: string): Record<string, unknown> {

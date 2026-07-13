@@ -41,7 +41,7 @@ describe("createFiveNorthClient", () => {
     await expect(client.getLedgerEnd()).resolves.toBe(42);
   });
 
-  it("surfaces bounded structured API rejection details", async () => {
+  it("surfaces only a validated structured API rejection code", async () => {
     const fetcher = vi.fn(async (url: string | URL | Request) => {
       if (String(url) === network.tokenUrl) {
         return Response.json({ access_token: token(), expires_in: 28_800 });
@@ -58,8 +58,34 @@ describe("createFiveNorthClient", () => {
     const client = createFiveNorthClient(network, fetcher);
 
     await expect(client.getTransaction(updateId, provider)).rejects.toThrow(
-      "HTTP 400 (INVALID_ARGUMENT: missing disclosed contract)",
+      /^Five North request failed with HTTP 400 \(INVALID_ARGUMENT\)$/,
     );
+  });
+
+  it("cancels an oversized declared response before reading it", async () => {
+    let cancelled = false;
+    const fetcher = vi.fn(async (url: string | URL | Request) => {
+      if (String(url) === network.tokenUrl) {
+        return Response.json({ access_token: token(), expires_in: 28_800 });
+      }
+      return new Response(
+        new ReadableStream({
+          cancel() {
+            cancelled = true;
+          },
+          start(controller) {
+            controller.enqueue(new TextEncoder().encode('{"offset":42}'));
+          },
+        }),
+        { headers: { "content-length": "2000001" } },
+      );
+    });
+    const client = createFiveNorthClient(network, fetcher);
+
+    await expect(client.getLedgerEnd()).rejects.toThrow(
+      "Five North response exceeds byte limit",
+    );
+    expect(cancelled).toBe(true);
   });
 
   it("fetches one transaction by update ID with a provider-scoped format", async () => {
