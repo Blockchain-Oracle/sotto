@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { SOTTO_CONTROL_PACKAGE_ID } from "@sotto/x402-canton";
-import { readSpikeConfig, summarizeConfig } from "../src/config.js";
+import {
+  readFiveNorthNetworkConfig,
+  readSpikeConfig,
+  summarizeConfig,
+} from "../src/config.js";
 
 const completeEnvironment = {
   CANTON_EXPLORER_BASE_URL: "https://scan.example",
@@ -25,6 +29,34 @@ const completeEnvironment = {
 };
 
 describe("readSpikeConfig", () => {
+  it("reads Five North deployment access without unrelated spike settings", () => {
+    expect(
+      readFiveNorthNetworkConfig({
+        FIVE_NORTH_LEDGER_URL: completeEnvironment.FIVE_NORTH_LEDGER_URL,
+        FIVE_NORTH_OIDC_AUDIENCE: completeEnvironment.FIVE_NORTH_OIDC_AUDIENCE,
+        FIVE_NORTH_OIDC_CLIENT_ID:
+          completeEnvironment.FIVE_NORTH_OIDC_CLIENT_ID,
+        FIVE_NORTH_OIDC_CLIENT_SECRET:
+          completeEnvironment.FIVE_NORTH_OIDC_CLIENT_SECRET,
+        FIVE_NORTH_OIDC_ISSUER_URL:
+          completeEnvironment.FIVE_NORTH_OIDC_ISSUER_URL,
+        FIVE_NORTH_OIDC_SCOPE: completeEnvironment.FIVE_NORTH_OIDC_SCOPE,
+        FIVE_NORTH_OIDC_TOKEN_URL:
+          completeEnvironment.FIVE_NORTH_OIDC_TOKEN_URL,
+        FIVE_NORTH_VALIDATOR_URL: completeEnvironment.FIVE_NORTH_VALIDATOR_URL,
+      }),
+    ).toEqual({
+      audience: "ledger-audience",
+      clientId: "client",
+      clientSecret: "secret-value",
+      issuerUrl: "https://issuer.example",
+      ledgerUrl: "https://ledger.example",
+      scope: "ledger-scope",
+      tokenUrl: "https://issuer.example/token",
+      validatorUrl: "https://validator.example/api/validator",
+    });
+  });
+
   it("separates network, relay, payer, provider, and explorer settings", () => {
     expect(readSpikeConfig(completeEnvironment)).toMatchObject({
       explorer: { baseUrl: "https://scan.example" },

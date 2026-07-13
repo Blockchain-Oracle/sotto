@@ -61,21 +61,27 @@ function approvedSottoPackageId(environment: Environment): string {
   return packageId;
 }
 
+export function readFiveNorthNetworkConfig(
+  environment: Environment,
+): SpikeConfig["network"] {
+  return {
+    audience: required(environment, "FIVE_NORTH_OIDC_AUDIENCE"),
+    clientId: required(environment, "FIVE_NORTH_OIDC_CLIENT_ID"),
+    clientSecret: required(environment, "FIVE_NORTH_OIDC_CLIENT_SECRET"),
+    issuerUrl: httpsUrl(environment, "FIVE_NORTH_OIDC_ISSUER_URL"),
+    ledgerUrl: httpsUrl(environment, "FIVE_NORTH_LEDGER_URL"),
+    scope: required(environment, "FIVE_NORTH_OIDC_SCOPE"),
+    tokenUrl: httpsUrl(environment, "FIVE_NORTH_OIDC_TOKEN_URL", true),
+    validatorUrl: httpsUrl(environment, "FIVE_NORTH_VALIDATOR_URL"),
+  };
+}
+
 export function readSpikeConfig(environment: Environment): SpikeConfig {
   return {
     explorer: {
       baseUrl: httpsUrl(environment, "CANTON_EXPLORER_BASE_URL"),
     },
-    network: {
-      audience: required(environment, "FIVE_NORTH_OIDC_AUDIENCE"),
-      clientId: required(environment, "FIVE_NORTH_OIDC_CLIENT_ID"),
-      clientSecret: required(environment, "FIVE_NORTH_OIDC_CLIENT_SECRET"),
-      issuerUrl: httpsUrl(environment, "FIVE_NORTH_OIDC_ISSUER_URL"),
-      ledgerUrl: httpsUrl(environment, "FIVE_NORTH_LEDGER_URL"),
-      scope: required(environment, "FIVE_NORTH_OIDC_SCOPE"),
-      tokenUrl: httpsUrl(environment, "FIVE_NORTH_OIDC_TOKEN_URL", true),
-      validatorUrl: httpsUrl(environment, "FIVE_NORTH_VALIDATOR_URL"),
-    },
+    network: readFiveNorthNetworkConfig(environment),
     payer: {
       party: required(environment, "PAYER_PARTY"),
       purchaseId: required(environment, "SOTTO_PURCHASE_ID"),

@@ -8,6 +8,7 @@ import {
   withCapabilityBootstrapLease,
 } from "../src/capability-bootstrap-journal.js";
 
+const now = Date.parse("2026-07-13T19:30:00.000Z");
 const input = {
   agentParty: "sotto-policy-agent::1220participant",
   allowedRecipient: "sotto-spike-provider::1220participant",
@@ -29,9 +30,14 @@ describe("capability bootstrap lease", () => {
     join(workspaceRoot, "tmp", "devnet-capability-bootstrap");
 
   beforeEach(async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(now);
     workspaceRoot = await mkdtemp(join(tmpdir(), "sotto-bootstrap-lease-"));
   });
-  afterEach(async () => rm(workspaceRoot, { force: true, recursive: true }));
+  afterEach(async () => {
+    vi.useRealTimers();
+    await rm(workspaceRoot, { force: true, recursive: true });
+  });
 
   async function initialized() {
     return initializeCapabilityBootstrapJournal({

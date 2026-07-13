@@ -285,6 +285,47 @@ Use current official Canton and Daml sources, not remembered APIs:
 
 Any reused source requires its compatible license, attribution, and exact pin.
 
+## Five North Package Presence Gate
+
+Before capability execution, the exact `sotto-control` 0.2.0 package must be
+present on the Five North participant. This is a one-time operator control-plane
+action, not a marketplace or purchase hot-path operation. Run it only from a
+clean committed source tree with the ignored `.env.local` values:
+
+```text
+pnpm spike:package
+```
+
+The command rebuilds no authority from caller input. It loads only the Five
+North Ledger/OIDC configuration, snapshots the generated approved research DAR
+through one no-follow file handle, enforces the Daml 3.5.2 toolchain, validates
+the exact 35-package inventory, and repeats the clean-source checkpoint after
+inspection. The approved main package is
+`4d614496ec9b30b22545fd350ecb9ec999164cfb0b5953f46dbbf937f8918f57`.
+
+Five North validation uses the observed synchronizer. Upload is allowed at most
+once, explicitly sends `vetAllPackages=false`, and never retries after a durable
+dispatch marker. All token acquisition, token-subject equality, authority-age,
+DAR-hash, size, cancellation, and request construction checks finish before an
+owner-only hash-chained journal fsyncs that marker immediately before the POST.
+If the response is lost, every restart is read-only until exact package-list and
+downloaded archive-hash evidence proves presence; otherwise the result stays
+`dispatch-unresolved`.
+
+The redacted result says `vetting: not-requested` and `readiness: not-proven`.
+Package presence does not prove preferred-package selection, vetting, template
+readiness, capability execution, descendant effects, restricted signing, bypass
+resistance, or production readiness. The shared participant-admin M2M credential
+is accepted only for this package administration probe and remains rejected as a
+payment signer.
+
+Performance is bounded for this control path. A new operation first mints or
+reuses one cached token and observes AmuletRules authority. An already-present
+check then uses one package list and one exact package download. An absent
+package adds one participant validation, one upload, one reconciliation list,
+and one exact package download. A terminal journal result performs no network
+call. No Postgres or Redis dependency is introduced at this spike gate.
+
 ## Deterministic Proof Before Live Spend
 
 - Pin canonical purchase bytes and hash.

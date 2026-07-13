@@ -254,12 +254,13 @@ describe("runBoundedCapabilityBootstrap", () => {
   });
 
   it.each([
-    ["zero", [], "outcome is unresolved"],
-    ["multiple", [fixture().active, fixture().active], "duplicate"],
+    ["zero", 0, "outcome is unresolved"],
+    ["multiple", 2, "duplicate"],
   ])(
     "stops after an ambiguous %s reconciliation",
-    async (_label, after, message) => {
+    async (_label, activeCount, message) => {
       const setup = fixture();
+      const after = Array.from({ length: activeCount }, () => setup.active);
       const readActiveCapabilities = vi
         .fn()
         .mockResolvedValueOnce([])
