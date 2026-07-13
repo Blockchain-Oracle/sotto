@@ -54,11 +54,12 @@ export function validateBinding(input: BoundedPurchaseCommitmentInput): URL {
 export function selectRequirement(
   input: BoundedPurchaseCommitmentInput,
   requestUrl: URL,
+  challengeBytes: Uint8Array,
 ): CantonPaymentRequirement {
   if (
-    !(input.challengeBytes instanceof Uint8Array) ||
-    input.challengeBytes.byteLength < 1 ||
-    input.challengeBytes.byteLength > 16_384
+    !(challengeBytes instanceof Uint8Array) ||
+    challengeBytes.byteLength < 1 ||
+    challengeBytes.byteLength > 16_384
   ) {
     throw new Error("challenge bytes must contain 1-16384 bytes");
   }
@@ -67,7 +68,7 @@ export function selectRequirement(
     challengeText = new TextDecoder("utf-8", {
       fatal: true,
       ignoreBOM: true,
-    }).decode(input.challengeBytes);
+    }).decode(challengeBytes);
   } catch {
     throw new Error("challenge bytes must contain strict UTF-8 JSON");
   }

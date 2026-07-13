@@ -4,6 +4,10 @@ import {
   commitHttpRequest,
   type BoundedPurchaseCommitmentInput,
 } from "../src/index.js";
+import {
+  capturePaymentRequiredBytesForTest,
+  readPaymentRequiredObservation,
+} from "../src/payment-observation.js";
 
 const resourceUrl = "https://provider.example/paid/weather?units=metric";
 const payerParty = "sotto-payer::1220payer";
@@ -57,9 +61,11 @@ function validInput(): BoundedPurchaseCommitmentInput {
       maximumTotalDebitAtomic: "2750000000",
       expiresAt: "2026-07-13T11:00:00.000Z",
     },
-    challengeBytes: challengeBytes(binding.commitment),
     expectedNetwork: "canton:devnet",
-    observedAt: "2026-07-13T10:00:00.000Z",
+    paymentObservation: capturePaymentRequiredBytesForTest(
+      challengeBytes(binding.commitment),
+      "2026-07-13T10:00:00.000Z",
+    ),
     payerParty,
     tokenFactory: {
       interfaceId:
@@ -94,27 +100,41 @@ const invalidCases: ReadonlyArray<readonly [string, Mutation, string]> = [
     "authorizationInstanceId",
   ],
   [
-    "non-canonical observation time",
-    (input) => ({ ...input, observedAt: "2026-07-13T10:00:00Z" }),
-    "observedAt",
+    "forged payment observation",
+    (input) =>
+      ({
+        ...input,
+        paymentObservation: {
+          challengeId: `sha256:${"0".repeat(64)}`,
+          httpStatus: 402,
+          observedAt: "2026-07-13T10:00:00.000Z",
+        },
+      }) as BoundedPurchaseCommitmentInput,
+    "not authenticated",
   ],
   [
     "oversized decoded challenge",
     (input) => ({
       ...input,
-      challengeBytes: new TextEncoder().encode(
-        `${new TextDecoder().decode(input.challengeBytes)}${" ".repeat(17_000)}`,
+      paymentObservation: capturePaymentRequiredBytesForTest(
+        new TextEncoder().encode(
+          `${new TextDecoder().decode(readPaymentRequiredObservation(input.paymentObservation).challengeBytes)}${" ".repeat(17_000)}`,
+        ),
+        "2026-07-13T10:00:00.000Z",
       ),
     }),
-    "challenge bytes",
+    "Decoded PAYMENT-REQUIRED",
   ],
   [
     "challenge resource mismatch",
     (input) => ({
       ...input,
-      challengeBytes: challengeBytes(
-        input.binding.commitment,
-        "https://provider.example/other",
+      paymentObservation: capturePaymentRequiredBytesForTest(
+        challengeBytes(
+          input.binding.commitment,
+          "https://provider.example/other",
+        ),
+        "2026-07-13T10:00:00.000Z",
       ),
     }),
     "resource URL",

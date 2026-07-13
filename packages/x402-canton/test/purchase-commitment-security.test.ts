@@ -1,57 +1,61 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { commitBoundedPurchase } from "../src/index.js";
 import {
   createPurchaseInput,
   mutateChallenge,
+  readChallengeBytes,
+  replaceChallengeObservation,
 } from "./purchase-commitment.fixtures.js";
+
+afterEach(() => vi.useRealTimers());
 
 describe("commitBoundedPurchase security validation", () => {
   it("rejects a duplicate JSON key in the decoded challenge", () => {
     const input = createPurchaseInput();
     const text = new TextDecoder()
-      .decode(input.challengeBytes)
+      .decode(readChallengeBytes(input))
       .replace(
         '"network":"canton:devnet"',
         '"network":"other","network":"canton:devnet"',
       );
 
     expect(() =>
-      commitBoundedPurchase({
-        ...input,
-        challengeBytes: new TextEncoder().encode(text),
-      }),
+      commitBoundedPurchase(
+        replaceChallengeObservation(input, new TextEncoder().encode(text)),
+      ),
     ).toThrow("duplicate JSON key");
   });
 
   it("rejects escaped-equivalent duplicate JSON keys", () => {
     const input = createPurchaseInput();
     const text = new TextDecoder()
-      .decode(input.challengeBytes)
+      .decode(readChallengeBytes(input))
       .replace(
         '"network":"canton:devnet"',
         '"netw\\u006frk":"other","network":"canton:devnet"',
       );
 
     expect(() =>
-      commitBoundedPurchase({
-        ...input,
-        challengeBytes: new TextEncoder().encode(text),
-      }),
+      commitBoundedPurchase(
+        replaceChallengeObservation(input, new TextEncoder().encode(text)),
+      ),
     ).toThrow("duplicate JSON key");
   });
 
   it("rejects excessive challenge nesting", () => {
     const input = createPurchaseInput();
     const challenge = JSON.parse(
-      new TextDecoder().decode(input.challengeBytes),
+      new TextDecoder().decode(readChallengeBytes(input)),
     );
     challenge.padding = JSON.parse(`${"[".repeat(33)}null${"]".repeat(33)}`);
 
     expect(() =>
-      commitBoundedPurchase({
-        ...input,
-        challengeBytes: new TextEncoder().encode(JSON.stringify(challenge)),
-      }),
+      commitBoundedPurchase(
+        replaceChallengeObservation(
+          input,
+          new TextEncoder().encode(JSON.stringify(challenge)),
+        ),
+      ),
     ).toThrow("structural limits");
   });
 
@@ -130,5 +134,13 @@ describe("commitBoundedPurchase security validation", () => {
     });
 
     expect(() => commitBoundedPurchase(input)).toThrow("purchase window");
+  });
+
+  it("rejects an authenticated observation held past ten minutes", () => {
+    vi.useFakeTimers({ now: new Date("2026-07-13T10:00:00.000Z") });
+    const input = createPurchaseInput();
+    vi.advanceTimersByTime(600_001);
+
+    expect(() => commitBoundedPurchase(input)).toThrow("stale");
   });
 });

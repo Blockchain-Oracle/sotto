@@ -1,5 +1,6 @@
 import type { CantonPaymentRequirement } from "./payment-requirement.js";
 import type { BoundedPurchaseCommitmentInput } from "./purchase-commitment.js";
+import { readPaymentRequiredObservation } from "./payment-observation.js";
 import {
   selectRequirement,
   validateBinding,
@@ -23,7 +24,9 @@ export const FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID =
 export const MAX_PURCHASE_WINDOW_SECONDS = 600;
 
 export type ValidatedPurchaseInput = Readonly<{
+  challengeId: `sha256:${string}`;
   expiresAt: string;
+  observedAt: string;
   requirement: CantonPaymentRequirement;
 }>;
 
@@ -37,9 +40,8 @@ export function validateBoundedPurchaseInput(
       "authorizationInstanceId",
       "binding",
       "capability",
-      "challengeBytes",
       "expectedNetwork",
-      "observedAt",
+      "paymentObservation",
       "payerParty",
       "tokenFactory",
     ],
@@ -48,9 +50,14 @@ export function validateBoundedPurchaseInput(
   identifier(input.authorizationInstanceId, "authorizationInstanceId", 256);
   identifier(input.expectedNetwork, "expectedNetwork", 256);
   identifier(input.payerParty, "payerParty", 512);
-  const observedAt = canonicalTime(input.observedAt, "observedAt");
+  const observation = readPaymentRequiredObservation(input.paymentObservation);
+  const observedAt = canonicalTime(observation.observedAt, "observedAt");
   const requestUrl = validateBinding(input);
-  const requirement = selectRequirement(input, requestUrl);
+  const requirement = selectRequirement(
+    input,
+    requestUrl,
+    observation.challengeBytes,
+  );
   if (
     requirement.maxTimeoutSeconds > MAX_PURCHASE_WINDOW_SECONDS ||
     requirement.extra.executeBeforeSeconds > MAX_PURCHASE_WINDOW_SECONDS
@@ -156,5 +163,10 @@ export function validateBoundedPurchaseInput(
   ) {
     throw new Error("tokenFactory expected admin does not match instrument");
   }
-  return { expiresAt, requirement };
+  return {
+    challengeId: observation.challengeId,
+    expiresAt,
+    observedAt: observation.observedAt,
+    requirement,
+  };
 }

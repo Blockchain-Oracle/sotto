@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { commitHttpRequest } from "../src/request-binding.js";
 import { commitBoundedPurchase } from "../src/purchase-commitment.js";
+import { capturePaymentRequiredBytesForTest } from "../src/payment-observation.js";
 
 const resourceUrl = "https://provider.example/paid/weather?units=metric";
 const binding = commitHttpRequest({
@@ -35,6 +36,10 @@ const challengeBytes = new TextEncoder().encode(
     accepts: [requirement],
   }),
 );
+const paymentObservation = capturePaymentRequiredBytesForTest(
+  challengeBytes,
+  "2026-07-13T10:00:00.000Z",
+);
 const capability = {
   contractId: "00capability7",
   revision: "7",
@@ -62,9 +67,8 @@ describe("commitBoundedPurchase", () => {
       authorizationInstanceId: "authorization-7",
       binding,
       capability,
-      challengeBytes,
       expectedNetwork: "canton:devnet",
-      observedAt: "2026-07-13T10:00:00.000Z",
+      paymentObservation,
       payerParty: "sotto-payer::1220payer",
       tokenFactory,
     });
@@ -116,9 +120,8 @@ describe("commitBoundedPurchase", () => {
         interfaceId: tokenFactory.interfaceId,
       },
       payerParty: "sotto-payer::1220payer",
-      observedAt: "2026-07-13T10:00:00.000Z",
       expectedNetwork: "canton:devnet",
-      challengeBytes,
+      paymentObservation,
       capability: {
         expiresAt: capability.expiresAt,
         maximumTotalDebitAtomic: capability.maximumTotalDebitAtomic,

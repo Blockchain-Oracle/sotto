@@ -148,6 +148,14 @@ complete decoded challenge bytes. Neither a standalone caller assertion nor an
 uncommitted requirement object may substitute for the authenticated challenge
 carrier.
 
+The purchase builder accepts an opaque server-captured payment observation, not
+caller-provided challenge bytes or an observation timestamp. The observation is
+issued only after an authentic HTTP `402` with canonical base64
+`PAYMENT-REQUIRED`, retains exact decoded bytes in private runtime state, and
+exposes only status, capture time, and challenge hash. It expires after ten
+minutes and rejects material wall-clock rollback. Raw challenge bytes never
+enter its serializable surface.
+
 ## Autonomous Purchase Flow
 
 1. Observe a fresh authentic x402 `402` and select exactly one supported Canton
@@ -190,6 +198,12 @@ replacement capability creation.
 No latency or throughput claim follows from this design. The deployed path must
 measure complete `402 -> 200` latency, prepared-sign-execute time,
 reconciliation lag, concurrency, and the incremental cost of the capability.
+
+The deterministic request boundary caps bodies at 1 MiB, URLs at 8 KiB, raw
+header tuples at 128, authoritative headers at 64 including the three base
+headers, and canonical request bytes at 64 KiB. The observer snapshots bounded
+body bytes before its first asynchronous operation and uses independent copies
+for transport and hashing so caller mutation cannot change the commitment.
 
 ## Source Boundary
 

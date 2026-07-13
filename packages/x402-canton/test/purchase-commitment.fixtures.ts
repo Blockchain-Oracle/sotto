@@ -4,6 +4,10 @@ import {
   type BoundedPurchaseCommitmentInput,
   type HttpRequestBindingInput,
 } from "../src/index.js";
+import {
+  capturePaymentRequiredBytesForTest,
+  readPaymentRequiredObservation,
+} from "../src/payment-observation.js";
 
 export const RESOURCE_URL =
   "https://provider.example/paid/weather?units=metric";
@@ -104,9 +108,11 @@ export function createPurchaseInput(): BoundedPurchaseCommitmentInput {
       maximumTotalDebitAtomic: "2750000000",
       expiresAt: "2026-07-13T11:00:00.000Z",
     },
-    challengeBytes: new TextEncoder().encode(JSON.stringify(challenge)),
     expectedNetwork: "canton:devnet",
-    observedAt: "2026-07-13T10:00:00.000Z",
+    paymentObservation: capturePaymentRequiredBytesForTest(
+      new TextEncoder().encode(JSON.stringify(challenge)),
+      "2026-07-13T10:00:00.000Z",
+    ),
     payerParty: PAYER,
     tokenFactory: {
       interfaceId:
@@ -123,12 +129,38 @@ export function mutateChallenge(
   input: BoundedPurchaseCommitmentInput,
   mutate: (challenge: ChallengeFixture) => void,
 ): BoundedPurchaseCommitmentInput {
+  const observation = readPaymentRequiredObservation(input.paymentObservation);
   const challenge = JSON.parse(
-    new TextDecoder().decode(input.challengeBytes),
+    new TextDecoder().decode(observation.challengeBytes),
   ) as ChallengeFixture;
   mutate(challenge);
   return {
     ...input,
-    challengeBytes: new TextEncoder().encode(JSON.stringify(challenge)),
+    paymentObservation: capturePaymentRequiredBytesForTest(
+      new TextEncoder().encode(JSON.stringify(challenge)),
+      observation.observedAt,
+    ),
   };
+}
+
+export function replaceChallengeObservation(
+  input: BoundedPurchaseCommitmentInput,
+  challengeBytes: Uint8Array,
+  observedAt?: string,
+): BoundedPurchaseCommitmentInput {
+  const current = readPaymentRequiredObservation(input.paymentObservation);
+  return {
+    ...input,
+    paymentObservation: capturePaymentRequiredBytesForTest(
+      challengeBytes,
+      observedAt ?? current.observedAt,
+    ),
+  };
+}
+
+export function readChallengeBytes(
+  input: BoundedPurchaseCommitmentInput,
+): Uint8Array {
+  return readPaymentRequiredObservation(input.paymentObservation)
+    .challengeBytes;
 }

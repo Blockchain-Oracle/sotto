@@ -4,7 +4,11 @@ import {
   selectCantonRequirement,
   type ChallengeObservation,
 } from "./observation.js";
-import { MAX_REQUEST_BODY_BYTES } from "@sotto/x402-canton";
+import {
+  capturePaymentRequiredResponse,
+  MAX_REQUEST_BODY_BYTES,
+  type PaymentRequiredObservation,
+} from "@sotto/x402-canton";
 
 type Fetcher = (url: string, init: RequestInit) => Promise<Response>;
 type UrlAuthority = (url: URL) => Promise<void>;
@@ -19,9 +23,12 @@ type ObserveInput = Readonly<{
   timeoutMs?: number;
 }>;
 
+export type ObservedHttpChallenge = ChallengeObservation &
+  Readonly<{ paymentObservation: PaymentRequiredObservation }>;
+
 export async function observeHttpChallenge(
   input: ObserveInput,
-): Promise<ChallengeObservation> {
+): Promise<ObservedHttpChallenge> {
   const url = new URL(input.resourceUrl);
   if (url.protocol !== "https:") {
     throw new Error("Paid provider URL must use HTTPS");
@@ -56,6 +63,7 @@ export async function observeHttpChallenge(
       `Paid provider expected HTTP 402, received ${response.status}`,
     );
   }
+  const paymentObservation = capturePaymentRequiredResponse(response);
 
   const header = response.headers.get("PAYMENT-REQUIRED");
   if (header === null || header.trim() === "") {
@@ -64,12 +72,15 @@ export async function observeHttpChallenge(
   const now = input.now ?? new Date();
   const paymentRequired = decodePaymentRequired(header);
   const challenge = selectCantonRequirement(paymentRequired);
-  return createChallengeObservation({
-    challenge,
-    method: input.method,
-    observedAt: now.toISOString(),
-    ...(requestBody === undefined ? {} : { requestBody }),
-    resourceUrl: url.toString(),
-    upstreamResourceUrl: paymentRequired.resource.url,
-  });
+  return {
+    ...createChallengeObservation({
+      challenge,
+      method: input.method,
+      observedAt: now.toISOString(),
+      ...(requestBody === undefined ? {} : { requestBody }),
+      resourceUrl: url.toString(),
+      upstreamResourceUrl: paymentRequired.resource.url,
+    }),
+    paymentObservation,
+  };
 }

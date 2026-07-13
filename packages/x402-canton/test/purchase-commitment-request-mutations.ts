@@ -1,5 +1,7 @@
 import type { BoundedPurchaseCommitmentInput } from "../src/index.js";
 import {
+  readChallengeBytes,
+  replaceChallengeObservation,
   mutateChallenge,
   replaceBoundRequest,
   RESOURCE_URL,
@@ -63,16 +65,22 @@ export const validRequestMutations: ReadonlyArray<
   ],
   [
     "challenge encoding",
-    (input) => ({
-      ...input,
-      challengeBytes: new TextEncoder().encode(
-        `${new TextDecoder().decode(input.challengeBytes)}\n`,
+    (input) =>
+      replaceChallengeObservation(
+        input,
+        new TextEncoder().encode(
+          `${new TextDecoder().decode(readChallengeBytes(input))}\n`,
+        ),
       ),
-    }),
   ],
   [
     "observation time",
-    (input) => ({ ...input, observedAt: "2026-07-13T10:00:00.001Z" }),
+    (input) =>
+      replaceChallengeObservation(
+        input,
+        readChallengeBytes(input),
+        "2026-07-13T10:00:00.001Z",
+      ),
   ],
   [
     "network",

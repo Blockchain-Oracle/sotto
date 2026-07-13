@@ -72,7 +72,12 @@ describe("observeHttpChallenge", () => {
       delivery: "pending",
       httpStatus: 402,
       settlement: "pending",
+      paymentObservation: {
+        challengeId: expect.stringMatching(/^sha256:[a-f0-9]{64}$/),
+        httpStatus: 402,
+      },
     });
+    expect(observation.paymentObservation).not.toHaveProperty("challengeBytes");
   });
 
   it("rejects a non-402 response", async () => {

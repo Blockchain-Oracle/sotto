@@ -1,4 +1,5 @@
 import type { HttpRequestCommitment } from "./request-binding.js";
+import type { PaymentRequiredObservation } from "./payment-observation.js";
 import {
   FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID,
   RESOURCE_BINDING_VERSION,
@@ -30,9 +31,8 @@ export type BoundedPurchaseCommitmentInput = Readonly<{
   authorizationInstanceId: string;
   binding: HttpRequestCommitment;
   capability: PurchaseCapabilitySnapshot;
-  challengeBytes: Uint8Array;
   expectedNetwork: `canton:${string}`;
-  observedAt: string;
+  paymentObservation: PaymentRequiredObservation;
   payerParty: string;
   tokenFactory: Readonly<{
     contractId: string;
@@ -108,8 +108,8 @@ function deriveAttemptId(purchase: unknown): `sha256:${string}` {
 export function commitBoundedPurchase(
   input: BoundedPurchaseCommitmentInput,
 ): BoundedPurchaseCommitment {
-  const { expiresAt, requirement } = validateBoundedPurchaseInput(input);
-  const challengeId = `sha256:${sha256Hex(input.challengeBytes)}` as const;
+  const { challengeId, expiresAt, observedAt, requirement } =
+    validateBoundedPurchaseInput(input);
   const purchase = {
     version: PURCHASE_COMMITMENT_VERSION,
     authorizationMode: "bounded-capability",
@@ -121,7 +121,7 @@ export function commitBoundedPurchase(
     challenge: {
       x402Version: 2,
       challengeId,
-      observedAt: input.observedAt,
+      observedAt,
       expiresAt,
       network: requirement.network,
       scheme: requirement.scheme,
