@@ -27,7 +27,8 @@ function transport(
 ): FiveNorthPrepareTransport {
   return {
     readLedgerEnd: vi.fn(async () => ({ offset: 42 })),
-    readActiveContracts: vi.fn(async () => activeContracts),
+    readCapabilityContracts: vi.fn(async () => activeContracts),
+    readHoldingContracts: vi.fn(async () => activeContracts),
     readRegistry: vi.fn(async () => new Uint8Array([1, 2, 3])),
     readPrepare: vi.fn(async () => new Uint8Array([4, 5, 6])),
   };
@@ -42,29 +43,7 @@ describe("Five North purchase readers", () => {
       activeAtOffset: 42,
       createdEvent: activeEntry().contractEntry.JsActiveContract.createdEvent,
     });
-    expect(source.readActiveContracts).toHaveBeenCalledWith({
-      filter: {
-        filtersByParty: {
-          [PAYER]: {
-            cumulative: [
-              {
-                identifierFilter: {
-                  TemplateFilter: {
-                    value: {
-                      templateId:
-                        APPROVED_BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_ID,
-                      includeCreatedEventBlob: false,
-                    },
-                  },
-                },
-              },
-            ],
-          },
-        },
-      },
-      verbose: true,
-      activeAtOffset: 42,
-    });
+    expect(source.readCapabilityContracts).toHaveBeenCalledWith(42);
   });
 
   it.each([
@@ -103,12 +82,32 @@ describe("Five North purchase readers", () => {
     await expect(readers.holdings.readLedgerEnd()).resolves.toEqual({
       offset: 42,
     });
+    const holdingRequest = {
+      filter: {
+        filtersByParty: {
+          [PAYER]: {
+            cumulative: [
+              {
+                identifierFilter: {
+                  InterfaceFilter: {
+                    value: {
+                      interfaceId:
+                        "#splice-api-token-holding-v1:Splice.Api.Token.HoldingV1:Holding",
+                      includeCreatedEventBlob: true,
+                      includeInterfaceView: true,
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+      verbose: false as const,
+      activeAtOffset: 42,
+    };
     await expect(
-      readers.holdings.readActiveContracts({
-        filter: { filtersByParty: {} },
-        verbose: false,
-        activeAtOffset: 42,
-      }),
+      readers.holdings.readActiveContracts(holdingRequest),
     ).resolves.toEqual([activeEntry()]);
     await expect(readers.registry(registryRequest)).resolves.toEqual(
       new Uint8Array([1, 2, 3]),
@@ -122,5 +121,60 @@ describe("Five North purchase readers", () => {
       "prepared",
       "registry",
     ]);
+    expect(source.readLedgerEnd).toHaveBeenCalledTimes(1);
+    expect(source.readHoldingContracts).toHaveBeenCalledWith(42);
+    expect(source.readRegistry).toHaveBeenCalledWith("{}");
+    expect(source.readPrepare).toHaveBeenCalledWith(prepareRequest.body);
+  });
+
+  it("ignores incomplete reassignment entries but rejects malformed active entries", async () => {
+    const incomplete = { contractEntry: { JsIncompleteAssigned: {} } };
+    const readers = createFiveNorthPurchaseReaders(
+      transport([incomplete, activeEntry()]),
+      PAYER,
+    );
+    await expect(readers.capability(CAPABILITY)).resolves.toMatchObject({
+      activeAtOffset: 42,
+    });
+
+    const malformed = createFiveNorthPurchaseReaders(
+      transport([{ contractEntry: { JsActiveContract: null } }]),
+      PAYER,
+    );
+    await expect(malformed.capability(CAPABILITY)).rejects.toThrow();
+  });
+
+  it("rejects forged reader envelopes before transport", async () => {
+    const source = transport();
+    const readers = createFiveNorthPurchaseReaders(source, PAYER);
+
+    await expect(
+      readers.registry({
+        ...{
+          body: "{}",
+          contentType: "application/json",
+          maximumResponseBytes: 2_000_000,
+          method: "POST",
+          path: TRANSFER_FACTORY_REGISTRY_PATH,
+          redirect: "error",
+          registryAdmin: "sotto-admin::1220admin",
+          timeoutMilliseconds: 10_000,
+        },
+        path: "/v0/wallet/tap",
+      } as never),
+    ).rejects.toThrow(/envelope/i);
+    await expect(
+      readers.prepared({
+        body: { commandId: "sotto-test" },
+        contentType: "application/json",
+        maximumResponseBytes: 8_388_608,
+        method: "POST",
+        path: "/v2/interactive-submission/execute",
+        redirect: "error",
+        timeoutMilliseconds: 10_000,
+      } as never),
+    ).rejects.toThrow(/envelope/i);
+    expect(source.readRegistry).not.toHaveBeenCalled();
+    expect(source.readPrepare).not.toHaveBeenCalled();
   });
 });

@@ -1,12 +1,8 @@
 const ERROR_RESPONSE_LIMIT = 65_536;
+const ERROR_CODE_PATTERN = /^[A-Z][A-Z0-9_.-]{0,63}$/u;
 
-function sanitizedDiagnostic(value: string): string {
-  return [...value]
-    .map((character) => {
-      const code = character.charCodeAt(0);
-      return code <= 0x1f || code === 0x7f ? " " : character;
-    })
-    .join("");
+async function cancelBody(response: Response): Promise<void> {
+  await response.body?.cancel().catch(() => undefined);
 }
 
 async function boundedBytes(
@@ -14,27 +10,49 @@ async function boundedBytes(
   maximumBytes: number,
 ): Promise<Uint8Array> {
   const declared = response.headers.get("content-length");
-  if (declared !== null && Number(declared) > maximumBytes) {
-    throw new Error("Five North response exceeds byte limit");
+  if (declared !== null) {
+    if (!/^(?:0|[1-9]\d*)$/u.test(declared)) {
+      await cancelBody(response);
+      throw new Error("Five North response content-length is invalid");
+    }
+    const declaredBytes = Number(declared);
+    if (!Number.isSafeInteger(declaredBytes) || declaredBytes > maximumBytes) {
+      await cancelBody(response);
+      throw new Error("Five North response exceeds byte limit");
+    }
   }
   if (response.body === null) return new Uint8Array();
   const reader = response.body.getReader();
   const chunks: Uint8Array[] = [];
   let total = 0;
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    total += value.byteLength;
-    if (total > maximumBytes) {
-      await reader.cancel();
-      throw new Error("Five North response exceeds byte limit");
+  let complete = false;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        complete = true;
+        break;
+      }
+      total += value.byteLength;
+      if (total > maximumBytes) {
+        throw new Error("Five North response exceeds byte limit");
+      }
+      chunks.push(value);
     }
-    chunks.push(value);
+    const output = new Uint8Array(total);
+    let offset = 0;
+    for (const chunk of chunks) {
+      output.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    return output;
+  } finally {
+    if (!complete) await reader.cancel().catch(() => undefined);
+    reader.releaseLock();
   }
-  return new Uint8Array(Buffer.concat(chunks, total));
 }
 
-function failureDetail(bytes: Uint8Array): string {
+function failureCode(bytes: Uint8Array): string {
   try {
     const value = JSON.parse(
       new TextDecoder("utf-8", { fatal: true }).decode(bytes),
@@ -46,14 +64,7 @@ function failureDetail(bytes: Uint8Array): string {
     const code = [record.code, record.error, record.status].find(
       (candidate): candidate is string => typeof candidate === "string",
     );
-    const message = [
-      record.message,
-      record.cause,
-      record.error_description,
-    ].find((candidate): candidate is string => typeof candidate === "string");
-    return sanitizedDiagnostic(
-      [code, message].filter(Boolean).join(": "),
-    ).slice(0, 500);
+    return code !== undefined && ERROR_CODE_PATTERN.test(code) ? code : "";
   } catch {
     return "";
   }
@@ -68,9 +79,9 @@ export async function readFiveNorthResponse(
     response.ok ? maximumBytes : ERROR_RESPONSE_LIMIT,
   );
   if (!response.ok) {
-    const detail = failureDetail(bytes);
+    const code = failureCode(bytes);
     throw new Error(
-      `Five North request failed with HTTP ${response.status}${detail === "" ? "" : ` (${detail})`}`,
+      `Five North request failed with HTTP ${response.status}${code === "" ? "" : ` (${code})`}`,
     );
   }
   return bytes;

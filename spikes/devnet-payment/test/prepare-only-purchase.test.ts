@@ -20,7 +20,10 @@ import {
   responseBytes,
 } from "../../../packages/x402-canton/test/transfer-factory-observation.fixtures.js";
 import type { FiveNorthPurchaseReaders } from "../src/five-north-purchase-readers.js";
-import { prepareOnlyPurchase } from "../src/prepare-only-purchase.js";
+import {
+  prepareOnlyPurchase,
+  type PrepareOnlyPurchaseInput,
+} from "../src/prepare-only-purchase.js";
 
 const AUTHORIZATION_INSTANCE = "prepare-only-authorization-1";
 const challengeHeader = Buffer.from(
@@ -30,6 +33,27 @@ const challengeHeader = Buffer.from(
 function paymentRequiredResponse(): Response {
   return new Response(null, {
     headers: { "PAYMENT-REQUIRED": challengeHeader },
+    status: 402,
+  });
+}
+
+function shortPaymentRequiredResponse(): Response {
+  const challenge = JSON.parse(
+    new TextDecoder().decode(readChallengeBytes(createPurchaseInput())),
+  ) as {
+    accepts: Array<{
+      extra: { executeBeforeSeconds: number };
+      maxTimeoutSeconds: number;
+    }>;
+  };
+  challenge.accepts[0]!.extra.executeBeforeSeconds = 4;
+  challenge.accepts[0]!.maxTimeoutSeconds = 4;
+  return new Response(null, {
+    headers: {
+      "PAYMENT-REQUIRED": Buffer.from(JSON.stringify(challenge)).toString(
+        "base64",
+      ),
+    },
     status: 402,
   });
 }
@@ -86,6 +110,25 @@ async function readers(): Promise<FiveNorthPurchaseReaders> {
   };
 }
 
+function purchaseInput(
+  source: FiveNorthPurchaseReaders,
+  overrides: Partial<PrepareOnlyPurchaseInput> = {},
+): PrepareOnlyPurchaseInput {
+  return {
+    authorizationInstanceId: AUTHORIZATION_INSTANCE,
+    capabilityContractId: "00capability7",
+    createReaders: () => source,
+    expectedAdmin: "DSO::1220dso",
+    expectedNetwork: "canton:devnet",
+    fetchAuthorized: async () => paymentRequiredResponse(),
+    method: "GET",
+    payerParty: PAYER,
+    resourceUrl: RESOURCE_URL,
+    tokenFactoryContractId: "00tokenfactory7",
+    ...overrides,
+  };
+}
+
 describe("prepare-only bounded purchase", () => {
   beforeEach(() => {
     vi.useFakeTimers({ now: new Date("2026-07-13T10:00:00.000Z") });
@@ -96,28 +139,20 @@ describe("prepare-only bounded purchase", () => {
   });
 
   it("stops after one authentic bounded preparation with redacted output", async () => {
-    const authorizeUrl = vi.fn(async () => undefined);
-    const provider = vi.fn(async (_url: string, init: RequestInit) => {
+    const source = await readers();
+    const createReaders = vi.fn(() => source);
+    const provider = vi.fn(async (_url: URL, init: RequestInit) => {
       expect(new Headers(init.headers).has("PAYMENT-SIGNATURE")).toBe(false);
+      expect(init.signal).toBeInstanceOf(AbortSignal);
       return paymentRequiredResponse();
     });
-    const result = await prepareOnlyPurchase({
-      authorizationInstanceId: AUTHORIZATION_INSTANCE,
-      authorizeUrl,
-      capabilityContractId: "00capability7",
-      expectedAdmin: "DSO::1220dso",
-      expectedNetwork: "canton:devnet",
-      fetcher: provider,
-      method: "GET",
-      payerParty: PAYER,
-      readers: await readers(),
-      resourceUrl: RESOURCE_URL,
-      tokenFactoryContractId: "00tokenfactory7",
-    });
+    const result = await prepareOnlyPurchase(
+      purchaseInput(source, { createReaders, fetchAuthorized: provider }),
+    );
     const expected = await expectedIntent();
 
-    expect(authorizeUrl).toHaveBeenCalledOnce();
     expect(provider).toHaveBeenCalledOnce();
+    expect(createReaders).toHaveBeenCalledWith(expect.any(AbortSignal));
     expect(result).toMatchObject({
       attemptId: expected.attemptId,
       prepared: {
@@ -139,22 +174,94 @@ describe("prepare-only bounded purchase", () => {
     const prepared = vi.spyOn(source, "prepared");
 
     await expect(
-      prepareOnlyPurchase({
-        authorizationInstanceId: AUTHORIZATION_INSTANCE,
-        authorizeUrl: async () => {
-          throw new Error("provider is not authorized");
-        },
-        capabilityContractId: "00capability7",
-        expectedAdmin: "DSO::1220dso",
-        expectedNetwork: "canton:devnet",
-        fetcher: async () => paymentRequiredResponse(),
-        method: "GET",
-        payerParty: PAYER,
-        readers: source,
-        resourceUrl: RESOURCE_URL,
-        tokenFactoryContractId: "00tokenfactory7",
-      }),
+      prepareOnlyPurchase(
+        purchaseInput(source, {
+          fetchAuthorized: async () => {
+            throw new Error("provider is not authorized");
+          },
+        }),
+      ),
     ).rejects.toThrow("not authorized");
     expect(prepared).not.toHaveBeenCalled();
+  });
+
+  it.each([0, 30_001, 1.5, Number.POSITIVE_INFINITY])(
+    "rejects invalid total timeout %s before I/O",
+    async (timeoutMilliseconds) => {
+      const source = await readers();
+      const provider = vi.fn(async () => paymentRequiredResponse());
+      const createReaders = vi.fn(() => source);
+
+      await expect(
+        prepareOnlyPurchase(
+          purchaseInput(source, {
+            createReaders,
+            fetchAuthorized: provider,
+            timeoutMilliseconds,
+          }),
+        ),
+      ).rejects.toThrow(/timeout/i);
+      expect(provider).not.toHaveBeenCalled();
+      expect(createReaders).not.toHaveBeenCalled();
+    },
+  );
+
+  it("sanitizes caller cancellation before any I/O", async () => {
+    const source = await readers();
+    const controller = new AbortController();
+    controller.abort("never expose this private reason");
+    const provider = vi.fn(async () => paymentRequiredResponse());
+    const createReaders = vi.fn(() => source);
+
+    const promise = prepareOnlyPurchase(
+      purchaseInput(source, {
+        createReaders,
+        fetchAuthorized: provider,
+        signal: controller.signal,
+      }),
+    );
+    await expect(promise).rejects.toThrow("purchase cancelled");
+    await expect(promise).rejects.not.toThrow(/private reason/);
+    expect(provider).not.toHaveBeenCalled();
+    expect(createReaders).not.toHaveBeenCalled();
+  });
+
+  it("stops before registry and prepare when cancelled after capability read", async () => {
+    const source = await readers();
+    const controller = new AbortController();
+    const capability = source.capability;
+    const registry = vi.spyOn(source, "registry");
+    const prepared = vi.spyOn(source, "prepared");
+    const cancelledSource: FiveNorthPurchaseReaders = {
+      ...source,
+      capability: vi.fn(async (contractId) => {
+        const result = await capability(contractId);
+        controller.abort("sensitive cancellation reason");
+        return result;
+      }),
+    };
+
+    const promise = prepareOnlyPurchase(
+      purchaseInput(cancelledSource, { signal: controller.signal }),
+    );
+    await expect(promise).rejects.toThrow("purchase cancelled");
+    await expect(promise).rejects.not.toThrow(/sensitive/);
+    expect(registry).not.toHaveBeenCalled();
+    expect(prepared).not.toHaveBeenCalled();
+  });
+
+  it("rejects a challenge without the five-second preparation reserve", async () => {
+    const source = await readers();
+    const createReaders = vi.fn(() => source);
+
+    await expect(
+      prepareOnlyPurchase(
+        purchaseInput(source, {
+          createReaders,
+          fetchAuthorized: async () => shortPaymentRequiredResponse(),
+        }),
+      ),
+    ).rejects.toThrow(/deadline/i);
+    expect(createReaders).not.toHaveBeenCalled();
   });
 });

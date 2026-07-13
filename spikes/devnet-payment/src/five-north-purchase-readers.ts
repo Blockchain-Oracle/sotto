@@ -1,8 +1,15 @@
 import {
-  APPROVED_BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_ID,
+  HOLDING_INTERFACE_QUERY_ID,
+  MAX_PREPARE_RESPONSE_BYTES,
+  MAX_REGISTRY_RESPONSE_BYTES,
+  PREPARE_SUBMISSION_PATH,
+  PREPARE_SUBMISSION_TIMEOUT_MS,
+  REGISTRY_TIMEOUT_MS,
+  TRANSFER_FACTORY_REGISTRY_PATH,
   type PreparedPurchaseReader,
   type PurchaseCapabilityAcsReader,
   type PurchaseHoldingAcsReader,
+  type PurchaseHoldingAcsRequest,
   type TransferFactoryRegistryReader,
 } from "@sotto/x402-canton";
 import type { FiveNorthPrepareTransport } from "./five-north-prepare-transport.js";
@@ -48,47 +55,74 @@ function activeEvent(value: unknown): Record<string, unknown> {
   return objectValue(active.createdEvent, "capability created event");
 }
 
+function activeEventOrUndefined(
+  value: unknown,
+): Record<string, unknown> | undefined {
+  const entry = objectValue(value, "capability ACS entry");
+  const contractEntry = objectValue(
+    entry.contractEntry,
+    "capability contract entry",
+  );
+  if (!("JsActiveContract" in contractEntry)) return undefined;
+  return activeEvent(value);
+}
+
+function holdingRequest(payer: string, activeAtOffset: number): unknown {
+  return {
+    filter: {
+      filtersByParty: {
+        [payer]: {
+          cumulative: [
+            {
+              identifierFilter: {
+                InterfaceFilter: {
+                  value: {
+                    interfaceId: HOLDING_INTERFACE_QUERY_ID,
+                    includeCreatedEventBlob: true,
+                    includeInterfaceView: true,
+                  },
+                },
+              },
+            },
+          ],
+        },
+      },
+    },
+    verbose: false,
+    activeAtOffset,
+  };
+}
+
+function requireEnvelope(condition: boolean, label: string): asserts condition {
+  if (!condition) throw new Error(`${label} envelope is not approved`);
+}
+
 export function createFiveNorthPurchaseReaders(
   transport: FiveNorthPrepareTransport,
   payerParty: string,
 ): FiveNorthPurchaseReaders {
   const payer = exactIdentifier(payerParty, "capability payer Party");
+  let offsetPromise: Promise<number> | undefined;
+  const stableOffset = (): Promise<number> => {
+    offsetPromise ??= (async () => {
+      const ledgerEnd = objectValue(
+        await transport.readLedgerEnd(),
+        "purchase ledger end",
+      );
+      if (
+        !Number.isSafeInteger(ledgerEnd.offset) ||
+        (ledgerEnd.offset as number) < 0
+      ) {
+        throw new Error("purchase ledger offset is invalid");
+      }
+      return ledgerEnd.offset as number;
+    })();
+    return offsetPromise;
+  };
   const capability: PurchaseCapabilityAcsReader = async (contractId) => {
     const requested = exactIdentifier(contractId, "capability contract ID");
-    const ledgerEnd = objectValue(
-      await transport.readLedgerEnd(),
-      "capability ledger end",
-    );
-    if (
-      !Number.isSafeInteger(ledgerEnd.offset) ||
-      (ledgerEnd.offset as number) < 0
-    ) {
-      throw new Error("capability ledger offset is invalid");
-    }
-    const activeAtOffset = ledgerEnd.offset as number;
-    const response = await transport.readActiveContracts({
-      filter: {
-        filtersByParty: {
-          [payer]: {
-            cumulative: [
-              {
-                identifierFilter: {
-                  TemplateFilter: {
-                    value: {
-                      templateId:
-                        APPROVED_BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_ID,
-                      includeCreatedEventBlob: false,
-                    },
-                  },
-                },
-              },
-            ],
-          },
-        },
-      },
-      verbose: true,
-      activeAtOffset,
-    });
+    const activeAtOffset = await stableOffset();
+    const response = await transport.readCapabilityContracts(activeAtOffset);
     if (
       !Array.isArray(response) ||
       response.length > MAX_CAPABILITY_ACS_ENTRIES
@@ -96,7 +130,8 @@ export function createFiveNorthPurchaseReaders(
       throw new Error("capability ACS result exceeds count limit");
     }
     const matches = response
-      .map(activeEvent)
+      .map(activeEventOrUndefined)
+      .filter((event): event is Record<string, unknown> => event !== undefined)
       .filter(
         (event) =>
           exactIdentifier(event.contractId, "capability event contract ID") ===
@@ -114,10 +149,40 @@ export function createFiveNorthPurchaseReaders(
   return Object.freeze({
     capability,
     holdings: Object.freeze({
-      readLedgerEnd: transport.readLedgerEnd,
-      readActiveContracts: transport.readActiveContracts,
+      readLedgerEnd: async () => ({ offset: await stableOffset() }),
+      readActiveContracts: async (request: PurchaseHoldingAcsRequest) => {
+        const activeAtOffset = await stableOffset();
+        requireEnvelope(
+          JSON.stringify(request) ===
+            JSON.stringify(holdingRequest(payer, activeAtOffset)),
+          "holding ACS",
+        );
+        return transport.readHoldingContracts(activeAtOffset);
+      },
     }),
-    registry: transport.readRegistry,
-    prepared: transport.readPrepare,
+    registry: async (request) => {
+      requireEnvelope(
+        request.path === TRANSFER_FACTORY_REGISTRY_PATH &&
+          request.method === "POST" &&
+          request.contentType === "application/json" &&
+          request.redirect === "error" &&
+          request.timeoutMilliseconds === REGISTRY_TIMEOUT_MS &&
+          request.maximumResponseBytes === MAX_REGISTRY_RESPONSE_BYTES,
+        "TransferFactory registry",
+      );
+      return transport.readRegistry(request.body);
+    },
+    prepared: async (request) => {
+      requireEnvelope(
+        request.path === PREPARE_SUBMISSION_PATH &&
+          request.method === "POST" &&
+          request.contentType === "application/json" &&
+          request.redirect === "error" &&
+          request.timeoutMilliseconds === PREPARE_SUBMISSION_TIMEOUT_MS &&
+          request.maximumResponseBytes === MAX_PREPARE_RESPONSE_BYTES,
+        "prepare",
+      );
+      return transport.readPrepare(request.body);
+    },
   });
 }

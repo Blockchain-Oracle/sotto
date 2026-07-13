@@ -64,7 +64,7 @@ const server = await startPaidProvider({
 
 try {
   const observation = await observeHttpChallenge({
-    authorizeUrl: async (url) => {
+    fetchAuthorized: async (url, init) => {
       if (
         url.toString() !== config.provider.resourceUrl ||
         !url.hostname.endsWith(".trycloudflare.com")
@@ -73,8 +73,8 @@ try {
           "Live provider must use the configured Cloudflare tunnel",
         );
       }
+      return fetch(url, init);
     },
-    fetcher: fetch,
     method: "GET",
     resourceUrl: config.provider.resourceUrl,
     timeoutMs: 10_000,

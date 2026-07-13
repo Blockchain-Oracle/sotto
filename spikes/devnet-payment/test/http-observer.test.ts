@@ -29,8 +29,7 @@ const paymentRequired = Buffer.from(JSON.stringify(requirement)).toString(
 
 describe("observeHttpChallenge", () => {
   it("requires URL authorization before making a bounded unpaid request", async () => {
-    const authorizeUrl = vi.fn(async () => undefined);
-    const fetcher = vi.fn(async (_url: string, _init: RequestInit) => {
+    const fetchAuthorized = vi.fn(async (_url: URL, _init: RequestInit) => {
       void _url;
       void _init;
       return Promise.resolve(
@@ -42,8 +41,7 @@ describe("observeHttpChallenge", () => {
     });
 
     const observation = await observeHttpChallenge({
-      authorizeUrl,
-      fetcher,
+      fetchAuthorized,
       method: "POST",
       now: new Date("2026-07-12T15:59:00.000Z"),
       requestBody: new TextEncoder().encode('{"prompt":"private"}'),
@@ -51,18 +49,15 @@ describe("observeHttpChallenge", () => {
       timeoutMs: 2_000,
     });
 
-    expect(authorizeUrl).toHaveBeenCalledWith(
+    expect(fetchAuthorized).toHaveBeenCalledWith(
       new URL("https://provider.example/resource"),
-    );
-    expect(fetcher).toHaveBeenCalledWith(
-      "https://provider.example/resource",
       expect.objectContaining({
         method: "POST",
         redirect: "error",
         signal: expect.any(AbortSignal),
       }),
     );
-    const requestHeaders = fetcher.mock.calls[0]?.[1].headers;
+    const requestHeaders = fetchAuthorized.mock.calls[0]?.[1].headers;
     expect(new Headers(requestHeaders).has("PAYMENT-SIGNATURE")).toBe(false);
     expect(observation).toMatchObject({
       compatibility: {
@@ -83,29 +78,26 @@ describe("observeHttpChallenge", () => {
   it("rejects a non-402 response", async () => {
     await expect(
       observeHttpChallenge({
-        authorizeUrl: async () => undefined,
-        fetcher: async () => new Response(null, { status: 200 }),
+        fetchAuthorized: async () => new Response(null, { status: 200 }),
         method: "GET",
         resourceUrl: "https://provider.example/resource",
       }),
     ).rejects.toThrow("expected HTTP 402");
   });
 
-  it("fails closed without URL authorization", async () => {
+  it("fails closed without an authorized fetch boundary", async () => {
     await expect(
       observeHttpChallenge({
-        fetcher: async () => new Response(null, { status: 402 }),
         method: "GET",
         resourceUrl: "https://provider.example/resource",
-      }),
-    ).rejects.toThrow("URL authority");
+      } as never),
+    ).rejects.toThrow("authorized fetch");
   });
 
   it("requires the v2 PAYMENT-REQUIRED header", async () => {
     await expect(
       observeHttpChallenge({
-        authorizeUrl: async () => undefined,
-        fetcher: async () =>
+        fetchAuthorized: async () =>
           new Response(null, {
             headers: { "X-PAYMENT-REQUIRED": paymentRequired },
             status: 402,
@@ -120,8 +112,7 @@ describe("observeHttpChallenge", () => {
     const body = new TextEncoder().encode("original");
     let sent = new Uint8Array();
     const observation = await observeHttpChallenge({
-      authorizeUrl: async () => undefined,
-      fetcher: async (_url, init) => {
+      fetchAuthorized: async (_url, init) => {
         sent = Uint8Array.from(init.body as Uint8Array);
         body.fill(0x78);
         return new Response(null, {
@@ -139,16 +130,36 @@ describe("observeHttpChallenge", () => {
   });
 
   it("rejects an oversized body before fetch", async () => {
-    const fetcher = vi.fn(async () => new Response(null, { status: 402 }));
+    const fetchAuthorized = vi.fn(
+      async () => new Response(null, { status: 402 }),
+    );
     await expect(
       observeHttpChallenge({
-        authorizeUrl: async () => undefined,
-        fetcher,
+        fetchAuthorized,
         method: "POST",
         requestBody: new Uint8Array(1_048_577),
         resourceUrl: "https://provider.example/resource",
       }),
     ).rejects.toThrow("body exceeds");
-    expect(fetcher).not.toHaveBeenCalled();
+    expect(fetchAuthorized).not.toHaveBeenCalled();
+  });
+
+  it("passes the caller cancellation signal into the authorized fetch", async () => {
+    const controller = new AbortController();
+    const fetchAuthorized = vi.fn(async (_url: URL, init: RequestInit) => {
+      expect(init.signal).toBeInstanceOf(AbortSignal);
+      controller.abort("private caller reason");
+      throw new DOMException("aborted", "AbortError");
+    });
+
+    const promise = observeHttpChallenge({
+      fetchAuthorized,
+      method: "GET",
+      resourceUrl: "https://provider.example/resource",
+      signal: controller.signal,
+    });
+    await expect(promise).rejects.toThrow("HTTP observation cancelled");
+    await expect(promise).rejects.not.toThrow(/private caller reason/);
+    expect(fetchAuthorized).toHaveBeenCalledOnce();
   });
 });
