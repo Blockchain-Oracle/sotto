@@ -81,9 +81,9 @@ non-custodial or ledger-enforced.
 
 A compromised agent may consume every active capability it controls, subject to
 their on-ledger resource, recipient, amount, allowance, expiry, revision, and
-replay constraints. It may not spend outside those capabilities.
-Capability creation rejects an agent Party equal to the payer Party; otherwise
-the delegated-authority boundary would collapse into generic payer authority.
+replay constraints. It may not spend outside those capabilities. Capability
+creation rejects an agent Party equal to the payer Party; otherwise the
+delegated-authority boundary would collapse into generic payer authority.
 
 ## Purchase Commitment
 
@@ -211,9 +211,9 @@ The deterministic request boundary caps bodies at 1 MiB, URLs at 8 KiB, raw
 header tuples at 128, authoritative headers at 64 including the three base
 headers, and canonical request bytes at 64 KiB. The observer snapshots bounded
 body bytes before its first asynchronous operation and uses independent copies
-for transport and hashing so caller mutation cannot change the commitment.
-The Daml choice caps input, receiver, and sender-change holding lists at 16
-before its quadratic uniqueness checks. One consuming capability deliberately
+for transport and hashing so caller mutation cannot change the commitment. The
+Daml choice caps input, receiver, and sender-change holding lists at 16 before
+its quadratic uniqueness checks. One consuming capability deliberately
 serializes purchases: production parallelism may use payer-created capabilities
 with disjoint budgets, never duplicate one allowance across concurrent shards.
 
