@@ -84,6 +84,9 @@ template BoundedPurchaseCapability
         now <- getTime
         assertMsg "capability is paused" (not paused)
         assertMsg "capability is expired" (now < expiresAt)
+        assertMsg "requested time is in the future" (requestedAt <= now)
+        assertMsg "execution window is closed" (now < executeBefore)
+        assertMsg "execution exceeds capability expiry" (executeBefore <= expiresAt)
         assertMsg "capability revision does not match" (expectedRevision == revision)
         assertMsg "resource does not match" (resourceHash == allowedResourceHash)
         assertMsg "recipient does not match" (recipient == allowedRecipient)

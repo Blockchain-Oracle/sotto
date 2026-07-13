@@ -1,0 +1,116 @@
+module SottoControlPurchaseTimeReplayTests where
+
+import DA.Time (addRelTime, hours)
+import Daml.Script
+import Splice.Api.Token.HoldingV1 qualified as Holding
+import Splice.Api.Token.MetadataV1 qualified as Metadata
+import Sotto.Control.PurchaseCapability
+import SottoControlPurchaseTestSupport
+import SottoControlTokenStandardMock
+
+purchaseAt
+  : PurchaseFixture
+  -> ContractId BoundedPurchaseCapability
+  -> ContractId Holding.Holding
+  -> Time
+  -> Time
+  -> Int
+  -> Commands PurchaseResult
+purchaseAt fixture capabilityCid holdingCid requestedAt executeBefore expectedRevision =
+  exerciseCmd capabilityCid Purchase with
+    attemptId = "sha256:attempt"
+    purchaseCommitment = "sha256:purchase"
+    requestCommitment = "sha256:request"
+    challengeId = "sha256:challenge"
+    resourceHash = "sha256:resource"
+    recipient = fixture.provider
+    amount = 2.0
+    requestedAt
+    executeBefore
+    inputHoldingCids = [holdingCid]
+    extraArgs = Metadata.ExtraArgs with
+      context = Metadata.emptyChoiceContext
+      meta = Metadata.emptyMetadata
+    expectedRevision
+
+timeRevisionAndReplay : Script ()
+timeRevisionAndReplay = do
+  futureRequested <- createPurchaseFixture Complete "Amulet"
+  futureOptions <- purchaseOptions futureRequested
+  submitMustFail futureOptions $ purchaseAt
+    futureRequested
+    futureRequested.capabilityCid
+    futureRequested.holdingInterfaceCid
+    (addRelTime futureRequested.now (hours 1))
+    (addRelTime futureRequested.now (hours 2))
+    0
+  assertPurchaseUnchanged futureRequested
+
+  pastExecution <- createPurchaseFixture Complete "Amulet"
+  pastOptions <- purchaseOptions pastExecution
+  passTime (hours 1)
+  submitMustFail pastOptions $ purchaseAt
+    pastExecution
+    pastExecution.capabilityCid
+    pastExecution.holdingInterfaceCid
+    pastExecution.now
+    (addRelTime pastExecution.now (hours 1))
+    0
+  assertPurchaseUnchanged pastExecution
+
+  beyondCapability <- createPurchaseFixture Complete "Amulet"
+  beyondOptions <- purchaseOptions beyondCapability
+  submitMustFail beyondOptions $ purchaseAt
+    beyondCapability
+    beyondCapability.capabilityCid
+    beyondCapability.holdingInterfaceCid
+    beyondCapability.now
+    (addRelTime beyondCapability.now (hours 3))
+    0
+  assertPurchaseUnchanged beyondCapability
+
+  wrongRevision <- createPurchaseFixture Complete "Amulet"
+  wrongRevisionOptions <- purchaseOptions wrongRevision
+  submitMustFail wrongRevisionOptions $ purchaseAt
+    wrongRevision
+    wrongRevision.capabilityCid
+    wrongRevision.holdingInterfaceCid
+    wrongRevision.now
+    (addRelTime wrongRevision.now (hours 1))
+    1
+  assertPurchaseUnchanged wrongRevision
+
+  expired <- createPurchaseFixture Complete "Amulet"
+  expiredOptions <- purchaseOptions expired
+  passTime (hours 2)
+  submitMustFail expiredOptions (purchaseCommands expired)
+  assertPurchaseUnchanged expired
+
+  replay <- createPurchaseFixture Complete "Amulet"
+  replayOptions <- purchaseOptions replay
+  accepted <- submit replayOptions (purchaseCommands replay)
+  None <- queryContractId replay.payer replay.capabilityCid
+  submitMustFail replayOptions (purchaseCommands replay)
+  secondHoldingCid <- submit replay.admin do
+    createCmd MockHolding with
+      admin = replay.admin
+      owner = replay.payer
+      instrumentId = replay.instrumentId
+      amount = 2.0
+  let secondHoldingInterfaceCid =
+        toInterfaceContractId @Holding.Holding secondHoldingCid
+  Some factoryDisclosure <- queryDisclosure replay.admin replay.factoryCid
+  Some holdingDisclosure <- queryDisclosure replay.payer secondHoldingCid
+  let replacementOptions =
+        actAs replay.agent <> discloseMany [factoryDisclosure, holdingDisclosure]
+  submitMustFail replacementOptions $ purchaseAt
+    replay
+    accepted.capabilityCid
+    secondHoldingInterfaceCid
+    replay.now
+    (addRelTime replay.now (hours 1))
+    0
+  Some replacement <- queryContractId replay.payer accepted.capabilityCid
+  assert (replacement.revision == 1)
+  Some _ <- queryContractId replay.payer secondHoldingCid
+  pure ()
