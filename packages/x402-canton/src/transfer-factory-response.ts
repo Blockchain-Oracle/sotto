@@ -24,6 +24,35 @@ export type TransferFactoryResponseExpectation = Readonly<{
   synchronizerId: string;
 }>;
 
+const DISCLOSURE_KEYS = [
+  "templateId",
+  "contractId",
+  "createdEventBlob",
+  "synchronizerId",
+] as const;
+const DISCLOSURE_DEBUG_KEYS = [
+  "debugCreatedAt",
+  "debugPackageName",
+  "debugPayload",
+] as const;
+
+function validateDisclosureEnvelope(disclosure: Record<string, unknown>): void {
+  const actual = Object.keys(disclosure).sort();
+  const base = [...DISCLOSURE_KEYS].sort();
+  if (JSON.stringify(actual) === JSON.stringify(base)) return;
+  const withDebug = [...DISCLOSURE_KEYS, ...DISCLOSURE_DEBUG_KEYS].sort();
+  if (
+    JSON.stringify(actual) === JSON.stringify(withDebug) &&
+    DISCLOSURE_DEBUG_KEYS.every((key) => disclosure[key] === null)
+  ) {
+    return;
+  }
+  if (actual.some((key) => key.startsWith("debug"))) {
+    throw new Error("TransferFactory disclosure debug envelope is invalid");
+  }
+  exactKeys(disclosure, DISCLOSURE_KEYS, "TransferFactory disclosure");
+}
+
 /** @internal Shared by pinned purchase and bootstrap discovery parsers. */
 export function parseTransferFactoryResponseWithExpectation(
   bytes: Uint8Array,
@@ -94,11 +123,7 @@ export function parseTransferFactoryResponseWithExpectation(
   let totalBlobBytes = 0;
   const disclosedContracts = context.disclosedContracts.map((candidate) => {
     const disclosure = objectValue(candidate, "TransferFactory disclosure");
-    exactKeys(
-      disclosure,
-      ["templateId", "contractId", "createdEventBlob", "synchronizerId"],
-      "TransferFactory disclosure",
-    );
+    validateDisclosureEnvelope(disclosure);
     const templateId = identifier(
       disclosure.templateId,
       "TransferFactory disclosure templateId",

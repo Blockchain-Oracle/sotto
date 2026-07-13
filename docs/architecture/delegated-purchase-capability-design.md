@@ -118,7 +118,7 @@ members:
 4. `capability` with agent Party, contract ID, full template ID, revision,
    resource-binding version, resource hash, recipient, per-call limit, remaining
    allowance, maximum total debit, and expiry;
-5. `tokenFactory` with interface ID, factory contract ID, implementation
+5. `tokenFactory` with interface ID, factory contract ID, disclosed creation
    template ID, and trusted expected admin;
 6. authorization-instance ID and attempt ID.
 
@@ -268,6 +268,13 @@ Use current official Canton and Daml sources, not remembered APIs:
   `23f47481dab6b1ec01339d6e14494d85bb2844c25f45b26fc5c9ef4cd4942d1f`. Sotto pins
   creation template and interface implementation independently; package-upgrade
   rendering must never be accepted from semver or equality assumptions alone.
+- Five North's current registry factory contract was created under
+  `splice-amulet` version `0.1.9`, package ID
+  `a5b055492fb8f08b2e7bc0fc94da6da50c39c2e1d7f24cd5ea8db12fc87c1332`, from the
+  same official Splice 0.6.11 release. Its release DAR SHA-256 is
+  `fd5b422530e9b4cd72ce78918144bb0a96099700523c8cbef8e257e4706275f8`. That
+  creation template is committed separately from the package preference that
+  will interpret the interface exercise.
 - Prepared-transaction structural decoding uses exactly pinned
   `@canton-network/core-ledger-proto@1.7.0` with recursive unknown-field
   rejection. Its schema predates some Canton 3.5.6 fields, so encountering an
@@ -355,8 +362,9 @@ Factory authority comes from a fresh bounded Token Standard
 transfer choice arguments and a fixed payer-holding observation. Before the
 factory ID may enter a payer-signed capability, Sotto must require `direct`,
 require exactly one disclosed contract whose contract ID equals the returned
-factory ID, and pin that disclosure's implementation template and synchronizer.
-The observation is one-use and short-lived.
+factory ID, and pin that disclosure's creation template and synchronizer. An
+all-null optional debug envelope is discarded; partial or non-null debug fields
+are rejected. The observation is one-use and short-lived.
 
 Each purchase reacquires its own choice context and disclosed contracts because
 the Token Standard permits choice-specific context. It must return the same
@@ -387,6 +395,10 @@ nor Redis cache may replace the live registry and disclosure checks.
   reviewed package-upgrade interpretation from current Five North package
   preference evidence, or prove equivalent exact child-effect validation; a
   later DAR upload must not silently change the nested interface exercise.
+- Rename the current canonical `implementationTemplateId` member to the exact
+  factory-creation-template meaning before signer approval and repin the byte,
+  attempt-ID, and commitment vectors. Field-name ambiguity cannot cross the
+  signer boundary.
 - Bound prepared bytes, node count, tree depth, and decode/hash time; oversized,
   over-deep, and timeout cases must make zero signing calls.
 - Keep the hot path to one strict protobuf decode plus bounded linear

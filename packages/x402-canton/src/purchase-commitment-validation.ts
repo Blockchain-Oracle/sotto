@@ -23,7 +23,7 @@ export { RESOURCE_BINDING_VERSION } from "./resource-route.js";
 export const TOKEN_TRANSFER_FACTORY_INTERFACE_ID =
   "55ba4deb0ad4662c4168b39859738a0e91388d252286480c7331b3f71a517281:Splice.Api.Token.TransferInstructionV1:TransferFactory" as const;
 export const FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID =
-  "23f47481dab6b1ec01339d6e14494d85bb2844c25f45b26fc5c9ef4cd4942d1f:Splice.ExternalPartyAmuletRules:ExternalPartyAmuletRules" as const;
+  "a5b055492fb8f08b2e7bc0fc94da6da50c39c2e1d7f24cd5ea8db12fc87c1332:Splice.ExternalPartyAmuletRules:ExternalPartyAmuletRules" as const;
 export const MAX_PURCHASE_WINDOW_SECONDS = 600;
 
 export type ValidatedPurchaseInput = Readonly<{

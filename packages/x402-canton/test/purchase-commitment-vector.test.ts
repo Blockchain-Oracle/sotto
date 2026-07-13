@@ -66,7 +66,7 @@ const tokenFactory = {
     "55ba4deb0ad4662c4168b39859738a0e91388d252286480c7331b3f71a517281:Splice.Api.Token.TransferInstructionV1:TransferFactory",
   contractId: "00tokenfactory7",
   implementationTemplateId:
-    "23f47481dab6b1ec01339d6e14494d85bb2844c25f45b26fc5c9ef4cd4942d1f:Splice.ExternalPartyAmuletRules:ExternalPartyAmuletRules",
+    "a5b055492fb8f08b2e7bc0fc94da6da50c39c2e1d7f24cd5ea8db12fc87c1332:Splice.ExternalPartyAmuletRules:ExternalPartyAmuletRules",
   expectedAdmin: requirement.extra.instrumentId.admin,
 } as const;
 
@@ -105,9 +105,9 @@ describe("commitBoundedPurchase", () => {
       '"expiresAt":"2026-07-13T11:00:00.000Z"},',
       '"tokenFactory":{"interfaceId":"55ba4deb0ad4662c4168b39859738a0e91388d252286480c7331b3f71a517281:Splice.Api.Token.TransferInstructionV1:TransferFactory",',
       '"contractId":"00tokenfactory7",',
-      '"implementationTemplateId":"23f47481dab6b1ec01339d6e14494d85bb2844c25f45b26fc5c9ef4cd4942d1f:Splice.ExternalPartyAmuletRules:ExternalPartyAmuletRules",',
+      '"implementationTemplateId":"a5b055492fb8f08b2e7bc0fc94da6da50c39c2e1d7f24cd5ea8db12fc87c1332:Splice.ExternalPartyAmuletRules:ExternalPartyAmuletRules",',
       '"expectedAdmin":"DSO::1220dso"},"authorizationInstanceId":"authorization-7",',
-      '"attemptId":"sha256:301d1843f5735833f701f85792d4db7c636f7a29c71841ad692e2043b85e3629"}',
+      '"attemptId":"sha256:86d3592ec49c2877e1a228a390780986bff8ee9a9bfdddd719fff58878358754"}',
     ].join("");
 
     expect(new TextDecoder().decode(result.canonicalBytes)).toBe(
@@ -115,11 +115,11 @@ describe("commitBoundedPurchase", () => {
     );
     expect(result).toMatchObject({
       attemptId:
-        "sha256:301d1843f5735833f701f85792d4db7c636f7a29c71841ad692e2043b85e3629",
+        "sha256:86d3592ec49c2877e1a228a390780986bff8ee9a9bfdddd719fff58878358754",
       challengeId:
         "sha256:8fdfd64077075dba79cc71e6dd13151e77f8d33f6e22df21fa892abd7941695b",
       commitment:
-        "sha256:0d1fe887f46b714a16c11bd082a5cc5743f36d4f28ed98a91086528bd44cf9c8",
+        "sha256:c76a0b62935b5a52e381e70f6559944c4e4c3a494581dce2d14ce4cd00e6b1be",
       expiresAt: "2026-07-13T10:00:45.000Z",
       version: "sotto-purchase-v2",
     });
