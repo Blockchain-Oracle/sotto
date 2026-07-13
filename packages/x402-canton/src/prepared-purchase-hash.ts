@@ -14,6 +14,9 @@ export type PreparedPurchaseHashDependencies = Readonly<{
   ) => Promise<Uint8Array>;
 }>;
 
+export const MAX_PREPARED_PURCHASE_HASH_AGE_MS = 10_000;
+const CLOCK_ROLLBACK_TOLERANCE_MS = 5_000;
+
 declare const hashVerifiedPreparedPurchaseBrand: unique symbol;
 export type HashVerifiedPreparedPurchase = Readonly<{
   observationId: `sha256:${string}`;
@@ -41,11 +44,26 @@ function requireMatch(
   }
 }
 
+function requireFresh(state: PreparedPurchaseState): void {
+  const now = Date.now();
+  const age = now - state.capturedAt;
+  if (age < -CLOCK_ROLLBACK_TOLERANCE_MS) {
+    throw new Error("prepared Purchase clock moved backwards");
+  }
+  if (now >= Date.parse(state.intent.challenge.executeBefore)) {
+    throw new Error("prepared Purchase execution window is closed");
+  }
+  if (age > MAX_PREPARED_PURCHASE_HASH_AGE_MS) {
+    throw new Error("prepared Purchase observation is stale");
+  }
+}
+
 export async function verifyPreparedPurchaseHash(
   observation: PreparedPurchaseObservation,
   dependencies: PreparedPurchaseHashDependencies,
 ): Promise<HashVerifiedPreparedPurchase> {
   const state = claimPreparedPurchaseObservation(observation);
+  requireFresh(state);
   const participant = new Uint8Array(
     Buffer.from(state.preparedTransactionHash, "base64"),
   );
@@ -65,6 +83,7 @@ export async function verifyPreparedPurchaseHash(
     "official prepared hash recomputation",
   );
   requireMatch(participant, official, "official prepared hash recomputation");
+  requireFresh(state);
   const result = Object.freeze({
     observationId: observation.observationId,
     preparedTransactionHash: state.preparedTransactionHash,

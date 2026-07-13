@@ -29,9 +29,12 @@ async function observation() {
     registry,
   );
   const transaction = preparedPurchaseBytes(intent, request);
-  return createPreparedPurchaseObserver(async () => response(transaction))(
-    request,
-  );
+  return {
+    prepared: await createPreparedPurchaseObserver(async () =>
+      response(transaction),
+    )(request),
+    executeBefore: intent.challenge.executeBefore,
+  };
 }
 
 describe("prepared Purchase hash gate", () => {
@@ -44,7 +47,7 @@ describe("prepared Purchase hash gate", () => {
   });
 
   it("requires matching precheck, official, and participant digests", async () => {
-    const prepared = await observation();
+    const { prepared } = await observation();
     const precheck = vi.fn(async () => new Uint8Array(digest));
     const official = vi.fn(async () => new Uint8Array(digest));
 
@@ -64,7 +67,7 @@ describe("prepared Purchase hash gate", () => {
   });
 
   it("stops before the official oracle after a precheck mismatch", async () => {
-    const prepared = await observation();
+    const { prepared } = await observation();
     const official = vi.fn(async () => new Uint8Array(digest));
 
     await expect(
@@ -77,7 +80,7 @@ describe("prepared Purchase hash gate", () => {
   });
 
   it("consumes a preparation after an official mismatch", async () => {
-    const prepared = await observation();
+    const { prepared } = await observation();
     const dependencies = {
       recomputeOfficialHash: async () => new Uint8Array(32).fill(8),
     };
@@ -91,7 +94,7 @@ describe("prepared Purchase hash gate", () => {
   });
 
   it("rejects cloned observations and invalid digest lengths", async () => {
-    const prepared = await observation();
+    const { prepared } = await observation();
 
     await expect(
       verifyPreparedPurchaseHash(structuredClone(prepared), {
@@ -103,5 +106,44 @@ describe("prepared Purchase hash gate", () => {
         recomputeOfficialHash: async () => new Uint8Array(31),
       }),
     ).rejects.toThrow(/32 bytes/i);
+  });
+
+  it("rejects a stale prepared observation before invoking a hash oracle", async () => {
+    const { prepared } = await observation();
+    const official = vi.fn(async () => new Uint8Array(digest));
+    vi.advanceTimersByTime(10_001);
+
+    await expect(
+      verifyPreparedPurchaseHash(prepared, {
+        recomputeOfficialHash: official,
+      }),
+    ).rejects.toThrow(/stale/i);
+    expect(official).not.toHaveBeenCalled();
+  });
+
+  it("rejects after the committed execution window before hashing", async () => {
+    const { prepared, executeBefore } = await observation();
+    const official = vi.fn(async () => new Uint8Array(digest));
+    vi.setSystemTime(new Date(executeBefore));
+
+    await expect(
+      verifyPreparedPurchaseHash(prepared, {
+        recomputeOfficialHash: official,
+      }),
+    ).rejects.toThrow(/execution window/i);
+    expect(official).not.toHaveBeenCalled();
+  });
+
+  it("rejects a material backwards clock movement before hashing", async () => {
+    const { prepared } = await observation();
+    const official = vi.fn(async () => new Uint8Array(digest));
+    vi.setSystemTime(new Date("2026-07-13T09:59:56.999Z"));
+
+    await expect(
+      verifyPreparedPurchaseHash(prepared, {
+        recomputeOfficialHash: official,
+      }),
+    ).rejects.toThrow(/clock moved backwards/i);
+    expect(official).not.toHaveBeenCalled();
   });
 });
