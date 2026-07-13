@@ -9,8 +9,6 @@ export const TRANSFER_PREAPPROVAL_PROPOSAL_QUERY_ID =
   "#splice-wallet:Splice.Wallet.TransferPreapproval:TransferPreapprovalProposal" as const;
 export const TRANSFER_PREAPPROVAL_QUERY_ID =
   "#splice-amulet:Splice.AmuletRules:TransferPreapproval" as const;
-const TRANSFER_FACTORY_QUERY_ID =
-  "#splice-amulet:Splice.ExternalPartyAmuletRules:ExternalPartyAmuletRules" as const;
 
 export function boundedPrepareBody(value: unknown, label: string): string {
   let body: string;
@@ -104,27 +102,6 @@ export function holdingContractsBody(
       },
     ],
     false,
-  );
-}
-
-export function transferFactoryContractsBody(
-  dsoParty: string,
-  activeAtOffset: number,
-): unknown {
-  return activeContractsBody(
-    cantonParty(dsoParty, "TransferFactory DSO"),
-    activeAtOffset,
-    [
-      {
-        TemplateFilter: {
-          value: {
-            templateId: TRANSFER_FACTORY_QUERY_ID,
-            includeCreatedEventBlob: false,
-          },
-        },
-      },
-    ],
-    true,
   );
 }
 

@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
-import { createFiveNorthCapabilityAuthorityTransport } from "../src/five-north-capability-authority-transport.js";
+import { createFiveNorthCapabilityReadinessTransport } from "../src/five-north-capability-readiness-transport.js";
 import type { SpikeConfig } from "../src/config.js";
 
 const network: SpikeConfig["network"] = {
@@ -15,7 +15,6 @@ const network: SpikeConfig["network"] = {
   validatorUrl:
     "https://wallet.validator.devnet.sandbox.fivenorth.io/api/validator",
 };
-const dso = `DSO::1220${"d".repeat(64)}`;
 const payer = `sotto-payer::1220${"a".repeat(64)}`;
 const agent = `sotto-agent::1220${"b".repeat(64)}`;
 
@@ -29,9 +28,9 @@ function tokenResponse(subject = "ledger-user-6"): Response {
   });
 }
 
-describe("Five North capability authority transport", () => {
+describe("Five North capability readiness transport", () => {
   it("exposes only authenticated discovery reads", () => {
-    const transport = createFiveNorthCapabilityAuthorityTransport(network, {
+    const transport = createFiveNorthCapabilityReadinessTransport(network, {
       fetcher: vi.fn(async () => tokenResponse()),
       signal: new AbortController().signal,
     });
@@ -39,16 +38,14 @@ describe("Five North capability authority transport", () => {
     expect(Object.keys(transport).sort()).toEqual([
       "readAmuletRules",
       "readAuthenticatedUserId",
-      "readLedgerEnd",
       "readPackagePresence",
       "readPreferredSottoPackage",
-      "readTransferFactoryContracts",
     ]);
     expect(transport).not.toHaveProperty("submit");
     expect(transport).not.toHaveProperty("sign");
   });
 
-  it("pins package bytes, preferred parties, and factory ACS", async () => {
+  it("pins package bytes and preferred parties", async () => {
     const payload = new TextEncoder().encode("test package payload");
     const packageId = createHash("sha256").update(payload).digest("hex");
     const requests: Array<
@@ -69,12 +66,9 @@ describe("Five North capability authority transport", () => {
       if (url.endsWith("/v0/scan-proxy/amulet-rules")) {
         return Response.json({ amulet_rules: {} });
       }
-      if (url.endsWith("/v2/state/ledger-end")) {
-        return Response.json({ offset: 42 });
-      }
       return Response.json([]);
     });
-    const transport = createFiveNorthCapabilityAuthorityTransport(network, {
+    const transport = createFiveNorthCapabilityReadinessTransport(network, {
       fetcher,
       signal: new AbortController().signal,
     });
@@ -85,21 +79,15 @@ describe("Five North capability authority transport", () => {
     await expect(transport.readAmuletRules()).resolves.toEqual({
       amulet_rules: {},
     });
-    await expect(transport.readLedgerEnd()).resolves.toEqual({ offset: 42 });
     await expect(transport.readPackagePresence(packageId)).resolves.toEqual({
       archivePayloadSha256: packageId,
       packageId,
     });
     await transport.readPreferredSottoPackage(payer, agent);
-    await transport.readTransferFactoryContracts(dso, 42);
 
-    expect(JSON.stringify(requests[3])).toContain("sotto-control");
-    expect(JSON.stringify(requests[3])).toContain(payer);
-    expect(JSON.stringify(requests[3])).toContain(agent);
-    expect(JSON.stringify(requests[4])).toContain(
-      "Splice.ExternalPartyAmuletRules:ExternalPartyAmuletRules",
-    );
-    expect(JSON.stringify(requests[4])).toContain(dso);
+    expect(JSON.stringify(requests[2])).toContain("sotto-control");
+    expect(JSON.stringify(requests[2])).toContain(payer);
+    expect(JSON.stringify(requests[2])).toContain(agent);
   });
 
   it("rejects invalid IDs and package header or payload mismatch", async () => {
@@ -109,7 +97,7 @@ describe("Five North capability authority transport", () => {
         headers: { "Canton-Package-Hash": "0".repeat(64) },
       });
     });
-    const transport = createFiveNorthCapabilityAuthorityTransport(network, {
+    const transport = createFiveNorthCapabilityReadinessTransport(network, {
       fetcher,
       signal: new AbortController().signal,
     });
@@ -122,7 +110,7 @@ describe("Five North capability authority transport", () => {
       "header does not match",
     );
 
-    const payloadTransport = createFiveNorthCapabilityAuthorityTransport(
+    const payloadTransport = createFiveNorthCapabilityReadinessTransport(
       network,
       {
         fetcher: vi.fn(async (url: string) =>

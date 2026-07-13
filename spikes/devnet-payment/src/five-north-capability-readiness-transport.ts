@@ -1,5 +1,5 @@
 import type { SpikeConfig } from "./config.js";
-import type { FiveNorthCapabilityAuthorityReader } from "./five-north-capability-authority.js";
+import type { FiveNorthCapabilityReadinessReader } from "./five-north-capability-readiness.js";
 import {
   approveFiveNorthPrepareNetwork,
   type ApprovedFiveNorthPrepareNetwork,
@@ -7,7 +7,6 @@ import {
 import {
   boundedPrepareBody,
   preferredSottoPackageBody,
-  transferFactoryContractsBody,
 } from "./five-north-prepare-requests.js";
 import {
   MAX_LEDGER_PACKAGE_BYTES,
@@ -48,10 +47,10 @@ function userIdFromToken(token: string): string {
   return (payload as { sub: string }).sub;
 }
 
-export function createFiveNorthCapabilityAuthorityTransport(
+export function createFiveNorthCapabilityReadinessTransport(
   candidateNetwork: SpikeConfig["network"],
   options: Options,
-): FiveNorthCapabilityAuthorityReader {
+): FiveNorthCapabilityReadinessReader {
   const network = approveFiveNorthPrepareNetwork(candidateNetwork);
   const fetcher = options.fetcher ?? fetch;
   const scopeSignal = options.signal;
@@ -133,7 +132,6 @@ export function createFiveNorthCapabilityAuthorityTransport(
     readAmuletRules: () => validatorJson(network),
     readAuthenticatedUserId: async () =>
       userIdFromToken(await tokens.accessToken()),
-    readLedgerEnd: () => ledgerJson("/v2/state/ledger-end", "GET"),
     readPackagePresence: async (candidatePackageId) => {
       const packageId = requireLedgerPackageId(candidatePackageId);
       const response = await authorizedResponse(
@@ -154,12 +152,6 @@ export function createFiveNorthCapabilityAuthorityTransport(
         "/v2/interactive-submission/preferred-packages",
         "POST",
         preferredSottoPackageBody(payerParty, agentParty),
-      ),
-    readTransferFactoryContracts: (dsoParty, activeAtOffset) =>
-      ledgerJson(
-        "/v2/state/active-contracts",
-        "POST",
-        transferFactoryContractsBody(dsoParty, activeAtOffset),
       ),
   });
 }
