@@ -27,12 +27,24 @@ describe("parsePaymentChallenge", () => {
     expect(parsed).not.toHaveProperty("requestHash");
   });
 
+  it("accepts the evidenced Five North direct Amulet transfer method", () => {
+    const challenge = {
+      ...validChallenge,
+      extra: {
+        ...validChallenge.extra,
+        assetTransferMethod: "amulet-rules-transfer",
+      },
+    };
+
+    expect(parsePaymentChallenge(challenge)).toEqual(challenge);
+  });
+
   it.each([
     ["fractional atomic amount", { amount: "1.25" }, "atomic integer"],
     [
       "unsupported transfer method",
       { extra: { ...validChallenge.extra, assetTransferMethod: "lock" } },
-      "transfer-factory",
+      "supported",
     ],
     [
       "missing synchronizer",

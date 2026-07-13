@@ -2,7 +2,7 @@ export type CantonPaymentRequirement = Readonly<{
   amount: string;
   asset: string;
   extra: Readonly<{
-    assetTransferMethod: "transfer-factory";
+    assetTransferMethod: "amulet-rules-transfer" | "transfer-factory";
     executeBeforeSeconds: number;
     feePayer: string;
     instrumentId: Readonly<{ admin: string; id: string }>;
@@ -60,8 +60,12 @@ export function parsePaymentChallenge(
   const asset = requiredString(input, "asset");
   const maxTimeoutSeconds = positiveInteger(input, "maxTimeoutSeconds");
   const extra = objectValue(input.extra, "Payment requirement extra");
-  if (extra.assetTransferMethod !== "transfer-factory") {
-    throw new Error("Payment requirement must use transfer-factory");
+  const assetTransferMethod = extra.assetTransferMethod;
+  if (
+    assetTransferMethod !== "amulet-rules-transfer" &&
+    assetTransferMethod !== "transfer-factory"
+  ) {
+    throw new Error("Payment requirement must use a supported transfer method");
   }
   const executeBeforeSeconds = positiveInteger(extra, "executeBeforeSeconds");
   if (executeBeforeSeconds > maxTimeoutSeconds) {
@@ -89,7 +93,7 @@ export function parsePaymentChallenge(
     amount,
     asset,
     extra: {
-      assetTransferMethod: "transfer-factory",
+      assetTransferMethod,
       executeBeforeSeconds,
       feePayer: requiredString(extra, "feePayer"),
       instrumentId,
