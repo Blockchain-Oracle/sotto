@@ -9,10 +9,7 @@ import {
 } from "./prepared-purchase.fixtures.js";
 import { purchaseCommandInputs } from "./transfer-factory-observation.fixtures.js";
 
-const preparedHash = Buffer.concat([
-  Buffer.from([0x12, 0x20]),
-  Buffer.alloc(32, 7),
-]).toString("base64");
+const preparedHash = Buffer.alloc(32, 7).toString("base64");
 
 function response(transaction: Uint8Array): Uint8Array {
   return new TextEncoder().encode(
