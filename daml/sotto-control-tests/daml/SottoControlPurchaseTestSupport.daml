@@ -82,22 +82,38 @@ purchaseOptions PurchaseFixture{payer; agent; admin; factoryCid; holdingCid} = d
   pure (actAs agent <> discloseMany [factoryDisclosure, holdingDisclosure])
 
 purchaseCommands : PurchaseFixture -> Commands PurchaseResult
-purchaseCommands PurchaseFixture{provider; now; holdingInterfaceCid; capabilityCid} =
+purchaseCommands fixture = purchaseAt
+  fixture
+  fixture.capabilityCid
+  fixture.holdingInterfaceCid
+  fixture.now
+  (addRelTime fixture.now (hours 1))
+  0
+
+purchaseAt
+  : PurchaseFixture
+  -> ContractId BoundedPurchaseCapability
+  -> ContractId Holding.Holding
+  -> Time
+  -> Time
+  -> Int
+  -> Commands PurchaseResult
+purchaseAt fixture capabilityCid holdingCid requestedAt executeBefore expectedRevision =
   exerciseCmd capabilityCid Purchase with
     attemptId = "sha256:attempt"
     purchaseCommitment = "sha256:purchase"
     requestCommitment = "sha256:request"
     challengeId = "sha256:challenge"
     resourceHash = "sha256:resource"
-    recipient = provider
+    recipient = fixture.provider
     amount = 2.0
-    requestedAt = now
-    executeBefore = addRelTime now (hours 1)
-    inputHoldingCids = [holdingInterfaceCid]
+    requestedAt
+    executeBefore
+    inputHoldingCids = [holdingCid]
     extraArgs = Metadata.ExtraArgs with
       context = Metadata.emptyChoiceContext
       meta = Metadata.emptyMetadata
-    expectedRevision = 0
+    expectedRevision
 
 assertPurchaseUnchanged : PurchaseFixture -> Script ()
 assertPurchaseUnchanged PurchaseFixture{payer; provider; capabilityCid; holdingCid} = do

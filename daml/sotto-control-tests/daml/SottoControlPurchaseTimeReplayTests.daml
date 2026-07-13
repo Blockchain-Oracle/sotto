@@ -3,35 +3,8 @@ module SottoControlPurchaseTimeReplayTests where
 import DA.Time (addRelTime, hours)
 import Daml.Script
 import Splice.Api.Token.HoldingV1 qualified as Holding
-import Splice.Api.Token.MetadataV1 qualified as Metadata
-import Sotto.Control.PurchaseCapability
 import SottoControlPurchaseTestSupport
 import SottoControlTokenStandardMock
-
-purchaseAt
-  : PurchaseFixture
-  -> ContractId BoundedPurchaseCapability
-  -> ContractId Holding.Holding
-  -> Time
-  -> Time
-  -> Int
-  -> Commands PurchaseResult
-purchaseAt fixture capabilityCid holdingCid requestedAt executeBefore expectedRevision =
-  exerciseCmd capabilityCid Purchase with
-    attemptId = "sha256:attempt"
-    purchaseCommitment = "sha256:purchase"
-    requestCommitment = "sha256:request"
-    challengeId = "sha256:challenge"
-    resourceHash = "sha256:resource"
-    recipient = fixture.provider
-    amount = 2.0
-    requestedAt
-    executeBefore
-    inputHoldingCids = [holdingCid]
-    extraArgs = Metadata.ExtraArgs with
-      context = Metadata.emptyChoiceContext
-      meta = Metadata.emptyMetadata
-    expectedRevision
 
 timeRevisionAndReplay : Script ()
 timeRevisionAndReplay = do
