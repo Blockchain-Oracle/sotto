@@ -24,7 +24,7 @@ export function createFiveNorthTransactionSubmitter(input: {
   readonly ledgerUrl: string;
 }) {
   return async (body: unknown): Promise<unknown> => {
-    const source = JSON.stringify(body);
+    const source = JSON.stringify({ commands: body });
     if (
       new TextEncoder().encode(source).byteLength > TRANSACTION_REQUEST_LIMIT
     ) {

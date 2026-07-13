@@ -114,8 +114,13 @@ describe("Five North transaction submitter", () => {
       Response.json({ transaction: { events: [] } }),
     );
     const setup = submitter(fetcher);
+    const commands = {
+      actAs: ["sotto-provider::1220participant"],
+      commandId: "sotto-preapproval",
+      commands: [{ CreateCommand: { createArguments: {}, templateId: "#x" } }],
+    };
 
-    await expect(setup.submit({ commands: [] })).resolves.toEqual({
+    await expect(setup.submit(commands)).resolves.toEqual({
       transaction: { events: [] },
     });
     const [url, init] = fetcher.mock.calls[0]!;
@@ -124,5 +129,6 @@ describe("Five North transaction submitter", () => {
     );
     expect(init).toMatchObject({ method: "POST", redirect: "error" });
     expect(init?.signal).toBeInstanceOf(AbortSignal);
+    expect(JSON.parse(String(init?.body))).toEqual({ commands });
   });
 });
