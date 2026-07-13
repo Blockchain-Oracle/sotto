@@ -111,7 +111,7 @@ members:
 1. `version` and `authorizationMode`;
 2. `request` with binding version, request commitment, and body hash;
 3. `challenge` with x402 version, challenge ID, observed time, execution expiry,
-   network, scheme, transfer method, payer, recipient, amount, asset,
+   network, scheme, transfer method, payer, recipient, amount, asset, fee payer,
    instrument, and synchronizer;
 4. `capability` with contract ID, revision, resource hash, recipient, per-call
    limit, remaining allowance, maximum total debit, and expiry;
