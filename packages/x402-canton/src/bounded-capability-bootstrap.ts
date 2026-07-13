@@ -21,6 +21,7 @@ import {
 
 const MINIMUM_LIFETIME_MS = 5 * 60 * 1_000;
 const MAXIMUM_LIFETIME_MS = 24 * 60 * 60 * 1_000;
+const MAXIMUM_AUTHORITY_AGE_MS = 60_000;
 const CLOCK_ROLLBACK_TOLERANCE_MS = 5_000;
 const MAXIMUM_ALLOWANCE_ATOMIC = 10_000_000_000n;
 const UPDATE_ID_PATTERN = /^1220[0-9a-f]{64}$/;
@@ -207,6 +208,9 @@ export function assertBoundedCapabilityBootstrapFresh(request: unknown): void {
   );
   if (expiresAt - nowMilliseconds < MINIMUM_LIFETIME_MS) {
     throw new Error("expiry must leave at least five minutes");
+  }
+  if (nowMilliseconds - validatedAt > MAXIMUM_AUTHORITY_AGE_MS) {
+    throw new Error("bootstrap authority is stale");
   }
 }
 
