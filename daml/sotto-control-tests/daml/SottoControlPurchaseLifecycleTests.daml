@@ -1,0 +1,39 @@
+module SottoControlPurchaseLifecycleTests where
+
+import DA.Time (addRelTime, hours)
+import Daml.Script
+import Sotto.Control.PurchaseCapability
+import SottoControlPurchaseTestSupport
+import SottoControlTokenStandardMock
+
+pauseAndRevokeLifecycle : Script ()
+pauseAndRevokeLifecycle = do
+  fixture <- createPurchaseFixture Complete "Amulet"
+
+  submitMustFail fixture.agent do
+    exerciseCmd fixture.capabilityCid Pause
+
+  pausedCid <- submit fixture.payer do
+    exerciseCmd fixture.capabilityCid Pause
+  Some paused <- queryContractId fixture.payer pausedCid
+  assert paused.paused
+  assert (paused.revision == 1)
+
+  options <- purchaseOptions fixture
+  submitMustFail options $ purchaseAt
+    fixture
+    pausedCid
+    fixture.holdingInterfaceCid
+    fixture.now
+    (addRelTime fixture.now (hours 1))
+    1
+  Some _ <- queryContractId fixture.payer fixture.holdingCid
+  contexts <- query @PurchaseContext fixture.payer
+  assert (null contexts)
+
+  submitMustFail fixture.agent do
+    exerciseCmd pausedCid Revoke
+  submit fixture.payer do
+    exerciseCmd pausedCid Revoke
+  None <- queryContractId fixture.payer pausedCid
+  pure ()
