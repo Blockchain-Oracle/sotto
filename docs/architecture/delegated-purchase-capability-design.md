@@ -16,7 +16,12 @@ Standard transfer inside the choice consequences.
 
 The final agent-accessible credential may authorize only the agent Party. It
 must not have payer `actAs`, execute-as-any-party, participant administration,
-or another interface that can submit a generic payer transfer.
+or another interface that can submit a generic payer transfer. The funded payer
+must be an external Party whose signing authority remains outside Sotto runtime
+services. No Sotto runtime, shared validator credential, or operator automation
+may hold generic payer authority. If Five North cannot provide that separation,
+the candidate remains `NOT PROVEN` unless a different custody boundary is
+explicitly presented and accepted.
 
 Daml consequence authorization makes this candidate possible: the consequences
 of a choice receive authority from the choice actors and the exercised
@@ -65,9 +70,9 @@ non-custodial or ledger-enforced.
 
 | Boundary                       | Required authority                                                  |
 | ------------------------------ | ------------------------------------------------------------------- |
-| Funded Canton Coin holding     | payer Party                                                         |
+| Funded Canton Coin holding     | external payer Party; user-controlled signing authority             |
 | Purchase capability            | payer signatory; agent observer                                     |
-| Capability creation/revocation | payer or explicitly approved owner/payer rule                       |
+| Capability creation/revocation | payer only                                                          |
 | Purchase choice                | agent controller only                                               |
 | Nested token transfer          | payer authority inherited only inside capability consequences       |
 | Agent credential               | agent Party only                                                    |
@@ -89,12 +94,38 @@ Define one versioned `sotto-purchase-v2` commitment over:
 - payer, recipient, instrument, amount, synchronizer, and execution expiry;
 - capability contract ID, revision, allowed resource, per-call limit, and
   remaining allowance;
+- trusted Token Standard factory/admin identity and maximum total payer debit;
 - authorization-instance identifier and payment-attempt identifier.
 
 The capability choice, prepared-transaction verifier, Canton command ID,
 provider proof, reconciliation, and private context must all agree on that exact
 commitment. Empty policy placeholders are forbidden. The later human lane must
 use its own explicit authorization-mode variant.
+
+### Canonical byte contract
+
+The implementation must pin one UTF-8 JSON fixture before signer work. The
+object uses this fixed key order and contains no optional, `null`, or undefined
+members:
+
+1. `version` and `authorizationMode`;
+2. `request` with binding version, request commitment, and body hash;
+3. `challenge` with x402 version, challenge ID, observed time, execution expiry,
+   network, scheme, transfer method, payer, recipient, amount, asset,
+   instrument, and synchronizer;
+4. `capability` with contract ID, revision, resource hash, recipient, per-call
+   limit, remaining allowance, maximum total debit, and expiry;
+5. `tokenFactory` with interface ID and trusted expected admin;
+6. authorization-instance ID and attempt ID.
+
+The challenge ID is SHA-256 of the exact decoded `PAYMENT-REQUIRED` header bytes
+after the existing size/base64 checks. Hashes use lowercase hexadecimal with a
+`sha256:` prefix. Amounts and allowances use unsigned base-10 atomic integer
+strings without leading zeroes except `0`. Revisions use unsigned base-10
+integer strings. Times use UTC ISO 8601 with exactly millisecond precision.
+Party, contract, package/interface, and synchronizer identifiers are preserved
+exactly after bounded validation. Canonicalization performs no locale-dependent
+sorting or implicit numeric conversion.
 
 ## Autonomous Purchase Flow
 
@@ -103,13 +134,18 @@ use its own explicit authorization-mode variant.
 2. Build the canonical HTTP request and complete purchase commitment.
 3. Prepare one root capability exercise controlled by the agent.
 4. In the choice, reject paused, revoked, expired, exhausted, stale, duplicate,
-   or mismatched resource, recipient, amount, commitment, or revision state.
+   or mismatched resource, recipient, amount, maximum debit, commitment, or
+   revision state.
 5. Exercise the pinned Token Standard transfer interface inside the choice.
-6. Atomically create the reduced replacement capability and private purchase
-   context only when the transfer succeeds.
+6. Pattern-match the Token Standard result. Only
+   `TransferInstructionResult_Completed` with the expected receiver holdings may
+   create the reduced replacement capability and private purchase context.
+   `Pending` and `Failed` abort the parent choice so every nested effect rolls
+   back.
 7. Decode the prepared transaction and verify the root exercise, complete
-   commitment, transfer effects, package/interface identities, synchronizer, and
-   absence of additional roots.
+   commitment, trusted factory/admin, transfer effects, recipient holdings,
+   bounded total payer debit, package/interface identities, synchronizer, and
+   absence of additional roots or value effects.
 8. Recompute the prepared-transaction hash locally and sign it with only the
    agent Party key.
 9. Execute idempotently, reconcile the accepted update, and retry the identical
@@ -117,6 +153,11 @@ use its own explicit authorization-mode variant.
 
 No raw signing key, prepared transaction, request body, response body, or
 authorization header may enter evidence, logs, browser code, Git, or a model.
+
+The capability is consuming and its contract ID plus revision are committed into
+each purchase. A successful purchase produces a new contract ID and revision, so
+replaying the old commitment fails without carrying an unbounded list of used
+attempts in the replacement capability.
 
 ## Performance Shape
 
@@ -138,6 +179,17 @@ Use current official Canton and Daml sources, not remembered APIs:
 - Canton Wallet SDK package `@canton-network/wallet-sdk` version `1.4.0`,
   Apache-2.0, source commit `13822ef748fc6245042eb20d4460b42b8ff3ce3f` in
   `https://github.com/canton-network/wallet`.
+- Canton Network Token Standard interface
+  `splice-api-token-transfer-instruction-v1` version `1.0.0`, package ID
+  `55ba4deb0ad4662c4168b39859738a0e91388d252286480c7331b3f71a517281`, from the
+  Apache-2.0 `canton-network/splice` tag `0.6.1` and commit
+  `f9d605c84498384ec2d5138d62af2f40b14882ff`. The official DAR SHA-256 is
+  `e4c73aa7ae73fb2fc330b938ffb99f568792321640ba4b9472902aa8d742c994`.
+- Prepared-transaction verification should use the smaller pinned
+  `@canton-network/core-tx-visualizer@1.7.0` and
+  `@canton-network/core-ledger-proto@1.7.0` surfaces. The official internal
+  signing controller signs a supplied hash without performing Sotto's semantic
+  validation and is not an acceptable verifier.
 - Token Standard interface definitions must be brought in through a reproducible
   pinned package or DAR dependency with the resulting Daml lock information
   tracked. Generated DARs themselves remain excluded from Git.
@@ -151,10 +203,16 @@ Any reused source requires its compatible license, attribution, and exact pin.
   signing calls.
 - Prove agent-only capability exercise succeeds in Daml Script.
 - Prove agent-only direct payer transfer fails.
+- Require Token Standard `Completed`; prove `Pending` and `Failed` roll back all
+  capability/context state.
 - Cover expiry, pause, revocation, stale contract ID, revision change,
   exhaustion, duplicate attempt, and concurrent consumption.
 - Decode sanitized prepared transactions and reject additional roots, changed
   transfer effects, wrong package/interface identifiers, or hash mismatch.
+- Bound prepared bytes, node count, tree depth, and decode/hash time; oversized,
+  over-deep, and timeout cases must make zero signing calls.
+- Verify expected admin, receiver holdings and amount, maximum fee/total debit,
+  and absence of unapproved value effects.
 - Keep all deterministic quality, security, source, license, and Daml gates
   green.
 
@@ -162,14 +220,19 @@ Any reused source requires its compatible license, attribution, and exact pin.
 
 The candidate closes the authority blocker only after Five North evidence shows:
 
-1. a final credential or external Party key restricted to the agent Party;
-2. a payer-created capability funded by payer-owned Canton Coin;
-3. one fresh `402 -> constrained capability purchase -> settlement -> 200`;
-4. a direct generic payer transfer rejected with that same agent credential;
-5. complete commitment agreement in the prepared transaction and accepted
+1. an external payer Party with no generic payer authority in any Sotto runtime
+   or shared credential, plus a complete custody/rights inventory;
+2. a final credential or external Party key restricted to the agent Party;
+3. a payer-created capability funded by payer-owned Canton Coin;
+4. one fresh `402 -> constrained capability purchase -> settlement -> 200`;
+5. a direct generic payer transfer rejected with that same agent credential by a
+   Canton authorization error, using otherwise-valid fresh transfer inputs;
+6. an authorized control proving those same transfer inputs are valid, with the
+   only decisive difference being payer authority;
+7. complete commitment agreement in the prepared transaction and accepted
    update;
-6. reconciliation and paid retry without a second payment;
-7. exact source SHA and redacted update evidence.
+8. reconciliation and paid retry without a second payment;
+9. exact source SHA and redacted update evidence.
 
 If the Token Standard dependency, merchant preapproval, external Party, or
 agent-only credential cannot be proven on Five North, the result remains
