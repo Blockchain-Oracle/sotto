@@ -30,6 +30,7 @@
     "spike:daml:reconcile": "tsx spikes/devnet-payment/src/live-daml-reconciliation.ts",
     "spike:atomic": "tsx spikes/devnet-payment/src/live-atomic-purchase.ts",
     "spike:atomic:reconcile": "tsx spikes/devnet-payment/src/live-atomic-reconciliation.ts",
+    "spike:prepare:local": "tsx spikes/devnet-payment/src/local-prepare-smoke-cli.ts",
     "test": "node scripts/build-workspaces.mjs && vitest run",
     "test:unit": "vitest run",
     "typecheck": "tsc --noEmit --pretty false",
