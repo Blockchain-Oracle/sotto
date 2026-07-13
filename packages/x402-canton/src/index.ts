@@ -1,4 +1,17 @@
 export * from "./authorization.js";
+export {
+  assertBoundedCapabilityBootstrapFresh,
+  buildBoundedCapabilityBootstrap,
+  parseBoundedCapabilityBootstrapResponse,
+  reconcileBoundedCapabilityBootstrapAcs,
+  type BoundedCapabilityBootstrapInput,
+  type BoundedCapabilityBootstrapRequest,
+} from "./bounded-capability-bootstrap.js";
+export {
+  exportBoundedCapabilityBootstrapIntent,
+  restoreBoundedCapabilityBootstrapIntent,
+  type PersistedBootstrapIntentV1,
+} from "./bounded-capability-bootstrap-intent.js";
 export { buildBoundedPurchasePrepareRequest } from "./bounded-purchase-command.js";
 export type {
   BoundedPurchaseChoiceArgument,
@@ -63,6 +76,10 @@ export {
   type PurchaseHoldingAcsRequest,
 } from "./purchase-holding-types.js";
 export * from "./request-binding.js";
+export {
+  commitResourceRoute,
+  RESOURCE_BINDING_VERSION,
+} from "./resource-route.js";
 export * from "./signer-boundary.js";
 export {
   createTransferFactoryObserver,

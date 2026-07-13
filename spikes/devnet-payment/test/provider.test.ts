@@ -56,6 +56,27 @@ describe("createPaidResourceHandler", () => {
     });
   });
 
+  it("advertises transfer-factory only for the bounded capability lane", async () => {
+    const response = await createPaidResourceHandler({
+      amount: "2500000000",
+      assetTransferMethod: "transfer-factory",
+      dsoParty: "DSO::1220dso",
+      maxTimeoutSeconds: 60,
+      payerParty: payer,
+      providerParty: provider,
+      resourceUrl,
+      synchronizerId: "global-domain::1220sync",
+      verifySettlement: vi.fn(async () => false),
+    })(new Request(resourceUrl));
+    const challenge = decodePaymentRequired(
+      response.headers.get("PAYMENT-REQUIRED") ?? "",
+    );
+    const extra = (challenge.accepts[0] as Record<string, unknown>)
+      .extra as Record<string, unknown>;
+
+    expect(extra.assetTransferMethod).toBe("transfer-factory");
+  });
+
   it("delivers only after independent settlement verification", async () => {
     const verifySettlement = vi.fn(async () => true);
     const paidHandler = createPaidResourceHandler({

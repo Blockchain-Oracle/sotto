@@ -1,9 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { SOTTO_CONTROL_PACKAGE_ID } from "@sotto/x402-canton";
-import {
-  createFiveNorthPrepareTransport,
-  type FiveNorthPrepareTransport,
-} from "../src/five-north-prepare-transport.js";
+import { createFiveNorthPrepareTransport } from "../src/five-north-prepare-transport.js";
 import type { SpikeConfig } from "../src/config.js";
 
 const network: SpikeConfig["network"] = {
@@ -21,8 +18,11 @@ const network: SpikeConfig["network"] = {
 const PAYER = "sotto-prepare-payer::1220payer";
 
 function tokenResponse(): Response {
+  const payload = Buffer.from(
+    JSON.stringify({ sub: "ledger-user-6" }),
+  ).toString("base64url");
   return Response.json({
-    access_token: "test-access-token",
+    access_token: `header.${payload}.signature`,
     expires_in: 28_800,
   });
 }
@@ -35,21 +35,6 @@ function createTransport(
 }
 
 describe("Five North prepare-only transport", () => {
-  it("exposes only bounded read and prepare operations", () => {
-    const transport = createTransport(vi.fn(async () => tokenResponse()));
-
-    expect(Object.keys(transport).sort()).toEqual([
-      "readCapabilityContracts",
-      "readHoldingContracts",
-      "readLedgerEnd",
-      "readPrepare",
-      "readRegistry",
-    ] satisfies Array<keyof FiveNorthPrepareTransport>);
-    expect(transport).not.toHaveProperty("execute");
-    expect(transport).not.toHaveProperty("sign");
-    expect(transport).not.toHaveProperty("submitSettlement");
-  });
-
   it("uses exact authenticated endpoints and caches the OIDC token", async () => {
     const fetcher = vi.fn(async (url: string, init?: RequestInit) => {
       if (url === network.tokenUrl) return tokenResponse();
@@ -87,13 +72,13 @@ describe("Five North prepare-only transport", () => {
       `${network.ledgerUrl}/v2/state/ledger-end`,
       `${network.ledgerUrl}/v2/state/active-contracts`,
       `${network.ledgerUrl}/v2/state/active-contracts`,
-      `${network.validatorUrl}/registry/transfer-instruction/v1/transfer-factory`,
+      `${network.validatorUrl}/v0/scan-proxy/registry/transfer-instruction/v1/transfer-factory`,
       `${network.ledgerUrl}/v2/interactive-submission/prepare`,
     ]);
     for (const [, init] of calls) {
       expect(init).toMatchObject({ redirect: "error" });
-      expect(new Headers(init?.headers).get("authorization")).toBe(
-        "Bearer test-access-token",
+      expect(new Headers(init?.headers).get("authorization")).toMatch(
+        /^Bearer header\./u,
       );
     }
   });

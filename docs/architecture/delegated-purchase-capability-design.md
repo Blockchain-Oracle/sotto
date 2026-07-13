@@ -250,6 +250,13 @@ Use current official Canton and Daml sources, not remembered APIs:
   - Holding: `ef75f8eb41a65810221784fdb78bb9dfac7cb22245aba14fa7cb7f69c34e0175`;
   - Metadata:
     `455eb160cb5abd4ae9918a6fbb9dad471f721adda39f0e5c76feef08d05637fc`.
+- Five North's preferred `splice-wallet` package for the provider preapproval
+  bootstrap is version `0.1.21`, package ID
+  `f799a58fa53dfe48bae52bd5dbcc2b578a7d4dfee3ae3f4eb7635fe9a8cc67d3`. The exact
+  artifact mapping is recorded in `daml/dars.lock` at the official Apache-2.0
+  `hyperledger-labs/splice` tag `0.6.9`, commit
+  `bc6a3587e7ea94230ba0c36c638945282c52b304`. Discovery must reject a package
+  that merely reuses the same name and version with a different package ID.
 - Prepared-transaction structural decoding uses exactly pinned
   `@canton-network/core-ledger-proto@1.7.0` with recursive unknown-field
   rejection. Its schema predates some Canton 3.5.6 fields, so encountering an

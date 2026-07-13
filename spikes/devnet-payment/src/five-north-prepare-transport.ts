@@ -16,6 +16,9 @@ import {
   boundedPrepareBody,
   capabilityContractsBody,
   holdingContractsBody,
+  preferredWalletPackageBody,
+  preapprovalStateContractsBody,
+  requirePreapprovalReceiverParty,
 } from "./five-north-prepare-requests.js";
 import {
   parseFiveNorthJson,
@@ -32,11 +35,22 @@ type TransportOptions = Readonly<{
 const JSON_RESPONSE_LIMIT = 2_000_000;
 
 export type FiveNorthPrepareTransport = Readonly<{
+  readAmuletRules: () => Promise<unknown>;
+  readAuthenticatedUserId: () => Promise<string>;
   readLedgerEnd: () => Promise<unknown>;
   readCapabilityContracts: (activeAtOffset: number) => Promise<unknown>;
   readHoldingContracts: (activeAtOffset: number) => Promise<unknown>;
   readRegistry: (body: string) => Promise<Uint8Array>;
   readPrepare: (body: BoundedPurchasePrepareRequest) => Promise<Uint8Array>;
+  readPreferredWalletPackage: (
+    receiverParty: string,
+    validatorParty: string,
+  ) => Promise<unknown>;
+  readPreapprovalStateContracts: (
+    receiverParty: string,
+  ) => Promise<Readonly<{ activeAtOffset: number; contracts: unknown }>>;
+  readTransferPreapproval: (receiverParty: string) => Promise<unknown | null>;
+  readValidatorUser: () => Promise<unknown>;
 }>;
 
 export function createFiveNorthPrepareTransport(
@@ -53,20 +67,44 @@ export function createFiveNorthPrepareTransport(
   }
   const tokens = createFiveNorthTokenProvider(network, fetcher, scopeSignal);
 
+  async function authenticatedUserId(): Promise<string> {
+    const token = await tokens.accessToken();
+    const parts = token.split(".");
+    if (parts.length !== 3 || parts[1] === undefined) {
+      throw new Error("Five North access token is not a JWT");
+    }
+    let payload: unknown;
+    try {
+      payload = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8"));
+    } catch {
+      throw new Error("Five North access token payload is invalid");
+    }
+    if (
+      typeof payload !== "object" ||
+      payload === null ||
+      Array.isArray(payload) ||
+      typeof (payload as Record<string, unknown>).sub !== "string" ||
+      (payload as { sub: string }).sub.trim() === "" ||
+      Buffer.byteLength((payload as { sub: string }).sub, "utf8") > 256
+    ) {
+      throw new Error("Five North access token subject is invalid");
+    }
+    return (payload as { sub: string }).sub;
+  }
+
   function requireActive(): void {
     if (scopeSignal.aborted) {
       throw new Error("Five North prepare scope cancelled");
     }
   }
 
-  async function authorized(
+  async function authorizedResponse(
     url: string,
     init: Omit<RequestInit, "headers" | "signal"> & {
       headers?: HeadersInit;
     },
     timeoutMilliseconds: number,
-    maximumBytes: number,
-  ): Promise<Uint8Array> {
+  ): Promise<Response> {
     async function send(): Promise<Response> {
       requireActive();
       const token = await tokens.accessToken();
@@ -95,7 +133,21 @@ export function createFiveNorthPrepareTransport(
       response = await send();
     }
     requireActive();
-    return readFiveNorthResponse(response, maximumBytes);
+    return response;
+  }
+
+  async function authorized(
+    url: string,
+    init: Omit<RequestInit, "headers" | "signal"> & {
+      headers?: HeadersInit;
+    },
+    timeoutMilliseconds: number,
+    maximumBytes: number,
+  ): Promise<Uint8Array> {
+    return readFiveNorthResponse(
+      await authorizedResponse(url, init, timeoutMilliseconds),
+      maximumBytes,
+    );
   }
 
   async function ledgerJson(
@@ -121,7 +173,37 @@ export function createFiveNorthPrepareTransport(
     return parseFiveNorthJson(bytes, "Five North response");
   }
 
+  async function validatorJson(path: string): Promise<unknown> {
+    return parseFiveNorthJson(
+      await authorized(
+        `${network.validatorUrl}${path}`,
+        { method: "GET", redirect: "error" },
+        30_000,
+        JSON_RESPONSE_LIMIT,
+      ),
+      "Five North validator response",
+    );
+  }
+
+  async function optionalValidatorJson(path: string): Promise<unknown | null> {
+    const response = await authorizedResponse(
+      `${network.validatorUrl}${path}`,
+      { method: "GET", redirect: "error" },
+      30_000,
+    );
+    if (response.status === 404) {
+      await response.body?.cancel().catch(() => undefined);
+      return null;
+    }
+    return parseFiveNorthJson(
+      await readFiveNorthResponse(response, JSON_RESPONSE_LIMIT),
+      "Five North validator response",
+    );
+  }
+
   return Object.freeze({
+    readAmuletRules: () => validatorJson("/v0/scan-proxy/amulet-rules"),
+    readAuthenticatedUserId: authenticatedUserId,
     readLedgerEnd: () => ledgerJson("/v2/state/ledger-end", "GET"),
     readCapabilityContracts: (activeAtOffset) =>
       ledgerJson(
@@ -137,7 +219,7 @@ export function createFiveNorthPrepareTransport(
       ),
     readRegistry: (body) =>
       authorized(
-        `${network.validatorUrl}${TRANSFER_FACTORY_REGISTRY_PATH}`,
+        `${network.validatorUrl}/v0/scan-proxy${TRANSFER_FACTORY_REGISTRY_PATH}`,
         {
           body: boundedPrepareBody(body, "TransferFactory registry request"),
           headers: { "content-type": "application/json" },
@@ -159,5 +241,37 @@ export function createFiveNorthPrepareTransport(
         PREPARE_SUBMISSION_TIMEOUT_MS,
         MAX_PREPARE_RESPONSE_BYTES,
       ),
+    readPreferredWalletPackage: (receiverParty, validatorParty) =>
+      ledgerJson(
+        "/v2/interactive-submission/preferred-packages",
+        "POST",
+        preferredWalletPackageBody(receiverParty, validatorParty),
+      ),
+    readPreapprovalStateContracts: async (receiverParty) => {
+      const ledgerEnd = await ledgerJson("/v2/state/ledger-end", "GET");
+      if (
+        typeof ledgerEnd !== "object" ||
+        ledgerEnd === null ||
+        Array.isArray(ledgerEnd) ||
+        !Number.isSafeInteger((ledgerEnd as Record<string, unknown>).offset) ||
+        ((ledgerEnd as Record<string, unknown>).offset as number) < 0
+      ) {
+        throw new Error("preapproval proposal ledger end is invalid");
+      }
+      const activeAtOffset = (ledgerEnd as { offset: number }).offset;
+      const contracts = await ledgerJson(
+        "/v2/state/active-contracts",
+        "POST",
+        preapprovalStateContractsBody(receiverParty, activeAtOffset),
+      );
+      return Object.freeze({ activeAtOffset, contracts });
+    },
+    readTransferPreapproval: (receiverParty) =>
+      optionalValidatorJson(
+        `/v0/scan-proxy/transfer-preapprovals/by-party/${encodeURIComponent(
+          requirePreapprovalReceiverParty(receiverParty),
+        )}`,
+      ),
+    readValidatorUser: () => validatorJson("/v0/validator-user"),
   });
 }

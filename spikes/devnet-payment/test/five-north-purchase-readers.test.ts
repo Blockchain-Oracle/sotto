@@ -26,9 +26,18 @@ function transport(
   activeContracts: unknown = [activeEntry()],
 ): FiveNorthPrepareTransport {
   return {
+    readAmuletRules: vi.fn(async () => ({})),
+    readAuthenticatedUserId: vi.fn(async () => "ledger-user-6"),
     readLedgerEnd: vi.fn(async () => ({ offset: 42 })),
     readCapabilityContracts: vi.fn(async () => activeContracts),
     readHoldingContracts: vi.fn(async () => activeContracts),
+    readPreferredWalletPackage: vi.fn(async () => ({})),
+    readPreapprovalStateContracts: vi.fn(async () => ({
+      activeAtOffset: 42,
+      contracts: [],
+    })),
+    readTransferPreapproval: vi.fn(async () => null),
+    readValidatorUser: vi.fn(async () => ({})),
     readRegistry: vi.fn(async () => new Uint8Array([1, 2, 3])),
     readPrepare: vi.fn(async () => new Uint8Array([4, 5, 6])),
   };

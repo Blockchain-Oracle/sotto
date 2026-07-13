@@ -10,6 +10,7 @@ export type SettlementProof = Readonly<{
 
 type ProviderConfig = Readonly<{
   amount: string;
+  assetTransferMethod?: "amulet-rules-transfer" | "transfer-factory";
   dsoParty: string;
   maxTimeoutSeconds: number;
   payerParty: string;
@@ -53,7 +54,10 @@ export function encodeSettlementProof(proof: SettlementProof): string {
   return Buffer.from(JSON.stringify(proof), "utf8").toString("base64");
 }
 
-function challengeResponse(config: ProviderConfig): Response {
+function challengeResponse(
+  config: ProviderConfig,
+  assetTransferMethod: "amulet-rules-transfer" | "transfer-factory",
+): Response {
   const binding = commitHttpRequest({ method: "GET", url: config.resourceUrl });
   const challenge = {
     x402Version: 2,
@@ -66,7 +70,7 @@ function challengeResponse(config: ProviderConfig): Response {
         payTo: config.providerParty,
         maxTimeoutSeconds: config.maxTimeoutSeconds,
         extra: {
-          assetTransferMethod: "amulet-rules-transfer",
+          assetTransferMethod,
           executeBeforeSeconds: config.maxTimeoutSeconds,
           feePayer: config.payerParty,
           instrumentId: { admin: config.dsoParty, id: "Amulet" },
@@ -93,6 +97,14 @@ function challengeResponse(config: ProviderConfig): Response {
 }
 
 export function createPaidResourceHandler(config: ProviderConfig) {
+  const assetTransferMethod =
+    config.assetTransferMethod ?? "amulet-rules-transfer";
+  if (
+    assetTransferMethod !== "amulet-rules-transfer" &&
+    assetTransferMethod !== "transfer-factory"
+  ) {
+    throw new Error("Provider asset transfer method is invalid");
+  }
   const configuredUrl = new URL(config.resourceUrl).toString();
   const requestCommitment = commitHttpRequest({
     method: "GET",
@@ -104,7 +116,7 @@ export function createPaidResourceHandler(config: ProviderConfig) {
     }
     const header = request.headers.get("PAYMENT-SIGNATURE");
     if (header === null) {
-      return challengeResponse(config);
+      return challengeResponse(config, assetTransferMethod);
     }
     let proof: SettlementProof;
     try {
@@ -122,7 +134,7 @@ export function createPaidResourceHandler(config: ProviderConfig) {
       proof.requestCommitment !== requestCommitment ||
       !(await config.verifySettlement(proof))
     ) {
-      return challengeResponse(config);
+      return challengeResponse(config, assetTransferMethod);
     }
     return Response.json({
       paid: true,

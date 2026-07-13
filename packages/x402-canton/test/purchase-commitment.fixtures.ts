@@ -1,7 +1,7 @@
-import { createHash } from "node:crypto";
 import {
   APPROVED_BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_ID,
   commitHttpRequest,
+  commitResourceRoute,
   type BoundedPurchaseCommitmentInput,
   type HttpRequestBindingInput,
 } from "../src/index.js";
@@ -49,13 +49,7 @@ export type ChallengeFixture = {
 };
 
 export function routeHash(url: string): `sha256:${string}` {
-  const resource = new URL(url);
-  const preimage = JSON.stringify({
-    version: "sotto-resource-v1",
-    origin: resource.origin,
-    pathname: resource.pathname,
-  });
-  return `sha256:${createHash("sha256").update(preimage).digest("hex")}`;
+  return commitResourceRoute(url);
 }
 
 export function replaceBoundRequest(

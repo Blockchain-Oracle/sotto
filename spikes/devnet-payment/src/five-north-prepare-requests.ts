@@ -4,6 +4,11 @@ import {
 } from "@sotto/x402-canton";
 
 const MAX_REQUEST_BYTES = 4_194_304;
+const PARTY_PATTERN = /^[^\s:]+::1220[0-9a-f]{64}$/u;
+export const TRANSFER_PREAPPROVAL_PROPOSAL_QUERY_ID =
+  "#splice-wallet:Splice.Wallet.TransferPreapproval:TransferPreapprovalProposal" as const;
+export const TRANSFER_PREAPPROVAL_QUERY_ID =
+  "#splice-amulet:Splice.AmuletRules:TransferPreapproval" as const;
 
 export function boundedPrepareBody(value: unknown, label: string): string {
   let body: string;
@@ -25,16 +30,31 @@ function boundedOffset(value: unknown): number {
   return value as number;
 }
 
+function cantonParty(value: unknown, label: string, sottoOnly = false): string {
+  if (
+    typeof value !== "string" ||
+    !PARTY_PATTERN.test(value) ||
+    (sottoOnly && !value.startsWith("sotto-"))
+  ) {
+    throw new Error(`${label} must be an exact Canton Party`);
+  }
+  return value;
+}
+
 function activeContractsBody(
   payer: string,
   activeAtOffset: number,
-  identifierFilter: unknown,
+  identifierFilters: readonly unknown[],
   verbose: boolean,
 ): unknown {
   return {
     filter: {
       filtersByParty: {
-        [payer]: { cumulative: [{ identifierFilter }] },
+        [payer]: {
+          cumulative: identifierFilters.map((identifierFilter) => ({
+            identifierFilter,
+          })),
+        },
       },
     },
     verbose,
@@ -49,14 +69,16 @@ export function capabilityContractsBody(
   return activeContractsBody(
     payer,
     activeAtOffset,
-    {
-      TemplateFilter: {
-        value: {
-          templateId: BOUNDED_PURCHASE_CAPABILITY_QUERY_ID,
-          includeCreatedEventBlob: false,
+    [
+      {
+        TemplateFilter: {
+          value: {
+            templateId: BOUNDED_PURCHASE_CAPABILITY_QUERY_ID,
+            includeCreatedEventBlob: false,
+          },
         },
       },
-    },
+    ],
     true,
   );
 }
@@ -68,15 +90,59 @@ export function holdingContractsBody(
   return activeContractsBody(
     payer,
     activeAtOffset,
-    {
-      InterfaceFilter: {
-        value: {
-          interfaceId: HOLDING_INTERFACE_QUERY_ID,
-          includeCreatedEventBlob: true,
-          includeInterfaceView: true,
+    [
+      {
+        InterfaceFilter: {
+          value: {
+            interfaceId: HOLDING_INTERFACE_QUERY_ID,
+            includeCreatedEventBlob: true,
+            includeInterfaceView: true,
+          },
         },
       },
-    },
+    ],
     false,
   );
+}
+
+export function preferredWalletPackageBody(
+  receiverParty: string,
+  validatorParty: string,
+): unknown {
+  return {
+    packageVettingRequirements: [
+      {
+        packageName: "splice-wallet",
+        parties: [
+          cantonParty(receiverParty, "preapproval receiver", true),
+          cantonParty(validatorParty, "validator operator"),
+        ],
+      },
+    ],
+  };
+}
+
+export function preapprovalStateContractsBody(
+  receiverParty: string,
+  activeAtOffset: number,
+): unknown {
+  return activeContractsBody(
+    cantonParty(receiverParty, "preapproval receiver", true),
+    activeAtOffset,
+    [TRANSFER_PREAPPROVAL_PROPOSAL_QUERY_ID, TRANSFER_PREAPPROVAL_QUERY_ID].map(
+      (templateId) => ({
+        TemplateFilter: {
+          value: {
+            templateId,
+            includeCreatedEventBlob: false,
+          },
+        },
+      }),
+    ),
+    true,
+  );
+}
+
+export function requirePreapprovalReceiverParty(value: unknown): string {
+  return cantonParty(value, "preapproval receiver", true);
 }

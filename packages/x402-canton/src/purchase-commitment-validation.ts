@@ -13,12 +13,15 @@ import {
   exactKeys,
   identifier,
   objectValue,
-  sha256Hex,
 } from "./purchase-commitment-primitives.js";
+import {
+  commitResourceRoute,
+  RESOURCE_BINDING_VERSION,
+} from "./resource-route.js";
+export { RESOURCE_BINDING_VERSION } from "./resource-route.js";
 
 export const TOKEN_TRANSFER_FACTORY_INTERFACE_ID =
   "55ba4deb0ad4662c4168b39859738a0e91388d252286480c7331b3f71a517281:Splice.Api.Token.TransferInstructionV1:TransferFactory" as const;
-export const RESOURCE_BINDING_VERSION = "sotto-resource-v1" as const;
 export const FIVE_NORTH_TRANSFER_FACTORY_IMPLEMENTATION_ID =
   "23f47481dab6b1ec01339d6e14494d85bb2844c25f45b26fc5c9ef4cd4942d1f:Splice.ExternalPartyAmuletRules:ExternalPartyAmuletRules" as const;
 export const MAX_PURCHASE_WINDOW_SECONDS = 600;
@@ -121,13 +124,7 @@ export function validateBoundedPurchaseInput(
   if (capability.resourceBindingVersion !== RESOURCE_BINDING_VERSION) {
     throw new Error("capability resource binding version is unsupported");
   }
-  const expectedResourceHash = `sha256:${sha256Hex(
-    JSON.stringify({
-      version: RESOURCE_BINDING_VERSION,
-      origin: requestUrl.origin,
-      pathname: requestUrl.pathname,
-    }),
-  )}`;
+  const expectedResourceHash = commitResourceRoute(requestUrl.toString());
   if (capability.resourceHash !== expectedResourceHash) {
     throw new Error("capability resource hash does not match request route");
   }
