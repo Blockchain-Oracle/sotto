@@ -1,5 +1,6 @@
 import {
   canonicalTime,
+  damlDecimalToAtomic,
   exactKeys,
   identifier,
   objectValue,
@@ -13,7 +14,6 @@ export const SOTTO_CONTROL_PACKAGE_ID =
   "286d5149f8fe9ba476eef40c60b701e8abf70a3174571698f2d2fa0531f77808" as const;
 export const APPROVED_BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_ID =
   `${SOTTO_CONTROL_PACKAGE_ID}:${BOUNDED_PURCHASE_CAPABILITY_TEMPLATE}` as const;
-const DAML_DECIMAL_PATTERN = /^(?:0|[1-9]\d{0,27})(?:\.(\d{1,10}))?$/;
 const DAML_TIME_PATTERN =
   /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.(\d{3}|\d{6}))?Z$/;
 
@@ -35,25 +35,6 @@ export type PurchaseCapabilitySnapshot = Readonly<{
   templateId: string;
   transferFactoryContractId: string;
 }>;
-
-function decimalToAtomic(value: unknown, label: string): string {
-  if (typeof value !== "string") {
-    throw new Error(`${label} must be a canonical Daml Decimal`);
-  }
-  const match = DAML_DECIMAL_PATTERN.exec(value);
-  if (match === null) {
-    throw new Error(`${label} must be a canonical Daml Decimal`);
-  }
-  const [whole, fraction = ""] = value.split(".");
-  const atomic = (
-    BigInt(whole!) * 10_000_000_000n +
-    BigInt(fraction.padEnd(10, "0"))
-  ).toString();
-  if (atomic.length > 38) {
-    throw new Error(`${label} exceeds the bounded atomic range`);
-  }
-  return atomic;
-}
 
 function normalizeDamlTime(value: unknown, label: string): string {
   if (typeof value !== "string") {
@@ -160,18 +141,18 @@ export function parsePurchaseCapabilityCreatedEvent(
       admin: identifier(instrument.admin, "capability instrument admin"),
       id: identifier(instrument.id, "capability instrument id"),
     },
-    maximumTotalDebitAtomic: decimalToAtomic(
+    maximumTotalDebitAtomic: damlDecimalToAtomic(
       argument.maximumTotalDebit,
       "capability maximumTotalDebit",
     ),
     paused: argument.paused,
     payerParty,
-    perCallLimitAtomic: decimalToAtomic(
+    perCallLimitAtomic: damlDecimalToAtomic(
       argument.perCallLimit,
       "capability perCallLimit",
     ),
     recipient: identifier(argument.allowedRecipient, "capability recipient"),
-    remainingAllowanceAtomic: decimalToAtomic(
+    remainingAllowanceAtomic: damlDecimalToAtomic(
       argument.remainingAllowance,
       "capability remainingAllowance",
     ),

@@ -4,6 +4,7 @@ export const SHA256_PATTERN = /^sha256:[a-f0-9]{64}$/;
 export const RAW_SHA256_PATTERN = /^[a-f0-9]{64}$/;
 export const REVISION_PATTERN = /^(?:0|[1-9]\d{0,18})$/;
 const atomicPattern = /^(?:0|[1-9]\d{0,37})$/;
+const damlDecimalPattern = /^(?:0|[1-9]\d{0,27})(?:\.(\d{1,10}))?$/;
 const timestampPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
 
 function hasUnpairedSurrogate(value: string): boolean {
@@ -90,4 +91,19 @@ export function atomic(value: unknown, label: string): bigint {
     throw new Error(`${label} must be a bounded atomic integer`);
   }
   return BigInt(value);
+}
+
+export function damlDecimalToAtomic(value: unknown, label: string): string {
+  if (typeof value !== "string" || !damlDecimalPattern.test(value)) {
+    throw new Error(`${label} must be a canonical Daml Decimal`);
+  }
+  const [whole, fraction = ""] = value.split(".");
+  const result = (
+    BigInt(whole!) * 10_000_000_000n +
+    BigInt(fraction.padEnd(10, "0"))
+  ).toString();
+  if (result.length > 38) {
+    throw new Error(`${label} exceeds the bounded atomic range`);
+  }
+  return result;
 }
