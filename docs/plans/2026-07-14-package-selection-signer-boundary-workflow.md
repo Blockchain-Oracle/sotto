@@ -53,7 +53,7 @@ max_iterations: 3
 
 verify: PATH=/Users/abu/.local/share/mise/installs/node/24.18.0/bin:$PATH pnpm vitest run packages/x402-canton/test/package-preference-closure.test.ts spikes/devnet-payment/test/five-north-package-preference-manifest.test.ts
 
-- [ ] **Step 5: Define package metadata verification RED tests**
+- [x] **Step 5: Define package metadata verification RED tests**
 
 action: Add focused tests requiring every live returned package ID/name/version tuple to match the independently reproduced artifact union, while allowing historical creation-package references and rejecting name reuse, version reuse, unknown IDs, conflicting ID metadata, and caller-supplied provenance.
 
