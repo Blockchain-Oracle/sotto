@@ -18,7 +18,6 @@ export type AuthorizedFetcher = (
 type ObserveInput = Readonly<{
   fetchAuthorized?: AuthorizedFetcher;
   method: string;
-  now?: Date;
   requestBody?: Uint8Array;
   resourceUrl: string;
   signal?: AbortSignal;
@@ -91,14 +90,13 @@ export async function observeHttpChallenge(
   if (header === null || header.trim() === "") {
     throw new Error("HTTP 402 requires a v2 PAYMENT-REQUIRED header");
   }
-  const now = input.now ?? new Date();
   const paymentRequired = decodePaymentRequired(header);
   const challenge = selectCantonRequirement(paymentRequired);
   return {
     ...createChallengeObservation({
       challenge,
       method: input.method,
-      observedAt: now.toISOString(),
+      observedAt: paymentObservation.observedAt,
       ...(requestBody === undefined ? {} : { requestBody }),
       resourceUrl: url.toString(),
       upstreamResourceUrl: paymentRequired.resource.url,

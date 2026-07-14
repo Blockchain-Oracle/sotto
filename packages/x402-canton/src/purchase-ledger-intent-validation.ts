@@ -7,38 +7,44 @@ import {
   TOKEN_TRANSFER_FACTORY_INTERFACE_ID,
 } from "./purchase-commitment.js";
 import type { BoundedPurchaseLedgerIntent } from "./purchase-ledger-intent.js";
+import { projectPurchasePackageSelection } from "./purchase-ledger-package-selection.js";
 import { parseBoundedPurchaseCanonical } from "./purchase-ledger-intent-parser.js";
+import {
+  derivePurchaseAttemptId,
+  purchaseSha256,
+} from "./purchase-ledger-validation-primitives.js";
 import {
   atomic,
   canonicalTime,
   identifier,
   REVISION_PATTERN,
-  SHA256_PATTERN,
-  sha256Hex,
 } from "./purchase-commitment-primitives.js";
 import { REQUEST_BINDING_VERSION } from "./request-binding.js";
-
-function sha256(value: unknown, label: string): `sha256:${string}` {
-  if (typeof value !== "string" || !SHA256_PATTERN.test(value)) {
-    throw new Error(`${label} must be a SHA-256 identifier`);
-  }
-  return value as `sha256:${string}`;
-}
 
 export function projectBoundedPurchaseLedgerIntent(
   commitment: BoundedPurchaseCommitment,
 ): BoundedPurchaseLedgerIntent {
-  const { root, request, challenge, instrument, capability, tokenFactory } =
-    parseBoundedPurchaseCanonical(commitment);
+  const parsed = parseBoundedPurchaseCanonical(commitment);
+  const {
+    root,
+    request,
+    challenge,
+    instrument,
+    capability,
+    tokenFactory,
+    packageSelection: rawPackageSelection,
+    packageRequirements,
+    packageReferences,
+  } = parsed;
 
-  const attemptId = sha256(root.attemptId, "purchase attemptId");
-  const requestCommitment = sha256(
+  const attemptId = purchaseSha256(root.attemptId, "purchase attemptId");
+  const requestCommitment = purchaseSha256(
     request.requestCommitment,
     "request commitment",
   );
-  const bodyHash = sha256(request.bodyHash, "request body hash");
-  const challengeId = sha256(challenge.challengeId, "challengeId");
-  const resourceHash = sha256(capability.resourceHash, "resource hash");
+  const bodyHash = purchaseSha256(request.bodyHash, "request body hash");
+  const challengeId = purchaseSha256(challenge.challengeId, "challengeId");
+  const resourceHash = purchaseSha256(capability.resourceHash, "resource hash");
   const requestedAt = identifier(challenge.observedAt, "challenge observedAt");
   const executeBefore = identifier(challenge.expiresAt, "challenge expiresAt");
   const capabilityExpiresAt = identifier(
@@ -59,10 +65,7 @@ export function projectBoundedPurchaseLedgerIntent(
     capability.remainingAllowanceAtomic,
     "remaining allowance",
   );
-  const maximumDebit = atomic(
-    capability.maximumTotalDebitAtomic,
-    "maximum total debit",
-  );
+  const maximumDebit = atomic(capability.maximumTotalDebitAtomic, "max debit");
   if (
     root.version !== PURCHASE_COMMITMENT_VERSION ||
     root.authorizationMode !== "bounded-capability" ||
@@ -92,21 +95,7 @@ export function projectBoundedPurchaseLedgerIntent(
     capabilityExpiresAt,
     "capability expiresAt",
   );
-  const canonicalPurchase = {
-    version: root.version,
-    authorizationMode: root.authorizationMode,
-    request,
-    challenge,
-    capability,
-    tokenFactory,
-    authorizationInstanceId: root.authorizationInstanceId,
-  };
-  const expectedAttemptId = `sha256:${sha256Hex(
-    JSON.stringify({
-      version: "sotto-payment-attempt-v2",
-      purchase: canonicalPurchase,
-    }),
-  )}`;
+  const expectedAttemptId = derivePurchaseAttemptId(parsed);
   if (
     expectedAttemptId !== attemptId ||
     attemptId !== commitment.attemptId ||
@@ -121,12 +110,30 @@ export function projectBoundedPurchaseLedgerIntent(
     requestedAtMs >= executeBeforeMs ||
     executeBeforeMs > capabilityExpiresAtMs ||
     amount === 0n ||
+    maximumDebit < perCall ||
     amount > perCall ||
     amount > remaining ||
     amount > maximumDebit
   ) {
     throw new Error("bounded purchase canonical semantics are inconsistent");
   }
+  const packageSelection = projectPurchasePackageSelection(
+    rawPackageSelection,
+    packageRequirements,
+    packageReferences,
+    {
+      adminParty: identifier(instrument.admin, "instrument admin"),
+      agentParty,
+      payerParty,
+      recipientParty,
+      synchronizerId: identifier(
+        challenge.synchronizerId,
+        "challenge synchronizer",
+      ),
+      requestedAt,
+      executeBefore,
+    },
+  );
 
   return {
     version: PURCHASE_COMMITMENT_VERSION,
@@ -186,5 +193,6 @@ export function projectBoundedPurchaseLedgerIntent(
         "tokenFactory expected admin",
       ),
     },
+    packageSelection,
   };
 }

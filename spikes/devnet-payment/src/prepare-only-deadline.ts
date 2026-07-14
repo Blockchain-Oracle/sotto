@@ -10,6 +10,32 @@ export type PrepareOnlyScope = Readonly<{
   signal: AbortSignal;
 }>;
 
+function challengeDeadlineMilliseconds(
+  observedAt: string,
+  requirement: CantonPaymentRequirement,
+): number {
+  const observedAtMs = Date.parse(observedAt);
+  const windowMs =
+    Math.min(
+      requirement.maxTimeoutSeconds,
+      requirement.extra.executeBeforeSeconds,
+    ) * 1_000;
+  const deadline = observedAtMs + windowMs;
+  if (!Number.isSafeInteger(deadline)) {
+    throw new Error("prepare-only purchase challenge deadline is invalid");
+  }
+  return deadline;
+}
+
+export function challengeExecuteBefore(
+  observedAt: string,
+  requirement: CantonPaymentRequirement,
+): string {
+  return new Date(
+    challengeDeadlineMilliseconds(observedAt, requirement),
+  ).toISOString();
+}
+
 export function createPrepareOnlyScope(
   callerSignal: AbortSignal | undefined,
   timeoutMilliseconds = MAX_PREPARE_ONLY_PURCHASE_MS,
@@ -38,14 +64,10 @@ export function bindChallengeDeadline(
   observedAt: string,
   requirement: CantonPaymentRequirement,
 ): PrepareOnlyScope {
-  const observedAtMs = Date.parse(observedAt);
-  const windowMs =
-    Math.min(
-      requirement.maxTimeoutSeconds,
-      requirement.extra.executeBeforeSeconds,
-    ) * 1_000;
   const remaining =
-    observedAtMs + windowMs - PREPARE_EXPIRY_RESERVE_MS - Date.now();
+    challengeDeadlineMilliseconds(observedAt, requirement) -
+    PREPARE_EXPIRY_RESERVE_MS -
+    Date.now();
   if (!Number.isFinite(remaining) || remaining < 1) {
     throw new Error("prepare-only purchase challenge deadline is too short");
   }

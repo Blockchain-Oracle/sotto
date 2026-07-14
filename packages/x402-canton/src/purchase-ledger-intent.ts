@@ -5,6 +5,7 @@ import type {
   PURCHASE_COMMITMENT_VERSION,
   TOKEN_TRANSFER_FACTORY_INTERFACE_ID,
 } from "./purchase-commitment.js";
+import type { BoundedPurchasePackageSelection } from "./purchase-ledger-package-selection.js";
 import { projectBoundedPurchaseLedgerIntent } from "./purchase-ledger-intent-validation.js";
 
 type Sha256 = `sha256:${string}`;
@@ -55,6 +56,7 @@ export type BoundedPurchaseLedgerIntent = Readonly<{
     creationTemplateId: typeof FIVE_NORTH_TRANSFER_FACTORY_CREATION_TEMPLATE_ID;
     expectedAdmin: string;
   }>;
+  packageSelection: BoundedPurchasePackageSelection;
 }>;
 
 const authenticLedgerIntents = new WeakMap<
@@ -71,6 +73,7 @@ function freezeIntent(
   Object.freeze(intent.challenge);
   Object.freeze(intent.capability);
   Object.freeze(intent.tokenFactory);
+  Object.freeze(intent.packageSelection);
   return Object.freeze(intent);
 }
 

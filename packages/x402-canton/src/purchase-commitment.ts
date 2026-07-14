@@ -1,5 +1,6 @@
 import type { HttpRequestCommitment } from "./request-binding.js";
 import type { PaymentRequiredObservation } from "./payment-observation.js";
+import type { AuthenticatedPackagePreferenceProjection } from "./package-preference-observation.js";
 import {
   APPROVED_BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_ID,
   BOUNDED_PURCHASE_CAPABILITY_TEMPLATE,
@@ -15,7 +16,8 @@ import {
 } from "./purchase-commitment-validation.js";
 import { sha256Hex } from "./purchase-commitment-primitives.js";
 
-export const PURCHASE_COMMITMENT_VERSION = "sotto-purchase-v2" as const;
+export const PURCHASE_COMMITMENT_VERSION = "sotto-purchase-v3" as const;
+export const PURCHASE_ATTEMPT_VERSION = "sotto-purchase-attempt-v3" as const;
 export {
   APPROVED_BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_ID,
   BOUNDED_PURCHASE_CAPABILITY_TEMPLATE,
@@ -32,6 +34,7 @@ export type BoundedPurchaseCommitmentInput = Readonly<{
   binding: HttpRequestCommitment;
   capability: PurchaseCapabilityObservation;
   expectedNetwork: `canton:${string}`;
+  packageSelection: AuthenticatedPackagePreferenceProjection;
   paymentObservation: PaymentRequiredObservation;
   payerParty: string;
   tokenFactory: Readonly<{
@@ -99,7 +102,7 @@ export function assertAuthenticBoundedPurchase(
 function deriveAttemptId(purchase: unknown): `sha256:${string}` {
   return `sha256:${sha256Hex(
     JSON.stringify({
-      version: "sotto-payment-attempt-v2",
+      version: PURCHASE_ATTEMPT_VERSION,
       purchase,
     }),
   )}`;
@@ -108,8 +111,14 @@ function deriveAttemptId(purchase: unknown): `sha256:${string}` {
 export function commitBoundedPurchase(
   input: BoundedPurchaseCommitmentInput,
 ): BoundedPurchaseCommitment {
-  const { capability, challengeId, expiresAt, observedAt, requirement } =
-    validateBoundedPurchaseInput(input);
+  const {
+    capability,
+    challengeId,
+    expiresAt,
+    observedAt,
+    packageSelection,
+    requirement,
+  } = validateBoundedPurchaseInput(input);
   const purchase = {
     version: PURCHASE_COMMITMENT_VERSION,
     authorizationMode: "bounded-capability",
@@ -156,6 +165,7 @@ export function commitBoundedPurchase(
       creationTemplateId: input.tokenFactory.creationTemplateId,
       expectedAdmin: input.tokenFactory.expectedAdmin,
     },
+    packageSelection,
     authorizationInstanceId: input.authorizationInstanceId,
   } as const;
   const attemptId = deriveAttemptId(purchase);

@@ -103,13 +103,16 @@ export function registerPurchaseLedgerIntentV3Cases(): void {
         withPurchaseV3Clock(() => {
           const prepare = vi.fn();
           const sign = vi.fn();
+          const { packageSelection: _selection, ...legacy } =
+            createPurchaseInput();
+          void _selection;
           expect(() => {
             const intent = readBoundedPurchaseLedgerIntent(
-              commitBoundedPurchase(createPurchaseInput()),
+              commitBoundedPurchase(legacy as never),
             );
             prepare(intent);
             sign(intent);
-          }).toThrow(/package selection/u);
+          }).toThrow(/input keys|package selection/u);
           expect(prepare).not.toHaveBeenCalled();
           expect(sign).not.toHaveBeenCalled();
         }));

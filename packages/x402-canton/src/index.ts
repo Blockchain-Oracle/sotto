@@ -25,11 +25,23 @@ export {
 } from "./payment-observation.js";
 export * from "./payment-requirement.js";
 export * from "./package-preference-closure.js";
-export * from "./package-preference-observation.js";
+export {
+  claimPackagePreferenceObservation,
+  createPackagePreferenceObserver,
+  MAX_PACKAGE_PREFERENCE_ACQUISITION_MS,
+  MAX_PACKAGE_PREFERENCE_OBSERVATION_AGE_MS,
+  type AuthenticatedPackagePreferenceProjection,
+  type PackagePreferenceClaimScope,
+  type PackagePreferenceObservation,
+  type PackagePreferenceObservationScope,
+  type PackagePreferenceReader,
+  type PackagePreferenceReadRequest,
+} from "./package-preference-observation.js";
 export * from "./package-reference-verifier.js";
 export {
   createPurchaseCapabilityObserver,
   MAX_CAPABILITY_OBSERVATION_AGE_MS,
+  readPurchaseCapabilityAgentParty,
   type PurchaseCapabilityAcsReader,
   type PurchaseCapabilityObservation,
 } from "./purchase-capability-observation.js";

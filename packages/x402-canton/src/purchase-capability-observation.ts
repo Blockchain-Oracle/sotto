@@ -142,3 +142,7 @@ export function readPurchaseCapabilityObservation(
   }
   return { ...state, snapshot: cloneSnapshot(state.snapshot) };
 }
+
+export function readPurchaseCapabilityAgentParty(observation: unknown): string {
+  return readPurchaseCapabilityObservation(observation).snapshot.agentParty;
+}

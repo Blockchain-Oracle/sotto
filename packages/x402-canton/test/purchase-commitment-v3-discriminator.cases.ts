@@ -16,9 +16,11 @@ export function registerPurchaseV3DiscriminatorCases(): void {
       expect(subject.PURCHASE_ATTEMPT_VERSION).toBe(
         "sotto-purchase-attempt-v3",
       );
+      const { packageSelection: _selection, ...legacy } = createPurchaseInput();
+      void _selection;
       expect(() =>
-        purchaseCommitment.commitBoundedPurchase(createPurchaseInput()),
-      ).toThrow(/package selection/u);
+        purchaseCommitment.commitBoundedPurchase(legacy as never),
+      ).toThrow(/input keys|package selection/u);
     });
   });
 }

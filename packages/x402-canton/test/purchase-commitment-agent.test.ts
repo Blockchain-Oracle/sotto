@@ -10,13 +10,24 @@ import {
   PAYER,
   replaceCapability,
 } from "./purchase-commitment.fixtures.js";
+import { replacePackageSelection } from "./purchase-package-selection.fixtures.js";
 
-function withAgent(agentParty: string): BoundedPurchaseCommitmentInput {
-  return replaceCapability(createPurchaseInput(), (capability) => ({
+function withAgent(
+  agentParty: string,
+  bindSelection = true,
+): BoundedPurchaseCommitmentInput {
+  const input = replaceCapability(createPurchaseInput(), (capability) => ({
     ...capability,
     agentParty,
     templateId: CAPABILITY_TEMPLATE_ID,
   }));
+  return bindSelection
+    ? replacePackageSelection(input, (selection) => {
+        selection.parties = selection.parties
+          .map((party) => (party === AGENT ? agentParty : party))
+          .sort();
+      })
+    : input;
 }
 
 describe("bounded purchase agent authority", () => {
@@ -53,7 +64,7 @@ describe("bounded purchase agent authority", () => {
   it.each(["", ` ${AGENT}`, "x".repeat(513)])(
     "rejects invalid agent Party %j",
     (agentParty) => {
-      expect(() => commitBoundedPurchase(withAgent(agentParty))).toThrow(
+      expect(() => commitBoundedPurchase(withAgent(agentParty, false))).toThrow(
         "capability agentParty",
       );
     },

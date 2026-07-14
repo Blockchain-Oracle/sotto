@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createHash } from "node:crypto";
 import { observeHttpChallenge } from "../src/http-observer.js";
 
@@ -27,6 +27,8 @@ const paymentRequired = Buffer.from(JSON.stringify(requirement)).toString(
   "base64",
 );
 
+afterEach(() => vi.useRealTimers());
+
 describe("observeHttpChallenge", () => {
   it("requires URL authorization before making a bounded unpaid request", async () => {
     const fetchAuthorized = vi.fn(async (_url: URL, _init: RequestInit) => {
@@ -43,7 +45,6 @@ describe("observeHttpChallenge", () => {
     const observation = await observeHttpChallenge({
       fetchAuthorized,
       method: "POST",
-      now: new Date("2026-07-12T15:59:00.000Z"),
       requestBody: new TextEncoder().encode('{"prompt":"private"}'),
       resourceUrl: "https://provider.example/resource",
       timeoutMs: 2_000,
@@ -126,6 +127,30 @@ describe("observeHttpChallenge", () => {
     });
     expect(observation.bodySha256).toBe(
       createHash("sha256").update(sent).digest("hex"),
+    );
+  });
+
+  it("uses the authenticated payment observation time for the challenge", async () => {
+    vi.useFakeTimers({ now: new Date("2026-07-13T10:00:00.000Z") });
+    const headers = new Headers({ "PAYMENT-REQUIRED": paymentRequired });
+    const read = headers.get.bind(headers);
+    let reads = 0;
+    vi.spyOn(headers, "get").mockImplementation((name) => {
+      reads += 1;
+      if (reads === 2) vi.advanceTimersByTime(1);
+      return read(name);
+    });
+
+    const observation = await observeHttpChallenge({
+      fetchAuthorized: async () =>
+        ({ body: null, headers, status: 402 }) as Response,
+      method: "GET",
+      resourceUrl: "https://provider.example/resource",
+    });
+
+    expect(observation.observedAt).toBe("2026-07-13T10:00:00.000Z");
+    expect(observation.observedAt).toBe(
+      observation.paymentObservation.observedAt,
     );
   });
 

@@ -16,6 +16,10 @@ import {
   type PackagePreferenceReader,
   type PackagePreferenceReadRequest,
 } from "./package-preference-observation-types.js";
+import {
+  registerAuthenticatedPackagePreferenceProjection,
+  snapshotPackagePreferenceProjection,
+} from "./package-preference-projection-state.js";
 import { verifyReviewedPackageReferences } from "./package-reference-verifier.js";
 import {
   exactKeys,
@@ -63,24 +67,6 @@ function buildRequest(
     ),
     synchronizerId,
     vettingValidAt,
-  });
-}
-
-function cloneProjection(
-  projection: AuthenticatedPackagePreferenceProjection,
-): AuthenticatedPackagePreferenceProjection {
-  return Object.freeze({
-    ...projection,
-    references: Object.freeze(
-      projection.references.map((reference) =>
-        Object.freeze({
-          ...reference,
-          artifactIds: Object.freeze([...reference.artifactIds]),
-        }),
-      ),
-    ),
-    packageIds: Object.freeze([...projection.packageIds]),
-    parties: Object.freeze([...projection.parties]),
   });
 }
 
@@ -132,8 +118,10 @@ export function createPackagePreferenceObserver(
     const capturedAt = Date.now();
     assertPackagePreferenceAcquisitionWindow(acquisitionStartedAt, capturedAt);
     const acquiredAt = new Date(capturedAt).toISOString();
-    const projection = cloneProjection({
+    const observationId = `sha256:${randomBytes(32).toString("hex")}` as const;
+    const projection = snapshotPackagePreferenceProjection({
       version: PACKAGE_SELECTION_VERSION,
+      observationId,
       closureHash: scope.closure.closureHash,
       references,
       packageIds: [...references.map(({ packageId }) => packageId)].sort(
@@ -146,7 +134,7 @@ export function createPackagePreferenceObserver(
       authenticatedSubject: initialSubject,
     });
     const observation = Object.freeze({
-      observationId: `sha256:${randomBytes(32).toString("hex")}`,
+      observationId,
       observedAt: acquiredAt,
     }) as PackagePreferenceObservation;
     observationStates.set(observation, {
@@ -180,9 +168,19 @@ export function claimPackagePreferenceObservation(
   if (state.claimed) {
     throw new Error("package preference observation is already claimed");
   }
+  const projection = registerAuthenticatedPackagePreferenceProjection(
+    state.projection,
+    state.acquisitionStartedAt,
+    state.capturedAt,
+  );
   state.claimed = true;
-  return cloneProjection(state.projection);
+  return projection;
 }
+
+export {
+  capturePackagePreferenceProjectionForTest,
+  readAuthenticatedPackagePreferenceProjection,
+} from "./package-preference-projection-state.js";
 
 export {
   MAX_PACKAGE_PREFERENCE_ACQUISITION_MS,

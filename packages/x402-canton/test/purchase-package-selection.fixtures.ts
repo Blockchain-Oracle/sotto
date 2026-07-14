@@ -92,7 +92,7 @@ export function createPackageSelectionFixture(
 export function createPurchaseV3Input(
   packageSelection = createPackageSelectionFixture(),
 ): PurchaseV3Input {
-  return { ...createPurchaseInput(), packageSelection };
+  return createPurchaseInput(packageSelection) as PurchaseV3Input;
 }
 
 export function expectedCanonicalPackageSelection(
@@ -123,6 +123,19 @@ export function mutatePackageSelection(
   const packageSelection = structuredClone(input.packageSelection);
   mutate(packageSelection);
   return { ...input, packageSelection };
+}
+
+export function replacePackageSelection(
+  input: BoundedPurchaseCommitmentInput,
+  mutate: (selection: PackageSelectionFixture) => void,
+): BoundedPurchaseCommitmentInput {
+  return {
+    ...input,
+    packageSelection: createPackageSelectionFixture(
+      undefined,
+      mutate,
+    ) as unknown as BoundedPurchaseCommitmentInput["packageSelection"],
+  };
 }
 
 export async function withPurchaseV3Clock<T>(

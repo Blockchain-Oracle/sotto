@@ -74,9 +74,8 @@ export function registerPurchaseV3VectorCases(): void {
       }
 
       await withPurchaseV3Clock(() => {
-        const result = purchaseCommitment.commitBoundedPurchase(
-          createPurchaseV3Input() as never,
-        );
+        const input = createPurchaseV3Input();
+        const result = purchaseCommitment.commitBoundedPurchase(input as never);
         expect(new TextDecoder().decode(result.canonicalBytes)).toBe(
           EXPECTED_CANONICAL,
         );
@@ -88,6 +87,23 @@ export function registerPurchaseV3VectorCases(): void {
           expiresAt: "2026-07-13T10:00:45.000Z",
           version: "sotto-purchase-v3",
         });
+        const reordered = purchaseCommitment.commitBoundedPurchase({
+          tokenFactory: {
+            expectedAdmin: input.tokenFactory.expectedAdmin,
+            creationTemplateId: input.tokenFactory.creationTemplateId,
+            contractId: input.tokenFactory.contractId,
+            interfaceId: input.tokenFactory.interfaceId,
+          },
+          payerParty: input.payerParty,
+          paymentObservation: input.paymentObservation,
+          packageSelection: input.packageSelection,
+          expectedNetwork: input.expectedNetwork,
+          capability: input.capability,
+          binding: input.binding,
+          authorizationInstanceId: input.authorizationInstanceId,
+        } as never);
+        expect(reordered.canonicalBytes).toEqual(result.canonicalBytes);
+        expect(reordered.commitment).toBe(result.commitment);
       });
     });
   });

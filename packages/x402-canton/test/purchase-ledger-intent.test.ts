@@ -18,6 +18,10 @@ import {
   routeHash,
 } from "./purchase-commitment.fixtures.js";
 import { registerPurchaseLedgerIntentV3Cases } from "./purchase-ledger-intent-v3.cases.js";
+import {
+  expectedCanonicalPackageSelection,
+  type PackageSelectionFixture,
+} from "./purchase-package-selection.fixtures.js";
 
 describe("bounded purchase Ledger intent", () => {
   it("projects the complete agent-only Ledger intent", () => {
@@ -25,7 +29,7 @@ describe("bounded purchase Ledger intent", () => {
     const purchase = commitBoundedPurchase(input);
 
     expect(readBoundedPurchaseLedgerIntent(purchase)).toEqual({
-      version: "sotto-purchase-v2",
+      version: "sotto-purchase-v3",
       authorizationMode: "bounded-capability",
       actAs: [AGENT],
       attemptId: purchase.attemptId,
@@ -70,6 +74,9 @@ describe("bounded purchase Ledger intent", () => {
         creationTemplateId: input.tokenFactory.creationTemplateId,
         expectedAdmin: input.tokenFactory.expectedAdmin,
       },
+      packageSelection: expectedCanonicalPackageSelection(
+        input.packageSelection as unknown as PackageSelectionFixture,
+      ),
     });
   });
 
@@ -112,6 +119,7 @@ describe("bounded purchase Ledger intent", () => {
     expect(Object.isFrozen(intent.challenge.instrument)).toBe(true);
     expect(Object.isFrozen(intent.capability)).toBe(true);
     expect(Object.isFrozen(intent.tokenFactory)).toBe(true);
+    expect(Object.isFrozen(intent.packageSelection)).toBe(true);
     expect(() =>
       readAuthenticatedBoundedPurchaseLedgerIntent(structuredClone(intent)),
     ).toThrow("not authenticated");

@@ -12,6 +12,9 @@ export type ParsedPurchaseCanonical = Readonly<{
   instrument: Record<string, unknown>;
   capability: Record<string, unknown>;
   tokenFactory: Record<string, unknown>;
+  packageSelection: Record<string, unknown>;
+  packageRequirements: ReadonlyArray<Record<string, unknown>>;
+  packageReferences: ReadonlyArray<Record<string, unknown>>;
 }>;
 
 function exactObject(
@@ -21,7 +24,22 @@ function exactObject(
 ): Record<string, unknown> {
   const result = objectValue(value, label);
   exactKeys(result, keys, label);
+  if (JSON.stringify(Object.keys(result)) !== JSON.stringify(keys)) {
+    throw new Error(`${label} keys must use canonical order`);
+  }
   return result;
+}
+
+function exactArray(value: unknown, label: string, maximum: number): unknown[] {
+  if (
+    !Array.isArray(value) ||
+    value.length === 0 ||
+    value.length > maximum ||
+    Object.keys(value).length !== value.length
+  ) {
+    throw new Error(`${label} must be a non-empty bounded array`);
+  }
+  return value;
 }
 
 function decodeCanonical(
@@ -46,6 +64,7 @@ function decodeCanonical(
       "challenge",
       "capability",
       "tokenFactory",
+      "packageSelection",
       "authorizationInstanceId",
       "attemptId",
     ],
@@ -113,5 +132,60 @@ export function parseBoundedPurchaseCanonical(
     ["interfaceId", "contractId", "creationTemplateId", "expectedAdmin"],
     "purchase token factory",
   );
-  return { root, request, challenge, instrument, capability, tokenFactory };
+  const packageSelection = exactObject(
+    root.packageSelection,
+    [
+      "version",
+      "observationId",
+      "closureHash",
+      "requirements",
+      "references",
+      "packageIds",
+      "parties",
+      "synchronizerId",
+      "vettingValidAt",
+      "acquiredAt",
+      "authenticatedSubject",
+    ],
+    "purchase package selection",
+  );
+  const packageRequirements = exactArray(
+    packageSelection.requirements,
+    "purchase package requirements",
+    64,
+  ).map((value) => {
+    const requirement = exactObject(
+      value,
+      ["packageName", "parties"],
+      "purchase package requirement",
+    );
+    exactArray(requirement.parties, "purchase requirement parties", 16);
+    return requirement;
+  });
+  const packageReferences = exactArray(
+    packageSelection.references,
+    "purchase package references",
+    64,
+  ).map((value) => {
+    const reference = exactObject(
+      value,
+      ["packageId", "packageName", "packageVersion", "artifactIds"],
+      "purchase package reference",
+    );
+    exactArray(reference.artifactIds, "purchase package artifact IDs", 64);
+    return reference;
+  });
+  exactArray(packageSelection.packageIds, "purchase package IDs", 64);
+  exactArray(packageSelection.parties, "purchase package parties", 16);
+  return {
+    root,
+    request,
+    challenge,
+    instrument,
+    capability,
+    tokenFactory,
+    packageSelection,
+    packageRequirements,
+    packageReferences,
+  };
 }

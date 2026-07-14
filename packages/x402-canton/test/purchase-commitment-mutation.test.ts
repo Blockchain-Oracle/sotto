@@ -5,7 +5,7 @@ import { validLedgerMutations } from "./purchase-commitment-ledger-mutations.js"
 import { validRequestMutations } from "./purchase-commitment-request-mutations.js";
 import { registerPurchaseV3MutationCases } from "./purchase-commitment-v3-mutation.cases.js";
 
-describe("sotto-purchase-v2 mutation coverage", () => {
+describe("sotto-purchase-v3 mutation coverage", () => {
   it.each([...validRequestMutations, ...validLedgerMutations])(
     "changes the commitment for %s",
     (_name, mutate) => {

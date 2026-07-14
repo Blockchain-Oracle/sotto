@@ -8,6 +8,7 @@ import {
   createTransferFactoryObserver,
   FIVE_NORTH_TRANSFER_FACTORY_CREATION_TEMPLATE_ID,
   readBoundedPurchaseLedgerIntent,
+  readPurchaseCapabilityAgentParty,
   TOKEN_TRANSFER_FACTORY_INTERFACE_ID,
   type PreparedPurchaseObservation,
 } from "@sotto/x402-canton";
@@ -18,13 +19,22 @@ import {
 } from "./http-observer.js";
 import {
   bindChallengeDeadline,
+  challengeExecuteBefore,
   createPrepareOnlyScope,
   requirePrepareOnlyActive,
 } from "./prepare-only-deadline.js";
+import {
+  acquirePrepareOnlyPackageSelection,
+  type PrepareOnlyPackageSelectionClaimer,
+  type PrepareOnlyPackageSelectionScope,
+} from "./prepare-only-package-selection.js";
+
+export type { PrepareOnlyPackageSelectionScope };
 
 export type PrepareOnlyPurchaseInput = Readonly<{
   authorizationInstanceId: string;
   capabilityContractId: string;
+  claimPackageSelection: PrepareOnlyPackageSelectionClaimer;
   createReaders: (signal: AbortSignal) => FiveNorthPurchaseReaders;
   expectedAdmin: string;
   expectedNetwork: `canton:${string}`;
@@ -72,9 +82,10 @@ export async function prepareOnlyPurchase(
       signal: scope.signal,
     });
     requirePrepareOnlyActive(scope);
+    const challengeObservedAt = challenge.paymentObservation.observedAt;
     scope = bindChallengeDeadline(
       scope,
-      challenge.observedAt,
+      challengeObservedAt,
       challenge.challenge,
     );
     requirePrepareOnlyActive(scope);
@@ -83,11 +94,29 @@ export async function prepareOnlyPurchase(
       readers.capability,
     )(input.capabilityContractId);
     requirePrepareOnlyActive(scope);
+    const packageSelection = await acquirePrepareOnlyPackageSelection(
+      input.claimPackageSelection,
+      {
+        adminParty: challenge.challenge.extra.instrumentId.admin,
+        agentParty: readPurchaseCapabilityAgentParty(capability),
+        challengeObservedAt,
+        executeBefore: challengeExecuteBefore(
+          challengeObservedAt,
+          challenge.challenge,
+        ),
+        payerParty: input.payerParty,
+        providerParty: challenge.challenge.payTo,
+        signal: scope.signal,
+        synchronizerId: challenge.challenge.extra.synchronizerId,
+      },
+    );
+    requirePrepareOnlyActive(scope);
     const purchase = commitBoundedPurchase({
       authorizationInstanceId: input.authorizationInstanceId,
       binding,
       capability,
       expectedNetwork: input.expectedNetwork,
+      packageSelection,
       paymentObservation: challenge.paymentObservation,
       payerParty: input.payerParty,
       tokenFactory: {

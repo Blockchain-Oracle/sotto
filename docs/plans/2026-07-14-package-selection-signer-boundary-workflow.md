@@ -141,7 +141,7 @@ max_iterations: 1
 
 verify: sh -c 'PATH=/Users/abu/.local/share/mise/installs/node/24.18.0/bin:$PATH pnpm vitest run packages/x402-canton/test/purchase-commitment-vector.test.ts packages/x402-canton/test/purchase-commitment-mutation.test.ts packages/x402-canton/test/purchase-ledger-intent.test.ts > /tmp/sotto-purchase-v3-red.log 2>&1; status=$?; cat /tmp/sotto-purchase-v3-red.log; test "$status" -ne 0 && rg -q "PURCHASE_V3_NOT_IMPLEMENTED" /tmp/sotto-purchase-v3-red.log'
 
-- [ ] **Step 13: Bind package selection into purchase-v3**
+- [x] **Step 13: Bind package selection into purchase-v3**
 
 action: Extend the purchase commitment, validation, ledger-intent, parser, and projection modules to consume the claimed authenticated projection, bind its package-name/ID mapping and scope, repin canonical bytes and attempt vectors under v3, and reject stale or mismatched selections.
 

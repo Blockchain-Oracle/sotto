@@ -13,9 +13,20 @@ import {
   replaceChallengeObservation,
   routeHash,
 } from "./purchase-commitment.fixtures.js";
+import { replacePackageSelection } from "./purchase-package-selection.fixtures.js";
 
 function read(input: BoundedPurchaseCommitmentInput) {
   return readBoundedPurchaseLedgerIntent(commitBoundedPurchase(input));
+}
+
+function replaceSelectionParty(
+  parties: string[],
+  current: string,
+  replacement: string,
+): string[] {
+  return parties
+    .map((party) => (party === current ? replacement : party))
+    .sort();
 }
 
 describe("bounded purchase Ledger intent projection", () => {
@@ -36,6 +47,10 @@ describe("bounded purchase Ledger intent projection", () => {
       readChallengeBytes(input),
       "2026-07-13T10:00:05.000Z",
     );
+    input = replacePackageSelection(input, (selection) => {
+      selection.synchronizerId = "other-domain::1220sync";
+      selection.acquiredAt = "2026-07-13T10:00:05.000Z";
+    });
 
     const intent = read(input);
     expect(intent.request).toEqual({
@@ -74,6 +89,23 @@ describe("bounded purchase Ledger intent projection", () => {
     input = mutateChallenge({ ...input, payerParty: payer }, (challenge) => {
       challenge.accepts[0]!.extra.feePayer = payer;
       challenge.accepts[0]!.payTo = recipient;
+    });
+    input = replacePackageSelection(input, (selection) => {
+      selection.parties = replaceSelectionParty(
+        selection.parties,
+        "sotto-payer::1220payer",
+        payer,
+      );
+      selection.parties = replaceSelectionParty(
+        selection.parties,
+        "sotto-agent::1220agent",
+        agent,
+      );
+      selection.parties = replaceSelectionParty(
+        selection.parties,
+        "sotto-provider::1220provider",
+        recipient,
+      );
     });
 
     const intent = read(input);
@@ -120,6 +152,13 @@ describe("bounded purchase Ledger intent projection", () => {
         };
       },
     );
+    input = replacePackageSelection(input, (selection) => {
+      selection.parties = replaceSelectionParty(
+        selection.parties,
+        "DSO::1220dso",
+        admin,
+      );
+    });
 
     const intent = read(input);
     expect(intent.challenge.instrument).toEqual({ admin, id: "TestAmulet" });

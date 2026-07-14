@@ -43,7 +43,7 @@ describe("bounded purchase evidence", () => {
       challengeId: result.challengeId,
       purchaseCommitment: result.commitment,
       requestCommitment: input.binding.commitment,
-      version: "sotto-purchase-v2",
+      version: "sotto-purchase-v3",
     });
 
     const serialized = JSON.stringify(evidence);
@@ -83,7 +83,7 @@ describe("bounded purchase evidence", () => {
       commitment: hash,
       expiresAt: "not-a-time",
       requestCommitment: hash,
-      version: "sotto-purchase-v2",
+      version: "sotto-purchase-v3",
     } as BoundedPurchaseCommitment;
 
     expect(() => createBoundedPurchaseEvidence(forged)).toThrow(

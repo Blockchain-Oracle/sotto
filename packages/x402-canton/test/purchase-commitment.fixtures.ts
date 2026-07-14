@@ -13,6 +13,10 @@ import {
   captureCapability,
   replaceCapability,
 } from "./purchase-capability.fixtures.js";
+import {
+  createPackageSelectionFixture,
+  type PackageSelectionFixture,
+} from "./purchase-package-selection.fixtures.js";
 
 export { captureCapability, replaceCapability };
 
@@ -70,7 +74,9 @@ export function replaceBoundRequest(
   );
 }
 
-export function createPurchaseInput(): BoundedPurchaseCommitmentInput {
+export function createPurchaseInput(
+  packageSelection: PackageSelectionFixture = createPackageSelectionFixture(),
+): BoundedPurchaseCommitmentInput {
   const binding = commitHttpRequest({ method: "GET", url: RESOURCE_URL });
   const challenge: ChallengeFixture = {
     x402Version: 2,
@@ -116,6 +122,8 @@ export function createPurchaseInput(): BoundedPurchaseCommitmentInput {
       transferFactoryContractId: "00tokenfactory7",
     }),
     expectedNetwork: "canton:devnet",
+    packageSelection:
+      packageSelection as unknown as BoundedPurchaseCommitmentInput["packageSelection"],
     paymentObservation: capturePaymentRequiredBytesForTest(
       new TextEncoder().encode(JSON.stringify(challenge)),
       "2026-07-13T10:00:00.000Z",

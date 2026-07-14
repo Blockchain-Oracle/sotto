@@ -1,6 +1,19 @@
 import type { PurchaseMutation } from "./purchase-commitment-request-mutations.js";
 import { replaceCapability } from "./purchase-commitment.fixtures.js";
 import { changeChallenge } from "./purchase-commitment-request-mutations.js";
+import { replacePackageSelection } from "./purchase-package-selection.fixtures.js";
+
+function replaceParty(
+  input: Parameters<typeof replacePackageSelection>[0],
+  current: string,
+  replacement: string,
+) {
+  return replacePackageSelection(input, (selection) => {
+    selection.parties = selection.parties
+      .map((party) => (party === current ? replacement : party))
+      .sort();
+  });
+}
 
 export const validLedgerMutations: ReadonlyArray<
   readonly [string, PurchaseMutation]
@@ -12,12 +25,17 @@ export const validLedgerMutations: ReadonlyArray<
         (value) =>
           (value.accepts[0]!.extra.feePayer = "sotto-payer-2::1220payer"),
       )(input);
-      return replaceCapability(
+      const authorized = replaceCapability(
         { ...changed, payerParty: "sotto-payer-2::1220payer" },
         (capability) => ({
           ...capability,
           payerParty: "sotto-payer-2::1220payer",
         }),
+      );
+      return replaceParty(
+        authorized,
+        "sotto-payer::1220payer",
+        "sotto-payer-2::1220payer",
       );
     },
   ],
@@ -27,10 +45,15 @@ export const validLedgerMutations: ReadonlyArray<
       const changed = changeChallenge(
         (value) => (value.accepts[0]!.payTo = "sotto-provider-2::1220provider"),
       )(input);
-      return replaceCapability(changed, (capability) => ({
+      const authorized = replaceCapability(changed, (capability) => ({
         ...capability,
         recipient: "sotto-provider-2::1220provider",
       }));
+      return replaceParty(
+        authorized,
+        "sotto-provider::1220provider",
+        "sotto-provider-2::1220provider",
+      );
     },
   ],
   [
@@ -40,7 +63,7 @@ export const validLedgerMutations: ReadonlyArray<
         (value) =>
           (value.accepts[0]!.extra.instrumentId.admin = "DSO-2::1220dso"),
       )(input);
-      return replaceCapability(
+      const authorized = replaceCapability(
         {
           ...changed,
           tokenFactory: {
@@ -54,6 +77,7 @@ export const validLedgerMutations: ReadonlyArray<
           instrument: { ...capability.instrument, admin: "DSO-2::1220dso" },
         }),
       );
+      return replaceParty(authorized, "DSO::1220dso", "DSO-2::1220dso");
     },
   ],
   [
@@ -71,18 +95,31 @@ export const validLedgerMutations: ReadonlyArray<
   ],
   [
     "synchronizer",
-    changeChallenge(
-      (value) =>
-        (value.accepts[0]!.extra.synchronizerId = "global-domain-2::1220sync"),
-    ),
+    (input) =>
+      replacePackageSelection(
+        changeChallenge(
+          (value) =>
+            (value.accepts[0]!.extra.synchronizerId =
+              "global-domain-2::1220sync"),
+        )(input),
+        (selection) => {
+          selection.synchronizerId = "global-domain-2::1220sync";
+        },
+      ),
   ],
   [
     "capability agent",
-    (input) =>
-      replaceCapability(input, (capability) => ({
+    (input) => {
+      const authorized = replaceCapability(input, (capability) => ({
         ...capability,
         agentParty: "sotto-agent-2::1220agent",
-      })),
+      }));
+      return replaceParty(
+        authorized,
+        "sotto-agent::1220agent",
+        "sotto-agent-2::1220agent",
+      );
+    },
   ],
   [
     "capability CID",

@@ -47,6 +47,7 @@ export type PackagePreferenceObservation = Readonly<{
 
 export type AuthenticatedPackagePreferenceProjection = Readonly<{
   version: typeof PACKAGE_SELECTION_VERSION;
+  observationId: `sha256:${string}`;
   closureHash: string;
   references: ReadonlyArray<
     Readonly<{

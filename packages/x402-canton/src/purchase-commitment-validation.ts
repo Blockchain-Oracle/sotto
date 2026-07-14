@@ -2,6 +2,8 @@ import type { CantonPaymentRequirement } from "./payment-requirement.js";
 import type { PurchaseCapabilitySnapshot } from "./purchase-capability-event.js";
 import { readPurchaseCapabilityObservation } from "./purchase-capability-observation.js";
 import type { BoundedPurchaseCommitmentInput } from "./purchase-commitment.js";
+import { validatePurchasePackageSelection } from "./purchase-package-selection-validation.js";
+import type { CanonicalPurchasePackageSelection } from "./purchase-package-selection-types.js";
 import { readPaymentRequiredObservation } from "./payment-observation.js";
 import {
   selectRequirement,
@@ -31,6 +33,7 @@ export type ValidatedPurchaseInput = Readonly<{
   challengeId: `sha256:${string}`;
   expiresAt: string;
   observedAt: string;
+  packageSelection: CanonicalPurchasePackageSelection;
   requirement: CantonPaymentRequirement;
 }>;
 
@@ -45,6 +48,7 @@ export function validateBoundedPurchaseInput(
       "binding",
       "capability",
       "expectedNetwork",
+      "packageSelection",
       "paymentObservation",
       "payerParty",
       "tokenFactory",
@@ -163,11 +167,24 @@ export function validateBoundedPurchaseInput(
   ) {
     throw new Error("tokenFactory expected admin does not match instrument");
   }
+  const packageSelection = validatePurchasePackageSelection(
+    input.packageSelection,
+    {
+      adminParty: requirement.extra.instrumentId.admin,
+      agentParty: capability.agentParty,
+      payerParty: input.payerParty,
+      providerParty: requirement.payTo,
+      synchronizerId: requirement.extra.synchronizerId,
+      challengeObservedAt: observation.observedAt,
+      executeBefore: expiresAt,
+    },
+  );
   return {
     capability,
     challengeId: observation.challengeId,
     expiresAt,
     observedAt: observation.observedAt,
+    packageSelection,
     requirement,
   };
 }

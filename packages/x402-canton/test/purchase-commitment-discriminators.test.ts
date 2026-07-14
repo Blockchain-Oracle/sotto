@@ -73,7 +73,7 @@ const rejected: ReadonlyArray<readonly [string, RejectedMutation, string]> = [
   ],
 ];
 
-describe("sotto-purchase-v2 fixed discriminators", () => {
+describe("sotto-purchase-v3 fixed discriminators", () => {
   it.each(rejected)("rejects a changed %s", (_name, mutate, message) => {
     expect(() => commitBoundedPurchase(mutate(createPurchaseInput()))).toThrow(
       message,

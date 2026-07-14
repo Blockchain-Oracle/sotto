@@ -5,6 +5,7 @@ import {
   commitHttpRequest,
   createPurchaseCapabilityObserver,
   readBoundedPurchaseLedgerIntent,
+  type AuthenticatedPackagePreferenceProjection,
 } from "@sotto/x402-canton";
 import { preparedPurchaseBytes } from "../../../packages/x402-canton/test/prepared-purchase.fixtures.js";
 import { createdCapabilityEvent } from "../../../packages/x402-canton/test/purchase-capability-observation.fixtures.js";
@@ -24,8 +25,10 @@ import {
   prepareOnlyPurchase,
   type PrepareOnlyPurchaseInput,
 } from "../src/prepare-only-purchase.js";
+import { claimPrepareOnlyPackageSelection } from "./prepare-only-package-selection.fixture.js";
 
 const AUTHORIZATION_INSTANCE = "prepare-only-authorization-1";
+let testPackageSelection: AuthenticatedPackagePreferenceProjection;
 const challengeHeader = Buffer.from(
   readChallengeBytes(createPurchaseInput()),
 ).toString("base64");
@@ -82,6 +85,7 @@ async function expectedIntent() {
       binding: commitHttpRequest({ method: "GET", url: RESOURCE_URL }),
       capability,
       expectedNetwork: "canton:devnet",
+      packageSelection: testPackageSelection,
       paymentObservation: capturePaymentRequiredResponse(
         paymentRequiredResponse(),
       ),
@@ -122,6 +126,7 @@ function purchaseInput(
     expectedNetwork: "canton:devnet",
     fetchAuthorized: async () => paymentRequiredResponse(),
     method: "GET",
+    claimPackageSelection: async () => testPackageSelection,
     payerParty: PAYER,
     resourceUrl: RESOURCE_URL,
     tokenFactoryContractId: "00tokenfactory7",
@@ -130,8 +135,9 @@ function purchaseInput(
 }
 
 describe("prepare-only bounded purchase", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.useFakeTimers({ now: new Date("2026-07-13T10:00:00.000Z") });
+    testPackageSelection = await claimPrepareOnlyPackageSelection();
   });
 
   afterEach(() => {

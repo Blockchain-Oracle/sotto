@@ -6,6 +6,7 @@ import {
   replaceBoundRequest,
   RESOURCE_URL,
 } from "./purchase-commitment.fixtures.js";
+import { replacePackageSelection } from "./purchase-package-selection.fixtures.js";
 
 export type PurchaseMutation = (
   input: BoundedPurchaseCommitmentInput,
@@ -84,10 +85,15 @@ export const validRequestMutations: ReadonlyArray<
   [
     "observation time",
     (input) =>
-      replaceChallengeObservation(
-        input,
-        readChallengeBytes(input),
-        "2026-07-13T10:00:00.001Z",
+      replacePackageSelection(
+        replaceChallengeObservation(
+          input,
+          readChallengeBytes(input),
+          "2026-07-13T10:00:00.001Z",
+        ),
+        (selection) => {
+          selection.acquiredAt = "2026-07-13T10:00:00.001Z";
+        },
       ),
   ],
   [
