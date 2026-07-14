@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import {
-  damlPrimB,
   type ClosureInput,
+  INVALID_CLOSURE_MUTATIONS,
   type PackageEntry,
   validClosureInput,
 } from "./package-preference-closure.fixtures.js";
@@ -97,70 +97,16 @@ describe("reviewed package-preference closure", () => {
     );
   });
 
-  it.each([
-    ["version", (input: ClosureInput) => (input.version = "v2")],
-    ["source pins", (input: ClosureInput) => (input.sourcePins = [])],
-    ["artifacts", (input: ClosureInput) => (input.artifacts = [])],
-    [
-      "selectable names",
-      (input: ClosureInput) => (input.selectablePackageNames = []),
-    ],
-    ["graph packages", (input: ClosureInput) => (input.graphPackages = [])],
-    [
-      "unpinned source",
-      (input: ClosureInput) => (input.artifacts[0]!.sourcePinId = "missing"),
-    ],
-    [
-      "floating commit",
-      (input: ClosureInput) => (input.sourcePins[0]!.commit = "main"),
-    ],
-    [
-      "DAR digest",
-      (input: ClosureInput) => (input.artifacts[0]!.darSha256 = "bad"),
-    ],
-    [
-      "manifest digest",
-      (input: ClosureInput) => (input.artifacts[0]!.manifestSha256 = "bad"),
-    ],
-    [
-      "missing main package",
-      (input: ClosureInput) => (input.artifacts[0]!.mainPackageId = damlPrimB),
-    ],
-    [
-      "duplicate source",
-      (input: ClosureInput) => input.sourcePins.push(input.sourcePins[0]!),
-    ],
-    [
-      "duplicate artifact",
-      (input: ClosureInput) => input.artifacts.push(input.artifacts[0]!),
-    ],
-    [
-      "duplicate selectable name",
-      (input: ClosureInput) =>
-        input.selectablePackageNames.push("sotto-control"),
-    ],
-    [
-      "duplicate graph ID",
-      (input: ClosureInput) =>
-        input.graphPackages.push(input.graphPackages[0]!),
-    ],
-    [
-      "conflicting graph ID",
-      (input: ClosureInput) =>
-        input.graphPackages.push({ ...input.graphPackages[0]!, name: "other" }),
-    ],
-    [
-      "orphan graph tuple",
-      (input: ClosureInput) =>
-        (input.graphPackages[0]!.packageId = "f".repeat(64)),
-    ],
-  ])("rejects %s before it can become authority", (_label, mutate) => {
-    const input = validClosureInput();
-    mutate(input);
-    expect(() =>
-      subject.buildReviewedPackagePreferenceClosure(input),
-    ).toThrow();
-  });
+  it.each(INVALID_CLOSURE_MUTATIONS)(
+    "rejects %s before it can become authority",
+    (_label, mutate) => {
+      const input = validClosureInput();
+      mutate(input);
+      expect(() =>
+        subject.buildReviewedPackagePreferenceClosure(input),
+      ).toThrow();
+    },
+  );
 
   it("changes the closure hash for valid source or DAR pin mutations", () => {
     const sourceMutation = validClosureInput();

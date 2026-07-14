@@ -149,10 +149,14 @@ export function validatePackagePreferenceClosure(
     MAX_PACKAGES,
   ).map(packageEntry);
   const graphPackages = canonicalGraph(artifacts, claimedGraph);
-  const graphNames = new Set(graphPackages.map(({ name }) => name));
-  if (selectablePackageNames.some((name) => !graphNames.has(name))) {
+  const artifactNames = [...new Set(artifacts.map(({ name }) => name))].sort(
+    utf8Compare,
+  );
+  if (
+    JSON.stringify(selectablePackageNames) !== JSON.stringify(artifactNames)
+  ) {
     throw new Error(
-      "selectable package names must occur in the reviewed graph",
+      "selectable package names must equal the reviewed artifact names",
     );
   }
   return Object.freeze({

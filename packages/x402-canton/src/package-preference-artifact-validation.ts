@@ -25,7 +25,12 @@ export function boundedArray(
   label: string,
   maximum: number,
 ): unknown[] {
-  if (!Array.isArray(value) || value.length === 0 || value.length > maximum) {
+  if (
+    !Array.isArray(value) ||
+    value.length === 0 ||
+    value.length > maximum ||
+    Object.keys(value).length !== value.length
+  ) {
     throw new Error(`${label} must be a non-empty bounded array`);
   }
   return value;
@@ -68,7 +73,8 @@ export function sourcePin(value: unknown): PackageSourcePin {
     parsed.username !== "" ||
     parsed.password !== "" ||
     parsed.search !== "" ||
-    parsed.hash !== ""
+    parsed.hash !== "" ||
+    repository !== parsed.href.replace(/\/$/u, "")
   ) {
     throw new Error("source repository must be an exact HTTPS URL");
   }

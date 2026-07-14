@@ -23,7 +23,7 @@ export type ClosureInput = {
 
 const damlPrimA =
   "11978acf1971ebffa32ef626228faaf06526c0693e80117558f2abc795274368";
-export const damlPrimB =
+const damlPrimB =
   "54f85ebfc7dfae18f7d70370015dcc6c6792f60135ab369c44ae52c6fc17c274";
 const sottoPackage =
   "4d614496ec9b30b22545fd350ecb9ec999164cfb0b5953f46dbbf937f8918f57";
@@ -87,3 +87,79 @@ const BASE_INPUT: ClosureInput = {
 
 export const validClosureInput = (): ClosureInput =>
   structuredClone(BASE_INPUT);
+
+type ClosureMutation = (input: ClosureInput) => void;
+
+function makeSparse(values: unknown[]): void {
+  values.length += 1;
+}
+
+export const INVALID_CLOSURE_MUTATIONS: ReadonlyArray<
+  readonly [string, ClosureMutation]
+> = [
+  ["version", (input) => (input.version = "v2")],
+  ["source pins", (input) => (input.sourcePins = [])],
+  ["artifacts", (input) => (input.artifacts = [])],
+  ["selectable names", (input) => (input.selectablePackageNames = [])],
+  ["graph packages", (input) => (input.graphPackages = [])],
+  ["unpinned source", (input) => (input.artifacts[0]!.sourcePinId = "missing")],
+  ["floating commit", (input) => (input.sourcePins[0]!.commit = "main")],
+  [
+    "source URL alias",
+    (input) =>
+      (input.sourcePins[0]!.repository =
+        "https://github.com:443/Blockchain-Oracle/sotto"),
+  ],
+  ["DAR digest", (input) => (input.artifacts[0]!.darSha256 = "bad")],
+  ["manifest digest", (input) => (input.artifacts[0]!.manifestSha256 = "bad")],
+  [
+    "missing main package",
+    (input) => (input.artifacts[0]!.mainPackageId = damlPrimB),
+  ],
+  ["duplicate source", (input) => input.sourcePins.push(input.sourcePins[0]!)],
+  [
+    "duplicate source identity",
+    (input) => input.sourcePins.push({ ...input.sourcePins[0]!, id: "alias" }),
+  ],
+  ["duplicate artifact", (input) => input.artifacts.push(input.artifacts[0]!)],
+  [
+    "duplicate selectable name",
+    (input) => input.selectablePackageNames.push("sotto-control"),
+  ],
+  [
+    "missing selectable name",
+    (input) => (input.selectablePackageNames = ["sotto-control"]),
+  ],
+  [
+    "transitive selectable name",
+    (input) => (input.selectablePackageNames = ["daml-prim"]),
+  ],
+  [
+    "extra selectable name",
+    (input) => input.selectablePackageNames.push("daml-prim"),
+  ],
+  [
+    "duplicate graph ID",
+    (input) => input.graphPackages.push(input.graphPackages[0]!),
+  ],
+  [
+    "conflicting graph ID",
+    (input) =>
+      input.graphPackages.push({ ...input.graphPackages[0]!, name: "other" }),
+  ],
+  [
+    "orphan graph tuple",
+    (input) => (input.graphPackages[0]!.packageId = "f".repeat(64)),
+  ],
+  ["sparse sources", (input) => makeSparse(input.sourcePins)],
+  ["sparse artifacts", (input) => makeSparse(input.artifacts)],
+  [
+    "sparse selectable names",
+    (input) => makeSparse(input.selectablePackageNames),
+  ],
+  ["sparse graph", (input) => makeSparse(input.graphPackages)],
+  [
+    "sparse artifact manifest",
+    (input) => makeSparse(input.artifacts[0]!.packages),
+  ],
+];
