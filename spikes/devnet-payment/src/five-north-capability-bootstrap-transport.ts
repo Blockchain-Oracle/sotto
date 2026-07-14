@@ -63,10 +63,7 @@ function allowedRoutes(network: SpikeConfig["network"]): Map<string, Route> {
       `POST ${network.validatorUrl}/v0/scan-proxy${TRANSFER_FACTORY_REGISTRY_PATH}`,
       "registry",
     ],
-    [
-      `POST ${network.ledgerUrl}/v2/commands/submit-and-wait-for-transaction`,
-      "submit",
-    ],
+    [`POST ${network.ledgerUrl}/v2/commands/submit-and-wait`, "submit"],
   ]);
 }
 
@@ -177,6 +174,7 @@ export function createFiveNorthCapabilityBootstrapTransport(
       },
       fetcher: guarded,
       ledgerUrl: network.ledgerUrl,
+      result: "completion",
     })(request);
   };
   return Object.freeze({

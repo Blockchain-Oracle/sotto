@@ -151,9 +151,7 @@ describe("Five North capability bootstrap transport", () => {
 
     await expect(transport.submit(request())).rejects.toThrow(/subject/iu);
     expect(
-      fetcher.mock.calls.filter(([url]) =>
-        url.endsWith("/submit-and-wait-for-transaction"),
-      ),
+      fetcher.mock.calls.filter(([url]) => url.endsWith("/submit-and-wait")),
     ).toHaveLength(0);
   });
 
@@ -174,9 +172,7 @@ describe("Five North capability bootstrap transport", () => {
     await transport.submit(request());
     await expect(transport.submit(request())).rejects.toThrow(/limit/iu);
     expect(
-      fetcher.mock.calls.filter(([url]) =>
-        url.endsWith("/submit-and-wait-for-transaction"),
-      ),
+      fetcher.mock.calls.filter(([url]) => url.endsWith("/submit-and-wait")),
     ).toHaveLength(1);
   });
 

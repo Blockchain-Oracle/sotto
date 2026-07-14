@@ -22,9 +22,12 @@ export function createFiveNorthTransactionSubmitter(input: {
   readonly accessToken: () => Promise<string>;
   readonly fetcher: Fetcher;
   readonly ledgerUrl: string;
+  readonly result: "completion" | "transaction";
 }) {
   return async (body: unknown): Promise<unknown> => {
-    const source = JSON.stringify(body);
+    const source = JSON.stringify(
+      input.result === "transaction" ? { commands: body } : body,
+    );
     if (
       new TextEncoder().encode(source).byteLength > TRANSACTION_REQUEST_LIMIT
     ) {
@@ -34,7 +37,11 @@ export function createFiveNorthTransactionSubmitter(input: {
     let response: Response;
     try {
       response = await input.fetcher(
-        `${input.ledgerUrl}/v2/commands/submit-and-wait-for-transaction`,
+        `${input.ledgerUrl}/v2/commands/${
+          input.result === "transaction"
+            ? "submit-and-wait-for-transaction"
+            : "submit-and-wait"
+        }`,
         {
           body: source,
           headers: {

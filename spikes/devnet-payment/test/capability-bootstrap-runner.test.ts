@@ -225,6 +225,7 @@ describe("runBoundedCapabilityBootstrap", () => {
         accessToken: async () => "token",
         fetcher,
         ledgerUrl: "https://ledger.example.test",
+        result: "completion",
       });
 
       await expect(

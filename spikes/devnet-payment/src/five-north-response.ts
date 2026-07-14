@@ -52,11 +52,30 @@ async function boundedBytes(
   }
 }
 
+function plainTextFailureCode(value: string): string {
+  if (/authoriz|permission|actas/iu.test(value)) {
+    return "AUTHORIZATION_REJECTED";
+  }
+  if (/vett|topolog|synchronizer|domain/iu.test(value)) {
+    return "TOPOLOGY_REJECTED";
+  }
+  if (/package|template/iu.test(value)) return "PACKAGE_REJECTED";
+  if (/decod|malform|parse|json|request content/iu.test(value)) {
+    return "MALFORMED_REQUEST";
+  }
+  if (/command|argument|field/iu.test(value)) return "INVALID_ARGUMENT";
+  return "";
+}
+
 function failureCode(bytes: Uint8Array): string {
   try {
-    const value = JSON.parse(
-      new TextDecoder("utf-8", { fatal: true }).decode(bytes),
-    );
+    const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    let value: unknown;
+    try {
+      value = JSON.parse(text);
+    } catch {
+      return plainTextFailureCode(text);
+    }
     if (typeof value !== "object" || value === null || Array.isArray(value)) {
       return "";
     }

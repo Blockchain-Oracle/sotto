@@ -26,7 +26,8 @@ const request = buildFiveNorthPreapprovalProposal({
 
 describe("Five North preapproval submitter", () => {
   it("exposes only one authenticated proposal submission", async () => {
-    const fetcher = vi.fn(async (url: string) => {
+    const fetcher = vi.fn(async (url: string, init?: RequestInit) => {
+      void init;
       if (url === network.tokenUrl) {
         return Response.json({
           access_token: "opaque-token",
@@ -47,6 +48,8 @@ describe("Five North preapproval submitter", () => {
       transaction: { commandId: request.commandId },
     });
     expect(fetcher).toHaveBeenCalledTimes(2);
+    const [, init] = fetcher.mock.calls[1]!;
+    expect(JSON.parse(String(init?.body))).toEqual({ commands: request });
   });
 
   it("rejects a cloned request before token or network access", async () => {

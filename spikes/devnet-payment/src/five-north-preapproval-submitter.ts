@@ -33,6 +33,7 @@ export function createFiveNorthPreapprovalSubmitter(
     accessToken: tokens.accessToken,
     fetcher: scopedFetcher,
     ledgerUrl: network.ledgerUrl,
+    result: "transaction",
   });
   return async (request: FiveNorthPreapprovalProposalRequest) => {
     readFiveNorthPreapprovalProposalBinding(request);

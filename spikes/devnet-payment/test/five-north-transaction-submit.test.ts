@@ -9,6 +9,7 @@ const ledgerUrl = "https://ledger.example.test";
 function submitter(
   fetcher: typeof fetch,
   accessToken = vi.fn(async () => "token"),
+  result: "completion" | "transaction" = "transaction",
 ) {
   return {
     accessToken,
@@ -16,6 +17,7 @@ function submitter(
       accessToken,
       fetcher,
       ledgerUrl,
+      result,
     }),
   };
 }
@@ -76,6 +78,24 @@ describe("Five North transaction submitter", () => {
     await expect(setup.submit({ commands: [] })).rejects.not.toThrow("hidden");
   });
 
+  it("classifies bounded plain-text rejection details without exposing them", async () => {
+    const fetcher = vi.fn<typeof fetch>(
+      async () =>
+        new Response(
+          "The actAs command authorization failed for private-party-detail",
+          { status: 400 },
+        ),
+    );
+    const setup = submitter(fetcher);
+
+    await expect(setup.submit({ commands: [] })).rejects.toThrow(
+      "HTTP 400 (AUTHORIZATION_REJECTED)",
+    );
+    await expect(setup.submit({ commands: [] })).rejects.not.toThrow(
+      "private-party-detail",
+    );
+  });
+
   it.each([408, 429, 500, 502, 503, 504])(
     "classifies HTTP %i as an ambiguous submission outcome",
     async (status) => {
@@ -129,6 +149,32 @@ describe("Five North transaction submitter", () => {
     );
     expect(init).toMatchObject({ method: "POST", redirect: "error" });
     expect(init?.signal).toBeInstanceOf(AbortSignal);
+    expect(JSON.parse(String(init?.body))).toEqual({ commands });
+  });
+
+  it("uses the minimal submit-and-wait contract for completion reconciliation", async () => {
+    const fetcher = vi.fn<typeof fetch>(async () =>
+      Response.json({
+        completionOffset: 42,
+        updateId: `1220${"a".repeat(64)}`,
+      }),
+    );
+    const setup = submitter(
+      fetcher,
+      vi.fn(async () => "token"),
+      "completion",
+    );
+    const commands = {
+      actAs: ["sotto-payer::1220participant"],
+      commandId: "sotto-capability",
+      commands: [{ CreateCommand: { createArguments: {}, templateId: "#x" } }],
+    };
+
+    await expect(setup.submit(commands)).resolves.toMatchObject({
+      completionOffset: 42,
+    });
+    const [url, init] = fetcher.mock.calls[0]!;
+    expect(url).toBe(`${ledgerUrl}/v2/commands/submit-and-wait`);
     expect(JSON.parse(String(init?.body))).toEqual(commands);
   });
 });
