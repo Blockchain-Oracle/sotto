@@ -22,11 +22,13 @@ function response(transaction: Uint8Array): Uint8Array {
 }
 
 async function observation() {
-  const { intent, holdings, registry } = await purchaseCommandInputs();
+  const { intent, holdings, packageSelection, registry } =
+    await purchaseCommandInputs();
   const request = buildBoundedPurchasePrepareRequest(
     intent,
     holdings,
     registry,
+    packageSelection,
   );
   const transaction = preparedPurchaseBytes(intent, request);
   return {

@@ -17,10 +17,6 @@ export function registerCommandPreferenceContractCases(): void {
 
     afterEach(() => vi.useRealTimers());
 
-    it("marks the unimplemented command preference boundary", () => {
-      throw new Error("COMMAND_PREFERENCE_NOT_IMPLEMENTED");
-    });
-
     it("submits the exact non-empty unique lexical committed package IDs", async () => {
       const selection = createPackageSelectionFixture(
         undefined,

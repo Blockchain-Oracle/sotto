@@ -14,9 +14,15 @@ export const HOLDING_INTERFACE_ID = `${HOLDING_INTERFACE_PACKAGE_ID}:Splice.Api.
 export const HOLDING_TEMPLATE_ID = `${HOLDING_TEMPLATE_PACKAGE_ID}:Splice.Amulet:Amulet`;
 
 export function authenticatedPurchaseIntent() {
-  return readBoundedPurchaseLedgerIntent(
-    commitBoundedPurchase(createPurchaseInput()),
-  );
+  return authenticatedPurchaseInputs().intent;
+}
+
+export function authenticatedPurchaseInputs() {
+  const input = createPurchaseInput();
+  return {
+    intent: readBoundedPurchaseLedgerIntent(commitBoundedPurchase(input)),
+    packageSelection: input.packageSelection,
+  };
 }
 
 export function holdingEntry(

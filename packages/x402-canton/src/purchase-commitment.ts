@@ -1,6 +1,7 @@
 import type { HttpRequestCommitment } from "./request-binding.js";
 import type { PaymentRequiredObservation } from "./payment-observation.js";
 import type { AuthenticatedPackagePreferenceProjection } from "./package-preference-observation.js";
+import { bindBoundedPurchasePackageSelectionAuthority } from "./purchase-package-selection-authority.js";
 import {
   APPROVED_BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_ID,
   BOUNDED_PURCHASE_CAPABILITY_TEMPLATE,
@@ -15,7 +16,6 @@ import {
   validateBoundedPurchaseInput,
 } from "./purchase-commitment-validation.js";
 import { sha256Hex } from "./purchase-commitment-primitives.js";
-
 export const PURCHASE_COMMITMENT_VERSION = "sotto-purchase-v3" as const;
 export const PURCHASE_ATTEMPT_VERSION = "sotto-purchase-attempt-v3" as const;
 export {
@@ -25,9 +25,8 @@ export {
   RESOURCE_BINDING_VERSION,
   SOTTO_CONTROL_PACKAGE_ID,
   TOKEN_TRANSFER_FACTORY_INTERFACE_ID,
+  type PurchaseCapabilitySnapshot,
 };
-
-export type { PurchaseCapabilitySnapshot };
 
 export type BoundedPurchaseCommitmentInput = Readonly<{
   authorizationInstanceId: string;
@@ -181,6 +180,12 @@ export function commitBoundedPurchase(
     requestCommitment: input.binding.commitment,
     version: PURCHASE_COMMITMENT_VERSION,
   });
+  bindBoundedPurchasePackageSelectionAuthority(
+    result,
+    result.commitment,
+    packageSelection,
+    input.packageSelection,
+  );
   authenticPurchaseResults.set(result, {
     attemptId: result.attemptId,
     bodyHash: result.bodyHash,

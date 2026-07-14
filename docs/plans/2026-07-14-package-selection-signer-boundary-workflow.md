@@ -163,7 +163,7 @@ max_iterations: 1
 
 verify: sh -c 'PATH=/Users/abu/.local/share/mise/installs/node/24.18.0/bin:$PATH pnpm vitest run packages/x402-canton/test/bounded-purchase-command.test.ts packages/x402-canton/test/bounded-purchase-command-security.test.ts > /tmp/sotto-command-preference-red.log 2>&1; status=$?; cat /tmp/sotto-command-preference-red.log; test "$status" -ne 0 && rg -q "COMMAND_PREFERENCE_NOT_IMPLEMENTED" /tmp/sotto-command-preference-red.log'
 
-- [ ] **Step 15: Submit the exact non-empty package preference**
+- [x] **Step 15: Submit the exact non-empty package preference**
 
 action: Extend bounded command types and construction so the prepare request carries the exact committed lexical package-ID list and freshness is rechecked immediately before construction; integrate the same claimed projection into `prepare-only-purchase.ts` before holdings, registry, and preparation.
 

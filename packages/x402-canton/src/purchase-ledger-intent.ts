@@ -1,10 +1,14 @@
-import type {
-  APPROVED_BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_ID,
-  BoundedPurchaseCommitment,
-  FIVE_NORTH_TRANSFER_FACTORY_CREATION_TEMPLATE_ID,
-  PURCHASE_COMMITMENT_VERSION,
-  TOKEN_TRANSFER_FACTORY_INTERFACE_ID,
+import {
+  type BoundedPurchaseCommitment,
+  type APPROVED_BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_ID,
+  type FIVE_NORTH_TRANSFER_FACTORY_CREATION_TEMPLATE_ID,
+  type PURCHASE_COMMITMENT_VERSION,
+  type TOKEN_TRANSFER_FACTORY_INTERFACE_ID,
 } from "./purchase-commitment.js";
+import {
+  readBoundedPurchasePackageSelectionAuthority,
+  type BoundedPurchasePackageSelectionAuthority,
+} from "./purchase-package-selection-authority.js";
 import type { BoundedPurchasePackageSelection } from "./purchase-ledger-package-selection.js";
 import { projectBoundedPurchaseLedgerIntent } from "./purchase-ledger-intent-validation.js";
 
@@ -59,9 +63,14 @@ export type BoundedPurchaseLedgerIntent = Readonly<{
   packageSelection: BoundedPurchasePackageSelection;
 }>;
 
+type AuthenticLedgerIntentState = Readonly<{
+  intent: BoundedPurchaseLedgerIntent;
+  packageSelectionAuthority: BoundedPurchasePackageSelectionAuthority;
+}>;
+
 const authenticLedgerIntents = new WeakMap<
   object,
-  BoundedPurchaseLedgerIntent
+  AuthenticLedgerIntentState
 >();
 
 function freezeIntent(
@@ -80,8 +89,16 @@ function freezeIntent(
 export function readBoundedPurchaseLedgerIntent(
   commitment: BoundedPurchaseCommitment,
 ): BoundedPurchaseLedgerIntent {
+  const packageSelectionAuthority =
+    readBoundedPurchasePackageSelectionAuthority(commitment);
   const intent = freezeIntent(projectBoundedPurchaseLedgerIntent(commitment));
-  authenticLedgerIntents.set(intent, intent);
+  if (
+    JSON.stringify(intent.packageSelection) !==
+    JSON.stringify(packageSelectionAuthority.canonical)
+  ) {
+    throw new Error("bounded purchase package authority is inconsistent");
+  }
+  authenticLedgerIntents.set(intent, { intent, packageSelectionAuthority });
   return intent;
 }
 
@@ -92,9 +109,18 @@ export function readAuthenticatedBoundedPurchaseLedgerIntent(
   if (typeof intent !== "object" || intent === null) {
     throw new Error("bounded purchase Ledger intent is not authenticated");
   }
-  const authenticated = authenticLedgerIntents.get(intent);
-  if (authenticated === undefined) {
+  const state = authenticLedgerIntents.get(intent);
+  if (state === undefined) {
     throw new Error("bounded purchase Ledger intent is not authenticated");
   }
-  return authenticated;
+  return state.intent;
+}
+
+/** @internal Command construction only. */
+export function readBoundedPurchaseCommandPackageAuthority(
+  intent: unknown,
+): BoundedPurchasePackageSelectionAuthority {
+  readAuthenticatedBoundedPurchaseLedgerIntent(intent);
+  return authenticLedgerIntents.get(intent as object)!
+    .packageSelectionAuthority;
 }

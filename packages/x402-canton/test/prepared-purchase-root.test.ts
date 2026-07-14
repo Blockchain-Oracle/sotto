@@ -46,11 +46,13 @@ function choiceField(exercise: Exercise, label: string): Value {
 async function expectRootRejection(
   mutate: (prepared: PreparedPurchaseFixture) => void,
 ): Promise<void> {
-  const { intent, holdings, registry } = await purchaseCommandInputs();
+  const { intent, holdings, packageSelection, registry } =
+    await purchaseCommandInputs();
   const request = buildBoundedPurchasePrepareRequest(
     intent,
     holdings,
     registry,
+    packageSelection,
   );
   const transaction = preparedPurchaseBytes(intent, request, mutate);
   const observe = createPreparedPurchaseObserver(async () =>

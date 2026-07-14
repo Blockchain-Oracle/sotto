@@ -1,5 +1,6 @@
 import type { StrictJsonObject } from "./strict-json-value.js";
 import type { ValidatedDisclosedContract } from "./purchase-holding-types.js";
+import type { BoundedPackageIdSelectionPreference } from "./bounded-purchase-command-preference.js";
 
 export type BoundedPurchaseChoiceArgument = Readonly<{
   attemptId: `sha256:${string}`;
@@ -33,7 +34,7 @@ export type BoundedPurchasePrepareRequest = Readonly<{
   readAs: readonly [];
   disclosedContracts: readonly ValidatedDisclosedContract[];
   synchronizerId: string;
-  packageIdSelectionPreference: readonly [];
+  packageIdSelectionPreference: BoundedPackageIdSelectionPreference;
   verboseHashing: false;
   prefetchContractKeys: readonly [];
   maxRecordTime: string;

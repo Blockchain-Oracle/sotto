@@ -32,7 +32,8 @@ describe("bounded Purchase command security", () => {
   });
 
   it("coalesces only byte-identical disclosure duplicates", async () => {
-    const { intent, holdings } = await purchaseExecutionInputs();
+    const { intent, holdings, packageSelection } =
+      await purchaseExecutionInputs();
     const holding = readPurchaseHoldingObservation(holdings, intent);
     const registry = await createTransferFactoryObserver(async () =>
       responseBytes(
@@ -52,6 +53,7 @@ describe("bounded Purchase command security", () => {
       intent,
       holdings,
       registry,
+      packageSelection,
     );
     expect(request.disclosedContracts).toHaveLength(2);
     expect(
@@ -62,7 +64,8 @@ describe("bounded Purchase command security", () => {
   });
 
   it("rejects conflicting disclosure duplicates before claiming either input", async () => {
-    const { intent, holdings } = await purchaseExecutionInputs();
+    const { intent, holdings, packageSelection } =
+      await purchaseExecutionInputs();
     const holding = readPurchaseHoldingObservation(holdings, intent);
     const conflict = {
       ...holding.disclosedContracts[0]!,
@@ -80,7 +83,12 @@ describe("bounded Purchase command security", () => {
     )(intent, holdings);
 
     expect(() =>
-      buildBoundedPurchasePrepareRequest(intent, holdings, registry),
+      buildBoundedPurchasePrepareRequest(
+        intent,
+        holdings,
+        registry,
+        packageSelection,
+      ),
     ).toThrow("conflicting");
     expect(() =>
       readPurchaseHoldingObservation(holdings, intent),
@@ -91,7 +99,8 @@ describe("bounded Purchase command security", () => {
   });
 
   it("supports the official zero-registry-disclosure response", async () => {
-    const { intent, holdings } = await purchaseExecutionInputs();
+    const { intent, holdings, packageSelection } =
+      await purchaseExecutionInputs();
     const registry = await createTransferFactoryObserver(async () =>
       responseBytes(
         factoryResponse(intent, {
@@ -104,13 +113,18 @@ describe("bounded Purchase command security", () => {
     )(intent, holdings);
 
     expect(
-      buildBoundedPurchasePrepareRequest(intent, holdings, registry)
-        .disclosedContracts,
+      buildBoundedPurchasePrepareRequest(
+        intent,
+        holdings,
+        registry,
+        packageSelection,
+      ).disclosedContracts,
     ).toHaveLength(1);
   });
 
   it("uses byte-ordinal disclosure ordering", async () => {
-    const { intent, holdings } = await purchaseExecutionInputs("00holding-ä");
+    const { intent, holdings, packageSelection } =
+      await purchaseExecutionInputs("00holding-ä");
     const registry = await createTransferFactoryObserver(async () =>
       responseBytes(
         factoryResponse(intent, {
@@ -134,6 +148,7 @@ describe("bounded Purchase command security", () => {
         intent,
         holdings,
         registry,
+        packageSelection,
       ).disclosedContracts.map(({ contractId }) => contractId),
     ).toEqual(["00holding-z", "00holding-ä"]);
   });
@@ -146,11 +161,13 @@ describe("bounded Purchase command security", () => {
       first.intent,
       first.holdings,
       first.registry,
+      first.packageSelection,
     );
     const secondRequest = buildBoundedPurchasePrepareRequest(
       second.intent,
       second.holdings,
       second.registry,
+      second.packageSelection,
     );
 
     expect(secondRequest).toEqual(firstRequest);
@@ -168,6 +185,7 @@ describe("bounded Purchase command security", () => {
         first.intent,
         first.holdings,
         first.registry,
+        first.packageSelection,
       ),
     ).toThrow("already claimed");
     expect(() =>
@@ -181,6 +199,7 @@ describe("bounded Purchase command security", () => {
         second.intent,
         second.holdings,
         second.registry,
+        second.packageSelection,
       ),
     ).toThrow("already claimed");
   });

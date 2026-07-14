@@ -38,11 +38,13 @@ async function observeMutatedBytes(
     prepared: PreparedPurchaseFixture,
   ) => Uint8Array = (bytes) => bytes,
 ) {
-  const { intent, holdings, registry } = await purchaseCommandInputs();
+  const { intent, holdings, packageSelection, registry } =
+    await purchaseCommandInputs();
   const request = buildBoundedPurchasePrepareRequest(
     intent,
     holdings,
     registry,
+    packageSelection,
   );
   let fixture: PreparedPurchaseFixture | undefined;
   const bytes = preparedPurchaseBytes(intent, request, (prepared) => {
@@ -114,11 +116,13 @@ describe("prepared Purchase semantic gate", () => {
       },
     ],
   ])("rejects a mismatched %s", async (_label, mutate) => {
-    const { intent, holdings, registry } = await purchaseCommandInputs();
+    const { intent, holdings, packageSelection, registry } =
+      await purchaseCommandInputs();
     const request = buildBoundedPurchasePrepareRequest(
       intent,
       holdings,
       registry,
+      packageSelection,
     );
     const transaction = preparedPurchaseBytes(intent, request, mutate);
     const observe = createPreparedPurchaseObserver(async () =>
@@ -173,11 +177,13 @@ describe("prepared Purchase semantic gate", () => {
       },
     ],
   ])("rejects a graph with %s", async (_label, mutate) => {
-    const { intent, holdings, registry } = await purchaseCommandInputs();
+    const { intent, holdings, packageSelection, registry } =
+      await purchaseCommandInputs();
     const request = buildBoundedPurchasePrepareRequest(
       intent,
       holdings,
       registry,
+      packageSelection,
     );
     const transaction = preparedPurchaseBytes(intent, request, mutate);
     const observe = createPreparedPurchaseObserver(async () =>

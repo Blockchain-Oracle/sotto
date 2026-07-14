@@ -17,7 +17,8 @@ describe("bounded Purchase prepare request", () => {
   });
 
   it("builds exactly one agent-authorized Purchase root", async () => {
-    const { intent, holdings, registry } = await purchaseCommandInputs();
+    const { intent, holdings, packageSelection, registry } =
+      await purchaseCommandInputs();
     const holdingState = readPurchaseHoldingObservation(holdings, intent);
     const registryState = readTransferFactoryObservation(
       registry,
@@ -29,6 +30,7 @@ describe("bounded Purchase prepare request", () => {
       intent,
       holdings,
       registry,
+      packageSelection,
     );
 
     expect(Object.keys(request).sort()).toEqual([
@@ -45,7 +47,7 @@ describe("bounded Purchase prepare request", () => {
       "verboseHashing",
     ]);
     expect(request.commandId).toBe(
-      `sotto-purchase-v2-${intent.purchaseCommitment.slice(7)}`,
+      `sotto-purchase-v3-${intent.purchaseCommitment.slice(7)}`,
     );
     expect(request.actAs).toEqual([intent.capability.agentParty]);
     expect(request.readAs).toEqual([]);
@@ -78,18 +80,22 @@ describe("bounded Purchase prepare request", () => {
     expect(request.synchronizerId).toBe(intent.challenge.synchronizerId);
     expect(request.maxRecordTime).toBe(intent.challenge.executeBefore);
     expect(request.hashingSchemeVersion).toBe("HASHING_SCHEME_VERSION_V2");
-    expect(request.packageIdSelectionPreference).toEqual([]);
+    expect(request.packageIdSelectionPreference).toEqual(
+      intent.packageSelection.packageIds,
+    );
     expect(request.prefetchContractKeys).toEqual([]);
     expect(request.verboseHashing).toBe(false);
   });
 
   it("merges and ordinally sorts authenticated disclosures", async () => {
-    const { intent, holdings, registry } = await purchaseCommandInputs();
+    const { intent, holdings, packageSelection, registry } =
+      await purchaseCommandInputs();
 
     const request = buildBoundedPurchasePrepareRequest(
       intent,
       holdings,
       registry,
+      packageSelection,
     );
 
     expect(
@@ -98,11 +104,13 @@ describe("bounded Purchase prepare request", () => {
   });
 
   it("omits every unsupported or caller-controlled prepare field", async () => {
-    const { intent, holdings, registry } = await purchaseCommandInputs();
+    const { intent, holdings, packageSelection, registry } =
+      await purchaseCommandInputs();
     const request = buildBoundedPurchasePrepareRequest(
       intent,
       holdings,
       registry,
+      packageSelection,
     );
     const serialized = JSON.stringify(request);
 
@@ -121,32 +129,51 @@ describe("bounded Purchase prepare request", () => {
   });
 
   it("rejects structural clones without consuming authentic inputs", async () => {
-    const { intent, holdings, registry } = await purchaseCommandInputs();
+    const { intent, holdings, packageSelection, registry } =
+      await purchaseCommandInputs();
 
     expect(() =>
       buildBoundedPurchasePrepareRequest(
         structuredClone(intent),
         holdings,
         registry,
+        packageSelection,
       ),
     ).toThrow("not authenticated");
     expect(() =>
-      buildBoundedPurchasePrepareRequest(intent, { ...holdings }, registry),
+      buildBoundedPurchasePrepareRequest(
+        intent,
+        { ...holdings },
+        registry,
+        packageSelection,
+      ),
     ).toThrow("not authenticated");
     expect(() =>
-      buildBoundedPurchasePrepareRequest(intent, holdings, { ...registry }),
+      buildBoundedPurchasePrepareRequest(
+        intent,
+        holdings,
+        { ...registry },
+        packageSelection,
+      ),
     ).toThrow("not authenticated");
     expect(() =>
-      buildBoundedPurchasePrepareRequest(intent, holdings, registry),
+      buildBoundedPurchasePrepareRequest(
+        intent,
+        holdings,
+        registry,
+        packageSelection,
+      ),
     ).not.toThrow();
   });
 
   it("deep-freezes the request and consumes both observations once", async () => {
-    const { intent, holdings, registry } = await purchaseCommandInputs();
+    const { intent, holdings, packageSelection, registry } =
+      await purchaseCommandInputs();
     const request = buildBoundedPurchasePrepareRequest(
       intent,
       holdings,
       registry,
+      packageSelection,
     );
 
     expect(Object.isFrozen(request)).toBe(true);
@@ -154,7 +181,12 @@ describe("bounded Purchase prepare request", () => {
     expect(Object.isFrozen(request.commands[0]!.ExerciseCommand)).toBe(true);
     expect(Object.isFrozen(request.disclosedContracts)).toBe(true);
     expect(() =>
-      buildBoundedPurchasePrepareRequest(intent, holdings, registry),
+      buildBoundedPurchasePrepareRequest(
+        intent,
+        holdings,
+        registry,
+        packageSelection,
+      ),
     ).toThrow("already claimed");
   });
 });

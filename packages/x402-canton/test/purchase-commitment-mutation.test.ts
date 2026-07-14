@@ -4,6 +4,7 @@ import { PAYER, createPurchaseInput } from "./purchase-commitment.fixtures.js";
 import { validLedgerMutations } from "./purchase-commitment-ledger-mutations.js";
 import { validRequestMutations } from "./purchase-commitment-request-mutations.js";
 import { registerPurchaseV3MutationCases } from "./purchase-commitment-v3-mutation.cases.js";
+import { createPackageSelectionFixture } from "./purchase-package-selection.fixtures.js";
 
 describe("sotto-purchase-v3 mutation coverage", () => {
   it.each([...validRequestMutations, ...validLedgerMutations])(
@@ -11,7 +12,16 @@ describe("sotto-purchase-v3 mutation coverage", () => {
     (_name, mutate) => {
       const input = createPurchaseInput();
       const baseline = commitBoundedPurchase(input);
-      const changed = commitBoundedPurchase(mutate(input));
+      const candidate = mutate(input);
+      const changed = commitBoundedPurchase(
+        candidate.packageSelection === input.packageSelection
+          ? {
+              ...candidate,
+              packageSelection:
+                createPackageSelectionFixture() as unknown as typeof candidate.packageSelection,
+            }
+          : candidate,
+      );
       expect(changed.commitment).not.toBe(baseline.commitment);
       expect(changed.attemptId).not.toBe(baseline.attemptId);
     },
@@ -23,6 +33,8 @@ describe("sotto-purchase-v3 mutation coverage", () => {
     const second = commitBoundedPurchase({
       ...input,
       authorizationInstanceId: "authorization-8",
+      packageSelection:
+        createPackageSelectionFixture() as unknown as typeof input.packageSelection,
     });
     expect(second.attemptId).not.toBe(first.attemptId);
     expect(second.commitment).not.toBe(first.commitment);

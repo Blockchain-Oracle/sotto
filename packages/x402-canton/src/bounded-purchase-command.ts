@@ -1,4 +1,10 @@
 import { atomicToDamlDecimal } from "./purchase-commitment-primitives.js";
+import {
+  claimBoundedPurchaseCommandPreference,
+  readBoundedPurchaseCommandPreference,
+  type BoundedPackageIdSelectionPreference,
+} from "./bounded-purchase-command-preference.js";
+import type { AuthenticatedPackagePreferenceProjection } from "./package-preference-observation-types.js";
 import { mergePurchaseDisclosures } from "./purchase-disclosure-merge.js";
 import {
   claimPurchaseHoldingObservation,
@@ -57,6 +63,7 @@ function constructRequest(
   holdingIds: readonly string[],
   context: BoundedPurchaseChoiceArgument["extraArgs"]["context"],
   disclosedContracts: BoundedPurchasePrepareRequest["disclosedContracts"],
+  packageIdSelectionPreference: BoundedPackageIdSelectionPreference,
 ): BoundedPurchasePrepareRequest {
   const exercise = Object.freeze({
     templateId: intent.capability.templateId,
@@ -65,13 +72,13 @@ function constructRequest(
     choiceArgument: purchaseChoiceArgument(intent, holdingIds, context),
   });
   return Object.freeze({
-    commandId: `sotto-purchase-v2-${intent.purchaseCommitment.slice(7)}`,
+    commandId: `sotto-purchase-v3-${intent.purchaseCommitment.slice(7)}`,
     commands: Object.freeze([Object.freeze({ ExerciseCommand: exercise })]),
     actAs: Object.freeze([intent.capability.agentParty]) as readonly [string],
     readAs: Object.freeze([]) as readonly [],
     disclosedContracts,
     synchronizerId: intent.challenge.synchronizerId,
-    packageIdSelectionPreference: Object.freeze([]) as readonly [],
+    packageIdSelectionPreference,
     verboseHashing: false,
     prefetchContractKeys: Object.freeze([]) as readonly [],
     maxRecordTime: intent.challenge.executeBefore,
@@ -83,8 +90,13 @@ export function buildBoundedPurchasePrepareRequest(
   candidateIntent: BoundedPurchaseLedgerIntent,
   holdingObservation: PurchaseHoldingObservation,
   registryObservation: TransferFactoryObservation,
+  packageSelection: AuthenticatedPackagePreferenceProjection,
 ): BoundedPurchasePrepareRequest {
   const intent = readAuthenticatedBoundedPurchaseLedgerIntent(candidateIntent);
+  const packageIdSelectionPreference = readBoundedPurchaseCommandPreference(
+    intent,
+    packageSelection,
+  );
   const holdings = readPurchaseHoldingObservation(holdingObservation, intent);
   const registry = readTransferFactoryObservation(
     registryObservation,
@@ -100,7 +112,9 @@ export function buildBoundedPurchasePrepareRequest(
     holdings.contractIds,
     registry.choiceContextData,
     disclosures,
+    packageIdSelectionPreference,
   );
+  claimBoundedPurchaseCommandPreference(intent, packageSelection);
   claimTransferFactoryObservation(
     registryObservation,
     intent,

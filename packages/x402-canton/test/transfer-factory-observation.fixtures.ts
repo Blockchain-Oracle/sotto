@@ -6,7 +6,7 @@ import {
   type TransferFactoryObservation,
 } from "../src/index.js";
 import {
-  authenticatedPurchaseIntent,
+  authenticatedPurchaseInputs,
   holdingEntry,
   holdingReader,
 } from "./purchase-holding-observation.fixtures.js";
@@ -17,12 +17,15 @@ export async function purchaseExecutionInputs(
 ): Promise<{
   intent: BoundedPurchaseLedgerIntent;
   holdings: PurchaseHoldingObservation;
+  packageSelection: ReturnType<
+    typeof authenticatedPurchaseInputs
+  >["packageSelection"];
 }> {
-  const intent = authenticatedPurchaseIntent();
+  const { intent, packageSelection } = authenticatedPurchaseInputs();
   const holdings = await createPurchaseHoldingObserver(
     holdingReader([holdingEntry(contractId, amount)]),
   )(intent);
-  return { intent, holdings };
+  return { intent, holdings, packageSelection };
 }
 
 export function factoryDisclosure(intent: BoundedPurchaseLedgerIntent) {
@@ -58,11 +61,15 @@ export function responseBytes(value: unknown): Uint8Array {
 export async function purchaseCommandInputs(): Promise<{
   intent: BoundedPurchaseLedgerIntent;
   holdings: PurchaseHoldingObservation;
+  packageSelection: ReturnType<
+    typeof authenticatedPurchaseInputs
+  >["packageSelection"];
   registry: TransferFactoryObservation;
 }> {
-  const { intent, holdings } = await purchaseExecutionInputs();
+  const { intent, holdings, packageSelection } =
+    await purchaseExecutionInputs();
   const registry = await createTransferFactoryObserver(async () =>
     responseBytes(factoryResponse(intent)),
   )(intent, holdings);
-  return { intent, holdings, registry };
+  return { intent, holdings, packageSelection, registry };
 }

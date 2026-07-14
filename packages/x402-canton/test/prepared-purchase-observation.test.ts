@@ -45,11 +45,13 @@ describe("prepared Purchase observation envelope", () => {
   });
 
   it("uses one authenticated bounded prepare request and emits redacted evidence", async () => {
-    const { intent, holdings, registry } = await purchaseCommandInputs();
+    const { intent, holdings, packageSelection, registry } =
+      await purchaseCommandInputs();
     const prepareRequest = buildBoundedPurchasePrepareRequest(
       intent,
       holdings,
       registry,
+      packageSelection,
     );
     const transaction = preparedPurchaseBytes(intent, prepareRequest);
     const reader = vi.fn(async () => response(transaction));
@@ -85,11 +87,13 @@ describe("prepared Purchase observation envelope", () => {
       true,
     ],
   ])("accepts a response that %s", async (_name, optional, includeOptional) => {
-    const { intent, holdings, registry } = await purchaseCommandInputs();
+    const { intent, holdings, packageSelection, registry } =
+      await purchaseCommandInputs();
     const prepareRequest = buildBoundedPurchasePrepareRequest(
       intent,
       holdings,
       registry,
+      packageSelection,
     );
     const transaction = preparedPurchaseBytes(intent, prepareRequest);
     const observe = createPreparedPurchaseObserver(async () =>
@@ -134,11 +138,13 @@ describe("prepared Purchase observation envelope", () => {
     ["missing hashing scheme", { hashingSchemeVersion: undefined }],
     ["unknown field", { unexpected: true }],
   ])("rejects a %s", async (_name, mutation) => {
-    const { intent, holdings, registry } = await purchaseCommandInputs();
+    const { intent, holdings, packageSelection, registry } =
+      await purchaseCommandInputs();
     const prepareRequest = buildBoundedPurchasePrepareRequest(
       intent,
       holdings,
       registry,
+      packageSelection,
     );
     const transaction = preparedPurchaseBytes(intent, prepareRequest);
     const observe = createPreparedPurchaseObserver(async () =>
@@ -149,11 +155,13 @@ describe("prepared Purchase observation envelope", () => {
   });
 
   it("rejects forged or cloned prepare requests before transport", async () => {
-    const { intent, holdings, registry } = await purchaseCommandInputs();
+    const { intent, holdings, packageSelection, registry } =
+      await purchaseCommandInputs();
     const prepareRequest = buildBoundedPurchasePrepareRequest(
       intent,
       holdings,
       registry,
+      packageSelection,
     );
     const transaction = preparedPurchaseBytes(intent, prepareRequest);
     const reader = vi.fn(async () => response(transaction));
@@ -166,11 +174,13 @@ describe("prepared Purchase observation envelope", () => {
   });
 
   it("rejects a prepare acquisition that exceeds its time budget", async () => {
-    const { intent, holdings, registry } = await purchaseCommandInputs();
+    const { intent, holdings, packageSelection, registry } =
+      await purchaseCommandInputs();
     const prepareRequest = buildBoundedPurchasePrepareRequest(
       intent,
       holdings,
       registry,
+      packageSelection,
     );
     const transaction = preparedPurchaseBytes(intent, prepareRequest);
     const observe = createPreparedPurchaseObserver(async () => {
@@ -182,11 +192,13 @@ describe("prepared Purchase observation envelope", () => {
   });
 
   it("rejects a prepare acquisition after its execution window", async () => {
-    const { intent, holdings, registry } = await purchaseCommandInputs();
+    const { intent, holdings, packageSelection, registry } =
+      await purchaseCommandInputs();
     const prepareRequest = buildBoundedPurchasePrepareRequest(
       intent,
       holdings,
       registry,
+      packageSelection,
     );
     const transaction = preparedPurchaseBytes(intent, prepareRequest);
     const observe = createPreparedPurchaseObserver(async () => {
@@ -198,11 +210,13 @@ describe("prepared Purchase observation envelope", () => {
   });
 
   it("rejects a material clock rollback during preparation", async () => {
-    const { intent, holdings, registry } = await purchaseCommandInputs();
+    const { intent, holdings, packageSelection, registry } =
+      await purchaseCommandInputs();
     const prepareRequest = buildBoundedPurchasePrepareRequest(
       intent,
       holdings,
       registry,
+      packageSelection,
     );
     const transaction = preparedPurchaseBytes(intent, prepareRequest);
     const observe = createPreparedPurchaseObserver(async () => {

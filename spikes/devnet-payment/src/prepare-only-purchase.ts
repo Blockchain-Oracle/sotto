@@ -140,6 +140,7 @@ export async function prepareOnlyPurchase(
       intent,
       holdings,
       registry,
+      packageSelection,
     );
     const prepared = await createPreparedPurchaseObserver(readers.prepared)(
       prepareRequest,

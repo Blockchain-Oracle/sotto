@@ -107,11 +107,13 @@ describe("prepared Purchase structural limits", () => {
       },
     ],
   ])("rejects an over-depth %s", async (_label, mutate) => {
-    const { intent, holdings, registry } = await purchaseCommandInputs();
+    const { intent, holdings, packageSelection, registry } =
+      await purchaseCommandInputs();
     const request = buildBoundedPurchasePrepareRequest(
       intent,
       holdings,
       registry,
+      packageSelection,
     );
     const transaction = preparedPurchaseBytes(intent, request, mutate);
     const observe = createPreparedPurchaseObserver(async () =>
@@ -122,11 +124,13 @@ describe("prepared Purchase structural limits", () => {
   });
 
   it("rejects an excessive aggregate value count", async () => {
-    const { intent, holdings, registry } = await purchaseCommandInputs();
+    const { intent, holdings, packageSelection, registry } =
+      await purchaseCommandInputs();
     const request = buildBoundedPurchasePrepareRequest(
       intent,
       holdings,
       registry,
+      packageSelection,
     );
     const transaction = preparedPurchaseBytes(intent, request, (prepared) => {
       setExtraContext(prepared, {

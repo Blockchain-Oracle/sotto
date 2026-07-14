@@ -7,6 +7,7 @@ import {
   commandPreferenceInputs,
   executionFor,
 } from "./bounded-purchase-command-preference.fixtures.js";
+import { registerCommandAuthoritySecurityCases } from "./bounded-purchase-command-authority-security.cases.js";
 import { createPackageSelectionFixture } from "./purchase-package-selection.fixtures.js";
 
 type CandidateFactory = (
@@ -58,6 +59,7 @@ const invalidCandidates: ReadonlyArray<readonly [string, CandidateFactory]> = [
 ];
 
 export function registerCommandPreferenceSecurityCases(): void {
+  registerCommandAuthoritySecurityCases();
   describe("exact command package preference security RED contract", () => {
     beforeEach(() => {
       vi.useFakeTimers({ now: new Date("2026-07-13T10:00:01.000Z") });
