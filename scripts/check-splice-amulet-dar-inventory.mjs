@@ -276,7 +276,6 @@ function main() {
       `${artifact.filename}: packages=${entries.length} manifest=${artifact.manifestSha256}\n`,
     );
   }
-
   const sottoEntries = inspectDar(
     SOTTO_DAR,
     basename(SOTTO_DAR),
