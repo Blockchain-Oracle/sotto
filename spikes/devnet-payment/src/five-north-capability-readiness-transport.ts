@@ -17,35 +17,19 @@ import {
   parseFiveNorthJson,
   readFiveNorthResponse,
 } from "./five-north-response.js";
-import { createFiveNorthTokenProvider } from "./five-north-token.js";
+import {
+  createFiveNorthTokenProvider,
+  readFiveNorthAccessTokenSubject,
+  type FiveNorthTokenProvider,
+} from "./five-north-token.js";
 
 type Fetcher = (url: string, init?: RequestInit) => Promise<Response>;
-type Options = Readonly<{ fetcher?: Fetcher; signal: AbortSignal }>;
+type Options = Readonly<{
+  fetcher?: Fetcher;
+  signal: AbortSignal;
+  tokenProvider?: FiveNorthTokenProvider;
+}>;
 const JSON_RESPONSE_LIMIT = 2_000_000;
-
-function userIdFromToken(token: string): string {
-  const parts = token.split(".");
-  if (parts.length !== 3 || parts[1] === undefined) {
-    throw new Error("Five North access token is not a JWT");
-  }
-  let payload: unknown;
-  try {
-    payload = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8"));
-  } catch {
-    throw new Error("Five North access token payload is invalid");
-  }
-  if (
-    typeof payload !== "object" ||
-    payload === null ||
-    Array.isArray(payload) ||
-    typeof (payload as Record<string, unknown>).sub !== "string" ||
-    (payload as { sub: string }).sub.trim() === "" ||
-    Buffer.byteLength((payload as { sub: string }).sub, "utf8") > 256
-  ) {
-    throw new Error("Five North access token subject is invalid");
-  }
-  return (payload as { sub: string }).sub;
-}
 
 export function createFiveNorthCapabilityReadinessTransport(
   candidateNetwork: SpikeConfig["network"],
@@ -57,7 +41,9 @@ export function createFiveNorthCapabilityReadinessTransport(
   if (!(scopeSignal instanceof AbortSignal)) {
     throw new Error("Five North authority scope requires an AbortSignal");
   }
-  const tokens = createFiveNorthTokenProvider(network, fetcher, scopeSignal);
+  const tokens =
+    options.tokenProvider ??
+    createFiveNorthTokenProvider(network, fetcher, scopeSignal);
 
   function requireActive(): void {
     if (scopeSignal.aborted) {
@@ -131,7 +117,7 @@ export function createFiveNorthCapabilityReadinessTransport(
   return Object.freeze({
     readAmuletRules: () => validatorJson(network),
     readAuthenticatedUserId: async () =>
-      userIdFromToken(await tokens.accessToken()),
+      readFiveNorthAccessTokenSubject(await tokens.accessToken()),
     readPackagePresence: async (candidatePackageId) => {
       const packageId = requireLedgerPackageId(candidatePackageId);
       const response = await authorizedResponse(

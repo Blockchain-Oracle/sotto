@@ -10,6 +10,11 @@ import {
 type Fetcher = (url: string, init?: RequestInit) => Promise<Response>;
 type CachedToken = Readonly<{ refreshAt: number; value: string }>;
 
+export type FiveNorthTokenProvider = Readonly<{
+  accessToken: () => Promise<string>;
+  invalidate: () => void;
+}>;
+
 const TOKEN_RESPONSE_LIMIT = 65_536;
 const MAX_TOKEN_BYTES = 16_384;
 const MAX_TOKEN_LIFETIME_SECONDS = 86_400;
@@ -27,6 +32,38 @@ function requireAccessToken(value: unknown): string {
   return value;
 }
 
+export function readFiveNorthAccessTokenSubject(token: string): string {
+  requireAccessToken(token);
+  const parts = token.split(".");
+  if (parts.length !== 3 || parts[1] === undefined) {
+    throw new Error("Five North access token is not a JWT");
+  }
+  let payload: unknown;
+  try {
+    payload = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8"));
+  } catch {
+    throw new Error("Five North access token payload is invalid");
+  }
+  if (
+    typeof payload !== "object" ||
+    payload === null ||
+    Array.isArray(payload) ||
+    typeof (payload as Record<string, unknown>).sub !== "string"
+  ) {
+    throw new Error("Five North access token subject is invalid");
+  }
+  const subject = (payload as { sub: string }).sub;
+  if (
+    subject === "" ||
+    subject.trim() !== subject ||
+    Buffer.byteLength(subject, "utf8") > 255 ||
+    hasControlCharacter(subject)
+  ) {
+    throw new Error("Five North access token subject is invalid");
+  }
+  return subject;
+}
+
 function requireLifetime(value: unknown): number {
   if (
     !Number.isSafeInteger(value) ||
@@ -42,10 +79,7 @@ export function createFiveNorthTokenProvider(
   network: ApprovedFiveNorthPrepareNetwork,
   fetcher: Fetcher,
   scopeSignal: AbortSignal,
-): Readonly<{
-  accessToken: () => Promise<string>;
-  invalidate: () => void;
-}> {
+): FiveNorthTokenProvider {
   let cached: CachedToken | undefined;
   let inFlight: Promise<CachedToken> | undefined;
 

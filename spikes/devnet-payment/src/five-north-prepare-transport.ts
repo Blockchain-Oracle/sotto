@@ -24,12 +24,17 @@ import {
   parseFiveNorthJson,
   readFiveNorthResponse,
 } from "./five-north-response.js";
-import { createFiveNorthTokenProvider } from "./five-north-token.js";
+import {
+  createFiveNorthTokenProvider,
+  readFiveNorthAccessTokenSubject,
+  type FiveNorthTokenProvider,
+} from "./five-north-token.js";
 
 type Fetcher = (url: string, init?: RequestInit) => Promise<Response>;
 type TransportOptions = Readonly<{
   fetcher?: Fetcher;
   signal: AbortSignal;
+  tokenProvider?: FiveNorthTokenProvider;
 }>;
 
 const JSON_RESPONSE_LIMIT = 2_000_000;
@@ -65,31 +70,12 @@ export function createFiveNorthPrepareTransport(
   if (!(scopeSignal instanceof AbortSignal)) {
     throw new Error("Five North prepare scope requires an AbortSignal");
   }
-  const tokens = createFiveNorthTokenProvider(network, fetcher, scopeSignal);
+  const tokens =
+    options.tokenProvider ??
+    createFiveNorthTokenProvider(network, fetcher, scopeSignal);
 
   async function authenticatedUserId(): Promise<string> {
-    const token = await tokens.accessToken();
-    const parts = token.split(".");
-    if (parts.length !== 3 || parts[1] === undefined) {
-      throw new Error("Five North access token is not a JWT");
-    }
-    let payload: unknown;
-    try {
-      payload = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8"));
-    } catch {
-      throw new Error("Five North access token payload is invalid");
-    }
-    if (
-      typeof payload !== "object" ||
-      payload === null ||
-      Array.isArray(payload) ||
-      typeof (payload as Record<string, unknown>).sub !== "string" ||
-      (payload as { sub: string }).sub.trim() === "" ||
-      Buffer.byteLength((payload as { sub: string }).sub, "utf8") > 256
-    ) {
-      throw new Error("Five North access token subject is invalid");
-    }
-    return (payload as { sub: string }).sub;
+    return readFiveNorthAccessTokenSubject(await tokens.accessToken());
   }
 
   function requireActive(): void {

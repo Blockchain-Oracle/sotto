@@ -3,54 +3,23 @@ import type {
   PackagePreferenceReadRequest,
 } from "@sotto/x402-canton";
 import type { SpikeConfig } from "./config.js";
-import {
-  approveFiveNorthPrepareNetwork,
-  hasControlCharacter,
-} from "./five-north-prepare-network.js";
+import { approveFiveNorthPrepareNetwork } from "./five-north-prepare-network.js";
 import { parseFiveNorthPackagePreferenceResponse } from "./five-north-package-preference-response.js";
 import { buildFiveNorthPackagePreferenceBody } from "./five-north-package-preference-validation.js";
 import {
   parseFiveNorthJson,
   readFiveNorthResponse,
 } from "./five-north-response.js";
-import { createFiveNorthTokenProvider } from "./five-north-token.js";
+import {
+  createFiveNorthTokenProvider,
+  readFiveNorthAccessTokenSubject,
+} from "./five-north-token.js";
 
 type Fetcher = (url: string, init?: RequestInit) => Promise<Response>;
 type Options = Readonly<{ fetcher?: Fetcher; signal: AbortSignal }>;
 const PREFERENCE_PATH = "/v2/interactive-submission/preferred-packages";
 const PREFERENCE_TIMEOUT_MS = 10_000;
 const PREFERENCE_RESPONSE_LIMIT = 65_536;
-
-function tokenSubject(token: string): string {
-  const parts = token.split(".");
-  if (parts.length !== 3 || parts[1] === undefined) {
-    throw new Error("Five North access token is not a JWT");
-  }
-  let payload: unknown;
-  try {
-    payload = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8"));
-  } catch {
-    throw new Error("Five North access token payload is invalid");
-  }
-  if (
-    typeof payload !== "object" ||
-    payload === null ||
-    Array.isArray(payload) ||
-    typeof (payload as Record<string, unknown>).sub !== "string"
-  ) {
-    throw new Error("Five North access token subject is invalid");
-  }
-  const subject = (payload as { sub: string }).sub;
-  if (
-    subject === "" ||
-    subject.trim() !== subject ||
-    Buffer.byteLength(subject, "utf8") > 255 ||
-    hasControlCharacter(subject)
-  ) {
-    throw new Error("Five North access token subject is invalid");
-  }
-  return subject;
-}
 
 export function createFiveNorthPackagePreferenceReader(
   candidateNetwork: SpikeConfig["network"],
@@ -77,7 +46,7 @@ export function createFiveNorthPackagePreferenceReader(
     requireActive();
     const token = await tokens.accessToken();
     requireActive();
-    const subject = tokenSubject(token);
+    const subject = readFiveNorthAccessTokenSubject(token);
     authenticatedSubject ??= subject;
     if (subject !== authenticatedSubject) {
       throw new Error("Five North access token subject changed");
