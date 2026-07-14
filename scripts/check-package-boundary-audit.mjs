@@ -47,10 +47,12 @@ for (const required of [
   "[AUDIT:zero-signing=PASS]",
   "[AUDIT:no-live-sign-or-spend=PASS]",
   "[AUDIT:prepare-only-observation=NOT_PROVEN_CAPABILITY]",
+  "[AUDIT:capability-cardinality=ZERO]",
   "[AUDIT:production=NO_GO]",
   "58 package IDs, 48 names",
   "914 TypeScript tests",
   "CAPABILITY_COUNT",
+  "Capability diagnostic classification: ZERO.",
   "Provider requests: zero",
   "No environment value, token, Party ID",
 ]) {
