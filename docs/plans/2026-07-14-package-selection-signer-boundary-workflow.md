@@ -23,7 +23,7 @@ verify: PATH=/Users/abu/.local/share/mise/installs/node/24.18.0/bin:$PATH node s
 
 gate: human
 
-- [ ] **Step 2: Define the package-closure schema RED contract**
+- [x] **Step 2: Define the package-closure schema RED contract**
 
 action: Add `packages/x402-canton/test/package-preference-closure.test.ts` with one deliberate `PACKAGE_CLOSURE_NOT_IMPLEMENTED` failure covering `sotto-package-closure-v1`, source/DAR pins, separate selectable names and graph package references, canonical UTF-8 sorting, repeated manifest names, and rejection of empty, duplicate, conflicting, unpinned, or non-reproducible entries.
 
