@@ -1,5 +1,6 @@
 import { isAbsolute } from "node:path";
 import type { BoundedCapabilityBootstrapRequest } from "@sotto/x402-canton";
+import type { CapabilityBootstrapCompletionQuery } from "./capability-bootstrap-completion.js";
 import {
   recoverJournaledCapabilityBootstrap,
   startJournaledCapabilityBootstrap,
@@ -16,6 +17,7 @@ import {
 
 const ROUTES = [
   "acs",
+  "completion",
   "ledgerEnd",
   "package",
   "preferred",
@@ -26,6 +28,7 @@ const ROUTES = [
 ] as const;
 const ROUTE_LIMITS = Object.freeze({
   acs: 3,
+  completion: 32,
   ledgerEnd: 4,
   package: 1,
   preferred: 1,
@@ -38,6 +41,7 @@ const TRANSPORT_KEYS = [
   "factory",
   "networkCallCounts",
   "readActiveCapabilities",
+  "readCompletionPage",
   "readLedgerEndOffset",
   "readiness",
   "submit",
@@ -51,6 +55,9 @@ type StartTransport = Readonly<{
   factory: FactoryReaders;
   networkCallCounts: () => NetworkCounts;
   readActiveCapabilities: () => Promise<unknown>;
+  readCompletionPage: (
+    query: CapabilityBootstrapCompletionQuery,
+  ) => Promise<unknown>;
   readLedgerEndOffset: () => Promise<number>;
   readiness: FiveNorthCapabilityReadinessReader;
   submit: (request: BoundedCapabilityBootstrapRequest) => Promise<unknown>;

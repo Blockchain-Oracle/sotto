@@ -64,13 +64,28 @@ describe("Five North capability bootstrap transport", () => {
   it("shares one token and exposes only bootstrap operations", async () => {
     const { createFiveNorthCapabilityBootstrapTransport } =
       await moduleUnderTest();
-    const fetcher = vi.fn(async (url: string) => {
+    const fetcher = vi.fn(async (url: string, init?: RequestInit) => {
       if (url === network.tokenUrl) return tokenResponse();
       if (url.endsWith("/v2/state/ledger-end")) {
         return Response.json({ offset: 42 });
       }
       if (url.endsWith("/v2/state/active-contracts")) {
         return Response.json([]);
+      }
+      if (url.includes("/v2/commands/completions?")) {
+        expect(init?.method).toBe("POST");
+        expect(JSON.parse(String(init?.body))).toEqual({
+          beginExclusive: 41,
+          parties: [payer],
+          userId: "ledger-user-6",
+        });
+        return Response.json([
+          {
+            completionResponse: {
+              OffsetCheckpoint: { value: { offset: 42 } },
+            },
+          },
+        ]);
       }
       return Response.json({ transaction: {} });
     });
@@ -85,6 +100,20 @@ describe("Five North capability bootstrap transport", () => {
     );
     await expect(transport.readActiveCapabilities()).resolves.toEqual([]);
     await expect(transport.readLedgerEndOffset()).resolves.toBe(42);
+    await expect(
+      transport.readCompletionPage({
+        beginExclusive: 41,
+        limit: 1_000,
+        parties: [payer],
+        userId: "ledger-user-6",
+      }),
+    ).resolves.toEqual([
+      {
+        completionResponse: {
+          OffsetCheckpoint: { value: { offset: 42 } },
+        },
+      },
+    ]);
     await expect(transport.submit(request())).resolves.toEqual({
       transaction: {},
     });
@@ -96,6 +125,7 @@ describe("Five North capability bootstrap transport", () => {
       "factory",
       "networkCallCounts",
       "readActiveCapabilities",
+      "readCompletionPage",
       "readLedgerEndOffset",
       "readiness",
       "submit",

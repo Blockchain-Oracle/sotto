@@ -30,6 +30,7 @@ export {
 
 export type FixtureNetworkCounts = Record<
   | "acs"
+  | "completion"
   | "ledgerEnd"
   | "package"
   | "preferred"
@@ -42,6 +43,7 @@ export type FixtureNetworkCounts = Record<
 
 export const EMPTY_COUNTS: Readonly<FixtureNetworkCounts> = Object.freeze({
   acs: 0,
+  completion: 0,
   ledgerEnd: 0,
   package: 0,
   preferred: 0,
@@ -88,6 +90,10 @@ export function createLiveBootstrapFixture(
       counts.ledgerEnd += 1;
       counts.acs += 1;
       return active;
+    },
+    readCompletionPage: async () => {
+      counts.completion += 1;
+      return [];
     },
     readLedgerEndOffset: async () => {
       counts.ledgerEnd += 1;

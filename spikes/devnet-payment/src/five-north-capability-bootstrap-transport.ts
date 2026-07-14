@@ -5,6 +5,10 @@ import {
   type BoundedCapabilityBootstrapRequest,
 } from "@sotto/x402-canton";
 import type { SpikeConfig } from "./config.js";
+import {
+  CAPABILITY_COMPLETION_QUERY,
+  createFiveNorthCapabilityCompletionPageReader,
+} from "./five-north-capability-completion-transport.js";
 import { createFiveNorthCapabilityReadinessTransport } from "./five-north-capability-readiness-transport.js";
 import { approveFiveNorthPrepareNetwork } from "./five-north-prepare-network.js";
 import { createFiveNorthPrepareTransport } from "./five-north-prepare-transport.js";
@@ -19,6 +23,7 @@ type Fetcher = (url: string, init?: RequestInit) => Promise<Response>;
 type Options = Readonly<{ fetcher?: Fetcher; signal: AbortSignal }>;
 type Route =
   | "acs"
+  | "completion"
   | "ledgerEnd"
   | "package"
   | "preferred"
@@ -29,6 +34,7 @@ type Route =
 
 const LIMITS: Readonly<Record<Route, number>> = Object.freeze({
   acs: 3,
+  completion: 32,
   ledgerEnd: 3,
   package: 1,
   preferred: 1,
@@ -41,6 +47,10 @@ const LIMITS: Readonly<Record<Route, number>> = Object.freeze({
 function allowedRoutes(network: SpikeConfig["network"]): Map<string, Route> {
   return new Map([
     [`POST ${network.tokenUrl}`, "token"],
+    [
+      `POST ${network.ledgerUrl}${CAPABILITY_COMPLETION_QUERY}`,
+      "completion",
+    ],
     [`GET ${network.validatorUrl}/v0/scan-proxy/amulet-rules`, "rules"],
     [
       `GET ${network.ledgerUrl}/v2/packages/${SOTTO_CONTROL_PACKAGE_ID}`,
@@ -75,6 +85,7 @@ export function createFiveNorthCapabilityBootstrapNetworkGuard(
   const routes = allowedRoutes(network);
   const counts: Record<Route, number> = {
     acs: 0,
+    completion: 0,
     ledgerEnd: 0,
     package: 0,
     preferred: 0,
@@ -140,6 +151,13 @@ export function createFiveNorthCapabilityBootstrapTransport(
   );
   const prepare = createFiveNorthPrepareTransport(network, payerParty, shared);
   const purchase = createFiveNorthPurchaseReaders(prepare, payerParty);
+  const readCompletionPage = createFiveNorthCapabilityCompletionPageReader({
+    fetcher: guarded,
+    ledgerUrl: network.ledgerUrl,
+    payerParty,
+    signal: options.signal,
+    tokenProvider: tokens,
+  });
   let submissionClaimed = false;
   const submitTransaction = async (
     request: BoundedCapabilityBootstrapRequest,
@@ -175,6 +193,7 @@ export function createFiveNorthCapabilityBootstrapTransport(
       prepare.readCapabilityContracts(
         ledgerOffset(await prepare.readLedgerEnd()),
       ),
+    readCompletionPage,
     readLedgerEndOffset: async () =>
       ledgerOffset(await prepare.readLedgerEnd()),
     readiness,

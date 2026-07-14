@@ -73,6 +73,7 @@ describe("Five North live capability bootstrap", () => {
     });
     expect(result.networkCallCounts).toEqual({
       acs: 3,
+      completion: 0,
       ledgerEnd: 4,
       package: 1,
       preferred: 1,
