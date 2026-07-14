@@ -33,3 +33,4 @@ test-results/
 .turbo/
 .cache/
 tmp/
+.hotl/
