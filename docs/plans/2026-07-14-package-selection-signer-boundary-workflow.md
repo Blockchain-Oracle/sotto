@@ -43,7 +43,7 @@ max_iterations: 3
 
 verify: PATH=/Users/abu/.local/share/mise/installs/node/24.18.0/bin:$PATH pnpm vitest run packages/x402-canton/test/package-preference-closure.test.ts
 
-- [ ] **Step 4: Reproduce the concrete reviewed manifests**
+- [x] **Step 4: Reproduce the concrete reviewed manifests**
 
 action: Add a bounded digest-pinned Splice DAR inventory verifier under `scripts/` plus `spikes/devnet-payment/src/five-north-package-preference-manifest.ts`; reuse the exact 35-entry Sotto inventory and reproduce the three official Splice artifact manifests, two selectable names, 58-ID union, and recorded hashes without committing DARs.
 
