@@ -127,7 +127,7 @@ function evidence(
   return Object.freeze({
     schema: "sotto-five-north-capability-bootstrap-evidence-v1" as const,
     status: "OBSERVED" as const,
-    compatibleClassification: "ONE" as const,
+    resolvedCompatibleClassification: "ONE" as const,
     ledgerMutationObserved: true,
     mode,
     networkCallCounts: counts,

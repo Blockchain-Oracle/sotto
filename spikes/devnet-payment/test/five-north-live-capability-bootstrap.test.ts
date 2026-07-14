@@ -65,7 +65,7 @@ describe("Five North live capability bootstrap", () => {
     expect(fixture.journalWasDurable).toBe(true);
     expect(fixture.submittedRequest).toEqual(exactBootstrapRequest());
     expect(result).toMatchObject({
-      compatibleClassification: "ONE",
+      resolvedCompatibleClassification: "ONE",
       ledgerMutationObserved: true,
       mode: "start",
       responseAcsAgreement: "MATCHED",
@@ -149,7 +149,7 @@ describe("Five North live capability bootstrap", () => {
     });
 
     expect(result).toMatchObject({
-      compatibleClassification: "ONE",
+      resolvedCompatibleClassification: "ONE",
       mode: "recover",
       responseAcsAgreement: "NOT_OBSERVED",
       status: "OBSERVED",
@@ -160,6 +160,33 @@ describe("Five North live capability bootstrap", () => {
       acs: 1,
       ledgerEnd: 1,
     });
+  });
+
+  it("labels terminal recovery as durable resolution without a current ACS claim", async () => {
+    const {
+      recoverFiveNorthLiveCapabilityBootstrap,
+      startFiveNorthLiveCapabilityBootstrap,
+    } = await moduleUnderTest();
+    const fixture = createLiveBootstrapFixture(workspaceRoot);
+    await startFiveNorthLiveCapabilityBootstrap(
+      input(workspaceRoot, fixture.transport),
+    );
+    const readActiveCapabilities = vi.fn(async () => []);
+
+    const result = await recoverFiveNorthLiveCapabilityBootstrap({
+      networkCallCounts: () => EMPTY_COUNTS,
+      readActiveCapabilities,
+      sourceCommit: SOURCE_COMMIT,
+      workspaceRoot,
+    });
+
+    expect(readActiveCapabilities).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
+      resolvedCompatibleClassification: "ONE",
+      status: "OBSERVED",
+    });
+    expect(result).not.toHaveProperty("compatibleClassification");
+    expect(result.networkCallCounts).toEqual(EMPTY_COUNTS);
   });
 
   it("rejects any prohibited live port before observation", async () => {
