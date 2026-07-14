@@ -126,13 +126,21 @@ describe("capability bootstrap completion security", () => {
     ).rejects.toThrow(/authority/iu);
   });
 
-  it("rejects a non-advancing page and a backwards captured end", async () => {
-    await expect(read({ end: 42, pages: [[]] }).result).rejects.toThrow(
-      /advance/iu,
-    );
+  it("retries a transient idle page and rejects a backwards captured end", async () => {
+    const idle = read({ end: 42, pages: [[], [checkpointEntry(42)]] });
+    await expect(idle.result).resolves.toMatchObject({
+      classification: "ABSENT_COMPLETE",
+    });
+    expect(idle.readPage).toHaveBeenCalledTimes(2);
     await expect(
       read({ beginExclusive: 42, end: 41, pages: [] }).result,
     ).rejects.toThrow(/backwards/iu);
+  });
+
+  it("rejects a completion stream that never advances", async () => {
+    await expect(
+      read({ end: 42, pages: Array.from({ length: 32 }, () => []) }).result,
+    ).rejects.toThrow(/page limit/iu);
   });
 
   it("caps pagination before an unbounded scan", async () => {

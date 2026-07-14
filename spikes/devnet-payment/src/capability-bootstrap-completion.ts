@@ -141,7 +141,7 @@ export async function readCapabilityBootstrapCompletion(
       match = value;
     }
     if (pageOffset <= reachedOffset) {
-      throw new Error("completion page did not advance");
+      continue;
     }
     reachedOffset = pageOffset;
   }
