@@ -121,7 +121,7 @@ verify: sh -c 'PATH=/Users/abu/.local/share/mise/installs/node/24.18.0/bin:$PATH
 
 gate: human
 
-- [ ] **Step 11: Implement the Five North preference reader**
+- [x] **Step 11: Implement the Five North preference reader**
 
 action: Add `spikes/devnet-payment/src/five-north-package-preference.ts`; extend the bounded request and transport modules so the purchase path acquires only the reviewed closure for the exact parties, synchronizer, and execution window with bounded code-only failures and independent artifact metadata verification.
 

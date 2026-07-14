@@ -1,5 +1,6 @@
 import { beforeAll } from "vitest";
 import { registerFiveNorthPreferenceContractCases } from "./five-north-package-preference-contract.cases.js";
+import { registerFiveNorthPreferenceHardeningCases } from "./five-north-package-preference-hardening.cases.js";
 import type { SubjectModule } from "./five-north-package-preference.harness.js";
 import { registerFiveNorthPreferenceSecurityCases } from "./five-north-package-preference-security.cases.js";
 
@@ -25,4 +26,5 @@ beforeAll(async () => {
 const getSubject = (): SubjectModule => subject;
 
 registerFiveNorthPreferenceContractCases(getSubject);
+registerFiveNorthPreferenceHardeningCases(getSubject);
 registerFiveNorthPreferenceSecurityCases(getSubject);
