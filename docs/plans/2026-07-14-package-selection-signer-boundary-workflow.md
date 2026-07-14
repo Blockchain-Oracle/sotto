@@ -255,7 +255,7 @@ max_iterations: 3
 
 verify: test -z "$(git status --porcelain --untracked-files=all | grep -v '^?? \.hotl/')" && PATH=/Users/abu/.local/share/mise/installs/node/24.18.0/bin:/Users/abu/.dpm/bin:$PATH JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home pnpm verify
 
-- [ ] **Step 24: Verify current HEAD from a clean non-shared clone**
+- [x] **Step 24: Verify current HEAD from a clean non-shared clone**
 
 action: Clone current HEAD without shared objects into a temporary directory, install from the frozen lockfile, run the complete pinned gate without `.env.local`, `.thoughts`, prior dependencies, or build output, then remove the temporary directory.
 
