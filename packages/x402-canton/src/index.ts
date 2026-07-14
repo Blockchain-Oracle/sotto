@@ -25,6 +25,7 @@ export {
 } from "./payment-observation.js";
 export * from "./payment-requirement.js";
 export * from "./package-preference-closure.js";
+export * from "./package-preference-observation.js";
 export * from "./package-reference-verifier.js";
 export {
   createPurchaseCapabilityObserver,

@@ -85,7 +85,7 @@ verify: sh -c 'PATH=/Users/abu/.local/share/mise/installs/node/24.18.0/bin:$PATH
 
 gate: human
 
-- [ ] **Step 8: Implement authenticated preference observation scope**
+- [x] **Step 8: Implement authenticated preference observation scope**
 
 action: Add `packages/x402-canton/src/package-preference-observation.ts` and types that accept only independently verified references for the exact two-name requirements, synchronizer, vetting time, conservative parties, acquisition start, and authenticated subject, then expose an immutable projection.
 
