@@ -40,7 +40,7 @@ describe("Five North bootstrap factory live probe", () => {
       maximumTotalDebitAtomic: "3250000000",
       payerParty,
       perCallLimitAtomic: "2500000000",
-      remainingAllowanceAtomic: "10000000000",
+      remainingAllowanceAtomic: "3250000000",
     });
     expect(result).toEqual({
       authenticated: true,

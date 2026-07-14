@@ -1,12 +1,10 @@
-import { commitResourceRoute } from "@sotto/x402-canton";
+import { buildFiveNorthLeastAuthorityCapabilityPolicy } from "./five-north-capability-bootstrap-policy.js";
 import type { FiveNorthBootstrapFactoryObservation } from "./five-north-bootstrap-factory.js";
 import type { FiveNorthCapabilityPolicy } from "./five-north-capability-policy.js";
 import type {
   FiveNorthCapabilityReadinessObservation,
   FiveNorthCapabilityReadinessScope,
 } from "./five-north-capability-readiness.js";
-
-const RESEARCH_LIFETIME_MS = 60 * 60 * 1_000;
 
 type ProbeInput = Readonly<{
   agentParty: string;
@@ -24,25 +22,12 @@ type ProbeInput = Readonly<{
 }>;
 
 function researchPolicy(input: ProbeInput): FiveNorthCapabilityPolicy {
-  if (
-    !Number.isSafeInteger(input.nowMilliseconds) ||
-    input.nowMilliseconds < 0 ||
-    !Number.isSafeInteger(input.nowMilliseconds + RESEARCH_LIFETIME_MS) ||
-    input.nowMilliseconds + RESEARCH_LIFETIME_MS > 8_640_000_000_000_000
-  ) {
-    throw new Error("factory probe clock is invalid");
-  }
-  return Object.freeze({
+  return buildFiveNorthLeastAuthorityCapabilityPolicy({
     agentParty: input.agentParty,
-    allowedRecipient: input.providerParty,
-    allowedResourceHash: commitResourceRoute(input.resourceUrl),
-    expiresAt: new Date(
-      input.nowMilliseconds + RESEARCH_LIFETIME_MS,
-    ).toISOString(),
-    maximumTotalDebitAtomic: "3250000000",
+    nowMilliseconds: input.nowMilliseconds,
     payerParty: input.payerParty,
-    perCallLimitAtomic: "2500000000",
-    remainingAllowanceAtomic: "10000000000",
+    providerParty: input.providerParty,
+    resourceUrl: input.resourceUrl,
   });
 }
 
