@@ -265,7 +265,7 @@ max_iterations: 2
 
 verify: tmpdir="$(mktemp -d)" && trap 'rm -rf "$tmpdir"' EXIT && git clone --no-local . "$tmpdir/repo" && cd "$tmpdir/repo" && PATH=/Users/abu/.local/share/mise/installs/node/24.18.0/bin:/Users/abu/.dpm/bin:$PATH pnpm install --frozen-lockfile && PATH=/Users/abu/.local/share/mise/installs/node/24.18.0/bin:/Users/abu/.dpm/bin:$PATH JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home pnpm verify
 
-- [ ] **Step 25: Perform the pre-observation security review**
+- [x] **Step 25: Perform the pre-observation security review**
 
 action: Add `scripts/check-package-boundary-audit.mjs`, review current HEAD and deterministic evidence for closure exhaustiveness, source and ID/name provenance, package TOCTOU, process-bound branding, ambiguous-outcome refresh, shared-credential bypass, evidence privacy, version migration, zero-signing behavior, and absence of live signing or spending, then record required markers and verdict in `.thoughts/verification/2026-07-14-package-selection-signer-boundary.md`.
 
