@@ -34,6 +34,8 @@
     "spike:preapproval": "tsx spikes/devnet-payment/src/live-provider-preapproval.ts start",
     "spike:preapproval:recover": "tsx spikes/devnet-payment/src/live-provider-preapproval.ts recover",
     "spike:capability:factory": "tsx spikes/devnet-payment/src/live-capability-factory-observation.ts",
+    "spike:capability:start": "tsx spikes/devnet-payment/src/live-capability-bootstrap.ts start",
+    "spike:capability:recover": "tsx spikes/devnet-payment/src/live-capability-bootstrap.ts recover",
     "spike:package": "tsx spikes/devnet-payment/src/live-sotto-control-package.ts",
     "test": "node scripts/build-workspaces.mjs && vitest run",
     "test:unit": "vitest run",
