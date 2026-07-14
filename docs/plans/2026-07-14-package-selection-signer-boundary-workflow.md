@@ -131,7 +131,7 @@ max_iterations: 3
 
 verify: PATH=/Users/abu/.local/share/mise/installs/node/24.18.0/bin:$PATH pnpm vitest run spikes/devnet-payment/test/five-north-package-preference.test.ts spikes/devnet-payment/test/five-north-prepare-transport.test.ts spikes/devnet-payment/test/five-north-purchase-readers.test.ts
 
-- [ ] **Step 12: Define purchase-v3 canonical migration RED tests**
+- [x] **Step 12: Define purchase-v3 canonical migration RED tests**
 
 action: Extend commitment, discriminator, ledger-intent, and mutation tests with one deliberate `PURCHASE_V3_NOT_IMPLEMENTED` failure requiring explicit `sotto-purchase-v3` and `sotto-purchase-attempt-v3`, rejecting v2 at this boundary, binding every closure hash, name, ID, version, party requirement, synchronizer, vetting time, and observation identity, and proving every mutation causes zero downstream prepare or sign calls.
 

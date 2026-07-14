@@ -17,6 +17,7 @@ import {
   replaceBoundRequest,
   routeHash,
 } from "./purchase-commitment.fixtures.js";
+import { registerPurchaseLedgerIntentV3Cases } from "./purchase-ledger-intent-v3.cases.js";
 
 describe("bounded purchase Ledger intent", () => {
   it("projects the complete agent-only Ledger intent", () => {
@@ -116,7 +117,7 @@ describe("bounded purchase Ledger intent", () => {
     ).toThrow("not authenticated");
   });
 
-  it("does not expose canonical bytes, observations, or request material", () => {
+  it("does not expose canonical bytes, raw observations, or request material", () => {
     const bodySecret = "private-body-secret";
     const headerSecret = "private-header-secret";
     const querySecret = "private-query-secret";
@@ -136,7 +137,8 @@ describe("bounded purchase Ledger intent", () => {
 
     expect(serialized).not.toContain("authorization-7");
     expect(serialized).not.toContain("canonicalBytes");
-    expect(serialized).not.toContain("observationId");
+    expect(serialized).not.toContain("paymentObservation");
+    expect(serialized).not.toContain("access_token");
     expect(serialized).not.toContain("created-event-blob");
     expect(serialized).not.toContain(bodySecret);
     expect(serialized).not.toContain(headerSecret);
@@ -163,3 +165,5 @@ describe("bounded purchase Ledger intent", () => {
     }
   });
 });
+
+registerPurchaseLedgerIntentV3Cases();

@@ -3,6 +3,7 @@ import { commitBoundedPurchase } from "../src/index.js";
 import { PAYER, createPurchaseInput } from "./purchase-commitment.fixtures.js";
 import { validLedgerMutations } from "./purchase-commitment-ledger-mutations.js";
 import { validRequestMutations } from "./purchase-commitment-request-mutations.js";
+import { registerPurchaseV3MutationCases } from "./purchase-commitment-v3-mutation.cases.js";
 
 describe("sotto-purchase-v2 mutation coverage", () => {
   it.each([...validRequestMutations, ...validLedgerMutations])(
@@ -34,3 +35,5 @@ describe("sotto-purchase-v2 mutation coverage", () => {
     ).toThrow("fee payer");
   });
 });
+
+registerPurchaseV3MutationCases();

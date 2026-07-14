@@ -4,6 +4,7 @@ import { commitBoundedPurchase } from "../src/purchase-commitment.js";
 import { capturePaymentRequiredBytesForTest } from "../src/payment-observation.js";
 import { captureCapability } from "./purchase-commitment.fixtures.js";
 import { CAPABILITY_TEMPLATE_ID } from "./purchase-commitment.fixtures.js";
+import { registerPurchaseV3VectorCases } from "./purchase-commitment-v3-vector.cases.js";
 
 const resourceUrl = "https://provider.example/paid/weather?units=metric";
 const binding = commitHttpRequest({
@@ -159,3 +160,5 @@ describe("commitBoundedPurchase", () => {
     expect(reordered.commitment).toBe(result.commitment);
   });
 });
+
+registerPurchaseV3VectorCases();

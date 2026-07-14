@@ -6,6 +6,7 @@ import {
   mutateChallenge,
   replaceCapability,
 } from "./purchase-commitment.fixtures.js";
+import { registerPurchaseV3DiscriminatorCases } from "./purchase-commitment-v3-discriminator.cases.js";
 
 type RejectedMutation = (
   input: BoundedPurchaseCommitmentInput,
@@ -79,3 +80,5 @@ describe("sotto-purchase-v2 fixed discriminators", () => {
     );
   });
 });
+
+registerPurchaseV3DiscriminatorCases();
