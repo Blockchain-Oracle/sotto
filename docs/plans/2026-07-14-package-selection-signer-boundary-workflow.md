@@ -33,7 +33,7 @@ max_iterations: 1
 
 verify: sh -c 'PATH=/Users/abu/.local/share/mise/installs/node/24.18.0/bin:$PATH pnpm vitest run packages/x402-canton/test/package-preference-closure.test.ts > /tmp/sotto-package-closure-red.log 2>&1; status=$?; cat /tmp/sotto-package-closure-red.log; test "$status" -ne 0 && rg -q "PACKAGE_CLOSURE_NOT_IMPLEMENTED" /tmp/sotto-package-closure-red.log'
 
-- [ ] **Step 3: Implement canonical package-closure validation**
+- [x] **Step 3: Implement canonical package-closure validation**
 
 action: Add `packages/x402-canton/src/package-preference-closure.ts` and exports that validate, deep-freeze, canonically sort, and hash source pins, selectable package names, and the independently approved package ID/name/version union without assuming manifest names are unique.
 

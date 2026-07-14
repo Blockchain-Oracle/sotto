@@ -24,6 +24,7 @@ export {
   type PaymentRequiredObservation,
 } from "./payment-observation.js";
 export * from "./payment-requirement.js";
+export * from "./package-preference-closure.js";
 export {
   createPurchaseCapabilityObserver,
   MAX_CAPABILITY_OBSERVATION_AGE_MS,

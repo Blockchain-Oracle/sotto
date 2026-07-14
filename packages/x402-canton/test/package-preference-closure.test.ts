@@ -86,8 +86,15 @@ describe("reviewed package-preference closure", () => {
       "sha256:b1ca640a9ab96fe788a1de269595102495d4f5f9954a6bacc460d8975c73aeb3",
     );
     expect(Object.isFrozen(result)).toBe(true);
+    expect(Object.isFrozen(result.artifacts[0])).toBe(true);
     expect(Object.isFrozen(result.artifacts[0]?.packages)).toBe(true);
+    expect(Object.isFrozen(result.artifacts[0]?.packages[0])).toBe(true);
     expect(Object.isFrozen(result.graphPackages[0]?.artifactIds)).toBe(true);
+    const callerBytes = result.canonicalBytes;
+    callerBytes.fill(0);
+    expect(new TextDecoder().decode(result.canonicalBytes)).toContain(
+      '"version":"sotto-package-closure-v1"',
+    );
   });
 
   it.each([
