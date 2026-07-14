@@ -1,4 +1,5 @@
 import { beforeAll } from "vitest";
+import { registerPackagePreferenceAuthorityCases } from "./package-preference-observation-authority.cases.js";
 import type { SubjectModule } from "./package-preference-observation.harness.js";
 import { registerPackagePreferenceLifetimeCases } from "./package-preference-observation-lifetime.cases.js";
 import { registerPackagePreferenceScopeCases } from "./package-preference-observation-scope.cases.js";
@@ -23,4 +24,5 @@ beforeAll(async () => {
 const getSubject = (): SubjectModule => subject;
 
 registerPackagePreferenceScopeCases(getSubject);
+registerPackagePreferenceAuthorityCases(getSubject);
 registerPackagePreferenceLifetimeCases(getSubject);

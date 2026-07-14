@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import {
   buildReviewedPackagePreferenceClosure,
   type ReviewedPackagePreferenceClosure,
@@ -29,6 +30,27 @@ export function oneNameClosure(): ReviewedPackagePreferenceClosure {
     packageIds.has(packageId),
   );
   input.selectablePackageNames = ["sotto-control"];
+  return buildReviewedPackagePreferenceClosure(input);
+}
+
+export function historicalSiblingClosure(): ReviewedPackagePreferenceClosure {
+  const input = validClosureInput();
+  const packageId = "e".repeat(64);
+  const name = "splice-amulet";
+  const version = "0.1.20";
+  input.artifacts.push({
+    id: "splice-amulet-0.1.20",
+    name,
+    version,
+    sourcePinId: "splice",
+    darSha256: "f".repeat(64),
+    mainPackageId: packageId,
+    manifestSha256: createHash("sha256")
+      .update(`${name}\t${version}\t${packageId}\n`)
+      .digest("hex"),
+    packages: [{ packageId, name, version }],
+  });
+  input.graphPackages.push({ packageId, name, version });
   return buildReviewedPackagePreferenceClosure(input);
 }
 

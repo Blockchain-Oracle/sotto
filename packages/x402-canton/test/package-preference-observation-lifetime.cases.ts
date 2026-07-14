@@ -73,6 +73,13 @@ export function registerPackagePreferenceLifetimeCases(
           authenticatedSubject: SUBJECT,
         });
         expect(Object.isFrozen(projection)).toBe(true);
+        expect(Object.isFrozen(projection.references)).toBe(true);
+        expect(Object.isFrozen(projection.references[0])).toBe(true);
+        expect(Object.isFrozen(projection.references[0]?.artifactIds)).toBe(
+          true,
+        );
+        expect(Object.isFrozen(projection.packageIds)).toBe(true);
+        expect(Object.isFrozen(projection.parties)).toBe(true);
         expect(() =>
           getSubject().claimPackagePreferenceObservation(
             observation,
