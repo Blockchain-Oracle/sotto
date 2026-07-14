@@ -83,6 +83,8 @@ max_iterations: 1
 
 verify: sh -c 'PATH=/Users/abu/.local/share/mise/installs/node/24.18.0/bin:$PATH pnpm vitest run packages/x402-canton/test/package-preference-observation.test.ts > /tmp/sotto-package-observation-red.log 2>&1; status=$?; cat /tmp/sotto-package-observation-red.log; test "$status" -ne 0 && rg -q "PACKAGE_OBSERVATION_NOT_IMPLEMENTED" /tmp/sotto-package-observation-red.log'
 
+gate: human
+
 - [ ] **Step 8: Implement authenticated preference observation scope**
 
 action: Add `packages/x402-canton/src/package-preference-observation.ts` and types that accept only independently verified references for the exact two-name requirements, synchronizer, vetting time, conservative parties, acquisition start, and authenticated subject, then expose an immutable projection.
@@ -92,6 +94,8 @@ loop: until observation scope tests pass
 max_iterations: 3
 
 verify: PATH=/Users/abu/.local/share/mise/installs/node/24.18.0/bin:$PATH pnpm vitest run packages/x402-canton/test/package-preference-observation.test.ts -t 'scope|metadata|ordering|mutation'
+
+gate: human
 
 - [ ] **Step 9: Implement observation freshness and one-use claiming**
 
@@ -103,6 +107,8 @@ max_iterations: 3
 
 verify: PATH=/Users/abu/.local/share/mise/installs/node/24.18.0/bin:$PATH pnpm vitest run packages/x402-canton/test/package-preference-observation.test.ts
 
+gate: human
+
 - [ ] **Step 10: Define Five North preference transport RED tests**
 
 action: Add `spikes/devnet-payment/test/five-north-package-preference.test.ts` requiring one bounded authenticated POST to the configured preferred-packages endpoint, exact two-name requirements, exact conservative parties, synchronizer and vetting time, bounded response parsing, stable token subject, no ambiguous retry, and no submit/sign surface.
@@ -112,6 +118,8 @@ loop: false
 max_iterations: 1
 
 verify: sh -c 'PATH=/Users/abu/.local/share/mise/installs/node/24.18.0/bin:$PATH pnpm vitest run spikes/devnet-payment/test/five-north-package-preference.test.ts > /tmp/sotto-five-north-preference-red.log 2>&1; status=$?; cat /tmp/sotto-five-north-preference-red.log; test "$status" -ne 0 && rg -q "FIVE_NORTH_PACKAGE_PREFERENCE_NOT_IMPLEMENTED" /tmp/sotto-five-north-preference-red.log'
+
+gate: human
 
 - [ ] **Step 11: Implement the Five North preference reader**
 
@@ -142,6 +150,8 @@ loop: until commitment and intent tests pass
 max_iterations: 3
 
 verify: PATH=/Users/abu/.local/share/mise/installs/node/24.18.0/bin:$PATH pnpm vitest run packages/x402-canton/test/purchase-commitment-vector.test.ts packages/x402-canton/test/purchase-commitment-mutation.test.ts packages/x402-canton/test/purchase-commitment-security.test.ts packages/x402-canton/test/purchase-ledger-intent.test.ts packages/x402-canton/test/purchase-ledger-intent-projection.test.ts
+
+gate: human
 
 - [ ] **Step 14: Define exact command preference RED tests**
 
