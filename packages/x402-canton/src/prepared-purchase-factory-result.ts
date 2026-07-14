@@ -1,10 +1,10 @@
 import type { Exercise } from "@canton-network/core-ledger-proto";
 import {
   preparedContractIds,
-  preparedEmptyMetadata,
   preparedIdentifier,
   preparedRecord,
 } from "./prepared-purchase-effect-values.js";
+import { preparedEmptyMetadata } from "./prepared-purchase-metadata-values.js";
 import type { BoundedPurchaseLedgerIntent } from "./purchase-ledger-intent.js";
 
 export type PreparedFactoryResult = Readonly<{

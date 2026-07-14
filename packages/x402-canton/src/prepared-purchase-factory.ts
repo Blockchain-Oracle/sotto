@@ -2,13 +2,15 @@ import type { Exercise } from "@canton-network/core-ledger-proto";
 import type { BoundedPurchasePrepareRequest } from "./bounded-purchase-command-types.js";
 import {
   preparedContractIds,
-  preparedEmptyMetadata,
-  preparedExtraArgs,
   preparedIdentifier,
   preparedParties,
   preparedRecord,
   preparedScalar,
 } from "./prepared-purchase-effect-values.js";
+import {
+  preparedEmptyMetadata,
+  preparedExtraArgs,
+} from "./prepared-purchase-metadata-values.js";
 import {
   type PreparedFactoryResult,
   validatePreparedFactoryResult,

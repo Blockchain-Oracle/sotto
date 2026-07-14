@@ -11,6 +11,7 @@ import type {
 } from "./prepared-purchase-graph-types.js";
 import { HOLDING_INTERFACE_ID } from "./purchase-holding-types.js";
 import type { BoundedPurchaseLedgerIntent } from "./purchase-ledger-intent.js";
+import { validatePreparedPurchaseSottoEffects } from "./prepared-purchase-sotto-effects.js";
 
 function selectedPackageId(
   intent: BoundedPurchaseLedgerIntent,
@@ -150,7 +151,12 @@ export function validatePreparedPurchaseEffects(
   request: BoundedPurchasePrepareRequest,
 ): void {
   const factory = requireFactoryNode(graph);
-  validatePreparedPurchaseFactory(factory.exercise, intent, request);
+  const factoryResult = validatePreparedPurchaseFactory(
+    factory.exercise,
+    intent,
+    request,
+  );
   validateArchiveEffects(graph, factory, intent, request);
   validateFactoryCreates(graph, factory, intent);
+  validatePreparedPurchaseSottoEffects(graph, intent, request, factoryResult);
 }

@@ -193,7 +193,7 @@ max_iterations: 3
 
 verify: PATH=/Users/abu/.local/share/mise/installs/node/24.18.0/bin:$PATH pnpm vitest run packages/x402-canton/test/prepared-purchase-root.test.ts packages/x402-canton/test/prepared-purchase-graph.test.ts packages/x402-canton/test/prepared-purchase-effects.test.ts -t 'root|factory|exercise|package|actor|result'
 
-- [ ] **Step 18: Implement capability and context effect verification**
+- [x] **Step 18: Implement capability and context effect verification**
 
 action: Verify exactly one replacement capability and PurchaseContext, exact root-result contract references, revision increment, allowance debit, challenge/request/purchase commitments, parties, and rejection of missing, duplicate, extra, or mutated Sotto creates.
 

@@ -1,4 +1,8 @@
-import type { Exercise, Value } from "@canton-network/core-ledger-proto";
+import type {
+  Create,
+  Exercise,
+  Value,
+} from "@canton-network/core-ledger-proto";
 import { expect } from "vitest";
 import {
   buildBoundedPurchasePrepareRequest,
@@ -51,6 +55,36 @@ export function factoryRecordField(
   )?.value;
   if (result === undefined) throw new Error(`missing field ${label}`);
   return result;
+}
+
+export function preparedCreate(
+  prepared: PreparedPurchaseFixture,
+  nodeId: string,
+): Create {
+  const wrapper = prepared.transaction?.nodes.find(
+    (candidate) => candidate.nodeId === nodeId,
+  )?.versionedNode;
+  if (wrapper?.oneofKind !== "v1") throw new Error(`missing node ${nodeId}`);
+  const node = wrapper.v1.nodeType;
+  if (node.oneofKind !== "create") {
+    throw new Error(`node ${nodeId} is not a create`);
+  }
+  return node.create;
+}
+
+export function replacePreparedScalar(
+  value: Value,
+  kind:
+    | "text"
+    | "party"
+    | "numeric"
+    | "timestamp"
+    | "int64"
+    | "bool"
+    | "contractId",
+  replacement: string | boolean,
+): void {
+  value.sum = { oneofKind: kind, [kind]: replacement } as Value["sum"];
 }
 
 export async function expectFactoryEffectRejection(

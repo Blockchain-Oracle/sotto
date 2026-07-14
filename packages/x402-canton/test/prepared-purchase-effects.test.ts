@@ -7,6 +7,9 @@ import {
 import { PREPARED_PURCHASE_EFFECT_CIDS } from "./prepared-purchase-effect.fixtures.js";
 import { registerPreparedFactoryEffectCases } from "./prepared-purchase-factory-effects.cases.js";
 import { registerPreparedFactoryResultCases } from "./prepared-purchase-factory-result.cases.js";
+import { registerPreparedCapabilityEffectCases } from "./prepared-purchase-capability-effects.cases.js";
+import { registerPreparedContextEffectCases } from "./prepared-purchase-context-effects.cases.js";
+import { registerPreparedSottoStructureCases } from "./prepared-purchase-sotto-structure.cases.js";
 import {
   rootOnlyPreparedPurchaseBytes,
   validPreparedPurchase,
@@ -48,7 +51,7 @@ describe("prepared Purchase effect baseline", () => {
 
   afterEach(() => vi.useRealTimers());
 
-  it("models the complete synthetic descendant graph and exact results", async () => {
+  it("models the complete capability and context graph with exact results", async () => {
     const { intent, holdings, packageSelection, registry } =
       await purchaseCommandInputs();
     const request = buildBoundedPurchasePrepareRequest(
@@ -135,3 +138,6 @@ describe("prepared Purchase effect baseline", () => {
 
 registerPreparedFactoryEffectCases();
 registerPreparedFactoryResultCases();
+registerPreparedCapabilityEffectCases();
+registerPreparedContextEffectCases();
+registerPreparedSottoStructureCases();
