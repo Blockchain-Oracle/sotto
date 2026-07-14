@@ -89,6 +89,10 @@ export function createLiveBootstrapFixture(
       counts.acs += 1;
       return active;
     },
+    readLedgerEndOffset: async () => {
+      counts.ledgerEnd += 1;
+      return 42;
+    },
     readiness: {
       readAmuletRules: async () => {
         counts.rules += 1;

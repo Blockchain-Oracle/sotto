@@ -12,6 +12,7 @@ import { AmbiguousTransactionSubmissionError } from "../src/five-north-transacti
 
 const now = Date.parse("2026-07-13T19:30:00.000Z");
 const sourceCommit = "a".repeat(40);
+const completionCursor = { readLedgerEndOffset: async () => 41 } as const;
 const input = {
   agentParty: "sotto-policy-agent::1220participant",
   allowedRecipient: "sotto-spike-provider::1220participant",
@@ -85,6 +86,7 @@ describe("journaled capability bootstrap", () => {
     const submit = vi.fn(async () => setup.response);
     const run = () =>
       startJournaledCapabilityBootstrap({
+        ...completionCursor,
         readActiveCapabilities,
         request: setup.request,
         sourceCommit,
@@ -122,6 +124,7 @@ describe("journaled capability bootstrap", () => {
     });
     await expect(
       startJournaledCapabilityBootstrap({
+        ...completionCursor,
         readActiveCapabilities: vi
           .fn()
           .mockResolvedValueOnce([])
@@ -160,6 +163,7 @@ describe("journaled capability bootstrap", () => {
 
     await expect(
       startJournaledCapabilityBootstrap({
+        ...completionCursor,
         readActiveCapabilities: vi
           .fn()
           .mockResolvedValueOnce([])
@@ -188,6 +192,7 @@ describe("journaled capability bootstrap", () => {
 
     await expect(
       startJournaledCapabilityBootstrap({
+        ...completionCursor,
         readActiveCapabilities,
         request: setup.request,
         sourceCommit: "b".repeat(40),
@@ -203,6 +208,7 @@ describe("journaled capability bootstrap", () => {
     const setup = fixture();
     const submit = vi.fn(async () => setup.response);
     await startJournaledCapabilityBootstrap({
+      ...completionCursor,
       readActiveCapabilities: vi
         .fn()
         .mockResolvedValueOnce([])
@@ -240,6 +246,7 @@ describe("journaled capability bootstrap", () => {
     const setup = fixture();
     const submit = vi.fn(async () => setup.response);
     await startJournaledCapabilityBootstrap({
+      ...completionCursor,
       readActiveCapabilities: vi
         .fn()
         .mockResolvedValueOnce([])

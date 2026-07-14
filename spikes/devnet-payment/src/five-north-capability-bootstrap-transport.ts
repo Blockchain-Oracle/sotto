@@ -175,6 +175,8 @@ export function createFiveNorthCapabilityBootstrapTransport(
       prepare.readCapabilityContracts(
         ledgerOffset(await prepare.readLedgerEnd()),
       ),
+    readLedgerEndOffset: async () =>
+      ledgerOffset(await prepare.readLedgerEnd()),
     readiness,
     submit: submitTransaction,
   });

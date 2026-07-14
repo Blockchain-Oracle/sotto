@@ -8,6 +8,7 @@ import {
   initializeCapabilityBootstrapJournal,
   loadCapabilityBootstrapJournalIntent,
   loadCapabilityBootstrapJournalState,
+  markCapabilityBootstrapCompletionCursor,
   markCapabilityBootstrapResolved,
   markCapabilityBootstrapSubmissionStarted,
   withCapabilityBootstrapLease,
@@ -83,6 +84,7 @@ export async function startJournaledCapabilityBootstrap(
   input: LiveBootstrapDependencies &
     Readonly<{
       request: BoundedCapabilityBootstrapRequest;
+      readLedgerEndOffset: () => Promise<number>;
       sourceCommit: string;
       submit: (request: BoundedCapabilityBootstrapRequest) => Promise<unknown>;
     }>,
@@ -112,6 +114,14 @@ export async function startJournaledCapabilityBootstrap(
       }
       const request = restoreBoundedCapabilityBootstrapIntent(state.intent);
       const result = await runBoundedCapabilityBootstrap({
+        persistCompletionCursor: async (beginExclusive) => {
+          await assertOwned();
+          await markCapabilityBootstrapCompletionCursor({
+            beginExclusive,
+            operationId: initialized.operationId,
+            workspaceRoot: input.workspaceRoot,
+          });
+        },
         persistIntent: async (candidate) => {
           const loaded = await loadCapabilityBootstrapJournalIntent(
             input.workspaceRoot,
@@ -134,6 +144,7 @@ export async function startJournaledCapabilityBootstrap(
           });
         },
         readActiveCapabilities: input.readActiveCapabilities,
+        readLedgerEndOffset: input.readLedgerEndOffset,
         request,
         submit: async (candidate) => {
           await assertOwned();

@@ -59,8 +59,10 @@ function fixture() {
 
 function persistence() {
   return {
+    persistCompletionCursor: vi.fn(async () => undefined),
     persistIntent: vi.fn(async () => undefined),
     persistSubmissionStarted: vi.fn(async () => undefined),
+    readLedgerEndOffset: vi.fn(async () => 41),
   };
 }
 
@@ -95,9 +97,16 @@ describe("runBoundedCapabilityBootstrap", () => {
     expect(submit).toHaveBeenCalledTimes(1);
     expect(readActiveCapabilities).toHaveBeenCalledTimes(2);
     expect(durable.persistIntent).toHaveBeenCalledTimes(1);
+    expect(durable.readLedgerEndOffset).toHaveBeenCalledTimes(1);
+    expect(durable.persistCompletionCursor).toHaveBeenCalledWith(41);
     expect(durable.persistSubmissionStarted).toHaveBeenCalledTimes(1);
     expect(durable.persistIntent.mock.invocationCallOrder[0]).toBeLessThan(
       readActiveCapabilities.mock.invocationCallOrder[0]!,
+    );
+    expect(
+      durable.persistCompletionCursor.mock.invocationCallOrder[0]!,
+    ).toBeLessThan(
+      durable.persistSubmissionStarted.mock.invocationCallOrder[0]!,
     );
     expect(
       durable.persistSubmissionStarted.mock.invocationCallOrder[0],
@@ -148,9 +157,11 @@ describe("runBoundedCapabilityBootstrap", () => {
 
     await expect(
       runBoundedCapabilityBootstrap({
+        persistCompletionCursor: vi.fn(async () => undefined),
         persistIntent: vi.fn(async () => undefined),
         persistSubmissionStarted,
         readActiveCapabilities: vi.fn(async () => []),
+        readLedgerEndOffset: vi.fn(async () => 41),
         request: setup.request,
         submit,
       }),

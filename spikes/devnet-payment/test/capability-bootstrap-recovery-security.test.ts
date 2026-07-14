@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { buildBoundedCapabilityBootstrap } from "@sotto/x402-canton";
 import {
   initializeCapabilityBootstrapJournal,
+  markCapabilityBootstrapCompletionCursor,
   markCapabilityBootstrapResolved,
   markCapabilityBootstrapSubmissionStarted,
 } from "../src/capability-bootstrap-journal.js";
@@ -29,6 +30,21 @@ const input = {
   transferFactoryContractId: "00transferfactory",
   userId: "ledger-user-6",
 } as const;
+
+async function markStarted(
+  operationId: string,
+  workspaceRoot: string,
+): Promise<void> {
+  await markCapabilityBootstrapCompletionCursor({
+    beginExclusive: 41,
+    operationId,
+    workspaceRoot,
+  });
+  await markCapabilityBootstrapSubmissionStarted({
+    operationId,
+    workspaceRoot,
+  });
+}
 
 describe("capability bootstrap recovery security", () => {
   let workspaceRoot: string;
@@ -63,6 +79,7 @@ describe("capability bootstrap recovery security", () => {
 
     await expect(
       startJournaledCapabilityBootstrap({
+        readLedgerEndOffset: async () => 41,
         readActiveCapabilities,
         request: otherRequest,
         sourceCommit,
@@ -81,15 +98,13 @@ describe("capability bootstrap recovery security", () => {
       sourceCommit,
       workspaceRoot,
     });
-    await markCapabilityBootstrapSubmissionStarted({
-      operationId,
-      workspaceRoot,
-    });
+    await markStarted(operationId, workspaceRoot);
     const readActiveCapabilities = vi.fn(async () => []);
     const submit = vi.fn();
 
     await expect(
       startJournaledCapabilityBootstrap({
+        readLedgerEndOffset: async () => 41,
         readActiveCapabilities,
         request,
         sourceCommit,
@@ -108,10 +123,7 @@ describe("capability bootstrap recovery security", () => {
       sourceCommit,
       workspaceRoot,
     });
-    await markCapabilityBootstrapSubmissionStarted({
-      operationId,
-      workspaceRoot,
-    });
+    await markStarted(operationId, workspaceRoot);
     const readActiveCapabilities = vi.fn();
 
     await expect(
@@ -131,10 +143,7 @@ describe("capability bootstrap recovery security", () => {
       sourceCommit,
       workspaceRoot,
     });
-    await markCapabilityBootstrapSubmissionStarted({
-      operationId,
-      workspaceRoot,
-    });
+    await markStarted(operationId, workspaceRoot);
     await markCapabilityBootstrapResolved({
       commandId: request.commandId,
       contractId: "00capability",
@@ -175,10 +184,7 @@ describe("capability bootstrap recovery security", () => {
       sourceCommit,
       workspaceRoot,
     });
-    await markCapabilityBootstrapSubmissionStarted({
-      operationId,
-      workspaceRoot,
-    });
+    await markStarted(operationId, workspaceRoot);
     const resolution = {
       commandId: request.commandId,
       contractId: "00capability",

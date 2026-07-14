@@ -26,7 +26,7 @@ const ROUTES = [
 ] as const;
 const ROUTE_LIMITS = Object.freeze({
   acs: 3,
-  ledgerEnd: 3,
+  ledgerEnd: 4,
   package: 1,
   preferred: 1,
   registry: 1,
@@ -38,6 +38,7 @@ const TRANSPORT_KEYS = [
   "factory",
   "networkCallCounts",
   "readActiveCapabilities",
+  "readLedgerEndOffset",
   "readiness",
   "submit",
 ] as const;
@@ -50,6 +51,7 @@ type StartTransport = Readonly<{
   factory: FactoryReaders;
   networkCallCounts: () => NetworkCounts;
   readActiveCapabilities: () => Promise<unknown>;
+  readLedgerEndOffset: () => Promise<number>;
   readiness: FiveNorthCapabilityReadinessReader;
   submit: (request: BoundedCapabilityBootstrapRequest) => Promise<unknown>;
 }>;
@@ -166,6 +168,7 @@ export async function startFiveNorthLiveCapabilityBootstrap(input: StartInput) {
   const request = buildFiveNorthCapabilityBootstrap(readiness, factory, policy);
   const result = await startJournaledCapabilityBootstrap({
     readActiveCapabilities: transport.readActiveCapabilities,
+    readLedgerEndOffset: transport.readLedgerEndOffset,
     request,
     sourceCommit: input.sourceCommit,
     submit: transport.submit,

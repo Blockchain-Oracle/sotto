@@ -37,9 +37,11 @@ describe("capability bootstrap authority freshness", () => {
 
     await expect(
       runBoundedCapabilityBootstrap({
+        persistCompletionCursor: vi.fn(async () => undefined),
         persistIntent: vi.fn(async () => undefined),
         persistSubmissionStarted,
         readActiveCapabilities,
+        readLedgerEndOffset: vi.fn(async () => 41),
         request,
         submit,
       }),
@@ -57,9 +59,11 @@ describe("capability bootstrap authority freshness", () => {
 
     await expect(
       runBoundedCapabilityBootstrap({
+        persistCompletionCursor: vi.fn(async () => undefined),
         persistIntent: vi.fn(async () => undefined),
         persistSubmissionStarted,
         readActiveCapabilities: vi.fn(async () => []),
+        readLedgerEndOffset: vi.fn(async () => 41),
         request,
         submit,
       }),

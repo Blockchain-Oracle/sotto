@@ -84,6 +84,7 @@ describe("Five North capability bootstrap transport", () => {
       "ledger-user-6",
     );
     await expect(transport.readActiveCapabilities()).resolves.toEqual([]);
+    await expect(transport.readLedgerEndOffset()).resolves.toBe(42);
     await expect(transport.submit(request())).resolves.toEqual({
       transaction: {},
     });
@@ -95,6 +96,7 @@ describe("Five North capability bootstrap transport", () => {
       "factory",
       "networkCallCounts",
       "readActiveCapabilities",
+      "readLedgerEndOffset",
       "readiness",
       "submit",
     ]);

@@ -1,30 +1,27 @@
 import { createHash } from "node:crypto";
-import {
-  exportBoundedCapabilityBootstrapIntent,
-  restoreBoundedCapabilityBootstrapIntent,
-  type BoundedCapabilityBootstrapRequest,
-  type PersistedBootstrapIntentV1,
-} from "@sotto/x402-canton";
+import { restoreBoundedCapabilityBootstrapIntent } from "@sotto/x402-canton";
 import {
   prepareCapabilityBootstrapJournalDirectory,
   readCapabilityBootstrapJournalJson,
   writeExclusiveCapabilityBootstrapJson,
 } from "./capability-bootstrap-journal-storage.js";
 import {
+  loadCapabilityBootstrapCompletionCursor,
+  writeCapabilityBootstrapCompletionCursor,
+} from "./capability-bootstrap-journal-cursor.js";
+import {
   parseCapabilityBootstrapResolution,
   type CapabilityBootstrapResolution,
 } from "./capability-bootstrap-journal-resolution.js";
+import {
+  initializeCapabilityBootstrapJournal,
+  loadCapabilityBootstrapJournalIntent,
+} from "./capability-bootstrap-journal-intent.js";
+export {
+  initializeCapabilityBootstrapJournal,
+  loadCapabilityBootstrapJournalIntent,
+};
 export { withCapabilityBootstrapLease } from "./capability-bootstrap-lease.js";
-
-const OPERATION_PATTERN = /^sha256:[0-9a-f]{64}$/u;
-
-type IntentRecord = Readonly<{
-  kind: "intent";
-  operationId: `sha256:${string}`;
-  payload: PersistedBootstrapIntentV1;
-  payloadSha256: `sha256:${string}`;
-  schema: "sotto-capability-bootstrap-journal-v1";
-}>;
 
 type SubmissionRecord = Readonly<{
   kind: "submission-started";
@@ -54,43 +51,6 @@ function exactObject(
     throw new Error(`${label} keys are invalid`);
   }
   return record;
-}
-
-function intentRecord(payload: PersistedBootstrapIntentV1): IntentRecord {
-  const source = JSON.stringify(payload);
-  return Object.freeze({
-    kind: "intent" as const,
-    operationId: sha256(`sotto-bootstrap-operation-v1\0${source}`),
-    payload,
-    payloadSha256: sha256(source),
-    schema: "sotto-capability-bootstrap-journal-v1" as const,
-  });
-}
-
-function parseIntentRecord(value: unknown): IntentRecord {
-  const record = exactObject(
-    value,
-    ["kind", "operationId", "payload", "payloadSha256", "schema"],
-    "bootstrap intent record",
-  );
-  if (
-    record.kind !== "intent" ||
-    record.schema !== "sotto-capability-bootstrap-journal-v1" ||
-    typeof record.operationId !== "string" ||
-    !OPERATION_PATTERN.test(record.operationId) ||
-    typeof record.payloadSha256 !== "string"
-  ) {
-    throw new Error("bootstrap intent record metadata is invalid");
-  }
-  const parsed = intentRecord(record.payload as PersistedBootstrapIntentV1);
-  if (
-    parsed.operationId !== record.operationId ||
-    parsed.payloadSha256 !== record.payloadSha256
-  ) {
-    throw new Error("bootstrap intent record integrity check failed");
-  }
-  restoreBoundedCapabilityBootstrapIntent(record.payload);
-  return parsed;
 }
 
 function isMissing(error: unknown): boolean {
@@ -126,40 +86,6 @@ function parseSubmissionRecord(
   return record as SubmissionRecord;
 }
 
-export async function initializeCapabilityBootstrapJournal(input: {
-  request: BoundedCapabilityBootstrapRequest;
-  sourceCommit: string;
-  workspaceRoot: string;
-}) {
-  const directory = await prepareCapabilityBootstrapJournalDirectory(
-    input.workspaceRoot,
-  );
-  const record = intentRecord(
-    exportBoundedCapabilityBootstrapIntent(input.request, input.sourceCommit),
-  );
-  await writeExclusiveCapabilityBootstrapJson(
-    directory,
-    "00-intent.json",
-    record,
-  );
-  return Object.freeze({ operationId: record.operationId });
-}
-
-export async function loadCapabilityBootstrapJournalIntent(
-  workspaceRoot: string,
-) {
-  const directory =
-    await prepareCapabilityBootstrapJournalDirectory(workspaceRoot);
-  const record = parseIntentRecord(
-    await readCapabilityBootstrapJournalJson(directory, "00-intent.json"),
-  );
-  return Object.freeze({
-    intent: record.payload,
-    operationId: record.operationId,
-    recordSha256: sha256(JSON.stringify(record)),
-  });
-}
-
 export async function markCapabilityBootstrapSubmissionStarted(input: {
   operationId: string;
   workspaceRoot: string;
@@ -173,13 +99,20 @@ export async function markCapabilityBootstrapSubmissionStarted(input: {
   if (loaded.operationId !== input.operationId) {
     throw new Error("bootstrap operation ID does not match the journal");
   }
+  const cursor = await loadCapabilityBootstrapCompletionCursor(directory, {
+    operationId: loaded.operationId,
+    previousRecordSha256: loaded.recordSha256,
+  });
+  if (cursor === null) {
+    throw new Error("bootstrap completion cursor is required");
+  }
   await writeExclusiveCapabilityBootstrapJson(
     directory,
     "10-submission-started.json",
     {
       kind: "submission-started",
       operationId: loaded.operationId,
-      previousRecordSha256: loaded.recordSha256,
+      previousRecordSha256: cursor.recordSha256,
       recordedAt: new Date().toISOString(),
       schema: "sotto-capability-bootstrap-journal-v1",
     },
@@ -192,6 +125,13 @@ export async function loadCapabilityBootstrapJournalState(
   const directory =
     await prepareCapabilityBootstrapJournalDirectory(workspaceRoot);
   const loaded = await loadCapabilityBootstrapJournalIntent(workspaceRoot);
+  const completionCursor = await loadCapabilityBootstrapCompletionCursor(
+    directory,
+    {
+      operationId: loaded.operationId,
+      previousRecordSha256: loaded.recordSha256,
+    },
+  );
   let submission: SubmissionRecord | undefined;
   try {
     submission = parseSubmissionRecord(
@@ -200,7 +140,7 @@ export async function loadCapabilityBootstrapJournalState(
         "10-submission-started.json",
       ),
       loaded.operationId,
-      loaded.recordSha256,
+      completionCursor?.recordSha256 ?? loaded.recordSha256,
     );
   } catch (error) {
     if (!isMissing(error)) throw error;
@@ -232,10 +172,32 @@ export async function loadCapabilityBootstrapJournalState(
   }
   return Object.freeze({
     ...loaded,
+    completionCursor: completionCursor?.record.beginExclusive ?? null,
     resolution: resolution ?? null,
     submissionStarted: submission !== undefined,
     submissionRecordSha256:
       submission === undefined ? null : sha256(JSON.stringify(submission)),
+  });
+}
+
+export async function markCapabilityBootstrapCompletionCursor(input: {
+  beginExclusive: number;
+  operationId: string;
+  workspaceRoot: string;
+}): Promise<void> {
+  const directory = await prepareCapabilityBootstrapJournalDirectory(
+    input.workspaceRoot,
+  );
+  const loaded = await loadCapabilityBootstrapJournalIntent(
+    input.workspaceRoot,
+  );
+  if (loaded.operationId !== input.operationId) {
+    throw new Error("bootstrap operation ID does not match the journal");
+  }
+  await writeCapabilityBootstrapCompletionCursor(directory, {
+    beginExclusive: input.beginExclusive,
+    operationId: loaded.operationId,
+    previousRecordSha256: loaded.recordSha256,
   });
 }
 

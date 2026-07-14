@@ -8,9 +8,11 @@ import {
 import { AmbiguousTransactionSubmissionError } from "./five-north-transaction-submit.js";
 
 type BootstrapRunnerInput = Readonly<{
+  persistCompletionCursor: (beginExclusive: number) => Promise<void>;
   persistIntent: (request: BoundedCapabilityBootstrapRequest) => Promise<void>;
   persistSubmissionStarted: () => Promise<void>;
   readActiveCapabilities: () => Promise<unknown>;
+  readLedgerEndOffset: () => Promise<number>;
   request: BoundedCapabilityBootstrapRequest;
   submit: (request: BoundedCapabilityBootstrapRequest) => Promise<unknown>;
 }>;
@@ -43,6 +45,12 @@ export async function runBoundedCapabilityBootstrap(
   if (before.activeCount !== 0) {
     throw new Error("capability bootstrap preflight must be empty");
   }
+  assertBoundedCapabilityBootstrapFresh(input.request);
+  const beginExclusive = await input.readLedgerEndOffset();
+  if (!Number.isSafeInteger(beginExclusive) || beginExclusive < 0) {
+    throw new Error("capability bootstrap completion cursor is invalid");
+  }
+  await input.persistCompletionCursor(beginExclusive);
   assertBoundedCapabilityBootstrapFresh(input.request);
   await input.persistSubmissionStarted();
   assertBoundedCapabilityBootstrapFresh(input.request);

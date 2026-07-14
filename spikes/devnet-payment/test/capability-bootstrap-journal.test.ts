@@ -17,6 +17,7 @@ import {
   initializeCapabilityBootstrapJournal,
   loadCapabilityBootstrapJournalIntent,
   loadCapabilityBootstrapJournalState,
+  markCapabilityBootstrapCompletionCursor,
   markCapabilityBootstrapResolved,
   markCapabilityBootstrapSubmissionStarted,
 } from "../src/capability-bootstrap-journal.js";
@@ -48,6 +49,13 @@ describe("capability bootstrap journal", () => {
     vi.setSystemTime(now);
     workspaceRoot = await mkdtemp(join(tmpdir(), "sotto-bootstrap-"));
   });
+
+  const markCursor = (operationId: string) =>
+    markCapabilityBootstrapCompletionCursor({
+      beginExclusive: 41,
+      operationId,
+      workspaceRoot,
+    });
 
   afterEach(async () => {
     vi.useRealTimers();
@@ -116,6 +124,7 @@ describe("capability bootstrap journal", () => {
       workspaceRoot,
     });
 
+    await markCursor(operationId);
     await markCapabilityBootstrapSubmissionStarted({
       operationId,
       workspaceRoot,
@@ -157,6 +166,50 @@ describe("capability bootstrap journal", () => {
     });
   });
 
+  it("requires a durable completion cursor before submission", async () => {
+    const request = buildBoundedCapabilityBootstrap(input);
+    const { operationId } = await initializeCapabilityBootstrapJournal({
+      request,
+      sourceCommit: commit,
+      workspaceRoot,
+    });
+
+    await expect(
+      markCapabilityBootstrapSubmissionStarted({
+        operationId,
+        workspaceRoot,
+      }),
+    ).rejects.toThrow(/completion cursor/iu);
+  });
+
+  it("persists the completion cursor before the submission marker", async () => {
+    const request = buildBoundedCapabilityBootstrap(input);
+    const { operationId } = await initializeCapabilityBootstrapJournal({
+      request,
+      sourceCommit: commit,
+      workspaceRoot,
+    });
+
+    await markCapabilityBootstrapCompletionCursor({
+      beginExclusive: 41,
+      operationId,
+      workspaceRoot,
+    });
+    await markCapabilityBootstrapSubmissionStarted({
+      operationId,
+      workspaceRoot,
+    });
+
+    expect(
+      JSON.parse(
+        await readFile(join(directory(), "05-completion-cursor.json"), "utf8"),
+      ),
+    ).toMatchObject({ beginExclusive: 41, kind: "completion-cursor" });
+    expect(
+      await loadCapabilityBootstrapJournalState(workspaceRoot),
+    ).toMatchObject({ completionCursor: 41, submissionStarted: true });
+  });
+
   it("rejects a corrupted terminal resolution chain", async () => {
     const request = buildBoundedCapabilityBootstrap(input);
     const { operationId } = await initializeCapabilityBootstrapJournal({
@@ -164,6 +217,7 @@ describe("capability bootstrap journal", () => {
       sourceCommit: commit,
       workspaceRoot,
     });
+    await markCursor(operationId);
     await markCapabilityBootstrapSubmissionStarted({
       operationId,
       workspaceRoot,
@@ -202,6 +256,7 @@ describe("capability bootstrap journal", () => {
       sourceCommit: commit,
       workspaceRoot,
     });
+    await markCursor(operationId);
     await markCapabilityBootstrapSubmissionStarted({
       operationId,
       workspaceRoot,
