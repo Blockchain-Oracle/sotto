@@ -63,7 +63,7 @@ max_iterations: 1
 
 verify: sh -c 'PATH=/Users/abu/.local/share/mise/installs/node/24.18.0/bin:$PATH pnpm vitest run packages/x402-canton/test/package-reference-verifier.test.ts > /tmp/sotto-package-reference-red.log 2>&1; status=$?; cat /tmp/sotto-package-reference-red.log; test "$status" -ne 0 && rg -q "PACKAGE_REFERENCE_VERIFIER_NOT_IMPLEMENTED" /tmp/sotto-package-reference-red.log'
 
-- [ ] **Step 6: Implement independent package metadata verification**
+- [x] **Step 6: Implement independent package metadata verification**
 
 action: Add `packages/x402-canton/src/package-reference-verifier.ts` that verifies live references only from the reviewed artifact union, returns an immutable canonical projection, and never trusts preferred-packages response names or versions as independent provenance.
 
