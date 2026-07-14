@@ -18,6 +18,9 @@ export const REQUIRED_PACKAGE_NAMES = Object.freeze([
   "sotto-control",
   "splice-amulet",
 ]);
+export const MAX_PACKAGE_PREFERENCE_ACQUISITION_MS = 10_000;
+export const MAX_PACKAGE_PREFERENCE_OBSERVATION_AGE_MS = 60_000;
+const CLOCK_ROLLBACK_TOLERANCE_MS = 5_000;
 
 export type ValidatedObservationScope = Readonly<{
   closure: ReviewedPackagePreferenceClosure;
@@ -48,6 +51,32 @@ function requireExactPackageNames(
     throw new Error(
       "package preference observation requires the exact reviewed names",
     );
+  }
+}
+
+export function assertPackagePreferenceAcquisitionWindow(
+  acquisitionStartedAt: number,
+  capturedAt: number,
+): void {
+  const duration = capturedAt - acquisitionStartedAt;
+  if (duration < -CLOCK_ROLLBACK_TOLERANCE_MS) {
+    throw new Error("package preference acquisition clock moved backwards");
+  }
+  if (duration > MAX_PACKAGE_PREFERENCE_ACQUISITION_MS) {
+    throw new Error("package preference acquisition exceeded its time limit");
+  }
+}
+
+export function assertPackagePreferenceObservationFresh(
+  acquisitionStartedAt: number,
+  capturedAt: number,
+): void {
+  const now = Date.now();
+  if (now - capturedAt < -CLOCK_ROLLBACK_TOLERANCE_MS) {
+    throw new Error("package preference observation clock moved backwards");
+  }
+  if (now - acquisitionStartedAt > MAX_PACKAGE_PREFERENCE_OBSERVATION_AGE_MS) {
+    throw new Error("package preference observation is stale");
   }
 }
 

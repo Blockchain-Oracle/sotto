@@ -35,6 +35,22 @@ export function registerPackagePreferenceLifetimeCases(
     });
 
     it.each([
+      ["acquisition ceiling", 10_000],
+      ["acquisition rollback tolerance", -5_000],
+    ])("accepts the exact %s", async (_label, delta) => {
+      await withObservedClock(async () => {
+        const closure = observationClosure();
+        await expect(
+          getSubject().createPackagePreferenceObserver(
+            reader(liveReferences(closure), [], undefined, () => {
+              vi.setSystemTime(Date.now() + delta);
+            }),
+          )(observationScope(closure)),
+        ).resolves.toMatchObject({ observedAt: expect.any(String) });
+      });
+    });
+
+    it.each([
       ["stale", 60_001, {}],
       ["clock rollback", -5_001, {}],
       ["vetting mismatch", 0, { vettingValidAt: "2026-07-14T10:00:31.000Z" }],
@@ -53,6 +69,43 @@ export function registerPackagePreferenceLifetimeCases(
             ...override,
           }),
         ).toThrow();
+      });
+    });
+
+    it("accepts a claim at the exact sixty-second boundary", async () => {
+      await withObservedClock(async () => {
+        const closure = observationClosure();
+        const observation = await getSubject().createPackagePreferenceObserver(
+          reader(liveReferences(closure)),
+        )(observationScope(closure));
+        vi.setSystemTime(Date.now() + 60_000);
+        expect(() =>
+          getSubject().claimPackagePreferenceObservation(
+            observation,
+            claimScope(closure),
+          ),
+        ).not.toThrow();
+      });
+    });
+
+    it("does not consume an observation after a mismatched claim", async () => {
+      await withObservedClock(async () => {
+        const closure = observationClosure();
+        const observation = await getSubject().createPackagePreferenceObserver(
+          reader(liveReferences(closure)),
+        )(observationScope(closure));
+        expect(() =>
+          getSubject().claimPackagePreferenceObservation(observation, {
+            ...claimScope(closure),
+            authenticatedSubject: "other-subject",
+          }),
+        ).toThrow();
+        expect(() =>
+          getSubject().claimPackagePreferenceObservation(
+            observation,
+            claimScope(closure),
+          ),
+        ).not.toThrow();
       });
     });
 

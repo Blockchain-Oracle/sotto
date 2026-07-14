@@ -1,6 +1,8 @@
 import { randomBytes } from "node:crypto";
 import { utf8Compare } from "./package-preference-artifact-validation.js";
 import {
+  assertPackagePreferenceAcquisitionWindow,
+  assertPackagePreferenceObservationFresh,
   REQUIRED_PACKAGE_NAMES,
   validateClaimScope,
   validateObservationScope,
@@ -128,6 +130,7 @@ export function createPackagePreferenceObserver(
       );
     }
     const capturedAt = Date.now();
+    assertPackagePreferenceAcquisitionWindow(acquisitionStartedAt, capturedAt);
     const acquiredAt = new Date(capturedAt).toISOString();
     const projection = cloneProjection({
       version: PACKAGE_SELECTION_VERSION,
@@ -170,8 +173,21 @@ export function claimPackagePreferenceObservation(
   ) {
     throw new Error("package preference claim does not match its observation");
   }
+  assertPackagePreferenceObservationFresh(
+    state.acquisitionStartedAt,
+    state.capturedAt,
+  );
+  if (state.claimed) {
+    throw new Error("package preference observation is already claimed");
+  }
+  state.claimed = true;
   return cloneProjection(state.projection);
 }
+
+export {
+  MAX_PACKAGE_PREFERENCE_ACQUISITION_MS,
+  MAX_PACKAGE_PREFERENCE_OBSERVATION_AGE_MS,
+} from "./package-preference-observation-validation.js";
 
 export type {
   AuthenticatedPackagePreferenceProjection,

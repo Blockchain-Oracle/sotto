@@ -97,7 +97,7 @@ verify: PATH=/Users/abu/.local/share/mise/installs/node/24.18.0/bin:$PATH pnpm v
 
 gate: human
 
-- [ ] **Step 9: Implement observation freshness and one-use claiming**
+- [x] **Step 9: Implement observation freshness and one-use claiming**
 
 action: Complete the observation module's 60-second ceiling, execution-time vetting equality, monotonic acquisition checks, token-subject stability, and exactly-once claim that yields one immutable projection consumed by both commitment and command construction.
 
