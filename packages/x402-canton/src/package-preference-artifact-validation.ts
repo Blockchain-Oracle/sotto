@@ -103,7 +103,7 @@ export function packageEntry(value: unknown): Readonly<PackageManifestEntry> {
 
 function manifestHash(packages: ReadonlyArray<PackageManifestEntry>): string {
   const manifest = `${packages
-    .map(({ packageId, name, version }) => `${packageId}\t${name}\t${version}`)
+    .map(({ packageId, name, version }) => `${name}\t${version}\t${packageId}`)
     .join("\n")}\n`;
   return sha256Hex(manifest);
 }

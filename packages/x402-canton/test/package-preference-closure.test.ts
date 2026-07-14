@@ -52,7 +52,7 @@ describe("reviewed package-preference closure", () => {
     expect(result).toMatchObject({
       version: "sotto-package-closure-v1",
       closureHash:
-        "sha256:b1ca640a9ab96fe788a1de269595102495d4f5f9954a6bacc460d8975c73aeb3",
+        "sha256:4a1bcf39aac8d5232b1e6e4caee93a39a3022a2ff235e13574e5d91c61cd299d",
       selectablePackageNames: ["sotto-control", "splice-amulet"],
     });
     expect(
@@ -83,7 +83,7 @@ describe("reviewed package-preference closure", () => {
     const result = subject.buildReviewedPackagePreferenceClosure(input);
     input.sourcePins[0]!.commit = "c".repeat(40);
     expect(result.closureHash).toBe(
-      "sha256:b1ca640a9ab96fe788a1de269595102495d4f5f9954a6bacc460d8975c73aeb3",
+      "sha256:4a1bcf39aac8d5232b1e6e4caee93a39a3022a2ff235e13574e5d91c61cd299d",
     );
     expect(Object.isFrozen(result)).toBe(true);
     expect(Object.isFrozen(result.artifacts[0])).toBe(true);

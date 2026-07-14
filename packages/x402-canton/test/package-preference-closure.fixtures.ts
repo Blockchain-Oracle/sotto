@@ -53,7 +53,7 @@ const BASE_INPUT: ClosureInput = {
       darSha256: "a".repeat(64),
       mainPackageId: sottoPackage,
       manifestSha256:
-        "65ee0af362f6ed37e523c5c8f7ca8e7ab07128a794acf28784fac064d0d8f855",
+        "53bcd7d54679fc663da4bacbbe3f25a690cffffed4d0fb51c5557818a38e4ac1",
       packages: [
         { packageId: damlPrimA, name: "daml-prim", version: "0.0.0" },
         { packageId: sottoPackage, name: "sotto-control", version: "0.2.0" },
@@ -68,7 +68,7 @@ const BASE_INPUT: ClosureInput = {
         "c26e1a4064afc9329167f90ad6f7e6f7236bc395fe480d1f113adc4e0168124c",
       mainPackageId: splicePackage,
       manifestSha256:
-        "cae0c15a9487b21ecc1d91eea405bf4b1887f16cb05e5bc24856430d9851abb5",
+        "edd0ed1c78f87806f30a5dd8fa554ef5a39d24f431ad4c0a49768f9f0b31a581",
       packages: [
         { packageId: damlPrimA, name: "daml-prim", version: "0.0.0" },
         { packageId: damlPrimB, name: "daml-prim", version: "0.0.0" },
