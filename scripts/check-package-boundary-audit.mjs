@@ -46,10 +46,12 @@ for (const required of [
   "[AUDIT:version-migration=PASS_SPIKE_ONLY]",
   "[AUDIT:zero-signing=PASS]",
   "[AUDIT:no-live-sign-or-spend=PASS]",
-  "[AUDIT:prepare-only-observation=APPROVAL_REQUIRED]",
+  "[AUDIT:prepare-only-observation=NOT_PROVEN_CAPABILITY]",
   "[AUDIT:production=NO_GO]",
   "58 package IDs, 48 names",
   "914 TypeScript tests",
+  "CAPABILITY_COUNT",
+  "Provider requests: zero",
   "No environment value, token, Party ID",
 ]) {
   if (!audit.includes(required)) {
