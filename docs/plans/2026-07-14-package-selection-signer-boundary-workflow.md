@@ -73,7 +73,7 @@ max_iterations: 3
 
 verify: PATH=/Users/abu/.local/share/mise/installs/node/24.18.0/bin:$PATH pnpm vitest run packages/x402-canton/test/package-reference-verifier.test.ts packages/x402-canton/test/package-preference-closure.test.ts
 
-- [ ] **Step 7: Define authenticated preference observation RED tests**
+- [x] **Step 7: Define authenticated preference observation RED tests**
 
 action: Add separate scope and lifetime tests for exact synchronizer, execution-window `vettingValidAt`, conservative payer/agent/provider/admin union, stable token subject, exact two-name closure equality, response reordering, unique IDs, 60-second age, acquisition duration, clock rollback, caller mutation, and one-use projection claiming.
 
