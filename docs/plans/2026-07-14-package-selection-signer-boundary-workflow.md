@@ -245,7 +245,7 @@ max_iterations: 3
 
 verify: PATH=/Users/abu/.local/share/mise/installs/node/24.18.0/bin:$PATH pnpm vitest run packages/x402-canton/test/prepared-purchase-limits.test.ts packages/x402-canton/test/prepared-purchase-validation.test.ts packages/x402-canton/test/bounded-purchase-signer-boundary.test.ts
 
-- [ ] **Step 23: Run the complete deterministic workspace gate**
+- [x] **Step 23: Run the complete deterministic workspace gate**
 
 action: Run pinned workspace verification, correct only failures caused by this feature, preserve the no-sign/no-spend boundary, and commit the reviewed tracked implementation and documentation with conventional commits.
 
