@@ -109,7 +109,7 @@ verify: PATH=/Users/abu/.local/share/mise/installs/node/24.18.0/bin:$PATH pnpm v
 
 gate: human
 
-- [ ] **Step 10: Define Five North preference transport RED tests**
+- [x] **Step 10: Define Five North preference transport RED tests**
 
 action: Add `spikes/devnet-payment/test/five-north-package-preference.test.ts` requiring one bounded authenticated POST to the configured preferred-packages endpoint, exact two-name requirements, exact conservative parties, synchronizer and vetting time, bounded response parsing, stable token subject, no ambiguous retry, and no submit/sign surface.
 
