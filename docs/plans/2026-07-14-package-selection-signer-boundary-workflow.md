@@ -183,7 +183,7 @@ max_iterations: 1
 
 verify: sh -c 'PATH=/Users/abu/.local/share/mise/installs/node/24.18.0/bin:$PATH pnpm vitest run packages/x402-canton/test/prepared-purchase-effects.test.ts packages/x402-canton/test/prepared-purchase-validation.test.ts > /tmp/sotto-prepared-effects-red.log 2>&1; status=$?; cat /tmp/sotto-prepared-effects-red.log; test "$status" -ne 0 && rg -q "PREPARED_EFFECTS_NOT_IMPLEMENTED" /tmp/sotto-prepared-effects-red.log'
 
-- [ ] **Step 17: Implement typed graph and factory-subtree verification**
+- [x] **Step 17: Implement typed graph and factory-subtree verification**
 
 action: Add `prepared-purchase-effects.ts`; extend graph and root parsing to retain typed parent/child nodes and verify the exact factory CID, creation template, V1 interface, selected implementation package, actor/stakeholder sets, transfer arguments, registry context, empty metadata, and Completed result while rejecting absent, additional, Pending, Failed, or unknown exercises.
 

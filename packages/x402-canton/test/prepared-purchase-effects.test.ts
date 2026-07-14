@@ -5,6 +5,8 @@ import {
   createPreparedPurchaseObserver,
 } from "../src/index.js";
 import { PREPARED_PURCHASE_EFFECT_CIDS } from "./prepared-purchase-effect.fixtures.js";
+import { registerPreparedFactoryEffectCases } from "./prepared-purchase-factory-effects.cases.js";
+import { registerPreparedFactoryResultCases } from "./prepared-purchase-factory-result.cases.js";
 import {
   rootOnlyPreparedPurchaseBytes,
   validPreparedPurchase,
@@ -130,3 +132,6 @@ describe("prepared Purchase effect baseline", () => {
     }
   });
 });
+
+registerPreparedFactoryEffectCases();
+registerPreparedFactoryResultCases();

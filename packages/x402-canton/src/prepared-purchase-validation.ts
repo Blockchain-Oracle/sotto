@@ -1,5 +1,6 @@
 import { PreparedTransaction } from "@canton-network/core-ledger-proto";
 import type { BoundedPurchasePrepareRequest } from "./bounded-purchase-command-types.js";
+import { validatePreparedPurchaseEffects } from "./prepared-purchase-effects.js";
 import { validatePreparedPurchaseGraph } from "./prepared-purchase-graph.js";
 import type { PreparedStructureBudget } from "./prepared-purchase-limits.js";
 import type { BoundedPurchaseLedgerIntent } from "./purchase-ledger-intent.js";
@@ -24,5 +25,11 @@ export function inspectPreparedPurchaseStructure(
   }
   const budget: PreparedStructureBudget = { items: 0 };
   validatePreparedPurchaseMetadata(prepared.metadata, intent, request, budget);
-  validatePreparedPurchaseGraph(prepared.transaction, intent, request, budget);
+  const graph = validatePreparedPurchaseGraph(
+    prepared.transaction,
+    intent,
+    request,
+    budget,
+  );
+  validatePreparedPurchaseEffects(graph, intent, request);
 }
