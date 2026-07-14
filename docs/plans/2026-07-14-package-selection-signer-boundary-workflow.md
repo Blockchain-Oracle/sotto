@@ -153,7 +153,7 @@ verify: PATH=/Users/abu/.local/share/mise/installs/node/24.18.0/bin:$PATH pnpm v
 
 gate: human
 
-- [ ] **Step 14: Define exact command preference RED tests**
+- [x] **Step 14: Define exact command preference RED tests**
 
 action: Extend command and security tests with one deliberate `COMMAND_PREFERENCE_NOT_IMPLEMENTED` failure requiring a non-empty unique lexical package-ID list exactly equal to the committed name-sorted mapping projection and rejecting empty, reordered, missing, extra, stale, separately constructed, or twice-claimed preferences before preparation.
 

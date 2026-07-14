@@ -18,6 +18,9 @@ import {
   purchaseExecutionInputs,
   responseBytes,
 } from "./transfer-factory-observation.fixtures.js";
+import { registerCommandPreferenceSecurityCases } from "./bounded-purchase-command-preference-security.cases.js";
+
+registerCommandPreferenceSecurityCases();
 
 describe("bounded Purchase command security", () => {
   beforeEach(() => {
