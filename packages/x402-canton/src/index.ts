@@ -18,6 +18,12 @@ export type {
   BoundedPurchasePrepareRequest,
 } from "./bounded-purchase-command-types.js";
 export {
+  signBoundedPurchase,
+  type BoundedPurchaseAttemptClaim,
+  type BoundedPurchaseSignerDependencies,
+  type BoundedPurchaseSigningReceipt,
+} from "./bounded-purchase-signer-boundary.js";
+export {
   capturePaymentRequiredResponse,
   MAX_PAYMENT_OBSERVATION_AGE_MS,
   MAX_PAYMENT_REQUIRED_HEADER_BYTES,

@@ -213,7 +213,7 @@ max_iterations: 3
 
 verify: PATH=/Users/abu/.local/share/mise/installs/node/24.18.0/bin:$PATH pnpm vitest run packages/x402-canton/test/prepared-purchase-effects.test.ts packages/x402-canton/test/prepared-purchase-metadata.test.ts packages/x402-canton/test/prepared-purchase-validation.test.ts -t 'holding|debit|fee|amount|unclassified|linkage'
 
-- [ ] **Step 20: Add the zero-signing boundary matrix**
+- [x] **Step 20: Add the zero-signing boundary matrix**
 
 action: Add `bounded-purchase-signer-boundary.ts` with an injected claim port and recording fake only; require fresh authenticated package selection, exact command preference, complete semantic prepared verification, official local hash recomputation, one claim, and opaque signing, while every package, party, node, result, value, fee, expiry, hash, replay, or unknown-effect mutation leaves signing at zero calls. Do not use `.env`, a signer URL, a real signer, or claim durability.
 

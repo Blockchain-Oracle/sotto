@@ -2,6 +2,7 @@ import { atomicToDamlDecimal } from "./purchase-commitment-primitives.js";
 import {
   claimBoundedPurchaseCommandPreference,
   readBoundedPurchaseCommandPreference,
+  requireBoundedPurchaseCommandPreferenceFresh,
   type BoundedPackageIdSelectionPreference,
 } from "./bounded-purchase-command-preference.js";
 import type { AuthenticatedPackagePreferenceProjection } from "./package-preference-observation-types.js";
@@ -30,6 +31,20 @@ type PrepareRequestState = Readonly<{
 }> & { claimed: boolean };
 
 const prepareRequestStates = new WeakMap<object, PrepareRequestState>();
+
+function readPrepareRequestState(candidate: unknown): PrepareRequestState {
+  if (typeof candidate !== "object" || candidate === null) {
+    throw new Error("bounded prepare request is not authenticated");
+  }
+  const state = prepareRequestStates.get(candidate);
+  if (state === undefined) {
+    throw new Error("bounded prepare request is not authenticated");
+  }
+  if (state.claimed) {
+    throw new Error("bounded prepare request is already claimed");
+  }
+  return state;
+}
 
 function purchaseChoiceArgument(
   intent: BoundedPurchaseLedgerIntent,
@@ -126,24 +141,33 @@ export function buildBoundedPurchasePrepareRequest(
 }
 
 /** @internal Prepare transport only; a failed prepare requires reacquisition. */
+export function readBoundedPurchasePrepareRequest(
+  candidate: unknown,
+): Readonly<{
+  intent: BoundedPurchaseLedgerIntent;
+  request: BoundedPurchasePrepareRequest;
+}> {
+  const state = readPrepareRequestState(candidate);
+  const packageIds = requireBoundedPurchaseCommandPreferenceFresh(state.intent);
+  const request = candidate as BoundedPurchasePrepareRequest;
+  if (
+    JSON.stringify(request.packageIdSelectionPreference) !==
+    JSON.stringify(packageIds)
+  ) {
+    throw new Error("bounded prepare request package selection does not match");
+  }
+  return Object.freeze({ intent: state.intent, request });
+}
+
+/** @internal Prepare transport only; a failed prepare requires reacquisition. */
 export function claimBoundedPurchasePrepareRequest(
   candidate: unknown,
 ): Readonly<{
   intent: BoundedPurchaseLedgerIntent;
   request: BoundedPurchasePrepareRequest;
 }> {
-  if (typeof candidate !== "object" || candidate === null) {
-    throw new Error("bounded prepare request is not authenticated");
-  }
-  const state = prepareRequestStates.get(candidate);
-  if (state === undefined) {
-    throw new Error("bounded prepare request is not authenticated");
-  }
-  if (state.claimed)
-    throw new Error("bounded prepare request is already claimed");
+  const authenticated = readBoundedPurchasePrepareRequest(candidate);
+  const state = readPrepareRequestState(candidate);
   state.claimed = true;
-  return Object.freeze({
-    intent: state.intent,
-    request: candidate as BoundedPurchasePrepareRequest,
-  });
+  return authenticated;
 }

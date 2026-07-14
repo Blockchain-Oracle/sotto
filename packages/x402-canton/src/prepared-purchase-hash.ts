@@ -25,6 +25,22 @@ export type HashVerifiedPreparedPurchase = Readonly<{
 
 const states = new WeakMap<object, PreparedPurchaseState>();
 
+/** @internal Bounded signer boundary only. */
+export function claimHashVerifiedPreparedPurchase(
+  candidate: unknown,
+): PreparedPurchaseState {
+  if (typeof candidate !== "object" || candidate === null) {
+    throw new Error("hash-verified prepared Purchase is not authenticated");
+  }
+  const state = states.get(candidate);
+  if (state === undefined) {
+    throw new Error("hash-verified prepared Purchase is not authenticated");
+  }
+  states.delete(candidate);
+  requireFresh(state);
+  return state;
+}
+
 function digest(value: unknown, label: string): Uint8Array {
   if (!(value instanceof Uint8Array) || value.byteLength !== 32) {
     throw new Error(`${label} must return exactly 32 bytes`);

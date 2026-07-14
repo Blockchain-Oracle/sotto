@@ -68,3 +68,35 @@ export function claimBoundedPurchaseCommandPreference(
   state.authority.commandClaimed = true;
   return state.packageIds;
 }
+
+/** @internal Signer preflight only. */
+export function requireBoundedPurchaseCommandPreferenceFresh(
+  candidateIntent: BoundedPurchaseLedgerIntent,
+): BoundedPackageIdSelectionPreference {
+  const intent = readAuthenticatedBoundedPurchaseLedgerIntent(candidateIntent);
+  const authority = readBoundedPurchaseCommandPackageAuthority(intent);
+  if (!authority.commandClaimed) {
+    throw new Error("command package selection was not claimed");
+  }
+  const projection = readAuthenticatedPackagePreferenceProjection(
+    authority.projection,
+  );
+  const { requirements: _requirements, ...committedProjection } =
+    intent.packageSelection;
+  void _requirements;
+  if (JSON.stringify(projection) !== JSON.stringify(committedProjection)) {
+    throw new Error("command package selection does not match the purchase");
+  }
+  const packageIds = [...projection.packageIds];
+  if (
+    packageIds.length === 0 ||
+    new Set(packageIds).size !== packageIds.length ||
+    JSON.stringify(packageIds) !==
+      JSON.stringify([...packageIds].sort(utf8Compare))
+  ) {
+    throw new Error(
+      "command package selection must be non-empty unique and lexical",
+    );
+  }
+  return Object.freeze(packageIds) as BoundedPackageIdSelectionPreference;
+}
