@@ -5,6 +5,7 @@ import {
   AmbiguousTransactionSubmissionError,
   createFiveNorthTransactionSubmitter,
 } from "../src/five-north-transaction-submit.js";
+import { capabilityBootstrapPersistence as persistence } from "./capability-bootstrap-runner.fixtures.js";
 
 const now = Date.parse("2026-07-13T19:30:00.000Z");
 const input = {
@@ -55,15 +56,6 @@ function fixture() {
       },
     },
   } as const;
-}
-
-function persistence() {
-  return {
-    persistCompletionCursor: vi.fn(async () => undefined),
-    persistIntent: vi.fn(async () => undefined),
-    persistSubmissionStarted: vi.fn(async () => undefined),
-    readLedgerEndOffset: vi.fn(async () => 41),
-  };
 }
 
 describe("runBoundedCapabilityBootstrap", () => {
@@ -161,6 +153,10 @@ describe("runBoundedCapabilityBootstrap", () => {
         persistIntent: vi.fn(async () => undefined),
         persistSubmissionStarted,
         readActiveCapabilities: vi.fn(async () => []),
+        readCompletion: vi.fn(async () => ({
+          classification: "ABSENT_COMPLETE" as const,
+          completionOffset: 42,
+        })),
         readLedgerEndOffset: vi.fn(async () => 41),
         request: setup.request,
         submit,
@@ -209,7 +205,7 @@ describe("runBoundedCapabilityBootstrap", () => {
     ).resolves.toMatchObject({
       contractId: setup.contractId,
       outcome: "reconciled-after-ambiguous",
-      updateId: null,
+      updateId: setup.response.transaction.updateId,
     });
     expect(submit).toHaveBeenCalledTimes(1);
   });
@@ -280,6 +276,10 @@ describe("runBoundedCapabilityBootstrap", () => {
         throw new AmbiguousTransactionSubmissionError();
       });
       const durable = persistence();
+      durable.readCompletion.mockResolvedValue({
+        classification: "ABSENT_COMPLETE",
+        completionOffset: 42,
+      });
 
       await expect(
         runBoundedCapabilityBootstrap({

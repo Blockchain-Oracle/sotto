@@ -5,6 +5,7 @@ import {
   restoreBoundedCapabilityBootstrapIntent,
   type BoundedCapabilityBootstrapRequest,
 } from "@sotto/x402-canton";
+import type { CapabilityBootstrapCompletion } from "./capability-bootstrap-completion.js";
 import { AmbiguousTransactionSubmissionError } from "./five-north-transaction-submit.js";
 
 type BootstrapRunnerInput = Readonly<{
@@ -12,26 +13,74 @@ type BootstrapRunnerInput = Readonly<{
   persistIntent: (request: BoundedCapabilityBootstrapRequest) => Promise<void>;
   persistSubmissionStarted: () => Promise<void>;
   readActiveCapabilities: () => Promise<unknown>;
+  readCompletion: (
+    beginExclusive: number,
+    request: BoundedCapabilityBootstrapRequest,
+  ) => Promise<CapabilityBootstrapCompletion>;
   readLedgerEndOffset: () => Promise<number>;
   request: BoundedCapabilityBootstrapRequest;
   submit: (request: BoundedCapabilityBootstrapRequest) => Promise<unknown>;
 }>;
 
-function exactReconciliation(
+export class DefinitiveCapabilityBootstrapRejectionError extends Error {
+  constructor(
+    readonly completionOffset: number,
+    readonly statusCode: number,
+  ) {
+    super("capability bootstrap command was rejected");
+  }
+}
+
+function optionalReconciliation(
   value: unknown,
   request: BoundedCapabilityBootstrapRequest,
-): string {
+): string | null {
   const result = reconcileBoundedCapabilityBootstrapAcs(value, request);
   if (result.activeCount > 1 || result.matchingContractIds.length > 1) {
     throw new Error("capability bootstrap produced duplicate active contracts");
   }
-  if (result.activeCount === 0) {
-    throw new Error("capability bootstrap outcome is unresolved");
-  }
+  if (result.activeCount === 0) return null;
   if (result.matchingContractIds.length !== 1) {
     throw new Error("active capability does not match the bootstrap request");
   }
   return result.matchingContractIds[0]!;
+}
+
+function resolveDualEvidence(input: {
+  active: unknown;
+  completion: CapabilityBootstrapCompletion;
+  request: BoundedCapabilityBootstrapRequest;
+  submitted?: ReturnType<typeof parseBoundedCapabilityBootstrapResponse>;
+}) {
+  const contractId = optionalReconciliation(input.active, input.request);
+  if (input.completion.classification !== "SUCCEEDED") {
+    if (input.submitted !== undefined || contractId !== null) {
+      throw new Error("capability completion evidence is inconsistent");
+    }
+    if (input.completion.classification === "REJECTED") {
+      throw new DefinitiveCapabilityBootstrapRejectionError(
+        input.completion.completionOffset,
+        input.completion.statusCode,
+      );
+    }
+    throw new Error("capability bootstrap outcome is unresolved");
+  }
+  if (contractId === null) {
+    throw new Error("successful completion has no exact active capability");
+  }
+  if (
+    input.submitted !== undefined &&
+    (input.submitted.contractId !== contractId ||
+      input.submitted.offset !== input.completion.completionOffset ||
+      input.submitted.updateId !== input.completion.updateId)
+  ) {
+    throw new Error("completion and submission response are inconsistent");
+  }
+  return Object.freeze({
+    contractId,
+    offset: input.completion.completionOffset,
+    updateId: input.completion.updateId,
+  });
 }
 
 export async function runBoundedCapabilityBootstrap(
@@ -68,41 +117,48 @@ export async function runBoundedCapabilityBootstrap(
       input.request,
     );
   }
-  const contractId = exactReconciliation(
-    await input.readActiveCapabilities(),
-    input.request,
-  );
-  if (submitted !== undefined && submitted.contractId !== contractId) {
-    throw new Error("submitted and reconciled capability IDs do not match");
-  }
+  const completion = await input.readCompletion(beginExclusive, input.request);
+  const resolved = resolveDualEvidence({
+    active: await input.readActiveCapabilities(),
+    completion,
+    request: input.request,
+    ...(submitted === undefined ? {} : { submitted }),
+  });
   return Object.freeze({
     commandId: input.request.commandId,
-    contractId,
-    offset: submitted?.offset ?? null,
+    contractId: resolved.contractId,
+    offset: resolved.offset,
     outcome:
       submitted === undefined
         ? ("reconciled-after-ambiguous" as const)
         : ("submitted" as const),
-    updateId: submitted?.updateId ?? null,
+    updateId: resolved.updateId,
   });
 }
 
 export async function recoverBoundedCapabilityBootstrap(
   input: Readonly<{
+    beginExclusive: number;
     intent: unknown;
     readActiveCapabilities: () => Promise<unknown>;
+    readCompletion: (
+      beginExclusive: number,
+      request: BoundedCapabilityBootstrapRequest,
+    ) => Promise<CapabilityBootstrapCompletion>;
   }>,
 ) {
   const request = restoreBoundedCapabilityBootstrapIntent(input.intent);
-  const contractId = exactReconciliation(
-    await input.readActiveCapabilities(),
+  const completion = await input.readCompletion(input.beginExclusive, request);
+  const resolved = resolveDualEvidence({
+    active: await input.readActiveCapabilities(),
+    completion,
     request,
-  );
+  });
   return Object.freeze({
     commandId: request.commandId,
-    contractId,
-    offset: null,
+    contractId: resolved.contractId,
+    offset: resolved.offset,
     outcome: "recovered" as const,
-    updateId: null,
+    updateId: resolved.updateId,
   });
 }

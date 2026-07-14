@@ -66,13 +66,23 @@ export function parseCapabilityBootstrapResolution(
   value: unknown,
   expected: Readonly<{
     commandId: string;
+    allowLegacyNull?: boolean;
     operationId: string;
     previousRecordSha256: string;
   }>,
 ): ResolutionRecord {
   const record = exactObject(value);
   const outcome = record.outcome;
-  const submitted = outcome === "submitted";
+  const completionBacked =
+    Number.isSafeInteger(record.offset) &&
+    (record.offset as number) >= 0 &&
+    typeof record.updateId === "string" &&
+    UPDATE_PATTERN.test(record.updateId);
+  const legacyNull =
+    expected.allowLegacyNull === true &&
+    outcome !== "submitted" &&
+    record.offset === null &&
+    record.updateId === null;
   if (
     record.kind !== "resolved" ||
     record.schema !== "sotto-capability-bootstrap-journal-v1" ||
@@ -86,12 +96,7 @@ export function parseCapabilityBootstrapResolution(
     !["submitted", "reconciled-after-ambiguous", "recovered"].includes(
       String(outcome),
     ) ||
-    (submitted
-      ? !Number.isSafeInteger(record.offset) ||
-        (record.offset as number) < 0 ||
-        typeof record.updateId !== "string" ||
-        !UPDATE_PATTERN.test(record.updateId)
-      : record.offset !== null || record.updateId !== null)
+    (!completionBacked && !legacyNull)
   ) {
     throw new Error("bootstrap resolution record chain is invalid");
   }

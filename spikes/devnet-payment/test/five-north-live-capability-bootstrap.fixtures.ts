@@ -5,6 +5,10 @@ import {
 import { loadCapabilityBootstrapJournalState } from "../src/capability-bootstrap-journal.js";
 import { AmbiguousTransactionSubmissionError } from "../src/five-north-transaction-submit.js";
 import {
+  checkpointEntry,
+  completionEntry,
+} from "./capability-bootstrap-completion.fixtures.js";
+import {
   activeCapability,
   DSO,
   factoryResponse,
@@ -93,11 +97,19 @@ export function createLiveBootstrapFixture(
     },
     readCompletionPage: async () => {
       counts.completion += 1;
-      return [];
+      if (submittedRequest === undefined || active.length === 0) {
+        return [checkpointEntry(42)];
+      }
+      return [
+        completionEntry(submittedRequest, {
+          updateId: `1220${"f".repeat(64)}`,
+        }),
+        checkpointEntry(42),
+      ];
     },
     readLedgerEndOffset: async () => {
       counts.ledgerEnd += 1;
-      return 42;
+      return submittedRequest === undefined ? 41 : 42;
     },
     readiness: {
       readAmuletRules: async () => {

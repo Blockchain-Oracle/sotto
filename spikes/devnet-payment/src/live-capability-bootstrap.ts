@@ -41,6 +41,8 @@ try {
       : await recoverFiveNorthLiveCapabilityBootstrap({
           networkCallCounts: transport.networkCallCounts,
           readActiveCapabilities: transport.readActiveCapabilities,
+          readCompletionPage: transport.readCompletionPage,
+          readLedgerEndOffset: transport.readLedgerEndOffset,
           sourceCommit,
           workspaceRoot,
         });

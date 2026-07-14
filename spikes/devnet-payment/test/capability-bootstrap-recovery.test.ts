@@ -51,15 +51,21 @@ describe("capability bootstrap recovery", () => {
 
     await expect(
       recoverBoundedCapabilityBootstrap({
+        beginExclusive: 41,
         intent,
         readActiveCapabilities: vi.fn(async () => [active]),
+        readCompletion: vi.fn(async () => ({
+          classification: "SUCCEEDED" as const,
+          completionOffset: 42,
+          updateId: `1220${"b".repeat(64)}`,
+        })),
       }),
     ).resolves.toEqual({
       commandId: request.commandId,
       contractId: "00capability",
-      offset: null,
+      offset: 42,
       outcome: "recovered",
-      updateId: null,
+      updateId: `1220${"b".repeat(64)}`,
     });
   });
 });

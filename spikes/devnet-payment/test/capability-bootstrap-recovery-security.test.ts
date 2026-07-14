@@ -30,6 +30,10 @@ const input = {
   transferFactoryContractId: "00transferfactory",
   userId: "ledger-user-6",
 } as const;
+const readCompletion = async () => ({
+  classification: "ABSENT_COMPLETE" as const,
+  completionOffset: 42,
+});
 
 async function markStarted(
   operationId: string,
@@ -81,6 +85,7 @@ describe("capability bootstrap recovery security", () => {
       startJournaledCapabilityBootstrap({
         readLedgerEndOffset: async () => 41,
         readActiveCapabilities,
+        readCompletion,
         request: otherRequest,
         sourceCommit,
         submit,
@@ -106,6 +111,7 @@ describe("capability bootstrap recovery security", () => {
       startJournaledCapabilityBootstrap({
         readLedgerEndOffset: async () => 41,
         readActiveCapabilities,
+        readCompletion,
         request,
         sourceCommit,
         submit,
@@ -129,6 +135,7 @@ describe("capability bootstrap recovery security", () => {
     await expect(
       recoverJournaledCapabilityBootstrap({
         readActiveCapabilities,
+        readCompletion,
         sourceCommit: "b".repeat(40),
         workspaceRoot,
       }),
@@ -170,6 +177,7 @@ describe("capability bootstrap recovery security", () => {
     await expect(
       recoverJournaledCapabilityBootstrap({
         readActiveCapabilities,
+        readCompletion,
         sourceCommit,
         workspaceRoot,
       }),
@@ -211,6 +219,7 @@ describe("capability bootstrap recovery security", () => {
     await expect(
       recoverJournaledCapabilityBootstrap({
         readActiveCapabilities,
+        readCompletion,
         sourceCommit: "b".repeat(40),
         workspaceRoot,
       }),

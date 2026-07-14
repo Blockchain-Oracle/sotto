@@ -35,7 +35,7 @@ type Route =
 const LIMITS: Readonly<Record<Route, number>> = Object.freeze({
   acs: 3,
   completion: 32,
-  ledgerEnd: 3,
+  ledgerEnd: 5,
   package: 1,
   preferred: 1,
   registry: 1,
@@ -47,10 +47,7 @@ const LIMITS: Readonly<Record<Route, number>> = Object.freeze({
 function allowedRoutes(network: SpikeConfig["network"]): Map<string, Route> {
   return new Map([
     [`POST ${network.tokenUrl}`, "token"],
-    [
-      `POST ${network.ledgerUrl}${CAPABILITY_COMPLETION_QUERY}`,
-      "completion",
-    ],
+    [`POST ${network.ledgerUrl}${CAPABILITY_COMPLETION_QUERY}`, "completion"],
     [`GET ${network.validatorUrl}/v0/scan-proxy/amulet-rules`, "rules"],
     [
       `GET ${network.ledgerUrl}/v2/packages/${SOTTO_CONTROL_PACKAGE_ID}`,

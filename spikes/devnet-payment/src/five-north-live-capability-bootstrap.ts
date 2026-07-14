@@ -1,6 +1,7 @@
 import { isAbsolute } from "node:path";
 import type { BoundedCapabilityBootstrapRequest } from "@sotto/x402-canton";
 import type { CapabilityBootstrapCompletionQuery } from "./capability-bootstrap-completion.js";
+import { readCapabilityBootstrapCompletion } from "./capability-bootstrap-completion.js";
 import {
   recoverJournaledCapabilityBootstrap,
   startJournaledCapabilityBootstrap,
@@ -29,7 +30,7 @@ const ROUTES = [
 const ROUTE_LIMITS = Object.freeze({
   acs: 3,
   completion: 32,
-  ledgerEnd: 4,
+  ledgerEnd: 5,
   package: 1,
   preferred: 1,
   registry: 1,
@@ -74,9 +75,28 @@ type StartInput = Readonly<{
 type RecoverInput = Readonly<{
   networkCallCounts: () => NetworkCounts;
   readActiveCapabilities: () => Promise<unknown>;
+  readCompletionPage: (
+    query: CapabilityBootstrapCompletionQuery,
+  ) => Promise<unknown>;
+  readLedgerEndOffset: () => Promise<number>;
   sourceCommit: string;
   workspaceRoot: string;
 }>;
+
+function completionReader(input: {
+  readCompletionPage: (
+    query: CapabilityBootstrapCompletionQuery,
+  ) => Promise<unknown>;
+  readLedgerEndOffset: () => Promise<number>;
+}) {
+  return (beginExclusive: number, request: BoundedCapabilityBootstrapRequest) =>
+    readCapabilityBootstrapCompletion({
+      beginExclusive,
+      readLedgerEndOffset: input.readLedgerEndOffset,
+      readPage: input.readCompletionPage,
+      request,
+    });
+}
 
 function requireSource(input: {
   sourceCommit: string;
@@ -175,6 +195,7 @@ export async function startFiveNorthLiveCapabilityBootstrap(input: StartInput) {
   const request = buildFiveNorthCapabilityBootstrap(readiness, factory, policy);
   const result = await startJournaledCapabilityBootstrap({
     readActiveCapabilities: transport.readActiveCapabilities,
+    readCompletion: completionReader(transport),
     readLedgerEndOffset: transport.readLedgerEndOffset,
     request,
     sourceCommit: input.sourceCommit,
@@ -192,7 +213,12 @@ export async function recoverFiveNorthLiveCapabilityBootstrap(
   input: RecoverInput,
 ) {
   requireSource(input);
-  const result = await recoverJournaledCapabilityBootstrap(input);
+  const result = await recoverJournaledCapabilityBootstrap({
+    readActiveCapabilities: input.readActiveCapabilities,
+    readCompletion: completionReader(input),
+    sourceCommit: input.sourceCommit,
+    workspaceRoot: input.workspaceRoot,
+  });
   return evidence(
     "recover",
     result.outcome,

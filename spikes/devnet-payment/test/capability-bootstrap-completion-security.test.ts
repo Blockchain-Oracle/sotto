@@ -48,6 +48,14 @@ describe("capability bootstrap completion security", () => {
     });
   });
 
+  it("rejects a status code outside google.rpc.Code", async () => {
+    const setup = read({
+      pages: [[completionEntry(bootstrapRequest(), { statusCode: 17 })]],
+    });
+
+    await expect(setup.result).rejects.toThrow(/status/iu);
+  });
+
   it("accepts the official Empty variant without weakening coverage", async () => {
     const empty = { completionResponse: { Empty: {} } };
     const setup = read({ pages: [[empty, checkpointEntry(42)]] });

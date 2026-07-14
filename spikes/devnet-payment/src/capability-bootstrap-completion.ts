@@ -1,4 +1,5 @@
 import type { BoundedCapabilityBootstrapRequest } from "@sotto/x402-canton";
+import { isGoogleRpcStatusCode } from "./canton-status-code.js";
 import {
   completionExactKeys as exactKeys,
   completionObject as objectValue,
@@ -158,7 +159,7 @@ export async function readCapabilityBootstrapCompletion(
   }
   const completionOffset = offset(match.offset, "command completion");
   const status = objectValue(match.status, "command completion status");
-  if (!Number.isSafeInteger(status.code) || (status.code as number) < 0) {
+  if (!isGoogleRpcStatusCode(status.code)) {
     throw new Error("command completion status is invalid");
   }
   if (status.code !== 0) {

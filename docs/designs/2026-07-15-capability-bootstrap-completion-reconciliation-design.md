@@ -42,9 +42,9 @@ visibility. It is rejected because it preserves the ambiguity observed live.
 Capture the payer-visible Ledger end before submission, persist and fsync it in
 the journal, then submit once. After any response or ambiguity, query the
 official command-completion service from that cursor through a freshly captured
-end and reconcile the exact command, authenticated user, and payer.
-Independently query the exact capability ACS. The two oracles must agree before
-a terminal result is recorded.
+end and reconcile the exact command, authenticated user, and payer. Then query
+the exact capability ACS at or after that captured completion end. The two
+oracles must agree before a terminal result is recorded.
 
 This preserves the reviewed one-root creation request and one-shot submit
 endpoint while closing the recovery gap with the smallest protocol change.
@@ -72,6 +72,11 @@ The journal remains ignored, owner-only, exclusive, and fsynced:
 Existing version-one journals without a cursor remain readable for audit, but
 they can never authorize a new submission. A new start must have the cursor
 durable before it may create the submission-started record.
+
+Cursorless legacy recovery records may retain their historical null offset and
+update ID. Every cursor-backed terminal success must retain the exact completion
+offset and update ID; null metadata is rejected once a cursor exists. Legacy
+records remain loadable for audit but cannot produce current live evidence.
 
 ## Completion Reader
 

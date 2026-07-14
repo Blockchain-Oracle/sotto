@@ -12,7 +12,14 @@ import { AmbiguousTransactionSubmissionError } from "../src/five-north-transacti
 
 const now = Date.parse("2026-07-13T19:30:00.000Z");
 const sourceCommit = "a".repeat(40);
-const completionCursor = { readLedgerEndOffset: async () => 41 } as const;
+const completionCursor = {
+  readCompletion: async () => ({
+    classification: "SUCCEEDED" as const,
+    completionOffset: 42,
+    updateId: `1220${"b".repeat(64)}`,
+  }),
+  readLedgerEndOffset: async () => 41,
+} as const;
 const input = {
   agentParty: "sotto-policy-agent::1220participant",
   allowedRecipient: "sotto-spike-provider::1220participant",
@@ -119,12 +126,24 @@ describe("journaled capability bootstrap", () => {
 
   it("recovers an unknown outcome without resubmitting", async () => {
     const setup = fixture();
+    const readCompletion = vi
+      .fn()
+      .mockResolvedValueOnce({
+        classification: "ABSENT_COMPLETE" as const,
+        completionOffset: 42,
+      })
+      .mockResolvedValueOnce({
+        classification: "SUCCEEDED" as const,
+        completionOffset: 42,
+        updateId: `1220${"b".repeat(64)}`,
+      });
     const submit = vi.fn(async () => {
       throw new AmbiguousTransactionSubmissionError();
     });
     await expect(
       startJournaledCapabilityBootstrap({
-        ...completionCursor,
+        readCompletion,
+        readLedgerEndOffset: completionCursor.readLedgerEndOffset,
         readActiveCapabilities: vi
           .fn()
           .mockResolvedValueOnce([])
@@ -138,6 +157,7 @@ describe("journaled capability bootstrap", () => {
 
     await expect(
       recoverJournaledCapabilityBootstrap({
+        readCompletion,
         readActiveCapabilities: vi.fn(async () => [setup.active]),
         sourceCommit,
         workspaceRoot,
@@ -220,6 +240,7 @@ describe("journaled capability bootstrap", () => {
     });
     const recover = () =>
       recoverJournaledCapabilityBootstrap({
+        ...completionCursor,
         readActiveCapabilities: vi.fn(async () => [setup.active]),
         sourceCommit,
         workspaceRoot,
@@ -260,6 +281,7 @@ describe("journaled capability bootstrap", () => {
     const readActiveCapabilities = vi.fn(async () => []);
     await expect(
       recoverJournaledCapabilityBootstrap({
+        ...completionCursor,
         readActiveCapabilities,
         sourceCommit,
         workspaceRoot,
@@ -273,24 +295,5 @@ describe("journaled capability bootstrap", () => {
     });
     expect(readActiveCapabilities).not.toHaveBeenCalled();
     expect(submit).toHaveBeenCalledTimes(1);
-  });
-
-  it("never submits from an intent-only recovery", async () => {
-    const setup = fixture();
-    await initializeCapabilityBootstrapJournal({
-      request: setup.request,
-      sourceCommit,
-      workspaceRoot,
-    });
-    const readActiveCapabilities = vi.fn(async () => [setup.active]);
-
-    await expect(
-      recoverJournaledCapabilityBootstrap({
-        readActiveCapabilities,
-        sourceCommit,
-        workspaceRoot,
-      }),
-    ).rejects.toThrow("submission was not started");
-    expect(readActiveCapabilities).not.toHaveBeenCalled();
   });
 });

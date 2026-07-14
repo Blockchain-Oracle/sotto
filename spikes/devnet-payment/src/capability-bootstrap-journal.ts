@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { restoreBoundedCapabilityBootstrapIntent } from "@sotto/x402-canton";
 import {
   prepareCapabilityBootstrapJournalDirectory,
@@ -10,9 +9,18 @@ import {
   writeCapabilityBootstrapCompletionCursor,
 } from "./capability-bootstrap-journal-cursor.js";
 import {
+  loadCapabilityBootstrapFailure,
+  writeCapabilityBootstrapFailure,
+} from "./capability-bootstrap-journal-failure.js";
+import {
   parseCapabilityBootstrapResolution,
   type CapabilityBootstrapResolution,
 } from "./capability-bootstrap-journal-resolution.js";
+import {
+  capabilityBootstrapJournalSha256 as sha256,
+  exactCapabilityBootstrapJournalObject as exactObject,
+  isMissingCapabilityBootstrapJournalRecord as isMissing,
+} from "./capability-bootstrap-journal-primitives.js";
 import {
   initializeCapabilityBootstrapJournal,
   loadCapabilityBootstrapJournalIntent,
@@ -30,37 +38,6 @@ type SubmissionRecord = Readonly<{
   recordedAt: string;
   schema: "sotto-capability-bootstrap-journal-v1";
 }>;
-
-function sha256(value: string): `sha256:${string}` {
-  return `sha256:${createHash("sha256").update(value).digest("hex")}`;
-}
-
-function exactObject(
-  value: unknown,
-  keys: readonly string[],
-  label: string,
-): Record<string, unknown> {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    throw new Error(`${label} must be an object`);
-  }
-  const record = value as Record<string, unknown>;
-  if (
-    JSON.stringify(Object.keys(record).sort()) !==
-    JSON.stringify([...keys].sort())
-  ) {
-    throw new Error(`${label} keys are invalid`);
-  }
-  return record;
-}
-
-function isMissing(error: unknown): boolean {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    error.code === "ENOENT"
-  );
-}
 
 function parseSubmissionRecord(
   value: unknown,
@@ -146,6 +123,16 @@ export async function loadCapabilityBootstrapJournalState(
     if (!isMissing(error)) throw error;
   }
   let resolution: CapabilityBootstrapResolution | undefined;
+  let failure = null;
+  const request = restoreBoundedCapabilityBootstrapIntent(loaded.intent);
+  const terminalExpected =
+    submission === undefined
+      ? null
+      : {
+          commandId: request.commandId,
+          operationId: loaded.operationId,
+          previousRecordSha256: sha256(JSON.stringify(submission)),
+        };
   try {
     const resolutionValue = await readCapabilityBootstrapJournalJson(
       directory,
@@ -154,8 +141,8 @@ export async function loadCapabilityBootstrapJournalState(
     if (submission === undefined) {
       throw new Error("bootstrap resolution exists without submission");
     }
-    const request = restoreBoundedCapabilityBootstrapIntent(loaded.intent);
     const parsed = parseCapabilityBootstrapResolution(resolutionValue, {
+      allowLegacyNull: completionCursor === null,
       commandId: request.commandId,
       operationId: loaded.operationId,
       previousRecordSha256: sha256(JSON.stringify(submission)),
@@ -170,9 +157,23 @@ export async function loadCapabilityBootstrapJournalState(
   } catch (error) {
     if (!isMissing(error)) throw error;
   }
+  if (terminalExpected !== null) {
+    failure = await loadCapabilityBootstrapFailure(directory, terminalExpected);
+  } else {
+    try {
+      await readCapabilityBootstrapJournalJson(directory, "30-failed.json");
+      throw new Error("bootstrap failure exists without submission");
+    } catch (error) {
+      if (!isMissing(error)) throw error;
+    }
+  }
+  if (resolution !== undefined && failure !== null) {
+    throw new Error("bootstrap journal has conflicting terminal records");
+  }
   return Object.freeze({
     ...loaded,
     completionCursor: completionCursor?.record.beginExclusive ?? null,
+    failure,
     resolution: resolution ?? null,
     submissionStarted: submission !== undefined,
     submissionRecordSha256:
@@ -204,10 +205,10 @@ export async function markCapabilityBootstrapCompletionCursor(input: {
 export async function markCapabilityBootstrapResolved(input: {
   commandId: string;
   contractId: string;
-  offset: number | null;
+  offset: number;
   operationId: string;
   outcome: "submitted" | "reconciled-after-ambiguous" | "recovered";
-  updateId: string | null;
+  updateId: string;
   workspaceRoot: string;
 }): Promise<void> {
   const directory = await prepareCapabilityBootstrapJournalDirectory(
@@ -217,7 +218,8 @@ export async function markCapabilityBootstrapResolved(input: {
   if (
     state.operationId !== input.operationId ||
     !state.submissionStarted ||
-    state.submissionRecordSha256 === null
+    state.submissionRecordSha256 === null ||
+    state.failure !== null
   ) {
     throw new Error("bootstrap cannot resolve before submission is durable");
   }
@@ -252,4 +254,35 @@ export async function markCapabilityBootstrapResolved(input: {
     "30-resolved.json",
     record,
   );
+}
+
+export async function markCapabilityBootstrapFailed(input: {
+  commandId: string;
+  completionOffset: number;
+  operationId: string;
+  statusCode: number;
+  workspaceRoot: string;
+}): Promise<void> {
+  const directory = await prepareCapabilityBootstrapJournalDirectory(
+    input.workspaceRoot,
+  );
+  const state = await loadCapabilityBootstrapJournalState(input.workspaceRoot);
+  const request = restoreBoundedCapabilityBootstrapIntent(state.intent);
+  if (
+    state.operationId !== input.operationId ||
+    !state.submissionStarted ||
+    state.submissionRecordSha256 === null ||
+    state.resolution !== null ||
+    state.failure !== null ||
+    request.commandId !== input.commandId
+  ) {
+    throw new Error("bootstrap cannot fail before submission is durable");
+  }
+  await writeCapabilityBootstrapFailure(directory, {
+    commandId: input.commandId,
+    completionOffset: input.completionOffset,
+    operationId: state.operationId,
+    previousRecordSha256: state.submissionRecordSha256,
+    statusCode: input.statusCode,
+  });
 }

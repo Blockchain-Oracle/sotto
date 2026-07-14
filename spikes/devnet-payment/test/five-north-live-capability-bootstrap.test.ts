@@ -73,8 +73,8 @@ describe("Five North live capability bootstrap", () => {
     });
     expect(result.networkCallCounts).toEqual({
       acs: 3,
-      completion: 0,
-      ledgerEnd: 4,
+      completion: 1,
+      ledgerEnd: 5,
       package: 1,
       preferred: 1,
       registry: 1,
@@ -145,6 +145,29 @@ describe("Five North live capability bootstrap", () => {
         counts.acs += 1;
         return fixture.active;
       },
+      readCompletionPage: async () => {
+        counts.completion += 1;
+        return [
+          {
+            completionResponse: {
+              Completion: {
+                value: {
+                  actAs: [...request.actAs],
+                  commandId: request.commandId,
+                  offset: 42,
+                  status: { code: 0 },
+                  updateId: `1220${"f".repeat(64)}`,
+                  userId: request.userId,
+                },
+              },
+            },
+          },
+        ];
+      },
+      readLedgerEndOffset: async () => {
+        counts.ledgerEnd += 1;
+        return 42;
+      },
       sourceCommit: SOURCE_COMMIT,
       workspaceRoot,
     });
@@ -159,7 +182,8 @@ describe("Five North live capability bootstrap", () => {
     expect(result.networkCallCounts).toEqual({
       ...EMPTY_COUNTS,
       acs: 1,
-      ledgerEnd: 1,
+      completion: 1,
+      ledgerEnd: 2,
     });
   });
 
@@ -177,6 +201,8 @@ describe("Five North live capability bootstrap", () => {
     const result = await recoverFiveNorthLiveCapabilityBootstrap({
       networkCallCounts: () => EMPTY_COUNTS,
       readActiveCapabilities,
+      readCompletionPage: vi.fn(),
+      readLedgerEndOffset: vi.fn(),
       sourceCommit: SOURCE_COMMIT,
       workspaceRoot,
     });
