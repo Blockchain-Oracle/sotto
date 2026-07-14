@@ -10,6 +10,9 @@ import { registerPreparedFactoryResultCases } from "./prepared-purchase-factory-
 import { registerPreparedCapabilityEffectCases } from "./prepared-purchase-capability-effects.cases.js";
 import { registerPreparedContextEffectCases } from "./prepared-purchase-context-effects.cases.js";
 import { registerPreparedSottoStructureCases } from "./prepared-purchase-sotto-structure.cases.js";
+import { registerPreparedAccountingEffectCases } from "./prepared-purchase-accounting-effects.cases.js";
+import { registerPreparedHoldingEffectCases } from "./prepared-purchase-holding-effects.cases.js";
+import { registerPreparedHoldingStructureCases } from "./prepared-purchase-holding-structure.cases.js";
 import {
   rootOnlyPreparedPurchaseBytes,
   validPreparedPurchase,
@@ -51,7 +54,7 @@ describe("prepared Purchase effect baseline", () => {
 
   afterEach(() => vi.useRealTimers());
 
-  it("models the complete capability and context graph with exact results", async () => {
+  it("models the complete capability context and Holding amounts", async () => {
     const { intent, holdings, packageSelection, registry } =
       await purchaseCommandInputs();
     const request = buildBoundedPurchasePrepareRequest(
@@ -141,3 +144,6 @@ registerPreparedFactoryResultCases();
 registerPreparedCapabilityEffectCases();
 registerPreparedContextEffectCases();
 registerPreparedSottoStructureCases();
+registerPreparedHoldingEffectCases();
+registerPreparedAccountingEffectCases();
+registerPreparedHoldingStructureCases();

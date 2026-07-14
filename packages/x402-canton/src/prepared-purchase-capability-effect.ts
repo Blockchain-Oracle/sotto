@@ -58,22 +58,24 @@ function replacementAllowance(
   return atomicToDamlDecimal(remaining.toString(), "replacement allowance");
 }
 
-export function validatePreparedReplacementCapability(
+function validateCapability(
   create: Create,
   intent: BoundedPurchaseLedgerIntent,
-  result: PreparedPurchaseResult,
+  allowance: string,
+  revision: string,
+  label: string,
 ): void {
   validatePreparedSottoCreateIdentity(
     create,
     intent.capability.templateId,
     intent.challenge.payerParty,
     [intent.challenge.payerParty, intent.capability.agentParty],
-    "replacement capability create",
+    label,
   );
   const argument = preparedRecord(
     create.argument,
     CAPABILITY_FIELDS,
-    "replacement capability argument",
+    `${label} argument`,
     intent.capability.templateId,
   );
   const scalars = [
@@ -94,7 +96,7 @@ export function validatePreparedReplacementCapability(
         "capability per-call limit",
       ),
     ],
-    ["remainingAllowance", "numeric", replacementAllowance(intent, result)],
+    ["remainingAllowance", "numeric", allowance],
     [
       "maximumTotalDebit",
       "numeric",
@@ -104,43 +106,60 @@ export function validatePreparedReplacementCapability(
       ),
     ],
     ["expiresAt", "timestamp", micros(intent.capability.expiresAt)],
-    [
-      "revision",
-      "int64",
-      replacementRevision(intent.capability.expectedRevision),
-    ],
+    ["revision", "int64", revision],
     ["transferFactoryCid", "contractId", intent.tokenFactory.contractId],
     ["expectedAdmin", "party", intent.tokenFactory.expectedAdmin],
   ] as const;
   for (const [field, kind, expected] of scalars) {
-    preparedScalar(
-      argument.get(field),
-      kind,
-      expected,
-      `replacement capability ${field}`,
-    );
+    preparedScalar(argument.get(field), kind, expected, `${label} ${field}`);
   }
   const instrument = preparedRecord(
     argument.get("instrumentId"),
     ["admin", "id"],
-    "replacement capability instrument",
+    `${label} instrument`,
     `${HOLDING_INTERFACE_ID.split(":")[0]}:Splice.Api.Token.HoldingV1:InstrumentId`,
   );
   preparedScalar(
     instrument.get("admin"),
     "party",
     intent.challenge.instrument.admin,
-    "replacement capability instrument admin",
+    `${label} instrument admin`,
   );
   preparedScalar(
     instrument.get("id"),
     "text",
     intent.challenge.instrument.id,
-    "replacement capability instrument ID",
+    `${label} instrument ID`,
   );
-  preparedBoolean(
-    argument.get("paused"),
-    false,
-    "replacement capability paused",
+  preparedBoolean(argument.get("paused"), false, `${label} paused`);
+}
+
+export function validatePreparedSourceCapability(
+  create: Create,
+  intent: BoundedPurchaseLedgerIntent,
+): void {
+  validateCapability(
+    create,
+    intent,
+    atomicToDamlDecimal(
+      intent.capability.remainingAllowanceAtomic,
+      "source capability allowance",
+    ),
+    intent.capability.expectedRevision,
+    "source capability",
+  );
+}
+
+export function validatePreparedReplacementCapability(
+  create: Create,
+  intent: BoundedPurchaseLedgerIntent,
+  result: PreparedPurchaseResult,
+): void {
+  validateCapability(
+    create,
+    intent,
+    replacementAllowance(intent, result),
+    replacementRevision(intent.capability.expectedRevision),
+    "replacement capability create",
   );
 }

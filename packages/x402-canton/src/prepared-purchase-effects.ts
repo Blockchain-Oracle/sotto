@@ -1,4 +1,5 @@
 import type { BoundedPurchasePrepareRequest } from "./bounded-purchase-command-types.js";
+import { validatePreparedPurchaseAccounting } from "./prepared-purchase-accounting.js";
 import {
   preparedIdentifier,
   preparedParties,
@@ -9,7 +10,13 @@ import type {
   PreparedPurchaseGraph,
   PreparedPurchaseGraphNode,
 } from "./prepared-purchase-graph-types.js";
-import { HOLDING_INTERFACE_ID } from "./purchase-holding-types.js";
+import { validatePreparedHoldingLinkage } from "./prepared-purchase-holding-linkage.js";
+import { validatePreparedPurchaseInputEffects } from "./prepared-purchase-input-effects.js";
+import type { PreparedPurchaseMetadata } from "./prepared-purchase-metadata-types.js";
+import {
+  FIVE_NORTH_HOLDING_TEMPLATE_PACKAGE_ID,
+  HOLDING_INTERFACE_ID,
+} from "./purchase-holding-types.js";
 import type { BoundedPurchaseLedgerIntent } from "./purchase-ledger-intent.js";
 import { validatePreparedPurchaseSottoEffects } from "./prepared-purchase-sotto-effects.js";
 
@@ -79,6 +86,11 @@ function validateArchiveEffects(
   }
   for (const { exercise } of archives) {
     preparedIdentifier(
+      exercise.templateId,
+      `${FIVE_NORTH_HOLDING_TEMPLATE_PACKAGE_ID}:Splice.Amulet:Amulet`,
+      "Holding archive template",
+    );
+    preparedIdentifier(
       exercise.interfaceId,
       HOLDING_INTERFACE_ID,
       "Holding archive interface",
@@ -108,6 +120,9 @@ function validateArchiveEffects(
       "Holding archive stakeholder",
     );
     preparedRecord(exercise.chosenValue, [], "Holding archive choice");
+    if (exercise.exerciseResult?.sum.oneofKind !== "unit") {
+      throw new Error("prepared Holding archive result is not unit");
+    }
   }
 }
 
@@ -147,6 +162,7 @@ function validateFactoryCreates(
 
 export function validatePreparedPurchaseEffects(
   graph: PreparedPurchaseGraph,
+  metadata: PreparedPurchaseMetadata,
   intent: BoundedPurchaseLedgerIntent,
   request: BoundedPurchasePrepareRequest,
 ): void {
@@ -158,5 +174,24 @@ export function validatePreparedPurchaseEffects(
   );
   validateArchiveEffects(graph, factory, intent, request);
   validateFactoryCreates(graph, factory, intent);
-  validatePreparedPurchaseSottoEffects(graph, intent, request, factoryResult);
+  const inputHoldings = validatePreparedPurchaseInputEffects(
+    metadata,
+    intent,
+    request,
+  );
+  const result = validatePreparedPurchaseSottoEffects(
+    graph,
+    intent,
+    request,
+    factoryResult,
+  );
+  const holdings = validatePreparedHoldingLinkage(
+    graph,
+    inputHoldings,
+    factoryResult,
+    result.capabilityCid,
+    result.contextCid,
+    intent,
+  );
+  validatePreparedPurchaseAccounting(holdings, result, intent);
 }

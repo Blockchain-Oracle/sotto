@@ -1,4 +1,4 @@
-import type { Metadata } from "@canton-network/core-ledger-proto";
+import type { Create, Metadata } from "@canton-network/core-ledger-proto";
 import type { BoundedPurchasePrepareRequest } from "./bounded-purchase-command-types.js";
 import type { BoundedPurchaseLedgerIntent } from "./purchase-ledger-intent.js";
 import { canonicalTime, identifier } from "./purchase-commitment-primitives.js";
@@ -6,6 +6,7 @@ import {
   type PreparedStructureBudget,
   validatePreparedValue,
 } from "./prepared-purchase-limits.js";
+import type { PreparedPurchaseMetadata } from "./prepared-purchase-metadata-types.js";
 
 export const MAX_PREPARED_INPUT_CONTRACTS = 4_096;
 export const MAX_PREPARED_EVENT_BLOB_BYTES = 1_048_576;
@@ -18,11 +19,11 @@ function timestampMicros(value: string, label: string): bigint {
 function validateInputContracts(
   metadata: Metadata,
   budget: PreparedStructureBudget,
-): void {
+): ReadonlyMap<string, Create> {
   if (metadata.inputContracts.length > MAX_PREPARED_INPUT_CONTRACTS) {
     throw new Error("prepared Purchase has too many input contracts");
   }
-  const contractIds = new Set<string>();
+  const contracts = new Map<string, Create>();
   let totalEventBytes = 0;
   for (const input of metadata.inputContracts) {
     if (input.contract.oneofKind !== "v1") {
@@ -33,11 +34,12 @@ function validateInputContracts(
       "prepared input contract ID",
       512,
     );
-    if (contractIds.has(contractId)) {
+    if (contracts.has(contractId)) {
       throw new Error("prepared input contract IDs must be unique");
     }
-    contractIds.add(contractId);
-    validatePreparedValue(input.contract.v1.argument, budget);
+    const contract = input.contract.v1;
+    contracts.set(contractId, contract);
+    validatePreparedValue(contract.argument, budget);
     if (input.eventBlob.byteLength > MAX_PREPARED_EVENT_BLOB_BYTES) {
       throw new Error("prepared input event blob exceeds byte limit");
     }
@@ -46,6 +48,7 @@ function validateInputContracts(
       throw new Error("prepared input event blobs exceed aggregate limit");
     }
   }
+  return contracts;
 }
 
 export function validatePreparedPurchaseMetadata(
@@ -53,7 +56,7 @@ export function validatePreparedPurchaseMetadata(
   intent: BoundedPurchaseLedgerIntent,
   request: BoundedPurchasePrepareRequest,
   budget: PreparedStructureBudget,
-): void {
+): PreparedPurchaseMetadata {
   const submitter = metadata.submitterInfo;
   if (
     submitter === undefined ||
@@ -93,5 +96,7 @@ export function validatePreparedPurchaseMetadata(
   ) {
     throw new Error("prepared ledger-time bounds are invalid");
   }
-  validateInputContracts(metadata, budget);
+  return Object.freeze({
+    inputContracts: validateInputContracts(metadata, budget),
+  });
 }

@@ -8,7 +8,10 @@ import type {
   PreparedPurchaseGraphNode,
 } from "./prepared-purchase-graph-types.js";
 import type { BoundedPurchaseLedgerIntent } from "./purchase-ledger-intent.js";
-import { validatePreparedPurchaseResult } from "./prepared-purchase-sotto-result.js";
+import {
+  type PreparedPurchaseResult,
+  validatePreparedPurchaseResult,
+} from "./prepared-purchase-sotto-result.js";
 
 type CreateNode = Extract<PreparedPurchaseGraphNode, { kind: "create" }>;
 
@@ -84,7 +87,7 @@ export function validatePreparedPurchaseSottoEffects(
   intent: BoundedPurchaseLedgerIntent,
   request: BoundedPurchasePrepareRequest,
   factory: PreparedFactoryResult,
-): void {
+): PreparedPurchaseResult {
   const { capability, context, root } = findSottoCreates(graph, intent);
   const result = validatePreparedPurchaseResult(
     root,
@@ -95,4 +98,5 @@ export function validatePreparedPurchaseSottoEffects(
   );
   validatePreparedPurchaseContext(context.create, intent, request, result);
   validatePreparedReplacementCapability(capability.create, intent, result);
+  return result;
 }

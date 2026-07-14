@@ -24,12 +24,17 @@ export function inspectPreparedPurchaseStructure(
     throw new Error("prepared transaction or metadata is absent");
   }
   const budget: PreparedStructureBudget = { items: 0 };
-  validatePreparedPurchaseMetadata(prepared.metadata, intent, request, budget);
+  const metadata = validatePreparedPurchaseMetadata(
+    prepared.metadata,
+    intent,
+    request,
+    budget,
+  );
   const graph = validatePreparedPurchaseGraph(
     prepared.transaction,
     intent,
     request,
     budget,
   );
-  validatePreparedPurchaseEffects(graph, intent, request);
+  validatePreparedPurchaseEffects(graph, metadata, intent, request);
 }

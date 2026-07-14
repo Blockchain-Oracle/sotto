@@ -10,6 +10,9 @@ import { damlDecimalToAtomic } from "./purchase-commitment-primitives.js";
 import type { BoundedPurchaseLedgerIntent } from "./purchase-ledger-intent.js";
 
 export type PreparedPurchaseResult = Readonly<{
+  capabilityCid: string;
+  contextCid: string;
+  receiverHoldingCids: readonly string[];
   totalDebitAtomic: string;
   totalDebitDecimal: string;
 }>;
@@ -40,13 +43,13 @@ export function validatePreparedPurchaseResult(
     contextCid,
     "Purchase result context CID",
   );
+  const receiverHoldingCids = preparedContractIds(
+    result.get("receiverHoldingCids"),
+    "Purchase result receiver holdings",
+  );
   if (
-    JSON.stringify(
-      preparedContractIds(
-        result.get("receiverHoldingCids"),
-        "Purchase result receiver holdings",
-      ),
-    ) !== JSON.stringify(factory.receiverHoldingCids)
+    JSON.stringify(receiverHoldingCids) !==
+    JSON.stringify(factory.receiverHoldingCids)
   ) {
     throw new Error("prepared Purchase result effect receivers do not match");
   }
@@ -58,5 +61,11 @@ export function validatePreparedPurchaseResult(
     totalDebitDecimal,
     "prepared Purchase result total debit",
   );
-  return Object.freeze({ totalDebitAtomic, totalDebitDecimal });
+  return Object.freeze({
+    capabilityCid,
+    contextCid,
+    receiverHoldingCids: Object.freeze(receiverHoldingCids),
+    totalDebitAtomic,
+    totalDebitDecimal,
+  });
 }

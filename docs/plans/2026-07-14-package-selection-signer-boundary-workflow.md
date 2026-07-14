@@ -203,7 +203,7 @@ max_iterations: 3
 
 verify: PATH=/Users/abu/.local/share/mise/installs/node/24.18.0/bin:$PATH pnpm vitest run packages/x402-canton/test/prepared-purchase-effects.test.ts -t 'capability|context|revision|commitment|allowance'
 
-- [ ] **Step 19: Implement Holding linkage and debit verification**
+- [x] **Step 19: Implement Holding linkage and debit verification**
 
 action: Verify one-to-one input, archive, receiver, and change Holding linkage; exact owner, instrument, principal, amount, and contract references; debit conservation; fee and allowance bounds; and rejection of every unclassified value-bearing effect.
 
