@@ -7,10 +7,17 @@ import {
   validatePreparedValue,
 } from "./prepared-purchase-limits.js";
 import type { PreparedPurchaseMetadata } from "./prepared-purchase-metadata-types.js";
+import {
+  MAX_PREPARED_EVENT_BLOB_BYTES,
+  MAX_PREPARED_INPUT_CONTRACTS,
+  MAX_TOTAL_PREPARED_EVENT_BLOB_BYTES,
+} from "./prepared-purchase-resource-envelope.js";
 
-export const MAX_PREPARED_INPUT_CONTRACTS = 4_096;
-export const MAX_PREPARED_EVENT_BLOB_BYTES = 1_048_576;
-export const MAX_TOTAL_PREPARED_EVENT_BLOB_BYTES = 2_097_152;
+export {
+  MAX_PREPARED_EVENT_BLOB_BYTES,
+  MAX_PREPARED_INPUT_CONTRACTS,
+  MAX_TOTAL_PREPARED_EVENT_BLOB_BYTES,
+};
 
 function timestampMicros(value: string, label: string): bigint {
   return BigInt(canonicalTime(value, label)) * 1000n;

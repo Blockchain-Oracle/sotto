@@ -150,6 +150,26 @@ Files touched: The package-selection and canonical purchase modules under
 `packages/x402-canton`, the prepared-purchase verifier modules, the Five North
 prepare readers and runner, focused tests, and redacted architecture evidence.
 
+## Reviewed Deterministic Envelope
+
+These are fail-closed verifier limits, not production latency or throughput
+claims. They retain room for the accepted maximum of 16 input Holdings while
+removing the earlier generic parser-scale ceilings.
+
+| Resource                |                       Limit |
+| ----------------------- | --------------------------: |
+| Prepare response        |                       3 MiB |
+| Prepared transaction    |                       2 MiB |
+| Graph                   | 64 nodes, 63 edges, depth 8 |
+| Metadata inputs         |                20 contracts |
+| Receiver/change outputs |                     16 each |
+| Value traversal         |  4,096 work units, depth 16 |
+| Input event blobs       |   256 KiB each, 1 MiB total |
+
+Verification retains one protobuf decode. The recorded elapsed microseconds are
+informational evidence only and never authorize package selection, claiming, or
+signing.
+
 ## Risks & Open Questions
 
 - The participant may not expose enough metadata to prove every selectable

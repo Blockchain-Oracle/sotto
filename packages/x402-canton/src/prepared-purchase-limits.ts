@@ -1,7 +1,10 @@
 import type { Value } from "@canton-network/core-ledger-proto";
+import {
+  MAX_PREPARED_STRUCTURE_ITEMS,
+  MAX_PREPARED_VALUE_DEPTH,
+} from "./prepared-purchase-resource-envelope.js";
 
-export const MAX_PREPARED_STRUCTURE_ITEMS = 65_536;
-export const MAX_PREPARED_VALUE_DEPTH = 64;
+export { MAX_PREPARED_STRUCTURE_ITEMS, MAX_PREPARED_VALUE_DEPTH };
 
 export type PreparedStructureBudget = { items: number };
 

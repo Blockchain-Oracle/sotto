@@ -14,11 +14,14 @@ import type {
   PreparedPurchaseGraph,
   PreparedPurchaseGraphNode,
 } from "./prepared-purchase-graph-types.js";
+import {
+  MAX_PREPARED_DEPTH,
+  MAX_PREPARED_EDGES,
+  MAX_PREPARED_NODES,
+} from "./prepared-purchase-resource-envelope.js";
 import { validatePreparedPurchaseRoot } from "./prepared-purchase-root.js";
 
-export const MAX_PREPARED_NODES = 4_096;
-export const MAX_PREPARED_EDGES = 65_536;
-export const MAX_PREPARED_DEPTH = 64;
+export { MAX_PREPARED_DEPTH, MAX_PREPARED_EDGES, MAX_PREPARED_NODES };
 const NODE_ID = /^(?:0|[1-9]\d{0,9})$/;
 const MAX_NODE_ID = 2_147_483_647;
 

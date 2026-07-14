@@ -10,12 +10,15 @@ import { canonicalDisclosureBlob } from "./purchase-disclosure-validation.js";
 import { inspectPreparedPurchaseStructure } from "./prepared-purchase-validation.js";
 import { requirePreparedPurchaseFresh } from "./prepared-purchase-freshness.js";
 import { registerPreparedPurchaseObservation } from "./prepared-purchase-observation-state.js";
+import {
+  MAX_PREPARE_RESPONSE_BYTES,
+  MAX_PREPARED_TRANSACTION_BYTES,
+} from "./prepared-purchase-resource-envelope.js";
 import { assertStrictJson } from "./strict-json.js";
 
 export const PREPARE_SUBMISSION_PATH = "/v2/interactive-submission/prepare";
 export const PREPARE_SUBMISSION_TIMEOUT_MS = 10_000;
-export const MAX_PREPARE_RESPONSE_BYTES = 8_388_608;
-export const MAX_PREPARED_TRANSACTION_BYTES = 6_291_456;
+export { MAX_PREPARE_RESPONSE_BYTES, MAX_PREPARED_TRANSACTION_BYTES };
 export type PreparedPurchaseTransportRequest = Readonly<{
   path: typeof PREPARE_SUBMISSION_PATH;
   method: "POST";

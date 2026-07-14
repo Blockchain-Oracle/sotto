@@ -235,7 +235,7 @@ max_iterations: 3
 
 verify: PATH=/Users/abu/.local/share/mise/installs/node/24.18.0/bin:$PATH pnpm vitest run packages/x402-canton/test/prepared-purchase-shape.test.ts
 
-- [ ] **Step 22: Tighten deterministic resource envelopes**
+- [x] **Step 22: Tighten deterministic resource envelopes**
 
 action: Replace generic ceilings with reviewed byte, node, edge, depth, input, output, and work-unit limits; add at-cap acceptance and over-cap rejection tests, retain one decode and bounded linear traversal, and record elapsed timing as informational only.
 

@@ -5,6 +5,7 @@ import {
   preparedRecord,
 } from "./prepared-purchase-effect-values.js";
 import { preparedEmptyMetadata } from "./prepared-purchase-metadata-values.js";
+import { MAX_PREPARED_HOLDING_OUTPUTS } from "./prepared-purchase-resource-envelope.js";
 import type { BoundedPurchaseLedgerIntent } from "./purchase-ledger-intent.js";
 
 export type PreparedFactoryResult = Readonly<{
@@ -48,10 +49,20 @@ export function validatePreparedFactoryResult(
   if (receiverHoldingCids.length === 0) {
     throw new Error("prepared TransferFactory effect has no receiver holding");
   }
+  if (receiverHoldingCids.length > MAX_PREPARED_HOLDING_OUTPUTS) {
+    throw new Error(
+      "prepared TransferFactory receiver output effects exceed limit",
+    );
+  }
   const senderChangeCids = preparedContractIds(
     result.get("senderChangeCids"),
     "TransferFactory sender change",
   );
+  if (senderChangeCids.length > MAX_PREPARED_HOLDING_OUTPUTS) {
+    throw new Error(
+      "prepared TransferFactory change output effects exceed limit",
+    );
+  }
   preparedEmptyMetadata(result.get("meta"), "TransferFactory result metadata");
   return Object.freeze({
     receiverHoldingCids: Object.freeze(receiverHoldingCids),

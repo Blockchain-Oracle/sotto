@@ -9,6 +9,13 @@ import {
   type PreparedPurchaseFixture,
 } from "./prepared-purchase.fixtures.js";
 import { purchaseCommandInputs } from "./transfer-factory-observation.fixtures.js";
+import {
+  MAX_PREPARED_STRUCTURE_ITEMS,
+  MAX_PREPARED_VALUE_DEPTH,
+  PREPARED_PURCHASE_RESOURCE_LIMITS,
+  validatePreparedPurchaseResourceEnvelope,
+} from "../src/prepared-purchase-resource-envelope.js";
+import { registerPreparedResourceLimitCases } from "./prepared-purchase-resource-limit.cases.js";
 
 const preparedHash = Buffer.alloc(32, 7).toString("base64");
 
@@ -68,17 +75,44 @@ describe("prepared Purchase structural limits", () => {
     vi.useRealTimers();
   });
 
+  registerPreparedResourceLimitCases();
+
+  it("accepts the exact reviewed resource envelope", () => {
+    expect(() =>
+      validatePreparedPurchaseResourceEnvelope(
+        PREPARED_PURCHASE_RESOURCE_LIMITS,
+      ),
+    ).not.toThrow();
+  });
+
+  it.each(Object.keys(PREPARED_PURCHASE_RESOURCE_LIMITS))(
+    "rejects %s above its reviewed resource envelope",
+    (field) => {
+      expect(() =>
+        validatePreparedPurchaseResourceEnvelope({
+          ...PREPARED_PURCHASE_RESOURCE_LIMITS,
+          [field]:
+            PREPARED_PURCHASE_RESOURCE_LIMITS[
+              field as keyof typeof PREPARED_PURCHASE_RESOURCE_LIMITS
+            ] + 1,
+        }),
+      ).toThrow(/resource envelope/iu);
+    },
+  );
+
   it.each([
     [
       "chosen value",
       (prepared: PreparedPurchaseFixture) => {
-        setExtraContext(prepared, nestedOptional(65));
+        setExtraContext(prepared, nestedOptional(MAX_PREPARED_VALUE_DEPTH + 1));
       },
     ],
     [
       "exercise result",
       (prepared: PreparedPurchaseFixture) => {
-        rootExercise(prepared).exerciseResult = nestedOptional(65);
+        rootExercise(prepared).exerciseResult = nestedOptional(
+          MAX_PREPARED_VALUE_DEPTH + 1,
+        );
       },
     ],
     [
@@ -96,7 +130,7 @@ describe("prepared Purchase structural limits", () => {
                 moduleName: "Test",
                 entityName: "Input",
               },
-              argument: nestedOptional(65),
+              argument: nestedOptional(MAX_PREPARED_VALUE_DEPTH + 1),
               signatories: [],
               stakeholders: [],
             },
@@ -137,9 +171,12 @@ describe("prepared Purchase structural limits", () => {
         sum: {
           oneofKind: "list",
           list: {
-            elements: Array.from({ length: 65_537 }, () => ({
-              sum: { oneofKind: "unit", unit: {} },
-            })),
+            elements: Array.from(
+              { length: MAX_PREPARED_STRUCTURE_ITEMS + 1 },
+              () => ({
+                sum: { oneofKind: "unit", unit: {} },
+              }),
+            ),
           },
         },
       });

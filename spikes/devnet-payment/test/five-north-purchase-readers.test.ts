@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   APPROVED_BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_ID,
+  MAX_PREPARE_RESPONSE_BYTES,
+  PREPARE_SUBMISSION_PATH,
+  PREPARE_SUBMISSION_TIMEOUT_MS,
   TRANSFER_FACTORY_REGISTRY_PATH,
 } from "@sotto/x402-canton";
 import { createFiveNorthPurchaseReaders } from "../src/five-north-purchase-readers.js";
@@ -81,11 +84,11 @@ describe("Five North purchase readers", () => {
     const prepareRequest = {
       body: { commandId: "sotto-test" } as never,
       contentType: "application/json",
-      maximumResponseBytes: 8_388_608,
+      maximumResponseBytes: MAX_PREPARE_RESPONSE_BYTES,
       method: "POST",
-      path: "/v2/interactive-submission/prepare",
+      path: PREPARE_SUBMISSION_PATH,
       redirect: "error",
-      timeoutMilliseconds: 10_000,
+      timeoutMilliseconds: PREPARE_SUBMISSION_TIMEOUT_MS,
     } as const;
 
     await expect(readers.holdings.readLedgerEnd()).resolves.toEqual({
