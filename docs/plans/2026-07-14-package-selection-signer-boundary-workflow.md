@@ -225,7 +225,7 @@ verify: PATH=/Users/abu/.local/share/mise/installs/node/24.18.0/bin:$PATH pnpm v
 
 gate: human
 
-- [ ] **Step 21: Add a bounded redacted prepared-shape recorder**
+- [x] **Step 21: Add a bounded redacted prepared-shape recorder**
 
 action: Add `prepared-purchase-shape.ts` and tests producing only reviewed identifiers, node kinds, consuming flags, edge counts, value-shape hashes, input counts, work-unit counters, and timing; prohibit raw values, parties, contract IDs, prepared bytes, and server bodies.
 

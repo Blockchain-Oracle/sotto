@@ -5,12 +5,17 @@ import { validatePreparedPurchaseGraph } from "./prepared-purchase-graph.js";
 import type { PreparedStructureBudget } from "./prepared-purchase-limits.js";
 import type { BoundedPurchaseLedgerIntent } from "./purchase-ledger-intent.js";
 import { validatePreparedPurchaseMetadata } from "./prepared-purchase-metadata.js";
+import {
+  recordPreparedPurchaseShape,
+  type PreparedPurchaseShape,
+} from "./prepared-purchase-shape.js";
 
 export function inspectPreparedPurchaseStructure(
   bytes: Uint8Array,
   intent: BoundedPurchaseLedgerIntent,
   request: BoundedPurchasePrepareRequest,
-): void {
+): PreparedPurchaseShape {
+  const startedAt = process.hrtime.bigint();
   const prepared = PreparedTransaction.fromBinary(bytes, {
     readUnknownField: "throw",
   });
@@ -37,4 +42,9 @@ export function inspectPreparedPurchaseStructure(
     budget,
   );
   validatePreparedPurchaseEffects(graph, metadata, intent, request);
+  const elapsed = Number((process.hrtime.bigint() - startedAt) / 1_000n);
+  if (!Number.isSafeInteger(elapsed) || elapsed < 0) {
+    throw new Error("prepared Purchase verification timing is invalid");
+  }
+  return recordPreparedPurchaseShape(graph, metadata, budget.items, elapsed);
 }

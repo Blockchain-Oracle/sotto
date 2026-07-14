@@ -6,10 +6,10 @@ import {
   exactKeys,
   objectValue,
 } from "./purchase-commitment-primitives.js";
-import type { BoundedPurchaseLedgerIntent } from "./purchase-ledger-intent.js";
 import { canonicalDisclosureBlob } from "./purchase-disclosure-validation.js";
 import { inspectPreparedPurchaseStructure } from "./prepared-purchase-validation.js";
 import { requirePreparedPurchaseFresh } from "./prepared-purchase-freshness.js";
+import { registerPreparedPurchaseObservation } from "./prepared-purchase-observation-state.js";
 import { assertStrictJson } from "./strict-json.js";
 
 export const PREPARE_SUBMISSION_PATH = "/v2/interactive-submission/prepare";
@@ -37,34 +37,6 @@ export type PreparedPurchaseObservation = Readonly<{
   preparedTransactionHash: string;
   readonly [preparedPurchaseObservationBrand]: true;
 }>;
-
-export type PreparedPurchaseState = Readonly<{
-  capturedAt: number;
-  intent: BoundedPurchaseLedgerIntent;
-  prepareRequest: BoundedPurchasePrepareRequest;
-  preparedTransaction: Uint8Array;
-  preparedTransactionHash: string;
-}> & { claimed: boolean };
-
-const states = new WeakMap<object, PreparedPurchaseState>();
-
-/** @internal Hash/effects gates only; a failed gate requires a new prepare. */
-export function claimPreparedPurchaseObservation(
-  candidate: unknown,
-): PreparedPurchaseState {
-  if (typeof candidate !== "object" || candidate === null) {
-    throw new Error("prepared Purchase observation is not authenticated");
-  }
-  const state = states.get(candidate);
-  if (state === undefined) {
-    throw new Error("prepared Purchase observation is not authenticated");
-  }
-  if (state.claimed) {
-    throw new Error("prepared Purchase observation is already claimed");
-  }
-  state.claimed = true;
-  return state;
-}
 
 function parseResponse(bytes: Uint8Array): Readonly<{
   preparedTransaction: Uint8Array;
@@ -167,7 +139,7 @@ export function createPreparedPurchaseObserver(
         }),
       ),
     );
-    inspectPreparedPurchaseStructure(
+    const shape = inspectPreparedPurchaseStructure(
       parsed.preparedTransaction,
       authenticated.intent,
       authenticated.request,
@@ -184,13 +156,14 @@ export function createPreparedPurchaseObserver(
       observedAt,
       preparedTransactionHash: parsed.preparedTransactionHash,
     }) as PreparedPurchaseObservation;
-    states.set(observation, {
+    registerPreparedPurchaseObservation(observation, {
       capturedAt,
       claimed: false,
       intent: authenticated.intent,
       prepareRequest: authenticated.request,
       preparedTransaction: new Uint8Array(parsed.preparedTransaction),
       preparedTransactionHash: parsed.preparedTransactionHash,
+      shape,
     });
     return observation;
   };

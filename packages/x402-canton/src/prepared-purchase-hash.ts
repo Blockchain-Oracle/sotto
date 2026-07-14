@@ -1,9 +1,9 @@
 import { timingSafeEqual } from "node:crypto";
+import { type PreparedPurchaseObservation } from "./prepared-purchase-observation.js";
 import {
   claimPreparedPurchaseObservation,
-  type PreparedPurchaseObservation,
   type PreparedPurchaseState,
-} from "./prepared-purchase-observation.js";
+} from "./prepared-purchase-observation-state.js";
 import { requirePreparedPurchaseFresh } from "./prepared-purchase-freshness.js";
 
 export type PreparedPurchaseHashDependencies = Readonly<{

@@ -66,6 +66,12 @@ export {
   type PreparedPurchaseReader,
   type PreparedPurchaseTransportRequest,
 } from "./prepared-purchase-observation.js";
+export { readPreparedPurchaseShape } from "./prepared-purchase-observation-state.js";
+export {
+  PREPARED_PURCHASE_SHAPE_VERSION,
+  type PreparedPurchaseNodeShape,
+  type PreparedPurchaseShape,
+} from "./prepared-purchase-shape.js";
 export {
   verifyPreparedPurchaseHash,
   type HashVerifiedPreparedPurchase,
