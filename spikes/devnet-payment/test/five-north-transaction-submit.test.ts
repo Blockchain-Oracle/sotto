@@ -129,6 +129,6 @@ describe("Five North transaction submitter", () => {
     );
     expect(init).toMatchObject({ method: "POST", redirect: "error" });
     expect(init?.signal).toBeInstanceOf(AbortSignal);
-    expect(JSON.parse(String(init?.body))).toEqual({ commands });
+    expect(JSON.parse(String(init?.body))).toEqual(commands);
   });
 });
