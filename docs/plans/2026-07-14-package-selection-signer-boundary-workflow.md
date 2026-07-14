@@ -173,7 +173,7 @@ max_iterations: 3
 
 verify: PATH=/Users/abu/.local/share/mise/installs/node/24.18.0/bin:$PATH pnpm vitest run packages/x402-canton/test/bounded-purchase-command.test.ts packages/x402-canton/test/bounded-purchase-command-security.test.ts spikes/devnet-payment/test/prepare-only-purchase.test.ts
 
-- [ ] **Step 16: Replace the root-only prepared fixture with effectful RED coverage**
+- [x] **Step 16: Replace the root-only prepared fixture with effectful RED coverage**
 
 action: Rewrite the prepared purchase fixture to model the root, TransferFactory exercise, input Holding fetch/consumption, receiver and change Holding creates, replacement capability, PurchaseContext, and exact result; add a deliberate `PREPARED_EFFECTS_NOT_IMPLEMENTED` failure proving the old root-only graph is not signable.
 

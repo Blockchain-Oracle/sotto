@@ -1,76 +1,17 @@
-import {
-  PreparedTransaction,
-  type Value,
-} from "@canton-network/core-ledger-proto";
+import { PreparedTransaction } from "@canton-network/core-ledger-proto";
 import type {
   BoundedPurchaseLedgerIntent,
   BoundedPurchasePrepareRequest,
 } from "../src/index.js";
+import {
+  buildEffectfulPreparedPurchaseInputs,
+  buildEffectfulPreparedPurchaseNodes,
+  buildEffectfulPreparedPurchaseSeeds,
+} from "./prepared-purchase-effect.fixtures.js";
 
 export type PreparedPurchaseFixture = ReturnType<
   typeof PreparedTransaction.create
 >;
-
-function identifier(templateId: string) {
-  const [packageId, moduleName, entityName] = templateId.split(":");
-  if (!packageId || !moduleName || !entityName) {
-    throw new Error("test template identifier is invalid");
-  }
-  return { packageId, moduleName, entityName };
-}
-
-function scalar(oneofKind: string, value: string): Value {
-  return { sum: { oneofKind, [oneofKind]: value } } as Value;
-}
-
-function record(fields: ReadonlyArray<readonly [string, Value]>): Value {
-  return {
-    sum: {
-      oneofKind: "record",
-      record: {
-        fields: fields.map(([label, value]) => ({ label, value })),
-      },
-    },
-  };
-}
-
-function choiceArgument(request: BoundedPurchasePrepareRequest): Value {
-  const argument = request.commands[0]!.ExerciseCommand.choiceArgument;
-  const timestamp = (value: string) =>
-    scalar("timestamp", (BigInt(Date.parse(value)) * 1000n).toString());
-  return record([
-    ["attemptId", scalar("text", argument.attemptId)],
-    ["purchaseCommitment", scalar("text", argument.purchaseCommitment)],
-    ["requestCommitment", scalar("text", argument.requestCommitment)],
-    ["challengeId", scalar("text", argument.challengeId)],
-    ["resourceHash", scalar("text", argument.resourceHash)],
-    ["recipient", scalar("party", argument.recipient)],
-    ["amount", scalar("numeric", argument.amount)],
-    ["requestedAt", timestamp(argument.requestedAt)],
-    ["executeBefore", timestamp(argument.executeBefore)],
-    [
-      "inputHoldingCids",
-      {
-        sum: {
-          oneofKind: "list",
-          list: {
-            elements: argument.inputHoldingCids.map((contractId) =>
-              scalar("contractId", contractId),
-            ),
-          },
-        },
-      },
-    ],
-    [
-      "extraArgs",
-      record([
-        ["context", record([])],
-        ["meta", record([])],
-      ]),
-    ],
-    ["expectedRevision", scalar("int64", argument.expectedRevision)],
-  ]);
-}
 
 export function validPreparedPurchase(
   intent: BoundedPurchaseLedgerIntent,
@@ -85,37 +26,8 @@ export function validPreparedPurchase(
     transaction: {
       version: "2.1",
       roots: ["0"],
-      nodes: [
-        {
-          nodeId: "0",
-          versionedNode: {
-            oneofKind: "v1",
-            v1: {
-              nodeType: {
-                oneofKind: "exercise",
-                exercise: {
-                  lfVersion: "2.1",
-                  contractId: intent.capability.contractId,
-                  packageName: "sotto-control",
-                  templateId: identifier(intent.capability.templateId),
-                  signatories: [intent.challenge.payerParty],
-                  stakeholders: [
-                    intent.challenge.payerParty,
-                    intent.capability.agentParty,
-                  ],
-                  actingParties: [intent.capability.agentParty],
-                  choiceId: "Purchase",
-                  chosenValue: choiceArgument(request),
-                  consuming: true,
-                  children: [],
-                  choiceObservers: [],
-                },
-              },
-            },
-          },
-        },
-      ],
-      nodeSeeds: [{ nodeId: 0, seed: new Uint8Array(32).fill(7) }],
+      nodes: buildEffectfulPreparedPurchaseNodes(intent, request),
+      nodeSeeds: buildEffectfulPreparedPurchaseSeeds(),
     },
     metadata: {
       submitterInfo: {
@@ -126,13 +38,33 @@ export function validPreparedPurchase(
       mediatorGroup: 0,
       transactionUuid: "00000000-0000-4000-8000-000000000001",
       preparationTime,
-      inputContracts: [],
+      inputContracts: buildEffectfulPreparedPurchaseInputs(intent),
       globalKeyMapping: [],
       minLedgerEffectiveTime: requestedAtMicros + 1n,
       maxLedgerEffectiveTime: executeBeforeMicros - 1n,
       maxRecordTime: executeBeforeMicros,
     },
   });
+}
+
+export function rootOnlyPreparedPurchase(
+  intent: BoundedPurchaseLedgerIntent,
+  request: BoundedPurchasePrepareRequest,
+): PreparedPurchaseFixture {
+  const prepared = validPreparedPurchase(intent, request);
+  const root = prepared.transaction!.nodes[0]!;
+  const wrapper = root.versionedNode;
+  if (wrapper.oneofKind !== "v1") throw new Error("test root is absent");
+  const value = wrapper.v1.nodeType;
+  if (value.oneofKind !== "exercise") throw new Error("test root is invalid");
+  value.exercise.children = [];
+  delete value.exercise.exerciseResult;
+  prepared.transaction!.nodes = [root];
+  prepared.transaction!.nodeSeeds = [
+    { nodeId: 0, seed: new Uint8Array(32).fill(7) },
+  ];
+  prepared.metadata!.inputContracts = [];
+  return prepared;
 }
 
 export function preparedPurchaseBytes(
@@ -143,4 +75,16 @@ export function preparedPurchaseBytes(
   const prepared = validPreparedPurchase(intent, request);
   mutate?.(prepared);
   return PreparedTransaction.toBinary(prepared, { writeUnknownFields: false });
+}
+
+export function rootOnlyPreparedPurchaseBytes(
+  intent: BoundedPurchaseLedgerIntent,
+  request: BoundedPurchasePrepareRequest,
+): Uint8Array {
+  return PreparedTransaction.toBinary(
+    rootOnlyPreparedPurchase(intent, request),
+    {
+      writeUnknownFields: false,
+    },
+  );
 }
