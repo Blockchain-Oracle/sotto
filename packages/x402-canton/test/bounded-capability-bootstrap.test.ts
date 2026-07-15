@@ -44,6 +44,11 @@ describe("bounded capability bootstrap", () => {
     expect(request.packageIdSelectionPreference).toEqual([
       APPROVED_BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_ID.split(":")[0],
     ]);
+    expect(request.disclosedContracts).toEqual([]);
+    expect(request.prefetchContractKeys).toEqual([]);
+    expect(request.maxRecordTime).toBe("2026-07-13T19:35:00.000Z");
+    expect(request.hashingSchemeVersion).toBe("HASHING_SCHEME_VERSION_V2");
+    expect(request.verboseHashing).toBe(false);
     expect(request.commandId).toBe(
       "sotto-capability-bootstrap-v1-e9db1381afd43d39258b1a021aefb6fbc325f4c84b264feaf476bf330a531abe",
     );

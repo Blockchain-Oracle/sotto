@@ -20,6 +20,7 @@ import {
 } from "./purchase-commitment-primitives.js";
 
 const MINIMUM_LIFETIME_MS = 5 * 60 * 1_000;
+const PREPARE_MAXIMUM_RECORD_AGE_MS = 5 * 60 * 1_000;
 const MAXIMUM_LIFETIME_MS = 24 * 60 * 60 * 1_000;
 const MAXIMUM_AUTHORITY_AGE_MS = 60_000;
 const CLOCK_ROLLBACK_TOLERANCE_MS = 5_000;
@@ -142,11 +143,17 @@ export function buildBoundedCapabilityBootstrapAt(
     readAs: Object.freeze([]) as readonly [],
     userId,
     commandId,
-    workflowId: "sotto-capability-bootstrap-v1" as const,
     synchronizerId,
     packageIdSelectionPreference: Object.freeze([
       SOTTO_CONTROL_PACKAGE_ID,
     ]) as readonly [string],
+    disclosedContracts: Object.freeze([]) as readonly [],
+    verboseHashing: false as const,
+    prefetchContractKeys: Object.freeze([]) as readonly [],
+    maxRecordTime: new Date(
+      nowMilliseconds + PREPARE_MAXIMUM_RECORD_AGE_MS,
+    ).toISOString(),
+    hashingSchemeVersion: "HASHING_SCHEME_VERSION_V2" as const,
     commands: Object.freeze([
       Object.freeze({
         CreateCommand: Object.freeze({

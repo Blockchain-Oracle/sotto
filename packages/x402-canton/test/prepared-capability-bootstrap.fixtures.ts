@@ -60,6 +60,7 @@ export function validPreparedCapabilityBootstrap(
   const create = createCommand(request);
   const preparationTime =
     BigInt(Date.parse("2026-07-15T10:00:01.000Z")) * 1_000n;
+  const maxRecordTime = BigInt(Date.parse(request.maxRecordTime)) * 1_000n;
   return PreparedTransaction.create({
     transaction: {
       version: "2.1",
@@ -103,20 +104,26 @@ export function validPreparedCapabilityBootstrap(
       inputContracts: [],
       globalKeyMapping: [],
       minLedgerEffectiveTime: preparationTime,
-      maxLedgerEffectiveTime: preparationTime + 299_000_000n,
-      maxRecordTime: preparationTime + 300_000_000n,
+      maxLedgerEffectiveTime: maxRecordTime - 1_000n,
+      maxRecordTime,
     },
   });
 }
 
+export type PreparedCapabilityBootstrapFixture = ReturnType<
+  typeof validPreparedCapabilityBootstrap
+>;
+
 export function preparedCapabilityBootstrapResponse(
   request: BoundedCapabilityBootstrapRequest,
-  mutate?: (response: Record<string, unknown>) => void,
+  mutateResponse?: (response: Record<string, unknown>) => void,
+  mutatePrepared?: (prepared: PreparedCapabilityBootstrapFixture) => void,
 ): Uint8Array {
-  const prepared = PreparedTransaction.toBinary(
-    validPreparedCapabilityBootstrap(request),
-    { writeUnknownFields: false },
-  );
+  const fixture = validPreparedCapabilityBootstrap(request);
+  mutatePrepared?.(fixture);
+  const prepared = PreparedTransaction.toBinary(fixture, {
+    writeUnknownFields: false,
+  });
   const response: Record<string, unknown> = {
     preparedTransaction: Buffer.from(prepared).toString("base64"),
     preparedTransactionHash: Buffer.alloc(32, 7).toString("base64"),
@@ -124,6 +131,6 @@ export function preparedCapabilityBootstrapResponse(
     hashingDetails: null,
     costEstimation: null,
   };
-  mutate?.(response);
+  mutateResponse?.(response);
   return new TextEncoder().encode(JSON.stringify(response));
 }

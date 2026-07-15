@@ -23,13 +23,13 @@ max_iterations: 4
 verify: PATH="$HOME/.local/share/mise/installs/node/24.18.0/bin:$PATH" pnpm vitest run packages/x402-canton/test/prepared-capability-bootstrap-observation.test.ts
 gate: human
 
-- [ ] **Step 3: Add root and metadata RED cases**
+- [x] **Step 3: Add root and metadata RED cases**
 action: Add `packages/x402-canton/test/prepared-capability-bootstrap-shape.test.ts` covering zero or multiple roots, non-create roots, extra nodes, unknown node variants, wrong package/template/package-name, changed contract argument, signatories or stakeholders, wrong `actAs`/`readAs`, command ID, user ID, synchronizer, package preference, workflow ID, and record-time bounds; retain a single exact accepted fixture.
 loop: false
 max_iterations: 1
 verify: bash -lc 'set +e; output=$(PATH="$HOME/.local/share/mise/installs/node/24.18.0/bin:$PATH" pnpm vitest run packages/x402-canton/test/prepared-capability-bootstrap-shape.test.ts 2>&1); status=$?; test "$status" -ne 0 && grep -q "prepared capability" <<<"$output"'
 
-- [ ] **Step 4: Verify the exact prepared create graph**
+- [x] **Step 4: Verify the exact prepared create graph**
 action: Add `packages/x402-canton/src/prepared-capability-bootstrap-shape.ts`, `prepared-capability-bootstrap-metadata.ts`, and `prepared-capability-bootstrap-values.ts`; decode once with `@canton-network/core-ledger-proto`, reject unknown protobuf fields, require exactly one create root and no other effects, and compare every node and metadata value against the authenticated bootstrap request.
 loop: until the shape tests pass
 max_iterations: 4

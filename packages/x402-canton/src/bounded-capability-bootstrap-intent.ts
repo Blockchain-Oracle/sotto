@@ -44,11 +44,15 @@ function restoredInput(value: unknown): {
       "actAs",
       "commandId",
       "commands",
+      "disclosedContracts",
+      "hashingSchemeVersion",
+      "maxRecordTime",
       "packageIdSelectionPreference",
+      "prefetchContractKeys",
       "readAs",
       "synchronizerId",
       "userId",
-      "workflowId",
+      "verboseHashing",
     ],
     "persisted bootstrap request",
   );
@@ -59,7 +63,12 @@ function restoredInput(value: unknown): {
     raw.readAs.length !== 0 ||
     !Array.isArray(raw.commands) ||
     raw.commands.length !== 1 ||
-    raw.workflowId !== "sotto-capability-bootstrap-v1"
+    !Array.isArray(raw.disclosedContracts) ||
+    raw.disclosedContracts.length !== 0 ||
+    !Array.isArray(raw.prefetchContractKeys) ||
+    raw.prefetchContractKeys.length !== 0 ||
+    raw.verboseHashing !== false ||
+    raw.hashingSchemeVersion !== "HASHING_SCHEME_VERSION_V2"
   ) {
     throw new Error("persisted bootstrap request shape does not match");
   }
@@ -97,6 +106,7 @@ function restoredInput(value: unknown): {
     throw new Error("persisted bootstrap actAs does not match payer");
   }
   identifier(raw.commandId, "persisted bootstrap command ID");
+  canonicalTime(raw.maxRecordTime, "persisted bootstrap maxRecordTime");
   return {
     input: {
       agentParty: snapshot.agentParty,

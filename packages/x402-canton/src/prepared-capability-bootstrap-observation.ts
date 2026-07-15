@@ -5,6 +5,7 @@ import {
 } from "./bounded-capability-bootstrap.js";
 import { sha256Hex } from "./purchase-commitment-primitives.js";
 import { parsePreparedCapabilityBootstrapResponse } from "./prepared-capability-bootstrap-response.js";
+import { validatePreparedCapabilityBootstrapShape } from "./prepared-capability-bootstrap-shape.js";
 import {
   MAX_PREPARED_CAPABILITY_RESPONSE_BYTES,
   PREPARED_CAPABILITY_BOOTSTRAP_PATH,
@@ -59,6 +60,10 @@ export function createPreparedCapabilityBootstrapObserver(
     );
     assertBoundedCapabilityBootstrapFresh(request);
     const parsed = parsePreparedCapabilityBootstrapResponse(response);
+    validatePreparedCapabilityBootstrapShape(
+      parsed.preparedTransaction,
+      request,
+    );
     const capturedAt = Date.now();
     const observation = Object.freeze({
       hashingSchemeVersion: "HASHING_SCHEME_VERSION_V2" as const,
