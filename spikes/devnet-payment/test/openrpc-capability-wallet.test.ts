@@ -6,6 +6,7 @@ import {
 } from "../../../packages/x402-canton/test/capability-wallet-connector.fixtures.js";
 import { registerCapabilityWalletConnectorContract } from "../../../packages/x402-canton/test/capability-wallet-connector.contract.js";
 import {
+  adaptCantonOpenRpcProvider,
   createOpenRpcCapabilityWallet,
   OPENRPC_CAPABILITIES_METHOD,
   OPENRPC_SIGN_PREPARED_METHOD,
@@ -23,6 +24,12 @@ import { registerOpenRpcSecurityCases } from "./openrpc-capability-wallet-securi
 import { registerOpenRpcApprovalSecurityCases } from "./openrpc-capability-wallet-approval-security.cases.js";
 import { registerRawOpenRpcSecurityCases } from "./openrpc-capability-wallet-jsonrpc.cases.js";
 import { registerCantonOpenRpcProviderCases } from "./openrpc-capability-wallet-canton-provider.cases.js";
+
+beforeEach(() => {
+  vi.stubGlobal("location", { origin: CONNECTOR_ORIGIN });
+});
+
+afterEach(() => vi.unstubAllGlobals());
 
 registerCapabilityWalletConnectorContract(openRpcConnectorHarness);
 registerOpenRpcSecurityCases();
@@ -54,7 +61,7 @@ describe("OpenRPC capability wallet", () => {
       expectedOrigin: CONNECTOR_ORIGIN,
       expectedPackageId: OPENRPC_PACKAGE_ID,
       payerParty: capabilities.payerParty,
-      provider,
+      provider: adaptCantonOpenRpcProvider(provider as never),
     });
 
     const result = await createCapabilityWalletSigningSession({
@@ -125,6 +132,7 @@ describe("OpenRPC capability wallet", () => {
 
   it("supports an embedded provider bound to its page origin", async () => {
     const origin = "https://embedded-wallet.example";
+    vi.stubGlobal("location", { origin });
     const embeddedCapabilities = { ...capabilities, origin };
     const provider = {
       origin,
@@ -139,7 +147,7 @@ describe("OpenRPC capability wallet", () => {
       expectedOrigin: origin,
       expectedPackageId: OPENRPC_PACKAGE_ID,
       payerParty: capabilities.payerParty,
-      provider,
+      provider: adaptCantonOpenRpcProvider(provider as never),
     });
 
     await expect(

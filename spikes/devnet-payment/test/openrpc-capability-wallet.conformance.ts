@@ -12,6 +12,7 @@ import {
   verifiedCapabilityBootstrap,
 } from "../../../packages/x402-canton/test/capability-wallet-connector.fixtures.js";
 import {
+  adaptCantonOpenRpcProvider,
   createOpenRpcCapabilityWallet,
   OPENRPC_CAPABILITIES_METHOD,
   type OpenRpcCapabilityWalletRequest,
@@ -99,7 +100,7 @@ function scenario(options: CapabilityWalletContractScenarioOptions = {}) {
     expectedOrigin: OPENRPC_CONNECTOR_ORIGIN,
     expectedPackageId: OPENRPC_PACKAGE_ID,
     payerParty: OPENRPC_CAPABILITIES.payerParty,
-    provider,
+    provider: adaptCantonOpenRpcProvider(provider as never),
   });
   const connector: CapabilityWalletConnector = {
     discover: ({ signal }) => {

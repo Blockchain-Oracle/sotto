@@ -30,13 +30,55 @@ export type OpenRpcCapabilityWalletProvider =
 
 export type CantonInjectedOpenRpcProvider = NonNullable<Window["canton"]>;
 
+declare const runtimeBoundOpenRpcProviderBrand: unique symbol;
+export type RuntimeBoundOpenRpcCapabilityWalletProvider =
+  OpenRpcCapabilityWalletProvider &
+    Readonly<{ [runtimeBoundOpenRpcProviderBrand]: true }>;
+
+const runtimeOrigins = new WeakMap<object, string>();
+
+function runtimeOrigin(): string {
+  const origin = globalThis.location?.origin;
+  if (typeof origin !== "string" || origin === "" || origin === "null") {
+    throw new Error("OpenRPC provider runtime origin is unavailable");
+  }
+  let parsed: URL;
+  try {
+    parsed = new URL(origin);
+  } catch {
+    throw new Error("OpenRPC provider runtime origin is invalid");
+  }
+  const secure = parsed.protocol === "https:";
+  const extension = parsed.protocol === "chrome-extension:";
+  const local =
+    parsed.protocol === "http:" &&
+    (parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1");
+  const canonical = extension
+    ? `${parsed.protocol}//${parsed.host}`
+    : parsed.origin;
+  if (
+    (!secure && !extension && !local) ||
+    parsed.username !== "" ||
+    parsed.password !== "" ||
+    parsed.search !== "" ||
+    parsed.hash !== "" ||
+    (parsed.pathname !== "" && parsed.pathname !== "/") ||
+    canonical !== origin
+  ) {
+    throw new Error("OpenRPC provider runtime origin is invalid");
+  }
+  return origin;
+}
+
 export function adaptCantonOpenRpcProvider(
   provider: Pick<CantonInjectedOpenRpcProvider, "request">,
-): OpenRpcCapabilityWalletProvider {
+): RuntimeBoundOpenRpcCapabilityWalletProvider {
   const request = provider.request.bind(
     provider,
   ) as unknown as OpenRpcCapabilityWalletProvider["request"];
-  return Object.freeze({ request });
+  const adapted = Object.freeze({ request });
+  runtimeOrigins.set(adapted, runtimeOrigin());
+  return adapted as RuntimeBoundOpenRpcCapabilityWalletProvider;
 }
 
 type OpenRpcCapabilityWalletInput = Readonly<{
@@ -45,7 +87,7 @@ type OpenRpcCapabilityWalletInput = Readonly<{
   expectedOrigin: string;
   expectedPackageId: string;
   payerParty: string;
-  provider: OpenRpcCapabilityWalletProvider;
+  provider: RuntimeBoundOpenRpcCapabilityWalletProvider;
 }>;
 
 function approvalParameters(request: CapabilityWalletApprovalRequest) {
@@ -91,6 +133,9 @@ export function createOpenRpcCapabilityWallet(
   const expectedOrigin = input.expectedOrigin;
   const expectedPackageId = input.expectedPackageId;
   const payerParty = input.payerParty;
+  if (runtimeOrigins.get(provider) !== expectedOrigin) {
+    throw new Error("OpenRPC provider is not bound to the runtime origin");
+  }
   const call = (
     method: OpenRpcCapabilityWalletMethod,
     params: Readonly<Record<string, unknown>>,

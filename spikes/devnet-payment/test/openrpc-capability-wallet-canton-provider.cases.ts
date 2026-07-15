@@ -60,5 +60,53 @@ export function registerCantonOpenRpcProviderCases(): void {
       expect(request.mock.calls[0]![0]).not.toHaveProperty("id");
       expect(request.mock.calls[0]![0]).not.toHaveProperty("jsonrpc");
     });
+
+    it("rejects a provider without a runtime-bound origin", () => {
+      expect(() =>
+        createOpenRpcCapabilityWallet({
+          connectorId: OPENRPC_CONNECTOR_ID,
+          expectedNetwork: OPENRPC_NETWORK,
+          expectedOrigin: OPENRPC_CONNECTOR_ORIGIN,
+          expectedPackageId: OPENRPC_PACKAGE_ID,
+          payerParty: OPENRPC_CAPABILITIES.payerParty,
+          provider: { request: vi.fn() } as never,
+        }),
+      ).toThrow(/runtime.*origin|authenticated.*provider/iu);
+    });
+
+    it("rejects clones and runtime-origin substitution", () => {
+      const provider = adaptCantonOpenRpcProvider({
+        request: vi.fn(),
+      } as never);
+      const base = {
+        connectorId: OPENRPC_CONNECTOR_ID,
+        expectedNetwork: OPENRPC_NETWORK,
+        expectedOrigin: OPENRPC_CONNECTOR_ORIGIN,
+        expectedPackageId: OPENRPC_PACKAGE_ID,
+        payerParty: OPENRPC_CAPABILITIES.payerParty,
+      };
+
+      expect(() =>
+        createOpenRpcCapabilityWallet({
+          ...base,
+          provider: { ...provider } as never,
+        }),
+      ).toThrow(/runtime origin/iu);
+      expect(() =>
+        createOpenRpcCapabilityWallet({
+          ...base,
+          expectedOrigin: "https://substituted.example",
+          provider,
+        }),
+      ).toThrow(/runtime origin/iu);
+    });
+
+    it("fails closed outside a browser runtime", () => {
+      vi.stubGlobal("location", undefined);
+
+      expect(() =>
+        adaptCantonOpenRpcProvider({ request: vi.fn() } as never),
+      ).toThrow(/runtime origin is unavailable/iu);
+    });
   });
 }
