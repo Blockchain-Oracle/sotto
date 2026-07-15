@@ -91,7 +91,7 @@ loop: false
 max_iterations: 1
 verify: bash -lc 'set +e; output=$(PATH="$HOME/.local/share/mise/installs/node/24.18.0/bin:$PATH" pnpm vitest run packages/x402-canton/test/capability-wallet-connector.test.ts 2>&1); status=$?; test "$status" -ne 0 && grep -q "createCapabilityWalletSigningSession\|CAPABILITY_WALLET_SESSION_NOT_IMPLEMENTED" <<<"$output"'
 
-- [ ] **Step 13: Implement one-use signing sessions**
+- [x] **Step 13: Implement one-use signing sessions**
 action: Add `packages/x402-canton/src/capability-wallet-connector-types.ts` and `capability-wallet-signing-session.ts`; bind a cryptographically random session ID to connector ID, origin, payer, capability-intent hash, prepared hash, network, synchronizer, package, creation time, and expiry; snapshot inputs, enforce a ten-minute maximum, and authenticate one-use state with a private WeakMap.
 loop: until the connector session tests pass
 max_iterations: 4

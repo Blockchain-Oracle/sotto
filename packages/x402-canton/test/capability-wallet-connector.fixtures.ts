@@ -5,6 +5,7 @@ import {
   recomputeWalletPreparedHashPrecheck,
   verifyPreparedCapabilityBootstrapHash,
   type CapabilityWalletConnector,
+  type HashVerifiedPreparedCapabilityBootstrap,
 } from "../src/index.js";
 import {
   CAPABILITY_BOOTSTRAP_INPUT,
@@ -47,8 +48,11 @@ export const APPROVED_SIGNATURE = Object.freeze({
   }),
 });
 
-export async function verifiedCapabilityBootstrap() {
+export async function verifiedCapabilityBootstrap(
+  afterRequest: () => void = () => undefined,
+): Promise<HashVerifiedPreparedCapabilityBootstrap> {
   const request = buildBoundedCapabilityBootstrap(CAPABILITY_BOOTSTRAP_INPUT);
+  afterRequest();
   const transaction = PreparedTransaction.toBinary(
     validPreparedCapabilityBootstrap(request),
     { writeUnknownFields: false },

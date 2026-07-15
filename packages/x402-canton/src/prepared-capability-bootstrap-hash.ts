@@ -73,6 +73,9 @@ function readState(candidate: unknown): VerifiedState {
   if (state === undefined) {
     throw new Error("hash-verified prepared capability is not authenticated");
   }
+  if (state.claimed) {
+    throw new Error("hash-verified prepared capability is already claimed");
+  }
   assertBoundedCapabilityBootstrapFresh(state.prepared.request);
   return state;
 }

@@ -1,4 +1,17 @@
 export * from "./authorization.js";
+export { createCapabilityWalletSigningSession } from "./capability-wallet-signing-session.js";
+export type {
+  ApprovedCapabilityWalletSigningSession,
+  CapabilityWalletApprovalRequest,
+  CapabilityWalletCapabilities,
+  CapabilityWalletConnector,
+  CapabilityWalletConnectorKind,
+  CapabilityWalletRejectedResult,
+  CapabilityWalletSignatureEnvelope,
+  CapabilityWalletSigningResult,
+  CapabilityWalletSigningSessionInput,
+  CapabilityWalletUnsupportedResult,
+} from "./capability-wallet-connector-types.js";
 export { parseBoundedCapabilityBootstrapCompletionResponse } from "./bounded-capability-bootstrap-completion-response.js";
 export {
   createPreparedCapabilityBootstrapObserver,
