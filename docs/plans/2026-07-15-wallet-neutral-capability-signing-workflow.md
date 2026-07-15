@@ -76,7 +76,7 @@ max_iterations: 4
 verify: PATH="$HOME/.local/share/mise/installs/node/24.18.0/bin:$PATH" pnpm vitest run packages/x402-canton/test/prepared-capability-bootstrap-limits.test.ts
 gate: human
 
-- [ ] **Step 11: Review the prepared-create verifier checkpoint**
+- [x] **Step 11: Review the prepared-create verifier checkpoint**
 action: Review the complete prepared-capability diff against `docs/designs/2026-07-15-wallet-neutral-capability-signing-design.md`, the authenticated bootstrap request, Canton V2 protobuf schema, hash contract, mutation coverage, parser bounds, secret redaction, and zero-connector behavior; resolve every BLOCK finding through a separate RED/GREEN cycle.
 loop: until the review verdict is READY with no BLOCK finding
 max_iterations: 3
