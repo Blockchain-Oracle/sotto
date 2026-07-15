@@ -2,6 +2,7 @@ import { constants } from "node:fs";
 import { lstat, mkdir, open } from "node:fs/promises";
 import { dirname, join, parse, resolve, sep } from "node:path";
 import type { OwnerOnlyWalletArtifactKind } from "./wallet-handoff-types.js";
+import { walletHandoffTombstonePayload } from "./wallet-handoff-tombstone.js";
 
 const RESERVE_FLAGS =
   constants.O_WRONLY |
@@ -82,6 +83,7 @@ async function createWalletHandoffMarker(
   root: string,
   name: string,
   duplicateMessage: string,
+  expiresAt: string,
 ): Promise<void> {
   const path = join(root, name);
   let handle;
@@ -94,7 +96,7 @@ async function createWalletHandoffMarker(
     throw error;
   }
   try {
-    await handle.writeFile("");
+    await handle.writeFile(walletHandoffTombstonePayload(expiresAt));
     await handle.chmod(0o600);
     await handle.sync();
   } finally {
@@ -107,11 +109,13 @@ export async function reserveWalletHandoffArtifact(
   root: string,
   id: string,
   kind: OwnerOnlyWalletArtifactKind,
+  expiresAt: string,
 ): Promise<void> {
   await createWalletHandoffMarker(
     root,
     walletHandoffReservationName(id, kind),
     "wallet handoff artifact already exists or was used",
+    expiresAt,
   );
 }
 
@@ -119,10 +123,12 @@ export async function claimWalletHandoffArtifact(
   root: string,
   id: string,
   kind: OwnerOnlyWalletArtifactKind,
+  expiresAt: string,
 ): Promise<void> {
   await createWalletHandoffMarker(
     root,
     walletHandoffClaimName(id, kind),
     "wallet handoff artifact is already claimed",
+    expiresAt,
   );
 }

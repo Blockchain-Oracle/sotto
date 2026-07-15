@@ -186,5 +186,20 @@ export function registerWalletHandoffStorageSecurityCases(
         ".used-handoff-1.response",
       ]);
     });
+
+    it("bounds replay tombstones beyond the expired signing window", async () => {
+      const fixture = await walletStorageFixture();
+      registerCleanup(fixture.cleanup);
+      await fixture.storage.create(artifact("request"));
+      await fixture.storage.claim("handoff-1", "request");
+      fixture.advance(61_002);
+
+      expect(await fixture.storage.cleanupExpired()).toEqual([
+        ".claimed-handoff-1.request",
+        ".used-handoff-1.request",
+        "handoff-1.request.json",
+      ]);
+      expect(await readdir(fixture.rootDirectory)).toEqual([]);
+    });
   });
 }

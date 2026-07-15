@@ -14,7 +14,12 @@ export async function claimWalletHandoffRecord<
   read: OwnerOnlyWalletStorage<Kind>["read"],
 ): Promise<OwnerOnlyWalletArtifactRecord<Kind>> {
   const initial = await read(id, kind);
-  await claimWalletHandoffArtifact(root, initial.id, initial.kind);
+  await claimWalletHandoffArtifact(
+    root,
+    initial.id,
+    initial.kind,
+    initial.expiresAt,
+  );
   const claimed = await read(id, kind);
   if (JSON.stringify(initial) !== JSON.stringify(claimed)) {
     throw new Error("wallet handoff artifact changed while being claimed");

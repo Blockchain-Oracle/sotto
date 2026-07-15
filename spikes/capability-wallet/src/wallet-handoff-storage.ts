@@ -1,4 +1,3 @@
-import { readdir } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
 import {
   InvalidWalletHandoffArtifactError,
@@ -6,6 +5,7 @@ import {
   readWalletHandoffBytes,
   removeWalletHandoffPath,
 } from "./wallet-handoff-files.js";
+import { cleanupExpiredWalletHandoffArtifacts } from "./wallet-handoff-cleanup.js";
 import {
   decodeCanonicalWalletHandoffJson,
   encodeCanonicalWalletHandoffJson,
@@ -24,7 +24,6 @@ import {
   requireWalletHandoffId,
   requireWalletHandoffTime,
   WALLET_HANDOFF_DIRECTORY_NAME,
-  WALLET_HANDOFF_FILE_PATTERN,
   type OwnerOnlyWalletArtifactInput,
   type OwnerOnlyWalletArtifactKind,
   type OwnerOnlyWalletStorage,
@@ -33,7 +32,6 @@ import {
   type WalletHandoffRecord,
   type WalletHandoffStorage,
 } from "./wallet-handoff-types.js";
-import { walletHandoffTemporaryStatus } from "./wallet-handoff-temporary.js";
 
 export { MAX_WALLET_HANDOFF_JSON_BYTES };
 export type {
@@ -42,16 +40,6 @@ export type {
   WalletHandoffRecord,
   WalletHandoffStorage,
 };
-
-function errorCode(error: unknown): string | undefined {
-  return typeof error === "object" && error !== null && "code" in error
-    ? String(error.code)
-    : undefined;
-}
-
-function utf8Compare(left: string, right: string): number {
-  return Buffer.compare(Buffer.from(left), Buffer.from(right));
-}
 
 export async function createOwnerOnlyWalletStorage<
   Kind extends OwnerOnlyWalletArtifactKind,
@@ -120,7 +108,12 @@ export async function createOwnerOnlyWalletStorage<
     );
     const bytes = encodeCanonicalWalletHandoffJson(record);
     await requireWalletHandoffRoot(root);
-    await reserveWalletHandoffArtifact(root, record.id, record.kind);
+    await reserveWalletHandoffArtifact(
+      root,
+      record.id,
+      record.kind,
+      record.expiresAt,
+    );
     await publishWalletHandoffBytes(root, artifactPath(record.id, kind), bytes);
   };
 
@@ -142,46 +135,12 @@ export async function createOwnerOnlyWalletStorage<
 
   const cleanupExpired = async () => {
     await requireWalletHandoffRoot(root);
-    const deleted: string[] = [];
-    const entries = (await readdir(root, { withFileTypes: true })).sort(
-      (left, right) => utf8Compare(left.name, right.name),
-    );
-    for (const entry of entries) {
-      const path = join(root, entry.name);
-      if (entry.isSymbolicLink()) {
-        await removeWalletHandoffPath(path);
-        deleted.push(entry.name);
-        continue;
-      }
-      if (!entry.isFile()) continue;
-      const temporary = walletHandoffTemporaryStatus(entry.name);
-      if (temporary !== undefined) {
-        if (temporary === "abandoned") {
-          await removeWalletHandoffPath(path);
-          deleted.push(entry.name);
-        }
-        continue;
-      }
-      const match = WALLET_HANDOFF_FILE_PATTERN.exec(entry.name);
-      if (match === null) continue;
-      let record;
-      try {
-        const kind = requireAllowedKind(match[2]!);
-        record = await readRecord(match[1]!, kind);
-      } catch (error) {
-        if (errorCode(error) === "ENOENT") continue;
-        if (!(error instanceof InvalidWalletHandoffArtifactError)) throw error;
-        await removeWalletHandoffPath(path);
-        deleted.push(entry.name);
-        continue;
-      }
-      if (requireWalletHandoffTime(record.expiresAt) <= now()) {
-        await removeWalletHandoffPath(path);
-        deleted.push(entry.name);
-      }
-    }
-    if (deleted.length > 0) await syncWalletHandoffDirectory(root);
-    return deleted;
+    return cleanupExpiredWalletHandoffArtifacts({
+      now,
+      readExpiration: async (id, kind) =>
+        (await readRecord(id, requireAllowedKind(kind))).expiresAt,
+      root,
+    });
   };
 
   return Object.freeze({ claim, cleanupExpired, create, read });
