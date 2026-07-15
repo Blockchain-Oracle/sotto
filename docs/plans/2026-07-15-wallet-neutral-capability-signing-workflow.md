@@ -49,7 +49,7 @@ max_iterations: 4
 verify: PATH="$HOME/.local/share/mise/installs/node/24.18.0/bin:$PATH" pnpm vitest run packages/x402-canton/test/prepared-capability-bootstrap-approval.test.ts
 gate: human
 
-- [ ] **Step 7: Add the independent V2 hash RED boundary**
+- [x] **Step 7: Add the independent V2 hash RED boundary**
 action: Add `packages/x402-canton/test/prepared-capability-bootstrap-hash.test.ts` requiring a participant digest, the existing Wallet SDK-compatible precheck, and an injected independent official recomputation to agree byte-for-byte before an approval can be claimed; cover missing, short, long, malformed, stale, and mismatched digests.
 loop: false
 max_iterations: 1
