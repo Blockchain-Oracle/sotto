@@ -4,7 +4,20 @@
   "private": true,
   "type": "module",
   "license": "Apache-2.0",
-  "exports": "./dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./internal/capability-wallet-signature": {
+      "types": "./dist/capability-wallet-signature.d.ts",
+      "import": "./dist/capability-wallet-signature.js"
+    },
+    "./internal/bounded-capability-bootstrap-prepare": {
+      "types": "./dist/bounded-capability-bootstrap-prepare.d.ts",
+      "import": "./dist/bounded-capability-bootstrap-prepare.js"
+    }
+  },
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.build.json"

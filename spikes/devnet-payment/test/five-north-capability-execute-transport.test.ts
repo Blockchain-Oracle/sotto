@@ -1,10 +1,6 @@
-import {
-  readApprovedCapabilityWalletSigningSession,
-} from "../../../packages/x402-canton/src/capability-wallet-signing-session.js";
-import { verifyCapabilityWalletSignature } from "../../../packages/x402-canton/src/index.js";
-import { signedCapabilitySession } from "../../../packages/x402-canton/test/capability-wallet-signature.fixtures.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { SpikeConfig } from "../src/config.js";
+import { verifiedExecuteSignature } from "./five-north-capability-execute-transport.fixtures.js";
 
 const EXECUTE_PATH = "/v2/interactive-submission/execute";
 const USER_ID = "ledger-user-6";
@@ -23,9 +19,7 @@ const network: SpikeConfig["network"] = {
 
 async function moduleUnderTest() {
   try {
-    return await import(
-      "../src/five-north-capability-execute-transport.js"
-    );
+    return await import("../src/five-north-capability-execute-transport.js");
   } catch (cause) {
     throw new Error("CAPABILITY_EXECUTE_TRANSPORT_NOT_IMPLEMENTED", { cause });
   }
@@ -41,18 +35,6 @@ function tokenResponse(subject: string, marker = "one"): Response {
   });
 }
 
-async function verifiedSignature() {
-  const fixture = await signedCapabilitySession("ed25519");
-  const approved = readApprovedCapabilityWalletSigningSession(fixture.session);
-  const verified = await verifyCapabilityWalletSignature(fixture.session, {
-    resolveRegisteredPublicKey: async () => fixture.registeredKey,
-  });
-  return {
-    approved,
-    verified,
-  };
-}
-
 describe("Five North capability execute transport", () => {
   beforeEach(() => {
     vi.useFakeTimers({ now: new Date("2026-07-15T10:00:00.000Z") });
@@ -63,7 +45,7 @@ describe("Five North capability execute transport", () => {
   it("executes the exact authenticated prepared transaction once", async () => {
     const { createFiveNorthCapabilityExecuteTransport } =
       await moduleUnderTest();
-    const { approved, verified } = await verifiedSignature();
+    const { approved, verified } = await verifiedExecuteSignature();
     const fetcher = vi.fn<typeof fetch>(async (url, init) => {
       if (url === network.tokenUrl) return tokenResponse(USER_ID);
       expect(url).toBe(`${network.ledgerUrl}${EXECUTE_PATH}`);
@@ -92,9 +74,9 @@ describe("Five North capability execute transport", () => {
             },
           ],
         },
-        preparedTransaction: Buffer.from(
-          approved.preparedTransaction,
-        ).toString("base64"),
+        preparedTransaction: Buffer.from(approved.preparedTransaction).toString(
+          "base64",
+        ),
         submissionId: expect.stringMatching(
           /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u,
         ),
@@ -124,7 +106,7 @@ describe("Five North capability execute transport", () => {
   it("refreshes once on 401 without changing the submission", async () => {
     const { createFiveNorthCapabilityExecuteTransport } =
       await moduleUnderTest();
-    const { approved, verified } = await verifiedSignature();
+    const { verified } = await verifiedExecuteSignature();
     const requests: Array<{ body: string; token: string }> = [];
     let tokens = 0;
     const fetcher = vi.fn<typeof fetch>(async (url, init) => {
@@ -159,8 +141,15 @@ describe("Five North capability execute transport", () => {
     expect(module.CAPABILITY_EXECUTE_TIMEOUT_MS).toBe(10_000);
     expect(module.MAX_CAPABILITY_EXECUTE_REQUEST_BYTES).toBe(2_097_152);
     expect(module.MAX_CAPABILITY_EXECUTE_RESPONSE_BYTES).toBe(2_097_152);
-    const { verified } = await verifiedSignature();
+    const { verified } = await verifiedExecuteSignature();
     const fetcher = vi.fn<typeof fetch>();
+    expect(() =>
+      module.createFiveNorthCapabilityExecuteTransport(network, {
+        fetcher,
+        signal: new AbortController().signal,
+        userId: "caller-controlled",
+      } as never),
+    ).toThrow(/fields/iu);
     const transport = module.createFiveNorthCapabilityExecuteTransport(
       network,
       { fetcher, signal: new AbortController().signal },

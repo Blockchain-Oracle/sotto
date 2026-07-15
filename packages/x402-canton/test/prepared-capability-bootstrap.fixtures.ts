@@ -78,6 +78,12 @@ export function validPreparedCapabilityBootstrap(
   request: BoundedCapabilityBootstrapRequest,
 ) {
   const prepareRequest = buildBoundedCapabilityBootstrapPrepareRequest(request);
+  return validPreparedCapabilityBootstrapFromPrepare(prepareRequest);
+}
+
+export function validPreparedCapabilityBootstrapFromPrepare(
+  prepareRequest: BoundedCapabilityBootstrapPrepareRequest,
+) {
   const create = createCommand(prepareRequest);
   const preparationTime =
     BigInt(Date.parse("2026-07-15T10:00:01.000Z")) * 1_000n;

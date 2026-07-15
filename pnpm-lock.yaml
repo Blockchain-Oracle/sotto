@@ -76,6 +76,10 @@ importers:
       '@sotto/x402-canton':
         specifier: workspace:*
         version: link:../../packages/x402-canton
+    devDependencies:
+      '@canton-network/core-ledger-proto':
+        specifier: 1.7.0
+        version: 1.7.0
 
 packages:
 
