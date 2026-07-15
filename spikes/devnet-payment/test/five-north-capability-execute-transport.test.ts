@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { MAX_PREPARED_CAPABILITY_TRANSACTION_BYTES } from "@sotto/x402-canton";
 import type { SpikeConfig } from "../src/config.js";
 import { verifiedExecuteSignature } from "./five-north-capability-execute-transport.fixtures.js";
 
@@ -154,7 +155,12 @@ describe("Five North capability execute transport", () => {
   it("rejects clones and bounds timeout, request, response, and errors", async () => {
     const module = await moduleUnderTest();
     expect(module.CAPABILITY_EXECUTE_TIMEOUT_MS).toBe(10_000);
-    expect(module.MAX_CAPABILITY_EXECUTE_REQUEST_BYTES).toBe(2_097_152);
+    expect(module.MAX_CAPABILITY_EXECUTE_REQUEST_BYTES).toBe(3_145_728);
+    const maximumPreparedBase64Bytes =
+      4 * Math.ceil(MAX_PREPARED_CAPABILITY_TRANSACTION_BYTES / 3);
+    expect(
+      module.MAX_CAPABILITY_EXECUTE_REQUEST_BYTES - maximumPreparedBase64Bytes,
+    ).toBeGreaterThanOrEqual(65_536);
     expect(module.MAX_CAPABILITY_EXECUTE_RESPONSE_BYTES).toBe(2_097_152);
     const { verified } = await verifiedExecuteSignature();
     const fetcher = vi.fn<typeof fetch>();

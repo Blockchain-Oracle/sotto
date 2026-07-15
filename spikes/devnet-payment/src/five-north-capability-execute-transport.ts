@@ -19,7 +19,7 @@ type PersistExecutionStarted = (
 ) => Promise<void>;
 
 export const CAPABILITY_EXECUTE_TIMEOUT_MS = 10_000;
-export const MAX_CAPABILITY_EXECUTE_REQUEST_BYTES = 2_097_152;
+export const MAX_CAPABILITY_EXECUTE_REQUEST_BYTES = 3_145_728;
 export const MAX_CAPABILITY_EXECUTE_RESPONSE_BYTES = 2_097_152;
 const EXECUTE_PATH = "/v2/interactive-submission/execute";
 
