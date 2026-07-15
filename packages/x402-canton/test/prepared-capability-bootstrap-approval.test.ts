@@ -2,6 +2,7 @@ import { PreparedTransaction } from "@canton-network/core-ledger-proto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   buildBoundedCapabilityBootstrap,
+  claimHashVerifiedPreparedCapabilityBootstrap,
   createPreparedCapabilityBootstrapObserver,
   recomputeWalletPreparedHashPrecheck,
 } from "../src/index.js";
@@ -117,6 +118,21 @@ describe("prepared capability wallet approval", () => {
         "version",
       ].sort(),
     );
+  });
+
+  it("keeps the connector claim free of request authority", async () => {
+    const secret = "wallet-user-secret-do-not-forward";
+    const { verified } = await approvalFor(secret);
+    const claim = claimHashVerifiedPreparedCapabilityBootstrap(verified);
+    const serialized = JSON.stringify(claim);
+
+    expect(serialized).not.toContain(secret);
+    expect(Object.keys(claim).sort()).toEqual(
+      ["capturedAt", "preparedTransaction", "preparedTransactionHash"].sort(),
+    );
+    for (const field of ["request", "userId", "actAs", "commandId"]) {
+      expect(claim).not.toHaveProperty(field);
+    }
   });
 
   it("rejects a forged hash-verified result", async () => {

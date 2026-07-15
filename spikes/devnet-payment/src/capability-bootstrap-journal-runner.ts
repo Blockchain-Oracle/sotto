@@ -1,7 +1,6 @@
 import { isDeepStrictEqual } from "node:util";
 import {
   exportBoundedCapabilityBootstrapIntent,
-  restoreBoundedCapabilityBootstrapIntent,
   type BoundedCapabilityBootstrapRequest,
 } from "@sotto/x402-canton";
 import {
@@ -20,6 +19,7 @@ import {
   runBoundedCapabilityBootstrap,
 } from "./capability-bootstrap-runner.js";
 import type { CapabilityBootstrapCompletion } from "./capability-bootstrap-completion.js";
+import { restoreCapabilityBootstrapJournalIntent } from "./capability-bootstrap-journal-intent.js";
 
 type LiveBootstrapDependencies = Readonly<{
   readActiveCapabilities: () => Promise<unknown>;
@@ -102,11 +102,12 @@ async function recoverAndPersist(input: {
       intent: input.state.intent,
       readActiveCapabilities: input.readActiveCapabilities,
       readCompletion: input.readCompletion,
+      restoreIntent: restoreCapabilityBootstrapJournalIntent,
     });
   } catch (error) {
     if (error instanceof DefinitiveCapabilityBootstrapRejectionError) {
       await input.assertOwned();
-      const request = restoreBoundedCapabilityBootstrapIntent(
+      const request = restoreCapabilityBootstrapJournalIntent(
         input.state.intent,
       );
       await markCapabilityBootstrapFailed({
@@ -167,7 +168,7 @@ export async function startJournaledCapabilityBootstrap(
           workspaceRoot: input.workspaceRoot,
         });
       }
-      const request = restoreBoundedCapabilityBootstrapIntent(state.intent);
+      const request = restoreCapabilityBootstrapJournalIntent(state.intent);
       let result;
       try {
         result = await runBoundedCapabilityBootstrap({
@@ -183,7 +184,7 @@ export async function startJournaledCapabilityBootstrap(
             const loaded = await loadCapabilityBootstrapJournalIntent(
               input.workspaceRoot,
             );
-            const persisted = restoreBoundedCapabilityBootstrapIntent(
+            const persisted = restoreCapabilityBootstrapJournalIntent(
               loaded.intent,
             );
             if (

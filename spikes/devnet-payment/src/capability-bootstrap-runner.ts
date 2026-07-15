@@ -173,9 +173,12 @@ export async function recoverBoundedCapabilityBootstrap(
       beginExclusive: number,
       request: BoundedCapabilityBootstrapRequest,
     ) => Promise<CapabilityBootstrapCompletion>;
+    restoreIntent?: (value: unknown) => BoundedCapabilityBootstrapRequest;
   }>,
 ) {
-  const request = restoreBoundedCapabilityBootstrapIntent(input.intent);
+  const request = (
+    input.restoreIntent ?? restoreBoundedCapabilityBootstrapIntent
+  )(input.intent);
   const completion = await input.readCompletion(input.beginExclusive, request);
   const resolved = resolveDualEvidence({
     active: await input.readActiveCapabilities(),

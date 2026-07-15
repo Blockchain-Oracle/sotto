@@ -104,7 +104,7 @@ describe("bounded capability bootstrap", () => {
     [
       "empty Canton network",
       { network: "canton:" as const },
-      "bootstrap network must be a specific Canton network",
+      "bootstrap network must be a canonical Canton network",
     ],
     [
       "oversized allowance",

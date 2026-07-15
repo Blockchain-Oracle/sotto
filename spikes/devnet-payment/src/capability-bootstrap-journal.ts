@@ -1,4 +1,3 @@
-import { restoreBoundedCapabilityBootstrapIntent } from "@sotto/x402-canton";
 import {
   prepareCapabilityBootstrapJournalDirectory,
   readCapabilityBootstrapJournalJson,
@@ -24,6 +23,7 @@ import {
 import {
   initializeCapabilityBootstrapJournal,
   loadCapabilityBootstrapJournalIntent,
+  restoreCapabilityBootstrapJournalIntent,
 } from "./capability-bootstrap-journal-intent.js";
 export {
   initializeCapabilityBootstrapJournal,
@@ -124,7 +124,7 @@ export async function loadCapabilityBootstrapJournalState(
   }
   let resolution: CapabilityBootstrapResolution | undefined;
   let failure = null;
-  const request = restoreBoundedCapabilityBootstrapIntent(loaded.intent);
+  const request = restoreCapabilityBootstrapJournalIntent(loaded.intent);
   const terminalExpected =
     submission === undefined
       ? null
@@ -267,7 +267,7 @@ export async function markCapabilityBootstrapFailed(input: {
     input.workspaceRoot,
   );
   const state = await loadCapabilityBootstrapJournalState(input.workspaceRoot);
-  const request = restoreBoundedCapabilityBootstrapIntent(state.intent);
+  const request = restoreCapabilityBootstrapJournalIntent(state.intent);
   if (
     state.operationId !== input.operationId ||
     !state.submissionStarted ||

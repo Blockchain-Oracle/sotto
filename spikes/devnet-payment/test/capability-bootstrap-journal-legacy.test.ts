@@ -8,15 +8,23 @@ import {
   loadCapabilityBootstrapJournalState,
   markCapabilityBootstrapCompletionCursor,
 } from "../src/capability-bootstrap-journal.js";
+import { restoreCapabilityBootstrapJournalIntent } from "../src/capability-bootstrap-journal-intent.js";
 import {
   prepareCapabilityBootstrapJournalDirectory,
   writeExclusiveCapabilityBootstrapJson,
 } from "../src/capability-bootstrap-journal-storage.js";
 import { recoverJournaledCapabilityBootstrap } from "../src/capability-bootstrap-journal-runner.js";
 import { bootstrapRequest } from "./capability-bootstrap-completion.fixtures.js";
+import {
+  LEGACY_BOOTSTRAP_COMMAND_ID,
+  LEGACY_DIRECT_BOOTSTRAP_INTENT_V1,
+} from "../../../packages/x402-canton/test/bounded-capability-bootstrap-intent-v1.fixture.js";
 
 const sha256 = (value: unknown) =>
   `sha256:${createHash("sha256").update(JSON.stringify(value)).digest("hex")}`;
+
+const sha256Text = (value: string) =>
+  `sha256:${createHash("sha256").update(value).digest("hex")}`;
 
 describe("legacy capability bootstrap resolution", () => {
   let workspaceRoot: string;
@@ -115,5 +123,29 @@ describe("legacy capability bootstrap resolution", () => {
     await expect(
       loadCapabilityBootstrapJournalState(workspaceRoot),
     ).rejects.toThrow(/resolution.*chain/iu);
+  });
+
+  it("loads a frozen networkless v1 journal with its historical identity", async () => {
+    const directory =
+      await prepareCapabilityBootstrapJournalDirectory(workspaceRoot);
+    const payload = structuredClone(LEGACY_DIRECT_BOOTSTRAP_INTENT_V1);
+    const source = JSON.stringify(payload);
+    await writeExclusiveCapabilityBootstrapJson(directory, "00-intent.json", {
+      kind: "intent",
+      operationId: sha256Text(`sotto-bootstrap-operation-v1\0${source}`),
+      payload,
+      payloadSha256: sha256Text(source),
+      schema: "sotto-capability-bootstrap-journal-v1",
+    });
+
+    const state = await loadCapabilityBootstrapJournalState(workspaceRoot);
+    const restored = restoreCapabilityBootstrapJournalIntent(state.intent);
+
+    expect(state).toMatchObject({
+      completionCursor: null,
+      resolution: null,
+      submissionStarted: false,
+    });
+    expect(restored.commandId).toBe(LEGACY_BOOTSTRAP_COMMAND_ID);
   });
 });

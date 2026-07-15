@@ -1,5 +1,4 @@
 import { timingSafeEqual } from "node:crypto";
-import type { BoundedCapabilityBootstrapRequest } from "./bounded-capability-bootstrap.js";
 import { assertBoundedCapabilityBootstrapFresh } from "./bounded-capability-bootstrap.js";
 import {
   claimPreparedCapabilityBootstrapObservation,
@@ -26,7 +25,6 @@ export type ClaimedPreparedCapabilityBootstrap = Readonly<{
   capturedAt: number;
   preparedTransaction: Uint8Array;
   preparedTransactionHash: string;
-  request: BoundedCapabilityBootstrapRequest;
 }>;
 
 type VerifiedState = {
@@ -98,7 +96,6 @@ export function claimHashVerifiedPreparedCapabilityBootstrap(
     capturedAt: state.prepared.capturedAt,
     preparedTransaction: new Uint8Array(state.prepared.preparedTransaction),
     preparedTransactionHash: state.prepared.preparedTransactionHash,
-    request: state.prepared.request,
   });
 }
 

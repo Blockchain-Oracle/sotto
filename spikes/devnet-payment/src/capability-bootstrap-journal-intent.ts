@@ -3,7 +3,7 @@ import {
   exportBoundedCapabilityBootstrapIntent,
   restoreBoundedCapabilityBootstrapIntent,
   type BoundedCapabilityBootstrapRequest,
-  type PersistedBootstrapIntentV1,
+  type PersistedBootstrapIntent,
 } from "@sotto/x402-canton";
 import {
   prepareCapabilityBootstrapJournalDirectory,
@@ -16,7 +16,7 @@ const OPERATION_PATTERN = /^sha256:[0-9a-f]{64}$/u;
 type IntentRecord = Readonly<{
   kind: "intent";
   operationId: `sha256:${string}`;
-  payload: PersistedBootstrapIntentV1;
+  payload: PersistedBootstrapIntent;
   payloadSha256: `sha256:${string}`;
   schema: "sotto-capability-bootstrap-journal-v1";
 }>;
@@ -25,7 +25,7 @@ function sha256(value: string): `sha256:${string}` {
   return `sha256:${createHash("sha256").update(value).digest("hex")}`;
 }
 
-function intentRecord(payload: PersistedBootstrapIntentV1): IntentRecord {
+function intentRecord(payload: PersistedBootstrapIntent): IntentRecord {
   const source = JSON.stringify(payload);
   return Object.freeze({
     kind: "intent" as const,
@@ -53,15 +53,21 @@ function parseIntentRecord(value: unknown): IntentRecord {
   ) {
     throw new Error("bootstrap intent record metadata is invalid");
   }
-  const parsed = intentRecord(record.payload as PersistedBootstrapIntentV1);
+  const parsed = intentRecord(record.payload as PersistedBootstrapIntent);
   if (
     parsed.operationId !== record.operationId ||
     parsed.payloadSha256 !== record.payloadSha256
   ) {
     throw new Error("bootstrap intent record integrity check failed");
   }
-  restoreBoundedCapabilityBootstrapIntent(record.payload);
+  restoreCapabilityBootstrapJournalIntent(record.payload);
   return parsed;
+}
+
+export function restoreCapabilityBootstrapJournalIntent(value: unknown) {
+  return restoreBoundedCapabilityBootstrapIntent(value, {
+    legacyNetwork: "canton:devnet",
+  });
 }
 
 export async function initializeCapabilityBootstrapJournal(input: {

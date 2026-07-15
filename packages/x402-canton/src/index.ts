@@ -33,7 +33,10 @@ export {
 export {
   exportBoundedCapabilityBootstrapIntent,
   restoreBoundedCapabilityBootstrapIntent,
+  type LegacyBootstrapIntentRestoreOptions,
+  type PersistedBootstrapIntent,
   type PersistedBootstrapIntentV1,
+  type PersistedBootstrapIntentV2,
 } from "./bounded-capability-bootstrap-intent.js";
 export { buildBoundedPurchasePrepareRequest } from "./bounded-purchase-command.js";
 export type {
