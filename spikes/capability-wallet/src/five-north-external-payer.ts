@@ -113,7 +113,7 @@ export async function runFiveNorthExternalPayer(
       let completed: ExternalPartyTopology;
       try {
         completed = canonicalTopology(
-          await creation.execute(signature),
+          await creation.execute(signature, { grantUserRights: false }),
           fingerprint,
         );
       } catch {

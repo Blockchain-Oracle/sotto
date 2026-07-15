@@ -119,7 +119,9 @@ describe("Five North external payer wallet command", () => {
     );
 
     expect(live.execute).toHaveBeenCalledOnce();
-    expect(live.execute).toHaveBeenCalledWith(expect.any(String));
+    expect(live.execute).toHaveBeenCalledWith(expect.any(String), {
+      grantUserRights: false,
+    });
     expect(result).toMatchObject({
       fingerprint: dryRun.fingerprint,
       mode: "live",

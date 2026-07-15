@@ -9,7 +9,10 @@ export type ExternalPartyTopology = Readonly<{
 }>;
 
 export type ExternalPartyCreation = Readonly<{
-  execute: (signature: string) => Promise<ExternalPartyTopology>;
+  execute: (
+    signature: string,
+    options: Readonly<{ grantUserRights: false }>,
+  ) => Promise<ExternalPartyTopology>;
   topology: () => Promise<ExternalPartyTopology>;
 }>;
 
