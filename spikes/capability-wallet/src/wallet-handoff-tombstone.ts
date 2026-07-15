@@ -5,6 +5,8 @@ import { requireWalletHandoffTime } from "./wallet-handoff-types.js";
 const TOMBSTONE_PATTERN =
   /^\.(?:used|claimed)-[a-z0-9](?:[a-z0-9_-]{0,62}[a-z0-9])?\.(?:request|response)$/u;
 export const WALLET_HANDOFF_TOMBSTONE_MARGIN_MS = 60_000;
+export const WALLET_HANDOFF_INCOMPLETE_TOMBSTONE_RETENTION_MS =
+  10 * 60 * 1_000 + WALLET_HANDOFF_TOMBSTONE_MARGIN_MS;
 
 function requireCurrentOwner(uid: number): void {
   if (typeof process.getuid === "function" && uid !== process.getuid()) {
@@ -38,9 +40,19 @@ export async function isExpiredWalletHandoffTombstone(
     if (
       !status.isFile() ||
       status.nlink !== 1 ||
-      (status.mode & 0o777) !== 0o600 ||
-      status.size !== 25
+      (status.mode & 0o777) !== 0o600
     ) {
+      throw new Error("wallet handoff tombstone is not owner-only and bounded");
+    }
+    if (status.size < 25) {
+      if (!Number.isFinite(status.mtimeMs)) {
+        throw new Error("wallet handoff tombstone time is invalid");
+      }
+      return (
+        status.mtimeMs + WALLET_HANDOFF_INCOMPLETE_TOMBSTONE_RETENTION_MS <= now
+      );
+    }
+    if (status.size !== 25) {
       throw new Error("wallet handoff tombstone is not owner-only and bounded");
     }
     const source = await handle.readFile("utf8");
