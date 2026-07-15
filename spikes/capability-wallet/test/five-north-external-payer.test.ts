@@ -24,6 +24,30 @@ async function walletKeyFile(): Promise<string> {
   return join(directory, "payer.key");
 }
 
+async function externalPartyClient() {
+  const offline = SDK.createOffline();
+  const topologyTransactions = ["AA=="];
+  const multiHash =
+    await offline.utils.hash.topologyTransaction(topologyTransactions);
+  let publicKey = "";
+  const response = async () => {
+    const fingerprint = await offline.keys.fingerprint(publicKey);
+    return {
+      multiHash,
+      partyId: `sotto-external-payer::${fingerprint}`,
+      publicKeyFingerprint: fingerprint,
+      topologyTransactions,
+    };
+  };
+  const execute = vi.fn(response);
+  const topology = vi.fn(response);
+  const createExternalParty = vi.fn((candidate: string) => {
+    publicKey = candidate;
+    return { execute, topology };
+  });
+  return { createExternalParty, execute, topology };
+}
+
 afterEach(async () => {
   await Promise.all(cleanups.splice(0).map((cleanup) => cleanup()));
 });
@@ -31,24 +55,8 @@ afterEach(async () => {
 describe("Five North external payer wallet command", () => {
   it("defaults to a redacted non-mutating topology dry run", async () => {
     const { runFiveNorthExternalPayer } = await moduleUnderTest();
-    const offline = SDK.createOffline();
-    const topologyTransactions = ["AA=="];
-    const multiHash =
-      await offline.utils.hash.topologyTransaction(topologyTransactions);
-    const execute = vi.fn();
-    const topology = vi.fn();
-    const createExternalParty = vi.fn((publicKey: string, options: unknown) => {
-      topology.mockImplementation(async () => {
-        const fingerprint = await offline.keys.fingerprint(publicKey);
-        return {
-          multiHash,
-          partyId: `sotto-external-payer::${fingerprint}`,
-          publicKeyFingerprint: fingerprint,
-          topologyTransactions,
-        };
-      });
-      return { execute, topology, options };
-    });
+    const { createExternalParty, execute, topology } =
+      await externalPartyClient();
     const keyFile = await walletKeyFile();
 
     const result = await runFiveNorthExternalPayer(
@@ -83,5 +91,53 @@ describe("Five North external payer wallet command", () => {
     const status = await lstat(keyFile);
     expect(status.size).toBe(64);
     expect(status.mode & 0o777).toBe(0o600);
+  });
+
+  it("requires the reviewed fingerprint for exactly one live mutation", async () => {
+    const { runFiveNorthExternalPayer } = await moduleUnderTest();
+    const keyFile = await walletKeyFile();
+    const first = await externalPartyClient();
+    const base = {
+      keyFile,
+      partyHint: "sotto-external-payer",
+      signal: new AbortController().signal,
+      synchronizerId: "global-domain::1220sync",
+    } as const;
+    const dryRun = await runFiveNorthExternalPayer(
+      { ...base, mode: "dry-run" },
+      { createExternalParty: first.createExternalParty },
+    );
+    const live = await externalPartyClient();
+
+    const result = await runFiveNorthExternalPayer(
+      {
+        ...base,
+        expectedFingerprint: dryRun.fingerprint,
+        mode: "live",
+      },
+      { createExternalParty: live.createExternalParty },
+    );
+
+    expect(live.execute).toHaveBeenCalledOnce();
+    expect(live.execute).toHaveBeenCalledWith(expect.any(String));
+    expect(result).toMatchObject({
+      fingerprint: dryRun.fingerprint,
+      mode: "live",
+      mutationSubmitted: true,
+    });
+
+    const rejected = await externalPartyClient();
+    await expect(
+      runFiveNorthExternalPayer(
+        {
+          ...base,
+          expectedFingerprint: `1220${"0".repeat(64)}`,
+          mode: "live",
+        },
+        { createExternalParty: rejected.createExternalParty },
+      ),
+    ).rejects.toThrow(/fingerprint/iu);
+    expect(rejected.topology).not.toHaveBeenCalled();
+    expect(rejected.execute).not.toHaveBeenCalled();
   });
 });

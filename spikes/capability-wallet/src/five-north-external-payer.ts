@@ -32,8 +32,16 @@ function canonicalInput(input: FiveNorthExternalPayerInput) {
   if (!IDENTIFIER_PATTERN.test(input.synchronizerId)) {
     throw new Error("external payer synchronizer is invalid");
   }
-  if (input.mode !== "dry-run") {
-    throw new Error("external payer live onboarding is not implemented");
+  if (input.mode !== "dry-run" && input.mode !== "live") {
+    throw new Error("external payer onboarding mode is invalid");
+  }
+  if (
+    (input.mode === "live" &&
+      (input.expectedFingerprint === undefined ||
+        !FINGERPRINT_PATTERN.test(input.expectedFingerprint))) ||
+    (input.mode === "dry-run" && input.expectedFingerprint !== undefined)
+  ) {
+    throw new Error("external payer expected fingerprint is invalid");
   }
   return input;
 }
@@ -83,6 +91,9 @@ export async function runFiveNorthExternalPayer(
     if (!FINGERPRINT_PATTERN.test(fingerprint)) {
       throw new Error("external payer fingerprint is invalid");
     }
+    if (input.mode === "live" && input.expectedFingerprint !== fingerprint) {
+      throw new Error("external payer fingerprint does not match approval");
+    }
     const creation = dependencies.createExternalParty(publicKey, {
       partyHint: input.partyHint,
       synchronizerId: input.synchronizerId,
@@ -95,12 +106,33 @@ export async function runFiveNorthExternalPayer(
     if (recomputed !== topology.multiHash) {
       throw new Error("external payer topology hash mismatch");
     }
-    signTransactionHash(recomputed, privateKey);
+    const signature = signTransactionHash(recomputed, privateKey);
     active(input.signal);
+    let mutationSubmitted = false;
+    if (input.mode === "live") {
+      let completed: ExternalPartyTopology;
+      try {
+        completed = canonicalTopology(
+          await creation.execute(signature),
+          fingerprint,
+        );
+      } catch {
+        throw new Error("external payer execution outcome is uncertain");
+      }
+      if (
+        completed.partyId !== topology.partyId ||
+        completed.multiHash !== topology.multiHash ||
+        JSON.stringify(completed.topologyTransactions) !==
+          JSON.stringify(topology.topologyTransactions)
+      ) {
+        throw new Error("external payer execution outcome is uncertain");
+      }
+      mutationSubmitted = true;
+    }
     return Object.freeze({
       fingerprint: fingerprint as `1220${string}`,
-      mode: "dry-run" as const,
-      mutationSubmitted: false,
+      mode: input.mode,
+      mutationSubmitted,
       partyHint: input.partyHint,
       proposedPartyId: topology.partyId,
       synchronizerId: input.synchronizerId,
