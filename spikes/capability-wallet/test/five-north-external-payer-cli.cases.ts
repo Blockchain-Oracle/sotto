@@ -16,6 +16,28 @@ async function keyFile(): Promise<string> {
   return join(directory, "payer.key");
 }
 
+function environment(privateSecret = "private-client-secret") {
+  return {
+    FIVE_NORTH_LEDGER_URL: "https://ledger.example",
+    FIVE_NORTH_OIDC_AUDIENCE: "ledger-audience",
+    FIVE_NORTH_OIDC_CLIENT_ID: "wallet-client",
+    FIVE_NORTH_OIDC_CLIENT_SECRET: privateSecret,
+    FIVE_NORTH_OIDC_ISSUER_URL: "https://auth.example/issuer",
+    FIVE_NORTH_OIDC_SCOPE: "daml_ledger_api",
+  };
+}
+
+async function dryRunArguments(): Promise<string[]> {
+  return [
+    "--key-file",
+    await keyFile(),
+    "--party-hint",
+    "sotto-external-payer",
+    "--synchronizer-id",
+    "global-domain::1220sync",
+  ];
+}
+
 export function registerFiveNorthExternalPayerCliCases(): void {
   afterEach(async () => {
     await Promise.all(cleanups.splice(0).map((cleanup) => cleanup()));
@@ -61,14 +83,7 @@ export function registerFiveNorthExternalPayerCliCases(): void {
             "--synchronizer-id",
             "global-domain::1220sync",
           ],
-          environment: {
-            FIVE_NORTH_LEDGER_URL: "https://ledger.example",
-            FIVE_NORTH_OIDC_AUDIENCE: "ledger-audience",
-            FIVE_NORTH_OIDC_CLIENT_ID: "wallet-client",
-            FIVE_NORTH_OIDC_CLIENT_SECRET: privateSecret,
-            FIVE_NORTH_OIDC_ISSUER_URL: "https://auth.example/issuer",
-            FIVE_NORTH_OIDC_SCOPE: "daml_ledger_api",
-          },
+          environment: environment(privateSecret),
           signal: new AbortController().signal,
         },
         { createSdk },
@@ -88,6 +103,78 @@ export function registerFiveNorthExternalPayerCliCases(): void {
       expect(execute).not.toHaveBeenCalled();
       expect(result.mode).toBe("dry-run");
       expect(JSON.stringify(result)).not.toContain(privateSecret);
+    });
+
+    it("rejects invalid or cancelled intent before SDK creation", async () => {
+      const { runFiveNorthExternalPayerCli } =
+        await import("../src/five-north-external-payer-cli.js");
+      const base = await dryRunArguments();
+      const invalid = [
+        [...base, "--live-onboard"],
+        [...base, "--expected-fingerprint", `1220${"0".repeat(64)}`],
+        [
+          ...base,
+          "--live-onboard",
+          "--expected-fingerprint",
+          "not-a-fingerprint",
+        ],
+        [...base, "--unknown"],
+      ];
+      for (const arguments_ of invalid) {
+        const createSdk = vi.fn();
+        await expect(
+          runFiveNorthExternalPayerCli(
+            {
+              arguments: arguments_,
+              environment: environment(),
+              signal: new AbortController().signal,
+            },
+            { createSdk },
+          ),
+        ).rejects.toThrow();
+        expect(createSdk).not.toHaveBeenCalled();
+      }
+
+      const controller = new AbortController();
+      controller.abort();
+      const createSdk = vi.fn();
+      await expect(
+        runFiveNorthExternalPayerCli(
+          {
+            arguments: base,
+            environment: environment(),
+            signal: controller.signal,
+          },
+          { createSdk },
+        ),
+      ).rejects.toThrow(/cancelled/iu);
+      expect(createSdk).not.toHaveBeenCalled();
+    });
+
+    it("redacts SDK initialization failures", async () => {
+      const { runFiveNorthExternalPayerCli } =
+        await import("../src/five-north-external-payer-cli.js");
+      const privateValue = "private-token-response";
+      let error: unknown;
+      try {
+        await runFiveNorthExternalPayerCli(
+          {
+            arguments: await dryRunArguments(),
+            environment: environment(),
+            signal: new AbortController().signal,
+          },
+          {
+            createSdk: async () => {
+              throw new Error(privateValue);
+            },
+          },
+        );
+      } catch (caught) {
+        error = caught;
+      }
+      expect(error).toBeInstanceOf(Error);
+      expect((error as Error).message).toMatch(/SDK initialization failed/iu);
+      expect((error as Error).message).not.toContain(privateValue);
     });
   });
 }

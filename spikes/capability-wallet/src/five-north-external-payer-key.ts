@@ -80,15 +80,22 @@ async function publishPrivateKey(path: string, key: Buffer): Promise<void> {
 export async function loadOrCreateExternalPayerPrivateKey(
   path: string,
   sdk: OfflineSDKInterface,
+  createIfMissing = true,
 ): Promise<Buffer> {
   const resolved = resolve(path);
   if (resolved !== path) {
     throw new Error("external payer key path must be absolute");
   }
+  await requireWalletDirectory(resolved);
   try {
     return await readReferenceWalletPrivateKey(resolved);
   } catch (error) {
     if (errorCode(error) !== "ENOENT") throw error;
+    if (!createIfMissing) {
+      throw new Error("external payer reviewed dry-run key is missing", {
+        cause: error,
+      });
+    }
   }
   const generated = sdk.keys.generate();
   const key = Buffer.from(generated.privateKey, "base64");

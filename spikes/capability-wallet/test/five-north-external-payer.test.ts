@@ -4,10 +4,16 @@ import { join } from "node:path";
 import { SDK } from "@canton-network/wallet-sdk";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { registerFiveNorthExternalPayerCliCases } from "./five-north-external-payer-cli.cases.js";
+import { registerFiveNorthExternalPayerCliSecurityCases } from "./five-north-external-payer-cli-security.cases.js";
+import { registerFiveNorthExternalPayerSecurityCases } from "./five-north-external-payer-security.cases.js";
+import { registerFiveNorthExternalPayerTopologyCases } from "./five-north-external-payer-topology.cases.js";
 
 const cleanups: Array<() => Promise<void>> = [];
 
 registerFiveNorthExternalPayerCliCases();
+registerFiveNorthExternalPayerCliSecurityCases();
+registerFiveNorthExternalPayerSecurityCases();
+registerFiveNorthExternalPayerTopologyCases();
 
 async function moduleUnderTest() {
   try {

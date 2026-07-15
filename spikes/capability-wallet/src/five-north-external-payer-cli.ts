@@ -1,37 +1,17 @@
 import { pathToFileURL } from "node:url";
 import { resolve } from "node:path";
-import { CustomLogAdapter, SDK } from "@canton-network/wallet-sdk";
 import { runFiveNorthExternalPayer } from "./five-north-external-payer.js";
-import type {
-  ExternalPartyCreator,
-  FiveNorthExternalPayerResult,
-} from "./five-north-external-payer-types.js";
+import {
+  acquireFiveNorthSdk,
+  type ExternalPayerEnvironment,
+  type ExternalPayerSdkDependencies,
+} from "./five-north-external-payer-sdk.js";
+import type { FiveNorthExternalPayerResult } from "./five-north-external-payer-types.js";
 
-type Environment = Readonly<Record<string, string | undefined>>;
 type CliInput = Readonly<{
   arguments: ReadonlyArray<string>;
-  environment: Environment;
+  environment: ExternalPayerEnvironment;
   signal: AbortSignal;
-}>;
-type SdkConfig = Readonly<{
-  auth: Readonly<{
-    configUrl: string;
-    credentials: Readonly<{
-      audience: string;
-      clientId: string;
-      clientSecret: string;
-      scope: string;
-    }>;
-    method: "client_credentials";
-  }>;
-  ledgerClientUrl: string;
-  logAdapter: CustomLogAdapter;
-}>;
-type OnlineSdk = Readonly<{
-  party: { external: { create: ExternalPartyCreator } };
-}>;
-type Dependencies = Readonly<{
-  createSdk: (config: SdkConfig) => Promise<OnlineSdk>;
 }>;
 
 const VALUE_FLAGS = new Set([
@@ -40,6 +20,7 @@ const VALUE_FLAGS = new Set([
   "--party-hint",
   "--synchronizer-id",
 ]);
+const FINGERPRINT_PATTERN = /^1220[0-9a-f]{64}$/u;
 
 function parseArguments(arguments_: ReadonlyArray<string>) {
   const values = new Map<string, string>();
@@ -71,8 +52,17 @@ function parseArguments(arguments_: ReadonlyArray<string>) {
   ) {
     throw new Error("external payer CLI required arguments are missing");
   }
+  const expectedFingerprint = values.get("--expected-fingerprint");
+  if (
+    (live &&
+      (expectedFingerprint === undefined ||
+        !FINGERPRINT_PATTERN.test(expectedFingerprint))) ||
+    (!live && expectedFingerprint !== undefined)
+  ) {
+    throw new Error("external payer CLI fingerprint approval is invalid");
+  }
   return {
-    expectedFingerprint: values.get("--expected-fingerprint"),
+    expectedFingerprint,
     keyFile,
     mode: live ? ("live" as const) : ("dry-run" as const),
     partyHint,
@@ -80,58 +70,22 @@ function parseArguments(arguments_: ReadonlyArray<string>) {
   };
 }
 
-function required(environment: Environment, name: string): string {
-  const value = environment[name];
-  if (value === undefined || value === "" || value.trim() !== value) {
-    throw new Error(`external payer environment requires ${name}`);
-  }
-  return value;
-}
-
-function httpsUrl(environment: Environment, name: string): string {
-  const url = new URL(required(environment, name));
-  if (url.protocol !== "https:") {
-    throw new Error(`external payer ${name} must use HTTPS`);
-  }
-  return url.toString();
-}
-
-function sdkConfig(environment: Environment): SdkConfig {
-  const issuer = httpsUrl(environment, "FIVE_NORTH_OIDC_ISSUER_URL");
-  return {
-    auth: {
-      configUrl: `${issuer.replace(/\/$/u, "")}/.well-known/openid-configuration`,
-      credentials: {
-        audience: required(environment, "FIVE_NORTH_OIDC_AUDIENCE"),
-        clientId: required(environment, "FIVE_NORTH_OIDC_CLIENT_ID"),
-        clientSecret: required(environment, "FIVE_NORTH_OIDC_CLIENT_SECRET"),
-        scope: required(environment, "FIVE_NORTH_OIDC_SCOPE"),
-      },
-      method: "client_credentials",
-    },
-    ledgerClientUrl: httpsUrl(environment, "FIVE_NORTH_LEDGER_URL"),
-    logAdapter: new CustomLogAdapter(() => undefined),
-  };
-}
-
-async function createOnlineSdk(config: SdkConfig): Promise<OnlineSdk> {
-  const sdk = await SDK.create(config);
-  return {
-    party: {
-      external: {
-        create: (publicKey, options) =>
-          sdk.party.external.create(publicKey as never, options),
-      },
-    },
-  };
-}
-
 export async function runFiveNorthExternalPayerCli(
   input: CliInput,
-  dependencies: Dependencies = { createSdk: createOnlineSdk },
+  dependencies?: ExternalPayerSdkDependencies,
 ): Promise<FiveNorthExternalPayerResult> {
   const parsed = parseArguments(input.arguments);
-  const sdk = await dependencies.createSdk(sdkConfig(input.environment));
+  if (!(input.signal instanceof AbortSignal) || input.signal.aborted) {
+    throw new Error("external payer onboarding cancelled");
+  }
+  const sdk = await acquireFiveNorthSdk(
+    input.environment,
+    input.signal,
+    dependencies,
+  );
+  if (input.signal.aborted) {
+    throw new Error("external payer onboarding cancelled");
+  }
   return runFiveNorthExternalPayer(
     {
       ...(parsed.expectedFingerprint === undefined

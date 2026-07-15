@@ -63,7 +63,10 @@ function canonicalTopology(
     value.topologyTransactions.length > MAX_TOPOLOGY_TRANSACTIONS ||
     value.topologyTransactions.some(
       (entry) =>
-        typeof entry !== "string" || !/^[A-Za-z0-9+/]*={0,2}$/u.test(entry),
+        typeof entry !== "string" ||
+        entry === "" ||
+        !/^[A-Za-z0-9+/]*={0,2}$/u.test(entry) ||
+        Buffer.from(entry, "base64").toString("base64") !== entry,
     ) ||
     value.topologyTransactions.reduce(
       (total, entry) => total + Buffer.byteLength(entry, "utf8"),
@@ -82,7 +85,11 @@ export async function runFiveNorthExternalPayer(
   const input = canonicalInput(candidate);
   active(input.signal);
   const offline = SDK.createOffline();
-  const key = await loadOrCreateExternalPayerPrivateKey(input.keyFile, offline);
+  const key = await loadOrCreateExternalPayerPrivateKey(
+    input.keyFile,
+    offline,
+    input.mode === "dry-run",
+  );
   try {
     active(input.signal);
     const privateKey = key.toString("base64");
@@ -98,7 +105,13 @@ export async function runFiveNorthExternalPayer(
       partyHint: input.partyHint,
       synchronizerId: input.synchronizerId,
     });
-    const topology = canonicalTopology(await creation.topology(), fingerprint);
+    let candidateTopology: ExternalPartyTopology;
+    try {
+      candidateTopology = await creation.topology();
+    } catch {
+      throw new Error("external payer topology acquisition failed");
+    }
+    const topology = canonicalTopology(candidateTopology, fingerprint);
     active(input.signal);
     const recomputed = await offline.utils.hash.topologyTransaction([
       ...topology.topologyTransactions,
