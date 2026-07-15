@@ -134,7 +134,7 @@ export function createFiveNorthCapabilityExecuteTransport(
       }
       const material = claimVerifiedCapabilityWalletSignature(verified);
       claimed = true;
-      let token = await tokens.accessToken();
+      const token = await tokens.accessToken();
       const userId = readFiveNorthAccessTokenSubject(token);
       const submissionId = randomUUID();
       const source = requestSource(material, submissionId, userId);
@@ -149,16 +149,7 @@ export function createFiveNorthCapabilityExecuteTransport(
       } catch {
         throw new Error("capability execute start persistence failed");
       }
-      let response = await send(source, token);
-      if (response.status === 401) {
-        await discardBounded(response);
-        tokens.invalidate();
-        token = await tokens.accessToken();
-        if (readFiveNorthAccessTokenSubject(token) !== userId) {
-          throw new Error("capability execute token subject changed");
-        }
-        response = await send(source, token);
-      }
+      const response = await send(source, token);
       if (!response.ok) {
         const status = response.status;
         await discardBounded(response);

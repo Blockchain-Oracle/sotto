@@ -120,7 +120,7 @@ describe("Five North capability execute transport", () => {
     );
   });
 
-  it("refreshes once on 401 without changing the submission", async () => {
+  it("never retries an execute after 401", async () => {
     const { createFiveNorthCapabilityExecuteTransport } =
       await moduleUnderTest();
     const { verified } = await verifiedExecuteSignature();
@@ -146,13 +146,9 @@ describe("Five North capability execute transport", () => {
 
     await expect(
       transport.execute(verified, async () => undefined),
-    ).resolves.toMatchObject({
-      outcome: "submitted",
-    });
-    expect(tokens).toBe(2);
-    expect(requests).toHaveLength(2);
-    expect(requests[0]!.body).toBe(requests[1]!.body);
-    expect(requests[0]!.token).not.toBe(requests[1]!.token);
+    ).rejects.toThrow("Five North capability execute failed with HTTP 401");
+    expect(tokens).toBe(1);
+    expect(requests).toHaveLength(1);
   });
 
   it("rejects clones and bounds timeout, request, response, and errors", async () => {
