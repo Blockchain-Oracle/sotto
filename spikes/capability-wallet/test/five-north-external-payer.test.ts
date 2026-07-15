@@ -3,8 +3,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { SDK } from "@canton-network/wallet-sdk";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { registerFiveNorthExternalPayerCliCases } from "./five-north-external-payer-cli.cases.js";
 
 const cleanups: Array<() => Promise<void>> = [];
+
+registerFiveNorthExternalPayerCliCases();
 
 async function moduleUnderTest() {
   try {
