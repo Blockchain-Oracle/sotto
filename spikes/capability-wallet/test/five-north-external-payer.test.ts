@@ -7,6 +7,7 @@ import { registerFiveNorthExternalPayerCliCases } from "./five-north-external-pa
 import { registerFiveNorthExternalPayerCliSecurityCases } from "./five-north-external-payer-cli-security.cases.js";
 import { registerFiveNorthExternalPayerSecurityCases } from "./five-north-external-payer-security.cases.js";
 import { registerFiveNorthExternalPayerTopologyCases } from "./five-north-external-payer-topology.cases.js";
+import { registerFiveNorthExternalPayerProcessCases } from "./five-north-external-payer-process.cases.js";
 
 const cleanups: Array<() => Promise<void>> = [];
 
@@ -14,6 +15,7 @@ registerFiveNorthExternalPayerCliCases();
 registerFiveNorthExternalPayerCliSecurityCases();
 registerFiveNorthExternalPayerSecurityCases();
 registerFiveNorthExternalPayerTopologyCases();
+registerFiveNorthExternalPayerProcessCases();
 
 async function moduleUnderTest() {
   try {
