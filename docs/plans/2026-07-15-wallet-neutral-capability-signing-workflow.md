@@ -69,7 +69,7 @@ max_iterations: 3
 verify: PATH="$HOME/.local/share/mise/installs/node/24.18.0/bin:$PATH" pnpm --filter @sotto/x402-canton build && PATH="$HOME/.local/share/mise/installs/node/24.18.0/bin:$PATH" pnpm typecheck && PATH="$HOME/.local/share/mise/installs/node/24.18.0/bin:$PATH" pnpm vitest run packages/x402-canton/test/prepared-capability-bootstrap-*.test.ts
 gate: human
 
-- [ ] **Step 10: Bound verifier work and measure it**
+- [x] **Step 10: Bound verifier work and measure it**
 action: Add `packages/x402-canton/test/prepared-capability-bootstrap-limits.test.ts` for exact and plus-one response bytes, prepared bytes, roots, nodes, fields, value depth, identifier bytes, party counts, and unknown fields; record test-only elapsed microseconds without making latency an authority input.
 loop: until exact limits pass and plus-one cases fail closed
 max_iterations: 4
