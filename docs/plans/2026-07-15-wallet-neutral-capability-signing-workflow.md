@@ -85,7 +85,7 @@ verify:
   prompt: Confirm the exact prepared create and all metadata are independently verified before any wallet connector can be called.
 gate: human
 
-- [ ] **Step 12: Define the wallet-neutral connector contract with RED tests**
+- [x] **Step 12: Define the wallet-neutral connector contract with RED tests**
 action: Add `packages/x402-canton/test/capability-wallet-connector.test.ts` defining exact capability negotiation, connector identity, supported network/package/hash scheme/signature formats, one explicit approval request, rejection, timeout, and one signature response; require the absent `createCapabilityWalletSigningSession` API.
 loop: false
 max_iterations: 1
