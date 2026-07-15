@@ -116,8 +116,8 @@ loop: until install, license guard, provenance test, and workspace build pass
 max_iterations: 4
 verify: PATH="$HOME/.local/share/mise/installs/node/24.18.0/bin:$PATH" pnpm install --frozen-lockfile && PATH="$HOME/.local/share/mise/installs/node/24.18.0/bin:$PATH" pnpm --filter @sotto/capability-wallet build && PATH="$HOME/.local/share/mise/installs/node/24.18.0/bin:$PATH" node scripts/check-licenses.mjs
 
-- [ ] **Step 17: Add owner-only Wallet SDK handoff storage**
-action: Add `spikes/capability-wallet/src/wallet-handoff-storage.ts` and `spikes/capability-wallet/test/wallet-handoff-storage.test.ts`; require an ignored directory with mode `0700`, request/response/key files with mode `0600`, atomic create-without-overwrite, canonical bounded JSON, no symlinks, no traversal, no group/world access, and deletion of expired raw transaction/signature artifacts.
+- [x] **Step 17: Add owner-only Wallet SDK handoff storage**
+action: Add `spikes/capability-wallet/src/wallet-handoff-storage.ts` and `spikes/capability-wallet/test/wallet-handoff-storage.test.ts`; require an ignored directory with mode `0700`, request/response files with mode `0600`, atomic create-without-overwrite, canonical bounded JSON, no symlinks, no traversal, no group/world access, and deletion of expired raw transaction/signature artifacts. Signing keys remain connector-owned and are never stored by Sotto.
 loop: until filesystem permission, symlink, overwrite, crash, and cleanup tests pass
 max_iterations: 4
 verify: PATH="$HOME/.local/share/mise/installs/node/24.18.0/bin:$PATH" pnpm vitest run spikes/capability-wallet/test/wallet-handoff-storage.test.ts
