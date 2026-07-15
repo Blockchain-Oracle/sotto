@@ -9,14 +9,14 @@ worktree: false
 
 ## Steps
 
-- [ ] **Step 1: Freeze the prepared-capability fixture and public RED API**
+- [x] **Step 1: Freeze the prepared-capability fixture and public RED API**
 action: Add `packages/x402-canton/test/prepared-capability-bootstrap.fixtures.ts` with one protobuf `PreparedTransaction` containing the exact authenticated bootstrap create, plus `packages/x402-canton/test/prepared-capability-bootstrap-observation.test.ts` importing the absent `createPreparedCapabilityBootstrapObserver` API and throwing the exact marker `PREPARED_CAPABILITY_OBSERVER_NOT_IMPLEMENTED` if the old surface accepts the fixture.
 loop: false
 max_iterations: 1
 verify: bash -lc 'set +e; output=$(PATH="$HOME/.local/share/mise/installs/node/24.18.0/bin:$PATH" pnpm vitest run packages/x402-canton/test/prepared-capability-bootstrap-observation.test.ts 2>&1); status=$?; test "$status" -ne 0 && grep -q "PREPARED_CAPABILITY_OBSERVER_NOT_IMPLEMENTED\|createPreparedCapabilityBootstrapObserver" <<<"$output"'
 gate: human
 
-- [ ] **Step 2: Parse the bounded prepare response**
+- [x] **Step 2: Parse the bounded prepare response**
 action: Add `packages/x402-canton/src/prepared-capability-bootstrap-types.ts`, `prepared-capability-bootstrap-response.ts`, and `prepared-capability-bootstrap-observation.ts`; require exact camel-case REST response keys, canonical base64, `HASHING_SCHEME_VERSION_V2`, a nonempty prepared transaction no larger than 2 MiB, a total response no larger than 3 MiB, one authenticated bootstrap request, one-use observation provenance, and freshness bounded by the capability expiry.
 loop: until the focused observation tests pass
 max_iterations: 4

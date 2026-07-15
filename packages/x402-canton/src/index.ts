@@ -1,6 +1,16 @@
 export * from "./authorization.js";
 export { parseBoundedCapabilityBootstrapCompletionResponse } from "./bounded-capability-bootstrap-completion-response.js";
 export {
+  createPreparedCapabilityBootstrapObserver,
+  MAX_PREPARED_CAPABILITY_RESPONSE_BYTES,
+  MAX_PREPARED_CAPABILITY_TRANSACTION_BYTES,
+  PREPARED_CAPABILITY_BOOTSTRAP_PATH,
+  PREPARED_CAPABILITY_BOOTSTRAP_TIMEOUT_MS,
+  type PreparedCapabilityBootstrapObservation,
+  type PreparedCapabilityBootstrapReader,
+  type PreparedCapabilityBootstrapTransportRequest,
+} from "./prepared-capability-bootstrap-observation.js";
+export {
   assertBoundedCapabilityBootstrapFresh,
   buildBoundedCapabilityBootstrap,
   parseBoundedCapabilityBootstrapResponse,
