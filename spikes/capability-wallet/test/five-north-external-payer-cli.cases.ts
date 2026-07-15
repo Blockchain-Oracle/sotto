@@ -1,8 +1,8 @@
 import { mkdir, mkdtemp, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { SDK } from "@canton-network/wallet-sdk";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { externalPayerOfflineSdk } from "./five-north-external-payer.fixtures.js";
 
 const cleanups: Array<() => Promise<void>> = [];
 
@@ -47,7 +47,7 @@ export function registerFiveNorthExternalPayerCliCases(): void {
     it("defaults to a silent redacted dry run from environment config", async () => {
       const { runFiveNorthExternalPayerCli } =
         await import("../src/five-north-external-payer-cli.js");
-      const offline = SDK.createOffline();
+      const offline = externalPayerOfflineSdk;
       const transactions = ["AA=="];
       const multiHash =
         await offline.utils.hash.topologyTransaction(transactions);

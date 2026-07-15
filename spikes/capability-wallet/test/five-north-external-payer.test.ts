@@ -1,18 +1,20 @@
 import { lstat, mkdir, mkdtemp, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { SDK } from "@canton-network/wallet-sdk";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { registerFiveNorthExternalPayerCliCases } from "./five-north-external-payer-cli.cases.js";
 import { registerFiveNorthExternalPayerCliSecurityCases } from "./five-north-external-payer-cli-security.cases.js";
+import { registerFiveNorthExternalPayerJournalCases } from "./five-north-external-payer-journal.cases.js";
 import { registerFiveNorthExternalPayerSecurityCases } from "./five-north-external-payer-security.cases.js";
 import { registerFiveNorthExternalPayerTopologyCases } from "./five-north-external-payer-topology.cases.js";
+import { externalPayerOfflineSdk } from "./five-north-external-payer.fixtures.js";
 import { registerFiveNorthExternalPayerProcessCases } from "./five-north-external-payer-process.cases.js";
 
 const cleanups: Array<() => Promise<void>> = [];
 
 registerFiveNorthExternalPayerCliCases();
 registerFiveNorthExternalPayerCliSecurityCases();
+registerFiveNorthExternalPayerJournalCases();
 registerFiveNorthExternalPayerSecurityCases();
 registerFiveNorthExternalPayerTopologyCases();
 registerFiveNorthExternalPayerProcessCases();
@@ -36,7 +38,7 @@ async function walletKeyFile(): Promise<string> {
 }
 
 async function externalPartyClient() {
-  const offline = SDK.createOffline();
+  const offline = externalPayerOfflineSdk;
   const topologyTransactions = ["AA=="];
   const multiHash =
     await offline.utils.hash.topologyTransaction(topologyTransactions);

@@ -5,6 +5,10 @@ import {
 } from "@canton-network/wallet-sdk";
 import { loadOrCreateExternalPayerPrivateKey } from "./five-north-external-payer-key.js";
 import {
+  markExternalPayerExecutionStarted,
+  requireExternalPayerNotSubmitted,
+} from "./five-north-external-payer-journal.js";
+import {
   FIVE_NORTH_EXTERNAL_PAYER_VERSION,
   type ExternalPartyCreator,
   type ExternalPartyTopology,
@@ -17,6 +21,16 @@ const IDENTIFIER_PATTERN = /^[\x21-\x7e]{1,255}$/u;
 const PARTY_HINT_PATTERN = /^sotto-[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/u;
 const MAX_TOPOLOGY_TRANSACTIONS = 16;
 const MAX_TOPOLOGY_BYTES = 2_097_152;
+
+function encodedTopologyIsBounded(value: ReadonlyArray<unknown>): boolean {
+  let total = 0;
+  for (const entry of value) {
+    if (typeof entry !== "string") return false;
+    total += Buffer.byteLength(entry, "utf8");
+    if (total > MAX_TOPOLOGY_BYTES) return false;
+  }
+  return true;
+}
 
 function active(signal: AbortSignal): void {
   if (signal.aborted) throw new Error("external payer onboarding cancelled");
@@ -61,17 +75,14 @@ function canonicalTopology(
     !Array.isArray(value.topologyTransactions) ||
     value.topologyTransactions.length === 0 ||
     value.topologyTransactions.length > MAX_TOPOLOGY_TRANSACTIONS ||
+    !encodedTopologyIsBounded(value.topologyTransactions) ||
     value.topologyTransactions.some(
       (entry) =>
         typeof entry !== "string" ||
         entry === "" ||
         !/^[A-Za-z0-9+/]*={0,2}$/u.test(entry) ||
         Buffer.from(entry, "base64").toString("base64") !== entry,
-    ) ||
-    value.topologyTransactions.reduce(
-      (total, entry) => total + Buffer.byteLength(entry, "utf8"),
-      0,
-    ) > MAX_TOPOLOGY_BYTES
+    )
   ) {
     throw new Error("external payer topology is invalid");
   }
@@ -101,6 +112,9 @@ export async function runFiveNorthExternalPayer(
     if (input.mode === "live" && input.expectedFingerprint !== fingerprint) {
       throw new Error("external payer fingerprint does not match approval");
     }
+    if (input.mode === "live") {
+      await requireExternalPayerNotSubmitted(input.keyFile);
+    }
     const creation = dependencies.createExternalParty(publicKey, {
       partyHint: input.partyHint,
       synchronizerId: input.synchronizerId,
@@ -123,6 +137,13 @@ export async function runFiveNorthExternalPayer(
     active(input.signal);
     let mutationSubmitted = false;
     if (input.mode === "live") {
+      await markExternalPayerExecutionStarted(input.keyFile, {
+        fingerprint,
+        partyId: topology.partyId,
+        synchronizerId: input.synchronizerId,
+        topologyHash: topology.multiHash,
+      });
+      active(input.signal);
       let completed: ExternalPartyTopology;
       try {
         completed = canonicalTopology(

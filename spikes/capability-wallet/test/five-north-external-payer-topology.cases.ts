@@ -1,9 +1,9 @@
 import { mkdir, mkdtemp, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { SDK } from "@canton-network/wallet-sdk";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { runFiveNorthExternalPayer } from "../src/five-north-external-payer.js";
+import { externalPayerOfflineSdk } from "./five-north-external-payer.fixtures.js";
 
 const cleanups: Array<() => Promise<void>> = [];
 
@@ -29,12 +29,13 @@ function input(path: string) {
 
 export function registerFiveNorthExternalPayerTopologyCases(): void {
   afterEach(async () => {
+    vi.restoreAllMocks();
     await Promise.all(cleanups.splice(0).map((cleanup) => cleanup()));
   });
 
   describe("Five North external payer topology verification", () => {
     it("rejects noncanonical base64 even when its hash agrees", async () => {
-      const offline = SDK.createOffline();
+      const offline = externalPayerOfflineSdk;
       const topologyTransactions = ["AB=="];
       const multiHash =
         await offline.utils.hash.topologyTransaction(topologyTransactions);
@@ -64,8 +65,42 @@ export function registerFiveNorthExternalPayerTopologyCases(): void {
       expect(execute).not.toHaveBeenCalled();
     });
 
+    it("rejects oversized encoded topology before base64 decoding", async () => {
+      const offline = externalPayerOfflineSdk;
+      const oversized = "A".repeat(2_097_156);
+      let publicKey = "";
+      const execute = vi.fn();
+      const createExternalParty = vi.fn((candidate: string) => {
+        publicKey = candidate;
+        return {
+          execute,
+          topology: async () => {
+            const fingerprint = await offline.keys.fingerprint(publicKey);
+            return {
+              multiHash: `1220${"0".repeat(64)}`,
+              partyId: `sotto-external-payer::${fingerprint}`,
+              publicKeyFingerprint: fingerprint,
+              topologyTransactions: [oversized],
+            };
+          },
+        };
+      });
+      const bufferFrom = vi.spyOn(Buffer, "from");
+
+      await expect(
+        runFiveNorthExternalPayer(input(await keyFile()), {
+          createExternalParty,
+        }),
+      ).rejects.toThrow(/topology.*invalid/iu);
+
+      expect(bufferFrom.mock.calls.some(([value]) => value === oversized)).toBe(
+        false,
+      );
+      expect(execute).not.toHaveBeenCalled();
+    });
+
     it("rejects substituted fingerprints and topology hashes", async () => {
-      const offline = SDK.createOffline();
+      const offline = externalPayerOfflineSdk;
       const transactions = ["AA=="];
       const validHash =
         await offline.utils.hash.topologyTransaction(transactions);

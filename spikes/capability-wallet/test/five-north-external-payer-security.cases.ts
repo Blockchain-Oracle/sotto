@@ -9,9 +9,9 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { SDK } from "@canton-network/wallet-sdk";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { runFiveNorthExternalPayer } from "../src/five-north-external-payer.js";
+import { externalPayerOfflineSdk } from "./five-north-external-payer.fixtures.js";
 
 const cleanups: Array<() => Promise<void>> = [];
 
@@ -26,7 +26,7 @@ async function absentKeyFile(): Promise<string> {
 }
 
 async function client(onTopology?: () => void) {
-  const offline = SDK.createOffline();
+  const offline = externalPayerOfflineSdk;
   const topologyTransactions = ["AA=="];
   const multiHash =
     await offline.utils.hash.topologyTransaction(topologyTransactions);
