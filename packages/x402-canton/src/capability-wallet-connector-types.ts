@@ -87,10 +87,19 @@ export type CapabilityWalletConnector = Readonly<{
   ) => Promise<unknown>;
 }>;
 
+export type CapabilityWalletApprovalStarted = Readonly<{
+  connectorId: string;
+  connectorKind: CapabilityWalletConnectorKind;
+  sessionId: `sha256:${string}`;
+}>;
+
 export type CapabilityWalletSigningSessionInput = Readonly<{
   connector: CapabilityWalletConnector;
   connectorId: string;
   connectorOrigin: string;
+  onApprovalRequested?: (
+    started: CapabilityWalletApprovalStarted,
+  ) => Promise<void>;
   prepared: HashVerifiedPreparedCapabilityBootstrap;
   signal?: AbortSignal;
   timeoutMilliseconds: number;

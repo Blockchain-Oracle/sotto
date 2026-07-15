@@ -3,6 +3,7 @@ export { createCapabilityWalletSigningSession } from "./capability-wallet-signin
 export { verifyCapabilityWalletSignature } from "./capability-wallet-signature.js";
 export type {
   ApprovedCapabilityWalletSigningSession,
+  CapabilityWalletApprovalStarted,
   CapabilityWalletApprovalRequest,
   CapabilityWalletCapabilities,
   CapabilityWalletConnector,

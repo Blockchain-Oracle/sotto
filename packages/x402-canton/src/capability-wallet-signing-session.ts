@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { assertBoundedCapabilityBootstrapFresh } from "./bounded-capability-bootstrap.js";
+import { persistCapabilityWalletApprovalStarted } from "./capability-wallet-approval-persistence.js";
 import {
   boundedCapabilityBootstrapState,
   MAX_BOOTSTRAP_AUTHORITY_AGE_MS,
@@ -74,6 +75,7 @@ export async function createCapabilityWalletSigningSession(
   const requestApproval = connector.requestApproval.bind(connector);
   const connectorId = input.connectorId;
   const connectorOrigin = input.connectorOrigin;
+  const onApprovalRequested = input.onApprovalRequested;
   const outerSignal = input.signal;
   const timeoutMilliseconds = sessionTimeout(input.timeoutMilliseconds);
   const startedAt = Date.now();
@@ -126,6 +128,14 @@ export async function createCapabilityWalletSigningSession(
         sessionId,
         version: CAPABILITY_WALLET_REQUEST_VERSION,
       });
+      if (onApprovalRequested !== undefined) {
+        await persistCapabilityWalletApprovalStarted(onApprovalRequested, {
+          connectorId: compatibility.capabilities.connectorId,
+          connectorKind: compatibility.capabilities.connectorKind,
+          sessionId,
+        });
+        requireActiveSession(signal, expiresAtMilliseconds);
+      }
       const responseValue = await callConnector("approval", () =>
         requestApproval(request, Object.freeze({ signal })),
       );

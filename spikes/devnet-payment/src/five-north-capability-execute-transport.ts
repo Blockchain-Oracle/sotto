@@ -10,6 +10,13 @@ import {
 
 type Fetcher = (url: string, init?: RequestInit) => Promise<Response>;
 type Options = Readonly<{ fetcher?: Fetcher; signal: AbortSignal }>;
+type PersistExecutionStarted = (
+  value: Readonly<{
+    sessionId: `sha256:${string}`;
+    submissionId: string;
+    userId: string;
+  }>,
+) => Promise<void>;
 
 export const CAPABILITY_EXECUTE_TIMEOUT_MS = 10_000;
 export const MAX_CAPABILITY_EXECUTE_REQUEST_BYTES = 2_097_152;
@@ -117,14 +124,31 @@ export function createFiveNorthCapabilityExecuteTransport(
   }
 
   return Object.freeze({
-    execute: async (verified: unknown) => {
+    execute: async (
+      verified: unknown,
+      persistExecutionStarted: PersistExecutionStarted,
+    ) => {
       if (claimed) throw new Error("capability execute is already claimed");
+      if (typeof persistExecutionStarted !== "function") {
+        throw new Error("capability execute start persistence is required");
+      }
       const material = claimVerifiedCapabilityWalletSignature(verified);
       claimed = true;
       let token = await tokens.accessToken();
       const userId = readFiveNorthAccessTokenSubject(token);
       const submissionId = randomUUID();
       const source = requestSource(material, submissionId, userId);
+      try {
+        await persistExecutionStarted(
+          Object.freeze({
+            sessionId: material.sessionId,
+            submissionId,
+            userId,
+          }),
+        );
+      } catch {
+        throw new Error("capability execute start persistence failed");
+      }
       let response = await send(source, token);
       if (response.status === 401) {
         await discardBounded(response);

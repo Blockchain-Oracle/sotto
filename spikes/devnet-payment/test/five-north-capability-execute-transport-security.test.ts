@@ -54,10 +54,12 @@ describe("Five North capability execute transport security", () => {
       ),
     );
 
-    await expect(execute.execute(verified)).rejects.toThrow(
-      "capability execute response is invalid",
-    );
-    await expect(execute.execute(verified)).rejects.toThrow(/claimed/iu);
+    await expect(
+      execute.execute(verified, async () => undefined),
+    ).rejects.toThrow("capability execute response is invalid");
+    await expect(
+      execute.execute(verified, async () => undefined),
+    ).rejects.toThrow(/claimed/iu);
   });
 
   it("returns status-only HTTP failures", async () => {
@@ -75,7 +77,7 @@ describe("Five North capability execute transport security", () => {
 
     let failure: unknown;
     try {
-      await execute.execute(verified);
+      await execute.execute(verified, async () => undefined);
     } catch (error) {
       failure = error;
     }
@@ -94,8 +96,26 @@ describe("Five North capability execute transport security", () => {
       }),
     );
 
-    await expect(execute.execute(verified)).rejects.toEqual(
+    await expect(
+      execute.execute(verified, async () => undefined),
+    ).rejects.toEqual(
       new Error("Five North capability execute transport failed"),
     );
+  });
+
+  it("does not send when durable execution-start persistence fails", async () => {
+    const { verified } = await verifiedExecuteSignature();
+    const fetcher = vi.fn<typeof fetch>(async (url) => {
+      if (url === network.tokenUrl) return tokenResponse();
+      return Response.json({});
+    });
+    const execute = transport(fetcher);
+
+    await expect(
+      execute.execute(verified, async () => {
+        throw new Error("private journal detail");
+      }),
+    ).rejects.toEqual(new Error("capability execute start persistence failed"));
+    expect(fetcher).toHaveBeenCalledTimes(1);
   });
 });

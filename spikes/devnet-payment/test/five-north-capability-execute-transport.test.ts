@@ -46,8 +46,13 @@ describe("Five North capability execute transport", () => {
     const { createFiveNorthCapabilityExecuteTransport } =
       await moduleUnderTest();
     const { approved, verified } = await verifiedExecuteSignature();
+    const events: string[] = [];
     const fetcher = vi.fn<typeof fetch>(async (url, init) => {
-      if (url === network.tokenUrl) return tokenResponse(USER_ID);
+      if (url === network.tokenUrl) {
+        events.push("token");
+        return tokenResponse(USER_ID);
+      }
+      events.push("execute");
       expect(url).toBe(`${network.ledgerUrl}${EXECUTE_PATH}`);
       const body = JSON.parse(String(init?.body));
       expect(init).toMatchObject({ method: "POST", redirect: "error" });
@@ -89,7 +94,15 @@ describe("Five North capability execute transport", () => {
       signal: new AbortController().signal,
     });
 
-    const result = await transport.execute(verified);
+    const persistStarted = vi.fn(async (started) => {
+      events.push("persisted");
+      expect(started).toEqual({
+        sessionId: approved.sessionId,
+        submissionId: expect.any(String),
+        userId: USER_ID,
+      });
+    });
+    const result = await transport.execute(verified, persistStarted);
 
     expect(result).toEqual({
       outcome: "submitted",
@@ -99,8 +112,12 @@ describe("Five North capability execute transport", () => {
       userId: USER_ID,
     });
     expect(JSON.stringify(result)).not.toContain(approved.signature.signature);
+    expect(events).toEqual(["token", "persisted", "execute"]);
+    expect(persistStarted).toHaveBeenCalledOnce();
     expect(fetcher).toHaveBeenCalledTimes(2);
-    await expect(transport.execute(verified)).rejects.toThrow(/claimed/iu);
+    await expect(transport.execute(verified, persistStarted)).rejects.toThrow(
+      /claimed/iu,
+    );
   });
 
   it("refreshes once on 401 without changing the submission", async () => {
@@ -127,7 +144,9 @@ describe("Five North capability execute transport", () => {
       signal: new AbortController().signal,
     });
 
-    await expect(transport.execute(verified)).resolves.toMatchObject({
+    await expect(
+      transport.execute(verified, async () => undefined),
+    ).resolves.toMatchObject({
       outcome: "submitted",
     });
     expect(tokens).toBe(2);
@@ -155,9 +174,9 @@ describe("Five North capability execute transport", () => {
       { fetcher, signal: new AbortController().signal },
     );
 
-    await expect(transport.execute({ ...verified })).rejects.toThrow(
-      /authenticated/iu,
-    );
+    await expect(
+      transport.execute({ ...verified }, async () => undefined),
+    ).rejects.toThrow(/authenticated/iu);
     expect(fetcher).not.toHaveBeenCalled();
   });
 });
