@@ -94,6 +94,18 @@ export function registerOpenRpcSecurityCases(): void {
       expect(provider).toHaveBeenCalledOnce();
     });
 
+    it("rejects a provider-supplied non-OpenRPC classification", async () => {
+      const provider = vi.fn(async () => ({
+        ...OPENRPC_CAPABILITIES,
+        connectorKind: "wallet-sdk",
+      }));
+
+      await expect(signWithOpenRpcProvider(provider)).rejects.toThrow(
+        "capability wallet discovery failed",
+      );
+      expect(provider).toHaveBeenCalledOnce();
+    });
+
     it("redacts SDK provider error messages", async () => {
       const provider = vi.fn(async () => {
         throw new Error("RPC error: -32000 - private provider detail");

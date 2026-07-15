@@ -171,12 +171,13 @@ export function createOpenRpcCapabilityWallet(
       const capabilities = openRpcObject(result, "OpenRPC wallet capabilities");
       if (
         capabilities.connectorId !== connectorId ||
+        capabilities.connectorKind !== "openrpc" ||
         capabilities.origin !== expectedOrigin ||
         capabilities.payerParty !== payerParty
       ) {
         throw new Error("OpenRPC wallet capability identity is invalid");
       }
-      return result;
+      return Object.freeze({ ...capabilities, connectorKind: "openrpc" });
     },
     requestApproval: async (request, { signal }) => {
       const result = await call(
