@@ -98,8 +98,8 @@ max_iterations: 4
 verify: PATH="$HOME/.local/share/mise/installs/node/24.18.0/bin:$PATH" pnpm vitest run packages/x402-canton/test/capability-wallet-connector.test.ts
 gate: human
 
-- [ ] **Step 14: Parse and verify the party signature envelope**
-action: Add `packages/x402-canton/src/capability-wallet-signature.ts` and `packages/x402-canton/test/capability-wallet-signature.test.ts`; require exact payer, canonical base64 signature bytes, supported format and ECDSA-SHA-256 algorithm, canonical `signedBy` fingerprint, registered public-key match where provided, cryptographic signature verification, and no additional parties or signatures.
+- [x] **Step 14: Parse and verify the party signature envelope**
+action: Add `packages/x402-canton/src/capability-wallet-signature.ts` and `packages/x402-canton/test/capability-wallet-signature.test.ts`; require exact payer, canonical base64 signature bytes, an exact supported pair (Wallet SDK Ed25519 + CONCAT or P-256 ECDSA-SHA-256 + DER), canonical `signedBy` fingerprint, registered public-key match, cryptographic signature verification, and no additional parties or signatures; reject legacy RAW and cross-paired formats/algorithms.
 loop: until signature success, mutation, size, algorithm, fingerprint, and cryptographic failure cases pass
 max_iterations: 4
 verify: PATH="$HOME/.local/share/mise/installs/node/24.18.0/bin:$PATH" pnpm vitest run packages/x402-canton/test/capability-wallet-signature.test.ts packages/x402-canton/test/capability-wallet-connector.test.ts

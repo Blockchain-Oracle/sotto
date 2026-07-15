@@ -8,7 +8,6 @@ import {
   CAPABILITY_WALLET_REQUEST_VERSION,
   MAX_CAPABILITY_WALLET_SESSION_MS,
   type ApprovedCapabilityWalletSigningSession,
-  type CapabilityWalletApprovedSessionState,
   type CapabilityWalletApprovalRequest,
   type CapabilityWalletSigningResult,
   type CapabilityWalletSigningSessionInput,
@@ -16,15 +15,14 @@ import {
 import { parseCapabilityWalletCapabilities } from "./capability-wallet-connector-validation.js";
 import { withCapabilityWalletDeadline } from "./capability-wallet-deadline.js";
 import { parseCapabilityWalletApprovalResponse } from "./capability-wallet-response-validation.js";
+import { requireNegotiatedCapabilityWalletSignatureScheme } from "./capability-wallet-signature-scheme.js";
+import { registerApprovedCapabilityWalletSigningSession } from "./capability-wallet-signing-session-state.js";
 import { projectPreparedCapabilityBootstrapApproval } from "./prepared-capability-bootstrap-approval.js";
 import {
   claimHashVerifiedPreparedCapabilityBootstrap,
   readHashVerifiedPreparedCapabilityBootstrap,
 } from "./prepared-capability-bootstrap-hash.js";
 import { SHA256_PATTERN } from "./purchase-commitment-primitives.js";
-
-const states = new WeakMap<object, CapabilityWalletApprovedSessionState>();
-const MAXIMUM_CLOCK_ROLLBACK_MS = 5_000;
 
 function sessionIdentifier(): `sha256:${string}` {
   return `sha256:${randomBytes(32).toString("hex")}`;
@@ -135,13 +133,17 @@ export async function createCapabilityWalletSigningSession(
           sessionId,
         });
       }
+      requireNegotiatedCapabilityWalletSignatureScheme(
+        compatibility.capabilities,
+        response.signature,
+      );
       const result = Object.freeze({
         ...resultIdentity,
         outcome: "approved" as const,
         sessionId,
         signature: response.signature,
       }) as ApprovedCapabilityWalletSigningSession;
-      states.set(result, {
+      registerApprovedCapabilityWalletSigningSession(result, {
         capabilityIntentHash: intentHash,
         claimed: false,
         connectorId: resultIdentity.connectorId,
@@ -165,30 +167,7 @@ export async function createCapabilityWalletSigningSession(
   );
 }
 
-/** @internal Signature verification only. */
-export function claimApprovedCapabilityWalletSigningSession(
-  candidate: unknown,
-): CapabilityWalletApprovedSessionState {
-  if (typeof candidate !== "object" || candidate === null) {
-    throw new Error("approved capability wallet session is not authenticated");
-  }
-  const state = states.get(candidate);
-  if (state === undefined) {
-    throw new Error("approved capability wallet session is not authenticated");
-  }
-  if (state.claimed) {
-    throw new Error("approved capability wallet session is already claimed");
-  }
-  const now = Date.now();
-  if (now < state.createdAt - MAXIMUM_CLOCK_ROLLBACK_MS) {
-    throw new Error("capability wallet signing session clock rollback");
-  }
-  if (now >= state.expiresAt) {
-    throw new Error("approved capability wallet session has expired");
-  }
-  state.claimed = true;
-  return {
-    ...state,
-    preparedTransaction: new Uint8Array(state.preparedTransaction),
-  };
-}
+export {
+  claimApprovedCapabilityWalletSigningSession,
+  readApprovedCapabilityWalletSigningSession,
+} from "./capability-wallet-signing-session-state.js";

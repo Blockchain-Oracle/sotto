@@ -7,13 +7,23 @@ export const CAPABILITY_WALLET_REQUEST_VERSION =
   "sotto-capability-wallet-request-v1" as const;
 export const CAPABILITY_WALLET_HASHING_SCHEME =
   "HASHING_SCHEME_VERSION_V2" as const;
-export const CAPABILITY_WALLET_SIGNATURE_FORMAT =
-  "SIGNATURE_FORMAT_RAW" as const;
-export const CAPABILITY_WALLET_SIGNING_ALGORITHM =
+export const CAPABILITY_WALLET_ED25519_SIGNATURE_FORMAT =
+  "SIGNATURE_FORMAT_CONCAT" as const;
+export const CAPABILITY_WALLET_ECDSA_SIGNATURE_FORMAT =
+  "SIGNATURE_FORMAT_DER" as const;
+export const CAPABILITY_WALLET_ED25519_SIGNING_ALGORITHM =
+  "SIGNING_ALGORITHM_SPEC_ED25519" as const;
+export const CAPABILITY_WALLET_ECDSA_SIGNING_ALGORITHM =
   "SIGNING_ALGORITHM_SPEC_EC_DSA_SHA_256" as const;
 export const MAX_CAPABILITY_WALLET_SESSION_MS = 10 * 60 * 1_000;
 
 export type CapabilityWalletConnectorKind = "openrpc" | "wallet-sdk";
+export type CapabilityWalletSignatureFormat =
+  | typeof CAPABILITY_WALLET_ECDSA_SIGNATURE_FORMAT
+  | typeof CAPABILITY_WALLET_ED25519_SIGNATURE_FORMAT;
+export type CapabilityWalletSigningAlgorithm =
+  | typeof CAPABILITY_WALLET_ECDSA_SIGNING_ALGORITHM
+  | typeof CAPABILITY_WALLET_ED25519_SIGNING_ALGORITHM;
 
 export type CapabilityWalletCapabilities = Readonly<{
   connectorId: string;
@@ -25,8 +35,8 @@ export type CapabilityWalletCapabilities = Readonly<{
   packageIds: ReadonlyArray<string>;
   payerParty: string;
   preparedTransactionSigning: true;
-  signatureFormats: ReadonlyArray<typeof CAPABILITY_WALLET_SIGNATURE_FORMAT>;
-  signingAlgorithms: ReadonlyArray<typeof CAPABILITY_WALLET_SIGNING_ALGORITHM>;
+  signatureFormats: ReadonlyArray<CapabilityWalletSignatureFormat>;
+  signingAlgorithms: ReadonlyArray<CapabilityWalletSigningAlgorithm>;
   version: typeof CAPABILITY_WALLET_CAPABILITIES_VERSION;
 }>;
 
@@ -46,9 +56,9 @@ export type CapabilityWalletApprovalRequest = Readonly<{
 export type CapabilityWalletSignatureEnvelope = Readonly<{
   party: string;
   signature: string;
-  signatureFormat: typeof CAPABILITY_WALLET_SIGNATURE_FORMAT;
+  signatureFormat: CapabilityWalletSignatureFormat;
   signedBy: string;
-  signingAlgorithm: typeof CAPABILITY_WALLET_SIGNING_ALGORITHM;
+  signingAlgorithm: CapabilityWalletSigningAlgorithm;
 }>;
 
 export type CapabilityWalletApprovedSessionState = {

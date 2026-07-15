@@ -1,8 +1,9 @@
+import type { CapabilityWalletSignatureEnvelope } from "./capability-wallet-connector-types.js";
 import {
-  CAPABILITY_WALLET_SIGNATURE_FORMAT,
-  CAPABILITY_WALLET_SIGNING_ALGORITHM,
-  type CapabilityWalletSignatureEnvelope,
-} from "./capability-wallet-connector-types.js";
+  capabilityWalletSignatureFormat,
+  capabilityWalletSigningAlgorithm,
+  isSupportedCapabilityWalletSignatureScheme,
+} from "./capability-wallet-signature-scheme.js";
 import {
   exactKeys,
   identifier,
@@ -36,19 +37,19 @@ export function parseCapabilityWalletApprovalResponse(value: unknown):
     ["party", "signature", "signatureFormat", "signedBy", "signingAlgorithm"],
     "capability wallet signature",
   );
-  const signatureFormat = identifier(
+  const signatureFormat = capabilityWalletSignatureFormat(
     signature.signatureFormat,
-    "wallet signature format",
   );
-  if (signatureFormat !== CAPABILITY_WALLET_SIGNATURE_FORMAT) {
-    throw new Error("capability wallet signature format is unsupported");
-  }
-  const signingAlgorithm = identifier(
+  const signingAlgorithm = capabilityWalletSigningAlgorithm(
     signature.signingAlgorithm,
-    "wallet signing algorithm",
   );
-  if (signingAlgorithm !== CAPABILITY_WALLET_SIGNING_ALGORITHM) {
-    throw new Error("capability wallet signing algorithm is unsupported");
+  if (
+    !isSupportedCapabilityWalletSignatureScheme(
+      signatureFormat,
+      signingAlgorithm,
+    )
+  ) {
+    throw new Error("capability wallet signature scheme is unsupported");
   }
   return Object.freeze({
     outcome: "approved" as const,

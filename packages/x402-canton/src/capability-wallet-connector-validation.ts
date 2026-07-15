@@ -1,12 +1,15 @@
 import {
   CAPABILITY_WALLET_CAPABILITIES_VERSION,
   CAPABILITY_WALLET_HASHING_SCHEME,
-  CAPABILITY_WALLET_SIGNATURE_FORMAT,
-  CAPABILITY_WALLET_SIGNING_ALGORITHM,
   type CapabilityWalletCapabilities,
   type CapabilityWalletConnectorKind,
   type CapabilityWalletUnsupportedResult,
 } from "./capability-wallet-connector-types.js";
+import {
+  capabilityWalletSignatureFormat,
+  capabilityWalletSigningAlgorithm,
+  isSupportedCapabilityWalletSignatureScheme,
+} from "./capability-wallet-signature-scheme.js";
 import {
   exactKeys,
   identifier,
@@ -15,7 +18,11 @@ import {
 
 const MAXIMUM_CAPABILITY_VALUES = 16;
 
-function exactStringArray(value: unknown, label: string): string[] {
+function exactValidatedStringArray<T extends string>(
+  value: unknown,
+  label: string,
+  validate: (entry: unknown) => T,
+): T[] {
   if (
     !Array.isArray(value) ||
     value.length > MAXIMUM_CAPABILITY_VALUES ||
@@ -23,13 +30,17 @@ function exactStringArray(value: unknown, label: string): string[] {
   ) {
     throw new Error(`${label} must be a bounded array`);
   }
-  const result = value.map((entry, index) =>
-    identifier(entry, `${label}[${index}]`, 512),
-  );
+  const result = value.map((entry) => validate(entry));
   if (new Set(result).size !== result.length) {
     throw new Error(`${label} must be unique`);
   }
   return result;
+}
+
+function exactStringArray(value: unknown, label: string): string[] {
+  return exactValidatedStringArray(value, label, (entry) =>
+    identifier(entry, label, 512),
+  );
 }
 
 function connectorKind(value: unknown): CapabilityWalletConnectorKind {
@@ -87,10 +98,18 @@ export function parseCapabilityWalletCapabilities(
     payerParty: identifier(record.payerParty, "wallet payer Party"),
     preparedTransactionSigning: record.preparedTransactionSigning,
     signatureFormats: Object.freeze(
-      exactStringArray(record.signatureFormats, "wallet signature formats"),
+      exactValidatedStringArray(
+        record.signatureFormats,
+        "wallet signature formats",
+        capabilityWalletSignatureFormat,
+      ),
     ),
     signingAlgorithms: Object.freeze(
-      exactStringArray(record.signingAlgorithms, "wallet signing algorithms"),
+      exactValidatedStringArray(
+        record.signingAlgorithms,
+        "wallet signing algorithms",
+        capabilityWalletSigningAlgorithm,
+      ),
     ),
     version: record.version,
   });
@@ -114,13 +133,15 @@ export function parseCapabilityWalletCapabilities(
       parsed.hashingSchemeVersions.includes(CAPABILITY_WALLET_HASHING_SCHEME),
       "unsupported-hashing-scheme",
     ],
+    [parsed.signatureFormats.length > 0, "unsupported-signature-format"],
+    [parsed.signingAlgorithms.length > 0, "unsupported-signing-algorithm"],
     [
-      parsed.signatureFormats.includes(CAPABILITY_WALLET_SIGNATURE_FORMAT),
-      "unsupported-signature-format",
-    ],
-    [
-      parsed.signingAlgorithms.includes(CAPABILITY_WALLET_SIGNING_ALGORITHM),
-      "unsupported-signing-algorithm",
+      parsed.signatureFormats.some((format) =>
+        parsed.signingAlgorithms.some((algorithm) =>
+          isSupportedCapabilityWalletSignatureScheme(format, algorithm),
+        ),
+      ),
+      "unsupported-signature-scheme",
     ],
     [
       parsed.preparedTransactionSigning === true,

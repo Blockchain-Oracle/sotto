@@ -98,6 +98,13 @@ describe("capability wallet connector", () => {
     ["hash scheme", { hashingSchemeVersions: [] }],
     ["signature format", { signatureFormats: [] }],
     ["signing algorithm", { signingAlgorithms: [] }],
+    [
+      "cross-paired signature scheme",
+      {
+        signatureFormats: ["SIGNATURE_FORMAT_CONCAT"],
+        signingAlgorithms: ["SIGNING_ALGORITHM_SPEC_EC_DSA_SHA_256"],
+      },
+    ],
     ["prepared signing", { preparedTransactionSigning: false }],
     ["explicit approval", { explicitApproval: false }],
   ])(

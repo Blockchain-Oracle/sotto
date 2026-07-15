@@ -30,10 +30,8 @@ export const CONNECTOR_CAPABILITIES = Object.freeze({
   ]),
   payerParty: CAPABILITY_BOOTSTRAP_INPUT.payerParty,
   preparedTransactionSigning: true,
-  signatureFormats: Object.freeze(["SIGNATURE_FORMAT_RAW" as const]),
-  signingAlgorithms: Object.freeze([
-    "SIGNING_ALGORITHM_SPEC_EC_DSA_SHA_256" as const,
-  ]),
+  signatureFormats: Object.freeze(["SIGNATURE_FORMAT_CONCAT" as const]),
+  signingAlgorithms: Object.freeze(["SIGNING_ALGORITHM_SPEC_ED25519" as const]),
   version: "sotto-capability-wallet-capabilities-v1" as const,
 });
 
@@ -42,9 +40,9 @@ export const APPROVED_SIGNATURE = Object.freeze({
   signature: Object.freeze({
     party: CAPABILITY_BOOTSTRAP_INPUT.payerParty,
     signature: SIGNATURE,
-    signatureFormat: "SIGNATURE_FORMAT_RAW" as const,
+    signatureFormat: "SIGNATURE_FORMAT_CONCAT" as const,
     signedBy: SIGNED_BY,
-    signingAlgorithm: "SIGNING_ALGORITHM_SPEC_EC_DSA_SHA_256" as const,
+    signingAlgorithm: "SIGNING_ALGORITHM_SPEC_ED25519" as const,
   }),
 });
 

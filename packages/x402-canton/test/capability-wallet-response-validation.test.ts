@@ -15,8 +15,12 @@ describe("capability wallet response discriminators", () => {
   afterEach(() => vi.useRealTimers());
 
   it.each([
-    ["signature format", { signatureFormat: "SIGNATURE_FORMAT_DER" }],
-    ["signing algorithm", { signingAlgorithm: "SIGNING_ALGORITHM_ED_25519" }],
+    ["legacy signature format", { signatureFormat: "SIGNATURE_FORMAT_RAW" }],
+    ["unknown algorithm", { signingAlgorithm: "SIGNING_ALGORITHM_ED_25519" }],
+    [
+      "cross-paired scheme",
+      { signingAlgorithm: "SIGNING_ALGORITHM_SPEC_EC_DSA_SHA_256" },
+    ],
   ])("rejects an unnegotiated response %s", async (_label, mutation) => {
     const prepared = await verifiedCapabilityBootstrap();
 
