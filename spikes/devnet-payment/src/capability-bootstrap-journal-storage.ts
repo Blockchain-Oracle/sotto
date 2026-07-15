@@ -5,6 +5,15 @@ import { isAbsolute, join } from "node:path";
 const CAPABILITY_DIRECTORY = "devnet-capability-bootstrap";
 const DIRECTORY_PATTERN = /^devnet-[a-z0-9-]{1,64}$/u;
 const MAXIMUM_RECORD_BYTES = 65_536;
+const RECORD_NAME_PATTERN =
+  /^(?:\d{2}-[a-z][a-z-]{0,63}\.json|\.(?:gate|lease|lease-owner-[0-9a-f]{32}\.json))$/u;
+
+function journalRecordName(value: string): string {
+  if (!RECORD_NAME_PATTERN.test(value)) {
+    throw new Error("bootstrap journal record name is invalid");
+  }
+  return value;
+}
 
 export type OwnerOnlyDirectoryOperations = Readonly<{
   lstat: (path: string) => Promise<
@@ -113,6 +122,7 @@ export async function writeExclusiveCapabilityBootstrapJson(
   name: string,
   value: unknown,
 ): Promise<void> {
+  journalRecordName(name);
   const source = `${JSON.stringify(value)}\n`;
   if (new TextEncoder().encode(source).byteLength > MAXIMUM_RECORD_BYTES) {
     throw new Error("bootstrap journal record exceeds byte limit");
@@ -148,6 +158,7 @@ export async function readCapabilityBootstrapJournalJson(
   directory: string,
   name: string,
 ): Promise<unknown> {
+  journalRecordName(name);
   const handle = await open(
     join(directory, name),
     constants.O_RDONLY | constants.O_NOFOLLOW,
