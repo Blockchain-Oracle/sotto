@@ -111,6 +111,7 @@ describe("Five North transaction submitter", () => {
 
       await expect(setup.submit({ commands: [] })).rejects.toMatchObject({
         reason,
+        statusCode: status,
       });
     },
   );

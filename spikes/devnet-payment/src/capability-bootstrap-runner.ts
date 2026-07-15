@@ -57,6 +57,7 @@ function resolveDualEvidence(input: {
     typeof parseBoundedCapabilityBootstrapCompletionResponse
   >;
   submissionAmbiguity?: AmbiguousTransactionSubmissionReason;
+  submissionStatusCode?: number;
 }) {
   const contractId = optionalReconciliation(input.active, input.request);
   if (input.completion.classification !== "SUCCEEDED") {
@@ -69,11 +70,17 @@ function resolveDualEvidence(input: {
         input.completion.statusCode,
       );
     }
-    const reason = input.submissionAmbiguity;
+    const details = [
+      ...(input.submissionAmbiguity === undefined ||
+      input.submissionAmbiguity === "UNKNOWN"
+        ? []
+        : [input.submissionAmbiguity]),
+      ...(input.submissionStatusCode === undefined
+        ? []
+        : [`HTTP ${input.submissionStatusCode}`]),
+    ];
     throw new Error(
-      `capability bootstrap outcome is unresolved${
-        reason === undefined || reason === "UNKNOWN" ? "" : ` (${reason})`
-      }`,
+      `capability bootstrap outcome is unresolved${details.length === 0 ? "" : ` (${details.join(", ")})`}`,
     );
   }
   if (contractId === null) {
@@ -118,11 +125,13 @@ export async function runBoundedCapabilityBootstrap(
     | undefined;
   let response: unknown;
   let submissionAmbiguity: AmbiguousTransactionSubmissionReason | undefined;
+  let submissionStatusCode: number | undefined;
   try {
     response = await input.submit(input.request);
   } catch (error) {
     if (!(error instanceof AmbiguousTransactionSubmissionError)) throw error;
     submissionAmbiguity = error.reason;
+    submissionStatusCode = error.statusCode;
   }
   if (response !== undefined) {
     try {
@@ -141,6 +150,7 @@ export async function runBoundedCapabilityBootstrap(
     request: input.request,
     ...(submitted === undefined ? {} : { submitted }),
     ...(submissionAmbiguity === undefined ? {} : { submissionAmbiguity }),
+    ...(submissionStatusCode === undefined ? {} : { submissionStatusCode }),
   });
   return Object.freeze({
     commandId: input.request.commandId,

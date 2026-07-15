@@ -68,7 +68,7 @@ it("rejects minimal response metadata inconsistent with completion", async () =>
   ).rejects.toThrow("completion and submission response are inconsistent");
 });
 
-it("surfaces only the safe ambiguity reason when evidence is absent", async () => {
+it("surfaces only safe ambiguity metadata when evidence is absent", async () => {
   const fixture = setup();
   const durable = persistence();
   durable.readCompletion.mockResolvedValue({
@@ -81,12 +81,12 @@ it("surfaces only the safe ambiguity reason when evidence is absent", async () =
       readActiveCapabilities: vi.fn(async () => []),
       request: fixture.request,
       submit: vi.fn(async () => {
-        throw new AmbiguousTransactionSubmissionError("HTTP_SERVER_ERROR");
+        throw new AmbiguousTransactionSubmissionError("HTTP_CLIENT_ERROR", 422);
       }),
       ...durable,
     }),
   ).rejects.toThrow(
-    "capability bootstrap outcome is unresolved (HTTP_SERVER_ERROR)",
+    "capability bootstrap outcome is unresolved (HTTP_CLIENT_ERROR, HTTP 422)",
   );
 });
 

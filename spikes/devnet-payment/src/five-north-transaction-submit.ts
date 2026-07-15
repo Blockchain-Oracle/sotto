@@ -26,8 +26,15 @@ export class AmbiguousTransactionSubmissionError extends Error {
 
   constructor(
     readonly reason: AmbiguousTransactionSubmissionReason = "UNKNOWN",
+    readonly statusCode?: number,
   ) {
     super("Five North transaction submission outcome is ambiguous");
+    if (
+      statusCode !== undefined &&
+      (!Number.isInteger(statusCode) || statusCode < 100 || statusCode > 599)
+    ) {
+      throw new Error("Five North ambiguity status code is invalid");
+    }
   }
 }
 
@@ -93,10 +100,12 @@ export function createFiveNorthTransactionSubmitter(input: {
             BOUNDED_HTTP_REJECTION_PATTERN.test(error.message)
             ? httpAmbiguityReason(response.status)
             : "RESPONSE_UNREADABLE",
+          response.status,
         );
       }
       throw new AmbiguousTransactionSubmissionError(
         httpAmbiguityReason(response.status),
+        response.status,
       );
     }
     try {
@@ -105,7 +114,10 @@ export function createFiveNorthTransactionSubmitter(input: {
         "Five North transaction response",
       );
     } catch {
-      throw new AmbiguousTransactionSubmissionError("SUCCESS_RESPONSE_INVALID");
+      throw new AmbiguousTransactionSubmissionError(
+        "SUCCESS_RESPONSE_INVALID",
+        response.status,
+      );
     }
   };
 }
