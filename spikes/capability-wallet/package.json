@@ -1,0 +1,17 @@
+{
+  "name": "@sotto/capability-wallet",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "exports": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run test"
+  },
+  "dependencies": {
+    "@canton-network/wallet-sdk": "1.4.0",
+    "@sotto/x402-canton": "workspace:*"
+  }
+}

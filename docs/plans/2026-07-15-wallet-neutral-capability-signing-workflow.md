@@ -110,7 +110,7 @@ loop: until a recording connector passes every conformance case
 max_iterations: 4
 verify: PATH="$HOME/.local/share/mise/installs/node/24.18.0/bin:$PATH" pnpm vitest run packages/x402-canton/test/capability-wallet-connector.test.ts packages/x402-canton/test/capability-wallet-signature.test.ts
 
-- [ ] **Step 16: Pin the separate Wallet SDK reference workspace**
+- [x] **Step 16: Pin the separate Wallet SDK reference workspace**
 action: Add `spikes/capability-wallet/package.json` with exact Apache-2.0 dependency `@canton-network/wallet-sdk` version `1.4.0`, `@sotto/x402-canton` as a workspace dependency, and build/test scripts; add `spikes/capability-wallet/tsconfig.build.json`, update `pnpm-lock.yaml` with a frozen install, and add a provenance test asserting npm integrity `sha512-uskdurYd9HgNSXisFUHFkpEFnZTusd0XJ4oBIDnyI2DrM+9TfJk1Z/s2qF1+J2f6B6OswE3oHwyjY39tyXLURg==` and repository `canton-network/wallet`.
 loop: until install, license guard, provenance test, and workspace build pass
 max_iterations: 4
