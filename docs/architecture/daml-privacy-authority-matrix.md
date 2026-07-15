@@ -50,10 +50,14 @@ oracles avoid treating a boolean flag as proof of archival revocation.
 | fresh outsider party | absent  | absent  | no stakeholder role               |
 | public Scan          | absent  | absent  | no public Canton stakeholder role |
 
-Five North's shared M2M token currently has participant administration and
-read-any authority. Live queries must therefore use explicit party-scoped event
-formats/readers, and their result proves Daml stakeholder visibility rather than
-credential isolation. The same token will hold named `actAs` rights for the live
-owner, agent, and payer roles, so it can satisfy both `Consume` controllers.
-That is an explicit negative signer-boundary result and cannot satisfy the
-operator-only or bounded-authority gate.
+During the July 13 probe, Five North's shared M2M token had participant
+administration, read-any authority, and named `actAs` rights for the live owner,
+agent, and payer roles. Live queries therefore used explicit party-scoped event
+formats/readers, and their result proved Daml stakeholder visibility rather than
+credential isolation. That historical token state could satisfy both `Consume`
+controllers and was an explicit negative signer-boundary result.
+
+On July 15, a read-only recheck found that named payer `CanActAs` was no longer
+present, although participant administration and execute-as-any-party remained.
+That change prevents current direct payer submission but does not retroactively
+strengthen the privacy proof or satisfy the bounded-authority gate.

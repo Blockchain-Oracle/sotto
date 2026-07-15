@@ -8,6 +8,14 @@ Approved for DevNet blocker remediation. This design selects the candidate that
 must now be proven; it does not change the current production verdict from
 `NO_GO` and does not claim that Five North already supports the complete path.
 
+Live update, 2026-07-15: the current shared identity no longer has named payer
+`CanActAs`. Five North accepted interactive preparation of the exact capability
+create but rejected direct command submission with HTTP `403`; exact completion
+history and payer-scoped ACS showed no effect. This is consistent with the
+selected design's authority direction, but it is not proof of the final boundary
+because the identity still has participant administration and
+execute-as-any-party, and no payer-controlled external signer is connected.
+
 ## Decision
 
 Use a payer-signed Daml purchase capability for opt-in autonomous buying. The
@@ -48,8 +56,11 @@ available according to their own accepted gates.
 ### Shared or low-balance payer credential
 
 Reducing the balance limits losses but does not prevent arbitrary transfers. The
-Five North spike already proved that the shared M2M credential can bypass Sotto
-policy with a generic transfer. This candidate remains rejected.
+July 13 Five North spike proved that the then-authorized shared M2M credential
+could bypass Sotto policy with a generic transfer. The July 15 removal of named
+payer `CanActAs` prevents the current credential from serving as the
+capability-creation signer; it does not make that shared credential an accepted
+agent signer. This candidate remains rejected.
 
 ### Transfer instruction or allocation alone
 

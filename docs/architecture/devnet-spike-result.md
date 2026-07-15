@@ -101,11 +101,18 @@ public Scan absence were not completed and are not claimed.
 
 ## Negative Results And Boundaries
 
-- The shared Five North machine credential has participant administration,
-  read-any, and the named payer/agent/provider `actAs` rights. The same
-  credential can submit `AmuletRules_Transfer` directly without consuming Sotto
-  policy. The baseline transfer succeeded before the policy existed, so this
-  signer and funding model is bypassable.
+- At the July 13 spike, the shared Five North machine credential had participant
+  administration, read-any, and the named payer/agent/provider `actAs` rights.
+  That credential submitted `AmuletRules_Transfer` directly without consuming
+  Sotto policy. The baseline transfer succeeded before the policy existed, so
+  that signer and funding model was bypassable.
+- A July 15 read-only authority recheck found 66 current rights. Participant
+  administration and execute-as-any-party remained, but named payer `CanActAs`
+  was absent. A reviewed one-shot capability bootstrap reached Five North and
+  returned HTTP `403`; completion history and exact payer-scoped ACS contained
+  no matching result. Interactive preparation of the same create had succeeded,
+  so the current blocker is payer signing/submission authority, not network or
+  package reachability. This state still does not prove a constrained signer.
 - Atomic composition is available, but the current canonical identifier does not
   independently commit every required challenge, expiry, policy-CID, and
   policy-revision field at a constrained signer boundary. Full purchase
