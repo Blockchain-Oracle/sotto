@@ -20,6 +20,7 @@ import {
   walletStorageFixture,
 } from "./wallet-handoff-storage.fixtures.js";
 import { registerWalletHandoffStorageSecurityCases } from "./wallet-handoff-storage-security.cases.js";
+import { registerWalletHandoffTombstoneCases } from "./wallet-handoff-tombstone.cases.js";
 
 const cleanups: Array<() => Promise<void>> = [];
 
@@ -34,6 +35,7 @@ afterEach(async () => {
 });
 
 registerWalletHandoffStorageSecurityCases((cleanup) => cleanups.push(cleanup));
+registerWalletHandoffTombstoneCases((cleanup) => cleanups.push(cleanup));
 
 describe("owner-only wallet handoff storage", () => {
   it("uses the tracked ignored directory with exact owner-only modes", async () => {
