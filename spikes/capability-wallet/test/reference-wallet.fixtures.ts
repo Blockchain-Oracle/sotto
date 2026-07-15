@@ -1,4 +1,5 @@
 import { PreparedTransaction } from "@canton-network/core-ledger-proto";
+import { SDK } from "@canton-network/wallet-sdk";
 import {
   buildBoundedCapabilityBootstrap,
   APPROVED_BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_ID,
@@ -10,7 +11,6 @@ import {
   CAPABILITY_BOOTSTRAP_INPUT,
   validPreparedCapabilityBootstrap,
 } from "../../../packages/x402-canton/test/prepared-capability-bootstrap.fixtures.js";
-import { SDK } from "../src/index.js";
 import {
   CONNECTOR_CAPABILITIES,
   CONNECTOR_ID,

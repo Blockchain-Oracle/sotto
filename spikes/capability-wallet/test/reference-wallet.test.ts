@@ -20,7 +20,7 @@ import {
   CONNECTOR_ID,
   CONNECTOR_ORIGIN,
 } from "../../../packages/x402-canton/test/capability-wallet-connector.fixtures.js";
-import { SDK } from "../src/index.js";
+import { SDK } from "@canton-network/wallet-sdk";
 import {
   createReferenceWalletConnector,
   runReferenceWalletApproval,

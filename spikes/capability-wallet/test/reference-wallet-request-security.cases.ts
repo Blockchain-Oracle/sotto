@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PreparedTransaction } from "@canton-network/core-ledger-proto";
-import { SDK } from "../src/index.js";
+import { SDK } from "@canton-network/wallet-sdk";
 import { createCapabilityWalletSigningSession } from "../../../packages/x402-canton/src/index.js";
 import {
   CONNECTOR_CAPABILITIES,
