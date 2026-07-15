@@ -1,6 +1,5 @@
 import type { Metadata } from "@canton-network/core-ledger-proto";
-import type { BoundedCapabilityBootstrapRequest } from "./bounded-capability-bootstrap.js";
-import { boundedCapabilityBootstrapState } from "./bounded-capability-bootstrap-state.js";
+import type { BoundedCapabilityBootstrapPrepareRequest } from "./bounded-capability-bootstrap-prepare.js";
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
@@ -12,7 +11,7 @@ function micros(value: string): bigint {
 
 export function validatePreparedCapabilityBootstrapMetadata(
   metadata: Metadata,
-  request: BoundedCapabilityBootstrapRequest,
+  request: BoundedCapabilityBootstrapPrepareRequest,
 ): void {
   const submitter = metadata.submitterInfo;
   if (
@@ -39,9 +38,7 @@ export function validatePreparedCapabilityBootstrapMetadata(
   ) {
     throw new Error("prepared capability must not contain hidden effects");
   }
-  const validatedAt = micros(
-    boundedCapabilityBootstrapState(request).validatedAt,
-  );
+  const validatedAt = micros(request.maxRecordTime) - 300_000_000n;
   const now = BigInt(Date.now()) * 1_000n;
   const maxRecordTime = micros(request.maxRecordTime);
   if (

@@ -1,3 +1,4 @@
+import type { BoundedCapabilityBootstrapPrepareRequest } from "./bounded-capability-bootstrap-prepare.js";
 import type { BoundedCapabilityBootstrapRequest } from "./bounded-capability-bootstrap.js";
 
 export const PREPARED_CAPABILITY_BOOTSTRAP_PATH =
@@ -7,7 +8,7 @@ export const MAX_PREPARED_CAPABILITY_RESPONSE_BYTES = 3_145_728;
 export const MAX_PREPARED_CAPABILITY_TRANSACTION_BYTES = 2_097_152;
 
 export type PreparedCapabilityBootstrapTransportRequest = Readonly<{
-  body: BoundedCapabilityBootstrapRequest;
+  body: BoundedCapabilityBootstrapPrepareRequest;
   contentType: "application/json";
   maximumResponseBytes: typeof MAX_PREPARED_CAPABILITY_RESPONSE_BYTES;
   method: "POST";

@@ -4,7 +4,10 @@ import {
   type BoundedCapabilityBootstrapInput,
   type BoundedCapabilityBootstrapRequest,
 } from "./bounded-capability-bootstrap.js";
-import { boundedCapabilityBootstrapState } from "./bounded-capability-bootstrap-state.js";
+import {
+  boundedCapabilityBootstrapState,
+  validateBoundedCapabilityBootstrapNetwork,
+} from "./bounded-capability-bootstrap-state.js";
 import {
   parsePurchaseCapabilityCreatedEvent,
   SOTTO_CONTROL_PACKAGE_ID,
@@ -19,6 +22,7 @@ import {
 const SOURCE_COMMIT_PATTERN = /^[0-9a-f]{40}$/u;
 
 export type PersistedBootstrapIntentV1 = Readonly<{
+  network: `canton:${string}`;
   request: BoundedCapabilityBootstrapRequest;
   schema: "sotto-capability-bootstrap-intent-v1";
   sourceCommit: string;
@@ -33,7 +37,10 @@ function sourceCommit(value: unknown): string {
   return commit;
 }
 
-function restoredInput(value: unknown): {
+function restoredInput(
+  value: unknown,
+  network: `canton:${string}`,
+): {
   input: BoundedCapabilityBootstrapInput;
   raw: Record<string, unknown>;
 } {
@@ -44,15 +51,11 @@ function restoredInput(value: unknown): {
       "actAs",
       "commandId",
       "commands",
-      "disclosedContracts",
-      "hashingSchemeVersion",
-      "maxRecordTime",
       "packageIdSelectionPreference",
-      "prefetchContractKeys",
       "readAs",
       "synchronizerId",
       "userId",
-      "verboseHashing",
+      "workflowId",
     ],
     "persisted bootstrap request",
   );
@@ -63,12 +66,7 @@ function restoredInput(value: unknown): {
     raw.readAs.length !== 0 ||
     !Array.isArray(raw.commands) ||
     raw.commands.length !== 1 ||
-    !Array.isArray(raw.disclosedContracts) ||
-    raw.disclosedContracts.length !== 0 ||
-    !Array.isArray(raw.prefetchContractKeys) ||
-    raw.prefetchContractKeys.length !== 0 ||
-    raw.verboseHashing !== false ||
-    raw.hashingSchemeVersion !== "HASHING_SCHEME_VERSION_V2"
+    raw.workflowId !== "sotto-capability-bootstrap-v1"
   ) {
     throw new Error("persisted bootstrap request shape does not match");
   }
@@ -106,7 +104,6 @@ function restoredInput(value: unknown): {
     throw new Error("persisted bootstrap actAs does not match payer");
   }
   identifier(raw.commandId, "persisted bootstrap command ID");
-  canonicalTime(raw.maxRecordTime, "persisted bootstrap maxRecordTime");
   return {
     input: {
       agentParty: snapshot.agentParty,
@@ -115,6 +112,7 @@ function restoredInput(value: unknown): {
       expiresAt: snapshot.expiresAt,
       instrument: snapshot.instrument,
       maximumTotalDebitAtomic: snapshot.maximumTotalDebitAtomic,
+      network,
       payerParty: snapshot.payerParty,
       perCallLimitAtomic: snapshot.perCallLimitAtomic,
       remainingAllowanceAtomic: snapshot.remainingAllowanceAtomic,
@@ -135,6 +133,7 @@ export function exportBoundedCapabilityBootstrapIntent(
 ): PersistedBootstrapIntentV1 {
   const state = boundedCapabilityBootstrapState(request);
   return Object.freeze({
+    network: state.network,
     request,
     schema: "sotto-capability-bootstrap-intent-v1" as const,
     sourceCommit: sourceCommit(candidateSourceCommit),
@@ -148,7 +147,7 @@ export function restoreBoundedCapabilityBootstrapIntent(
   const intent = objectValue(value, "persisted bootstrap intent");
   exactKeys(
     intent,
-    ["request", "schema", "sourceCommit", "validatedAt"],
+    ["network", "request", "schema", "sourceCommit", "validatedAt"],
     "persisted bootstrap intent",
   );
   if (intent.schema !== "sotto-capability-bootstrap-intent-v1") {
@@ -159,7 +158,8 @@ export function restoreBoundedCapabilityBootstrapIntent(
     intent.validatedAt,
     "persisted bootstrap validatedAt",
   );
-  const restored = restoredInput(intent.request);
+  const network = validateBoundedCapabilityBootstrapNetwork(intent.network);
+  const restored = restoredInput(intent.request, network);
   const request = buildBoundedCapabilityBootstrapAt(
     restored.input,
     validatedAt,

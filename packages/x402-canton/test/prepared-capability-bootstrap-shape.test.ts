@@ -4,6 +4,7 @@ import {
   createPreparedCapabilityBootstrapObserver,
   type BoundedCapabilityBootstrapRequest,
 } from "../src/index.js";
+import { buildBoundedCapabilityBootstrapPrepareRequest } from "../src/bounded-capability-bootstrap-prepare.js";
 import {
   preparedCapabilityBootstrapResponse,
   type PreparedCapabilityBootstrapFixture,
@@ -20,6 +21,7 @@ const input = {
   expiresAt: "2026-07-15T11:00:00.000Z",
   instrument: { admin: "DSO::1220dso", id: "Amulet" },
   maximumTotalDebitAtomic: "3250000000",
+  network: "canton:devnet" as const,
   payerParty: "sotto-spike-payer::1220participant",
   perCallLimitAtomic: "2500000000",
   remainingAllowanceAtomic: "10000000000",
@@ -126,8 +128,10 @@ describe("prepared capability bootstrap shape", () => {
 
   it("builds the exact interactive prepare request envelope", () => {
     const request = buildBoundedCapabilityBootstrap(input);
+    const prepareRequest =
+      buildBoundedCapabilityBootstrapPrepareRequest(request);
 
-    expect(Object.keys(request).sort()).toEqual(
+    expect(Object.keys(prepareRequest).sort()).toEqual(
       [
         "actAs",
         "commandId",

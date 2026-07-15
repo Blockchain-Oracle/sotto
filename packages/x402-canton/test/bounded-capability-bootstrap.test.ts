@@ -8,6 +8,7 @@ import {
   restoreBoundedCapabilityBootstrapIntent,
   type BoundedCapabilityBootstrapInput,
 } from "../src/index.js";
+import { buildBoundedCapabilityBootstrapPrepareRequest } from "../src/bounded-capability-bootstrap-prepare.js";
 
 const now = Date.parse("2026-07-13T19:30:00.000Z");
 const input = {
@@ -17,6 +18,7 @@ const input = {
   expiresAt: "2026-07-13T20:30:00.000Z",
   instrument: { admin: "DSO::1220dso", id: "Amulet" },
   maximumTotalDebitAtomic: "3250000000",
+  network: "canton:devnet" as const,
   payerParty: "sotto-spike-payer::1220participant",
   perCallLimitAtomic: "2500000000",
   remainingAllowanceAtomic: "10000000000",
@@ -37,6 +39,8 @@ describe("bounded capability bootstrap", () => {
 
   it("builds one deterministic payer-only create command", () => {
     const request = buildBoundedCapabilityBootstrap(input);
+    const prepareRequest =
+      buildBoundedCapabilityBootstrapPrepareRequest(request);
 
     expect(request.actAs).toEqual([input.payerParty]);
     expect(request.readAs).toEqual([]);
@@ -44,13 +48,16 @@ describe("bounded capability bootstrap", () => {
     expect(request.packageIdSelectionPreference).toEqual([
       APPROVED_BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_ID.split(":")[0],
     ]);
-    expect(request.disclosedContracts).toEqual([]);
-    expect(request.prefetchContractKeys).toEqual([]);
-    expect(request.maxRecordTime).toBe("2026-07-13T19:35:00.000Z");
-    expect(request.hashingSchemeVersion).toBe("HASHING_SCHEME_VERSION_V2");
-    expect(request.verboseHashing).toBe(false);
+    expect(request.workflowId).toBe("sotto-capability-bootstrap-v1");
+    expect(prepareRequest.disclosedContracts).toEqual([]);
+    expect(prepareRequest.prefetchContractKeys).toEqual([]);
+    expect(prepareRequest.maxRecordTime).toBe("2026-07-13T19:35:00.000Z");
+    expect(prepareRequest.hashingSchemeVersion).toBe(
+      "HASHING_SCHEME_VERSION_V2",
+    );
+    expect(prepareRequest.verboseHashing).toBe(false);
     expect(request.commandId).toBe(
-      "sotto-capability-bootstrap-v1-e9db1381afd43d39258b1a021aefb6fbc325f4c84b264feaf476bf330a531abe",
+      "sotto-capability-bootstrap-v1-98cb6458d0b2d6278a6b98cd4b0ef46da6d0a332b0e2792a1f323b7295961a92",
     );
     expect(buildBoundedCapabilityBootstrap(input)).toEqual(request);
     expect(request.commands).toEqual([
@@ -93,6 +100,11 @@ describe("bounded capability bootstrap", () => {
       "wrong instrument",
       { instrument: { ...input.instrument, id: "Other" } },
       "instrument must be Amulet",
+    ],
+    [
+      "empty Canton network",
+      { network: "canton:" as const },
+      "bootstrap network must be a specific Canton network",
     ],
     [
       "oversized allowance",
@@ -251,6 +263,7 @@ describe("bounded capability bootstrap", () => {
     const restored = restoreBoundedCapabilityBootstrapIntent(
       JSON.parse(JSON.stringify(intent)) as unknown,
     );
+    expect(intent.network).toBe(input.network);
     vi.setSystemTime(Date.parse("2026-07-15T19:30:00.000Z"));
     expect(
       reconcileBoundedCapabilityBootstrapAcs([entry(event)], restored),
@@ -265,6 +278,12 @@ describe("bounded capability bootstrap", () => {
       restoreBoundedCapabilityBootstrapIntent({
         ...intent,
         request: { ...intent.request, synchronizerId: "other-synchronizer" },
+      }),
+    ).toThrow("does not match");
+    expect(() =>
+      restoreBoundedCapabilityBootstrapIntent({
+        ...intent,
+        network: "canton:other",
       }),
     ).toThrow("does not match");
     expect(() =>

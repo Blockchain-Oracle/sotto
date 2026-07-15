@@ -1,5 +1,5 @@
 import type { Value } from "@canton-network/core-ledger-proto";
-import type { BoundedCapabilityBootstrapRequest } from "./bounded-capability-bootstrap.js";
+import type { BoundedCapabilityBootstrapPrepareRequest } from "./bounded-capability-bootstrap-prepare.js";
 import {
   preparedBoolean,
   preparedRecord,
@@ -30,7 +30,7 @@ function micros(value: string): string {
 
 export function validatePreparedCapabilityBootstrapValue(
   value: Value | undefined,
-  request: BoundedCapabilityBootstrapRequest,
+  request: BoundedCapabilityBootstrapPrepareRequest,
 ): void {
   const expected = request.commands[0]!.CreateCommand;
   const argument = expected.createArguments;

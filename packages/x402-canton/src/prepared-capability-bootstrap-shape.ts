@@ -1,5 +1,5 @@
 import { PreparedTransaction } from "@canton-network/core-ledger-proto";
-import type { BoundedCapabilityBootstrapRequest } from "./bounded-capability-bootstrap.js";
+import type { BoundedCapabilityBootstrapPrepareRequest } from "./bounded-capability-bootstrap-prepare.js";
 import { validatePreparedCapabilityBootstrapMetadata } from "./prepared-capability-bootstrap-metadata.js";
 import { validatePreparedCapabilityBootstrapValue } from "./prepared-capability-bootstrap-values.js";
 import {
@@ -10,7 +10,7 @@ import { identifier } from "./purchase-commitment-primitives.js";
 
 export function validatePreparedCapabilityBootstrapShape(
   bytes: Uint8Array,
-  request: BoundedCapabilityBootstrapRequest,
+  request: BoundedCapabilityBootstrapPrepareRequest,
 ): void {
   let prepared: ReturnType<typeof PreparedTransaction.fromBinary>;
   try {

@@ -42,7 +42,7 @@ loop: until every mutation has a unique passing rejection assertion
 max_iterations: 4
 verify: PATH="$HOME/.local/share/mise/installs/node/24.18.0/bin:$PATH" pnpm vitest run packages/x402-canton/test/prepared-capability-bootstrap-shape.test.ts
 
-- [ ] **Step 6: Project a redacted exact wallet approval summary**
+- [x] **Step 6: Project a redacted exact wallet approval summary**
 action: Add `packages/x402-canton/src/prepared-capability-bootstrap-approval.ts` and `packages/x402-canton/test/prepared-capability-bootstrap-approval.test.ts`; produce a deeply frozen authenticated projection containing the exact payer, agent, resource hash, recipient, instrument, limits, expiry, revision, transfer factory, network/synchronizer, package ID, and prepared hash while excluding prepared bytes, raw signature material, user credentials, and private authorization data.
 loop: until approval projection and secret-seeded redaction tests pass
 max_iterations: 4

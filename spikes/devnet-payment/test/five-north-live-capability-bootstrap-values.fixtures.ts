@@ -83,6 +83,7 @@ export function exactBootstrapRequest(): BoundedCapabilityBootstrapRequest {
   return buildBoundedCapabilityBootstrap({
     ...policy,
     instrument: { admin: DSO, id: "Amulet" },
+    network: "canton:devnet",
     synchronizerId: SYNCHRONIZER,
     transferFactoryContractId: FACTORY,
     userId: USER_ID,

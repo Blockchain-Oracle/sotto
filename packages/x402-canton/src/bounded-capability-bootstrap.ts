@@ -8,6 +8,7 @@ import {
   matchesExpectedBootstrapCapability,
   registerBoundedCapabilityBootstrap,
   type ExpectedBootstrapCapability,
+  validateBoundedCapabilityBootstrapNetwork,
 } from "./bounded-capability-bootstrap-state.js";
 import {
   atomic,
@@ -20,14 +21,12 @@ import {
 } from "./purchase-commitment-primitives.js";
 
 const MINIMUM_LIFETIME_MS = 5 * 60 * 1_000;
-const PREPARE_MAXIMUM_RECORD_AGE_MS = 5 * 60 * 1_000;
 const MAXIMUM_LIFETIME_MS = 24 * 60 * 60 * 1_000;
 const MAXIMUM_AUTHORITY_AGE_MS = 60_000;
 const CLOCK_ROLLBACK_TOLERANCE_MS = 5_000;
 const MAXIMUM_ALLOWANCE_ATOMIC = 10_000_000_000n;
 const UPDATE_ID_PATTERN = /^1220[0-9a-f]{64}$/;
 const MAXIMUM_ACS_ENTRIES = 256;
-
 export type BoundedCapabilityBootstrapInput = Readonly<{
   agentParty: string;
   allowedRecipient: string;
@@ -35,6 +34,7 @@ export type BoundedCapabilityBootstrapInput = Readonly<{
   expiresAt: string;
   instrument: Readonly<{ admin: string; id: string }>;
   maximumTotalDebitAtomic: string;
+  network: `canton:${string}`;
   payerParty: string;
   perCallLimitAtomic: string;
   remainingAllowanceAtomic: string;
@@ -42,7 +42,6 @@ export type BoundedCapabilityBootstrapInput = Readonly<{
   transferFactoryContractId: string;
   userId: string;
 }>;
-
 function sottoParty(value: unknown, label: string): string {
   const party = identifier(value, `${label} Party`);
   if (!party.startsWith("sotto-") || !party.includes("::")) {
@@ -50,7 +49,6 @@ function sottoParty(value: unknown, label: string): string {
   }
   return party;
 }
-
 function boundedAmount(value: unknown, label: string): bigint {
   const amount = atomic(value, label);
   if (amount > MAXIMUM_ALLOWANCE_ATOMIC) {
@@ -103,6 +101,7 @@ export function buildBoundedCapabilityBootstrapAt(
     input.transferFactoryContractId,
     "transfer factory contract ID",
   );
+  const network = validateBoundedCapabilityBootstrapNetwork(input.network);
   const synchronizerId = identifier(
     input.synchronizerId,
     "bootstrap synchronizer ID",
@@ -134,6 +133,7 @@ export function buildBoundedCapabilityBootstrapAt(
     JSON.stringify({
       templateId: APPROVED_BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_ID,
       packageId: SOTTO_CONTROL_PACKAGE_ID,
+      network,
       synchronizerId,
       createArguments,
     }),
@@ -143,17 +143,11 @@ export function buildBoundedCapabilityBootstrapAt(
     readAs: Object.freeze([]) as readonly [],
     userId,
     commandId,
+    workflowId: "sotto-capability-bootstrap-v1" as const,
     synchronizerId,
     packageIdSelectionPreference: Object.freeze([
       SOTTO_CONTROL_PACKAGE_ID,
     ]) as readonly [string],
-    disclosedContracts: Object.freeze([]) as readonly [],
-    verboseHashing: false as const,
-    prefetchContractKeys: Object.freeze([]) as readonly [],
-    maxRecordTime: new Date(
-      nowMilliseconds + PREPARE_MAXIMUM_RECORD_AGE_MS,
-    ).toISOString(),
-    hashingSchemeVersion: "HASHING_SCHEME_VERSION_V2" as const,
     commands: Object.freeze([
       Object.freeze({
         CreateCommand: Object.freeze({
@@ -182,6 +176,7 @@ export function buildBoundedCapabilityBootstrapAt(
       templateId: APPROVED_BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_ID,
       transferFactoryContractId: transferFactoryCid,
     },
+    network,
     packageId: SOTTO_CONTROL_PACKAGE_ID,
     synchronizerId,
     validatedAt: new Date(nowMilliseconds).toISOString(),

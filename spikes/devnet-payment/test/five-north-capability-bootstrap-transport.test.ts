@@ -45,6 +45,7 @@ function request(userId = "ledger-user-6") {
     expiresAt: "2026-07-14T11:00:00.000Z",
     instrument: { admin: `DSO${suffix}`, id: "Amulet" },
     maximumTotalDebitAtomic: "3250000000",
+    network: "canton:devnet",
     payerParty: payer,
     perCallLimitAtomic: "2500000000",
     remainingAllowanceAtomic: "3250000000",

@@ -8,12 +8,26 @@ export type ExpectedBootstrapCapability = Omit<
 export type BoundedCapabilityBootstrapState = Readonly<{
   commandId: string;
   expected: ExpectedBootstrapCapability;
+  network: `canton:${string}`;
   packageId: string;
   synchronizerId: string;
   validatedAt: string;
 }>;
 
 const states = new WeakMap<object, BoundedCapabilityBootstrapState>();
+
+export function validateBoundedCapabilityBootstrapNetwork(
+  value: unknown,
+): `canton:${string}` {
+  if (
+    typeof value !== "string" ||
+    !value.startsWith("canton:") ||
+    value.length === "canton:".length
+  ) {
+    throw new Error("bootstrap network must be a specific Canton network");
+  }
+  return value as `canton:${string}`;
+}
 
 export function registerBoundedCapabilityBootstrap(
   request: object,

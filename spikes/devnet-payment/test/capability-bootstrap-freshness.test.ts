@@ -10,6 +10,7 @@ const input = {
   expiresAt: "2026-07-13T20:30:00.000Z",
   instrument: { admin: "DSO::1220dso", id: "Amulet" },
   maximumTotalDebitAtomic: "3250000000",
+  network: "canton:devnet" as const,
   payerParty: "sotto-spike-payer::1220participant",
   perCallLimitAtomic: "2500000000",
   remainingAllowanceAtomic: "10000000000",

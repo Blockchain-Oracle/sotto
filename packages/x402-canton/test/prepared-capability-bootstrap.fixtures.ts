@@ -1,5 +1,9 @@
 import { PreparedTransaction } from "@canton-network/core-ledger-proto";
-import type { BoundedCapabilityBootstrapRequest } from "../src/index.js";
+import {
+  buildBoundedCapabilityBootstrapPrepareRequest,
+  type BoundedCapabilityBootstrapPrepareRequest,
+} from "../src/bounded-capability-bootstrap-prepare.js";
+import { type BoundedCapabilityBootstrapRequest } from "../src/bounded-capability-bootstrap.js";
 import {
   fixtureIdentifier,
   fixtureRecord,
@@ -17,6 +21,7 @@ export const CAPABILITY_BOOTSTRAP_INPUT = Object.freeze({
   expiresAt: "2026-07-15T11:00:00.000Z",
   instrument: Object.freeze({ admin: "DSO::1220dso", id: "Amulet" }),
   maximumTotalDebitAtomic: "3250000000",
+  network: "canton:devnet" as const,
   payerParty: "sotto-spike-payer::1220participant",
   perCallLimitAtomic: "2500000000",
   remainingAllowanceAtomic: "10000000000",
@@ -25,7 +30,7 @@ export const CAPABILITY_BOOTSTRAP_INPUT = Object.freeze({
   userId: "ledger-user-6",
 });
 
-function createCommand(request: BoundedCapabilityBootstrapRequest) {
+function createCommand(request: BoundedCapabilityBootstrapPrepareRequest) {
   const create = request.commands[0]?.CreateCommand;
   if (create === undefined) {
     throw new Error("prepared capability fixture create is absent");
@@ -33,7 +38,7 @@ function createCommand(request: BoundedCapabilityBootstrapRequest) {
   return create;
 }
 
-function capabilityArgument(request: BoundedCapabilityBootstrapRequest) {
+function capabilityArgument(request: BoundedCapabilityBootstrapPrepareRequest) {
   const create = createCommand(request);
   const value = create.createArguments;
   return fixtureRecord(create.templateId, [
@@ -72,10 +77,12 @@ function capabilityArgument(request: BoundedCapabilityBootstrapRequest) {
 export function validPreparedCapabilityBootstrap(
   request: BoundedCapabilityBootstrapRequest,
 ) {
-  const create = createCommand(request);
+  const prepareRequest = buildBoundedCapabilityBootstrapPrepareRequest(request);
+  const create = createCommand(prepareRequest);
   const preparationTime =
     BigInt(Date.parse("2026-07-15T10:00:01.000Z")) * 1_000n;
-  const maxRecordTime = BigInt(Date.parse(request.maxRecordTime)) * 1_000n;
+  const maxRecordTime =
+    BigInt(Date.parse(prepareRequest.maxRecordTime)) * 1_000n;
   return PreparedTransaction.create({
     transaction: {
       version: "2.1",
@@ -93,7 +100,7 @@ export function validPreparedCapabilityBootstrap(
                   contractId: "00prepared-capability",
                   packageName: "sotto-control",
                   templateId: fixtureIdentifier(create.templateId),
-                  argument: capabilityArgument(request),
+                  argument: capabilityArgument(prepareRequest),
                   signatories: [create.createArguments.payer],
                   stakeholders: [
                     create.createArguments.payer,
@@ -110,9 +117,9 @@ export function validPreparedCapabilityBootstrap(
     metadata: {
       submitterInfo: {
         actAs: [create.createArguments.payer],
-        commandId: request.commandId,
+        commandId: prepareRequest.commandId,
       },
-      synchronizerId: request.synchronizerId,
+      synchronizerId: prepareRequest.synchronizerId,
       mediatorGroup: 0,
       transactionUuid: "00000000-0000-4000-8000-000000000002",
       preparationTime,

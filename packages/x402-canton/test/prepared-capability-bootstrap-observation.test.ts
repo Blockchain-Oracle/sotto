@@ -5,6 +5,7 @@ import {
   MAX_PREPARED_CAPABILITY_RESPONSE_BYTES,
   PREPARED_CAPABILITY_BOOTSTRAP_PATH,
 } from "../src/index.js";
+import { buildBoundedCapabilityBootstrapPrepareRequest } from "../src/bounded-capability-bootstrap-prepare.js";
 import { claimPreparedCapabilityBootstrapObservation } from "../src/prepared-capability-bootstrap-observation.js";
 import { preparedCapabilityBootstrapResponse } from "./prepared-capability-bootstrap.fixtures.js";
 
@@ -17,6 +18,7 @@ const input = {
   expiresAt: "2026-07-15T11:00:00.000Z",
   instrument: { admin: "DSO::1220dso", id: "Amulet" },
   maximumTotalDebitAtomic: "3250000000",
+  network: "canton:devnet" as const,
   payerParty: "sotto-spike-payer::1220participant",
   perCallLimitAtomic: "2500000000",
   remainingAllowanceAtomic: "10000000000",
@@ -43,7 +45,7 @@ describe("prepared capability bootstrap observation", () => {
       preparedTransactionHash: Buffer.alloc(32, 7).toString("base64"),
     });
     expect(read).toHaveBeenCalledWith({
-      body: request,
+      body: buildBoundedCapabilityBootstrapPrepareRequest(request),
       contentType: "application/json",
       maximumResponseBytes: MAX_PREPARED_CAPABILITY_RESPONSE_BYTES,
       method: "POST",

@@ -219,6 +219,7 @@ export function buildFiveNorthCapabilityBootstrap(
   const request = buildBoundedCapabilityBootstrap({
     ...policy.value,
     instrument: { admin: authority.expectedAdmin, id: "Amulet" },
+    network: "canton:devnet",
     synchronizerId: authority.synchronizerId,
     transferFactoryContractId: state.factoryId,
     userId: authority.userId,
