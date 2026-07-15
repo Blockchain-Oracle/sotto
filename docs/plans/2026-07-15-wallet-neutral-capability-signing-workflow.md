@@ -36,7 +36,7 @@ max_iterations: 4
 verify: PATH="$HOME/.local/share/mise/installs/node/24.18.0/bin:$PATH" pnpm vitest run packages/x402-canton/test/prepared-capability-bootstrap-shape.test.ts packages/x402-canton/test/prepared-capability-bootstrap-observation.test.ts
 gate: human
 
-- [ ] **Step 5: Add the exhaustive prepared-create mutation matrix**
+- [x] **Step 5: Add the exhaustive prepared-create mutation matrix**
 action: Add `packages/x402-canton/test/prepared-capability-bootstrap-mutations.cases.ts` and register it from the shape suite; mutate every capability argument, root identity, party list, package selection, metadata field, timestamp boundary, node seed, and unknown field independently and assert rejection before any wallet connector dependency is invoked.
 loop: until every mutation has a unique passing rejection assertion
 max_iterations: 4

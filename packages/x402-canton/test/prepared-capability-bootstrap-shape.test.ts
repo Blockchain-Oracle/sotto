@@ -8,6 +8,9 @@ import {
   preparedCapabilityBootstrapResponse,
   type PreparedCapabilityBootstrapFixture,
 } from "./prepared-capability-bootstrap.fixtures.js";
+import { registerPreparedCapabilityBootstrapMutationCases } from "./prepared-capability-bootstrap-mutations.cases.js";
+
+registerPreparedCapabilityBootstrapMutationCases();
 
 const NOW = Date.parse("2026-07-15T10:00:00.000Z");
 const input = {

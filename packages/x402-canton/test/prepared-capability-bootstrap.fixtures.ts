@@ -10,6 +10,21 @@ import {
 const HOLDING_PACKAGE_ID =
   "718a0f77e505a8de22f188bd4c87fe74101274e9d4cb1bfac7d09aec7158d35b";
 
+export const CAPABILITY_BOOTSTRAP_INPUT = Object.freeze({
+  agentParty: "sotto-policy-agent::1220participant",
+  allowedRecipient: "sotto-spike-provider::1220participant",
+  allowedResourceHash: `sha256:${"a".repeat(64)}` as const,
+  expiresAt: "2026-07-15T11:00:00.000Z",
+  instrument: Object.freeze({ admin: "DSO::1220dso", id: "Amulet" }),
+  maximumTotalDebitAtomic: "3250000000",
+  payerParty: "sotto-spike-payer::1220participant",
+  perCallLimitAtomic: "2500000000",
+  remainingAllowanceAtomic: "10000000000",
+  synchronizerId: "global-domain::1220synchronizer",
+  transferFactoryContractId: "00transferfactory",
+  userId: "ledger-user-6",
+});
+
 function createCommand(request: BoundedCapabilityBootstrapRequest) {
   const create = request.commands[0]?.CreateCommand;
   if (create === undefined) {
@@ -118,12 +133,14 @@ export function preparedCapabilityBootstrapResponse(
   request: BoundedCapabilityBootstrapRequest,
   mutateResponse?: (response: Record<string, unknown>) => void,
   mutatePrepared?: (prepared: PreparedCapabilityBootstrapFixture) => void,
+  mutatePreparedBytes?: (prepared: Uint8Array) => Uint8Array,
 ): Uint8Array {
   const fixture = validPreparedCapabilityBootstrap(request);
   mutatePrepared?.(fixture);
-  const prepared = PreparedTransaction.toBinary(fixture, {
+  const canonical = PreparedTransaction.toBinary(fixture, {
     writeUnknownFields: false,
   });
+  const prepared = mutatePreparedBytes?.(canonical) ?? canonical;
   const response: Record<string, unknown> = {
     preparedTransaction: Buffer.from(prepared).toString("base64"),
     preparedTransactionHash: Buffer.alloc(32, 7).toString("base64"),
