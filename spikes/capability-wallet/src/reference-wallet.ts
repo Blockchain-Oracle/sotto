@@ -53,8 +53,12 @@ function handoffIdentifier(sessionId: string): string {
 function snapshotCapabilities(
   value: ReferenceWalletConnectorInput["capabilities"],
 ) {
+  if (value.connectorKind !== "wallet-sdk") {
+    throw new Error("reference wallet connector kind must be wallet-sdk");
+  }
   return Object.freeze({
     ...value,
+    connectorKind: "wallet-sdk" as const,
     hashingSchemeVersions: Object.freeze([...value.hashingSchemeVersions]),
     networks: Object.freeze([...value.networks]),
     packageIds: Object.freeze([...value.packageIds]),

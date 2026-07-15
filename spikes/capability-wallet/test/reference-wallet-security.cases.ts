@@ -29,6 +29,19 @@ export function registerReferenceWalletSecurityCases(): void {
   });
 
   describe("reference wallet independent verification", () => {
+    it("rejects a caller-supplied non-wallet connector classification", () => {
+      expect(() =>
+        createReferenceWalletConnector({
+          capabilities: {
+            ...CONNECTOR_CAPABILITIES,
+            connectorKind: "openrpc",
+          },
+          exchange: async () => undefined,
+          storage: {} as never,
+        }),
+      ).toThrow(/connector kind/iu);
+    });
+
     it("cancels during presentation before key access", async () => {
       const prepared = await walletSdkVerifiedCapabilityBootstrap();
       const parent = await realpath(
