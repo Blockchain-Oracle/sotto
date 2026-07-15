@@ -14,8 +14,19 @@ import {
   SIGNED_BY,
   verifiedCapabilityBootstrap,
 } from "./capability-wallet-connector.fixtures.js";
+import { registerCapabilityWalletConnectorContract } from "./capability-wallet-connector.contract.js";
+import { createRecordingWalletContractScenario } from "./capability-wallet-connector-contract.fixture.js";
 
 const NOW = Date.parse("2026-07-15T10:00:00.000Z");
+
+registerCapabilityWalletConnectorContract({
+  connectorId: CONNECTOR_ID,
+  connectorKind: "wallet-sdk",
+  connectorOrigin: CONNECTOR_ORIGIN,
+  createPrepared: verifiedCapabilityBootstrap,
+  createScenario: createRecordingWalletContractScenario,
+  label: "recording wallet connector",
+});
 
 function sessionInput(
   prepared: Awaited<ReturnType<typeof verifiedCapabilityBootstrap>>,

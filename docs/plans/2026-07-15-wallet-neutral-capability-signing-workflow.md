@@ -104,7 +104,7 @@ loop: until signature success, mutation, size, algorithm, fingerprint, and crypt
 max_iterations: 4
 verify: PATH="$HOME/.local/share/mise/installs/node/24.18.0/bin:$PATH" pnpm vitest run packages/x402-canton/test/capability-wallet-signature.test.ts packages/x402-canton/test/capability-wallet-connector.test.ts
 
-- [ ] **Step 15: Create the reusable connector conformance suite**
+- [x] **Step 15: Create the reusable connector conformance suite**
 action: Add `packages/x402-canton/test/capability-wallet-connector.contract.ts`; export a test registrar that every connector adapter must run for discovery, exact scope, approval, user rejection, abort, deadline, mutation, origin binding, replay, malformed response, and zero-signing behavior.
 loop: until a recording connector passes every conformance case
 max_iterations: 4
