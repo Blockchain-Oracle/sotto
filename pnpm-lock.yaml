@@ -55,6 +55,9 @@ importers:
 
   spikes/capability-wallet:
     dependencies:
+      '@canton-network/core-ledger-proto':
+        specifier: 1.7.0
+        version: 1.7.0
       '@canton-network/wallet-sdk':
         specifier: 1.4.0
         version: 1.4.0
