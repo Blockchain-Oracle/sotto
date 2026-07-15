@@ -4,8 +4,11 @@ import {
   buildBoundedCapabilityBootstrap,
   createPreparedCapabilityBootstrapObserver,
   recomputeWalletPreparedHashPrecheck,
-  type PreparedCapabilityBootstrapObservation,
 } from "../src/index.js";
+import {
+  claimHashVerifiedPreparedCapabilityBootstrap,
+  verifyPreparedCapabilityBootstrapHash,
+} from "../src/prepared-capability-bootstrap-hash.js";
 import {
   projectPreparedCapabilityBootstrapApproval,
   type PreparedCapabilityBootstrapApproval,
@@ -16,28 +19,6 @@ import {
 } from "./prepared-capability-bootstrap.fixtures.js";
 
 const NOW = Date.parse("2026-07-15T10:00:00.000Z");
-
-type OfficialHashDependencies = Readonly<{
-  recomputeOfficialHash?: (
-    preparedTransaction: Uint8Array,
-  ) => Promise<Uint8Array>;
-}>;
-
-type HashVerifiedCapabilityBootstrap = Readonly<{
-  observationId: `sha256:${string}`;
-  preparedTransactionHash: string;
-  verifiedAt: string;
-}>;
-
-type VerifyCapabilityHash = (
-  observation: PreparedCapabilityBootstrapObservation,
-  dependencies: OfficialHashDependencies,
-) => Promise<HashVerifiedCapabilityBootstrap>;
-
-const verifyPreparedCapabilityBootstrapHash: VerifyCapabilityHash =
-  async () => {
-    throw new Error("prepared capability hash boundary is not implemented");
-  };
 
 function response(
   preparedTransaction: Uint8Array,
@@ -82,9 +63,10 @@ describe("prepared capability V2 hash gate", () => {
 
   it("requires participant, Wallet SDK precheck, and official digests", async () => {
     const { digest, observation, transaction } = await preparedObservation();
-    const official = vi.fn(async (_bytes: Uint8Array) =>
-      new Uint8Array(digest),
-    );
+    const official = vi.fn(async (bytes: Uint8Array) => {
+      void bytes;
+      return new Uint8Array(digest);
+    });
 
     expect(() => projectApproval(observation)).toThrow(/hash-verified/iu);
     const verified = await verifyPreparedCapabilityBootstrapHash(observation, {
@@ -102,6 +84,37 @@ describe("prepared capability V2 hash gate", () => {
     expect(projectApproval(verified)).toMatchObject({
       preparedTransactionHash: `sha256:${Buffer.from(digest).toString("hex")}`,
     });
+  });
+
+  it("authenticates one claim and protects its internal bytes", async () => {
+    const { digest, observation, transaction } = await preparedObservation();
+    const verified = await verifyPreparedCapabilityBootstrapHash(observation, {
+      recomputeOfficialHash: async () => digest,
+    });
+
+    expect(() =>
+      claimHashVerifiedPreparedCapabilityBootstrap({ ...verified }),
+    ).toThrow(/not authenticated/iu);
+    const claimed = claimHashVerifiedPreparedCapabilityBootstrap(verified);
+    expect(claimed.preparedTransaction).toEqual(transaction);
+    claimed.preparedTransaction[0] =
+      (claimed.preparedTransaction.at(0) ?? 0) ^ 0xff;
+    expect(() =>
+      claimHashVerifiedPreparedCapabilityBootstrap(verified),
+    ).toThrow(/already claimed/iu);
+  });
+
+  it("isolates retained bytes from the asynchronous official oracle", async () => {
+    const { digest, observation, transaction } = await preparedObservation();
+    const verified = await verifyPreparedCapabilityBootstrapHash(observation, {
+      recomputeOfficialHash: async (candidate) => {
+        candidate[0] = (candidate.at(0) ?? 0) ^ 0xff;
+        return digest;
+      },
+    });
+
+    const claimed = claimHashVerifiedPreparedCapabilityBootstrap(verified);
+    expect(claimed.preparedTransaction).toEqual(transaction);
   });
 
   it.each([

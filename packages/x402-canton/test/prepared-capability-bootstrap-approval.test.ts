@@ -1,12 +1,16 @@
+import { PreparedTransaction } from "@canton-network/core-ledger-proto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   buildBoundedCapabilityBootstrap,
   createPreparedCapabilityBootstrapObserver,
+  recomputeWalletPreparedHashPrecheck,
 } from "../src/index.js";
 import { projectPreparedCapabilityBootstrapApproval } from "../src/prepared-capability-bootstrap-approval.js";
+import { verifyPreparedCapabilityBootstrapHash } from "../src/prepared-capability-bootstrap-hash.js";
 import {
   CAPABILITY_BOOTSTRAP_INPUT,
   preparedCapabilityBootstrapResponse,
+  validPreparedCapabilityBootstrap,
 } from "./prepared-capability-bootstrap.fixtures.js";
 
 const NOW = Date.parse("2026-07-15T10:00:00.000Z");
@@ -16,13 +20,24 @@ async function approvalFor(userId: string = CAPABILITY_BOOTSTRAP_INPUT.userId) {
     ...CAPABILITY_BOOTSTRAP_INPUT,
     userId,
   });
+  const prepared = PreparedTransaction.toBinary(
+    validPreparedCapabilityBootstrap(request),
+    { writeUnknownFields: false },
+  );
+  const digest = await recomputeWalletPreparedHashPrecheck(prepared);
   const observe = createPreparedCapabilityBootstrapObserver(async () =>
-    preparedCapabilityBootstrapResponse(request),
+    preparedCapabilityBootstrapResponse(request, (response) => {
+      response.preparedTransactionHash = Buffer.from(digest).toString("base64");
+    }),
   );
   const observation = await observe(request);
+  const verified = await verifyPreparedCapabilityBootstrapHash(observation, {
+    recomputeOfficialHash: async () => digest,
+  });
   return {
-    approval: projectPreparedCapabilityBootstrapApproval(observation),
-    observation,
+    approval: projectPreparedCapabilityBootstrapApproval(verified),
+    digest,
+    verified,
   };
 }
 
@@ -31,7 +46,7 @@ describe("prepared capability wallet approval", () => {
   afterEach(() => vi.useRealTimers());
 
   it("projects the exact deeply frozen approval", async () => {
-    const { approval } = await approvalFor();
+    const { approval, digest } = await approvalFor();
 
     expect(approval).toEqual({
       action: "create-purchase-capability",
@@ -49,7 +64,7 @@ describe("prepared capability wallet approval", () => {
       packageId:
         "4d614496ec9b30b22545fd350ecb9ec999164cfb0b5953f46dbbf937f8918f57",
       payerParty: CAPABILITY_BOOTSTRAP_INPUT.payerParty,
-      preparedTransactionHash: `sha256:${"07".repeat(32)}`,
+      preparedTransactionHash: `sha256:${Buffer.from(digest).toString("hex")}`,
       recipientParty: CAPABILITY_BOOTSTRAP_INPUT.allowedRecipient,
       resourceHash: CAPABILITY_BOOTSTRAP_INPUT.allowedResourceHash,
       revision: "0",
@@ -104,11 +119,11 @@ describe("prepared capability wallet approval", () => {
     );
   });
 
-  it("rejects a forged observation", async () => {
-    const { observation } = await approvalFor();
+  it("rejects a forged hash-verified result", async () => {
+    const { verified } = await approvalFor();
 
     expect(() =>
-      projectPreparedCapabilityBootstrapApproval({ ...observation }),
-    ).toThrow(/prepared capability.*not authenticated/iu);
+      projectPreparedCapabilityBootstrapApproval({ ...verified }),
+    ).toThrow(/hash-verified.*not authenticated/iu);
   });
 });

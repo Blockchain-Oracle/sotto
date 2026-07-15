@@ -1,6 +1,8 @@
 import { boundedCapabilityBootstrapState } from "./bounded-capability-bootstrap-state.js";
-import { readPreparedCapabilityBootstrapObservation } from "./prepared-capability-bootstrap-observation.js";
-import type { PreparedCapabilityBootstrapObservation } from "./prepared-capability-bootstrap-types.js";
+import {
+  readHashVerifiedPreparedCapabilityBootstrap,
+  type HashVerifiedPreparedCapabilityBootstrap,
+} from "./prepared-capability-bootstrap-hash.js";
 
 export const PREPARED_CAPABILITY_APPROVAL_VERSION =
   "sotto-capability-approval-v1" as const;
@@ -29,9 +31,9 @@ export type PreparedCapabilityBootstrapApproval = Readonly<{
 }>;
 
 export function projectPreparedCapabilityBootstrapApproval(
-  observation: PreparedCapabilityBootstrapObservation,
+  verified: HashVerifiedPreparedCapabilityBootstrap,
 ): PreparedCapabilityBootstrapApproval {
-  const observed = readPreparedCapabilityBootstrapObservation(observation);
+  const observed = readHashVerifiedPreparedCapabilityBootstrap(verified);
   const state = boundedCapabilityBootstrapState(observed.request);
   const expected = state.expected;
   return Object.freeze({

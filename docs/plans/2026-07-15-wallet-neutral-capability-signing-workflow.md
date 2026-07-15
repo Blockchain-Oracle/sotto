@@ -55,7 +55,7 @@ loop: false
 max_iterations: 1
 verify: bash -lc 'set +e; output=$(PATH="$HOME/.local/share/mise/installs/node/24.18.0/bin:$PATH" pnpm vitest run packages/x402-canton/test/prepared-capability-bootstrap-hash.test.ts 2>&1); status=$?; test "$status" -ne 0 && grep -q "prepared capability.*hash\|official.*recomputation" <<<"$output"'
 
-- [ ] **Step 8: Implement authenticated hash verification**
+- [x] **Step 8: Implement authenticated hash verification**
 action: Add `packages/x402-canton/src/prepared-capability-bootstrap-hash.ts`; copy prepared bytes before each asynchronous dependency, compare all 32-byte digests in constant time, recheck freshness after each await, authenticate the hash-verified result with process-local provenance, and make its claim one-use.
 loop: until the hash and prior verifier suites pass
 max_iterations: 4
