@@ -9,7 +9,7 @@ import {
 type Phase = "approval" | "discovery";
 
 async function reach(probe: CapabilityWalletContractProbe, phase: Phase) {
-  for (let attempts = 0; attempts < 4; attempts += 1) {
+  for (let attempts = 0; attempts < 12; attempts += 1) {
     if (
       phase === "approval" ? probe.approvalStarted() : probe.discoveryStarted()
     ) {
@@ -38,10 +38,12 @@ export function registerCapabilityWalletConnectorTimingCases(
           controller.signal,
         ),
       );
-      const cancelled = expect(signing).rejects.toThrow(/cancelled/iu);
+      const cancelled = signing.catch((error: unknown) => error);
       await reach(scenario.probe, phase);
       controller.abort();
-      await cancelled;
+      await expect(cancelled).resolves.toEqual(
+        new Error("capability wallet signing cancelled"),
+      );
 
       const aborted =
         phase === "approval"
@@ -60,10 +62,12 @@ export function registerCapabilityWalletConnectorTimingCases(
       const signing = createCapabilityWalletSigningSession(
         sessionInput(harness, scenario.connector, prepared, 10),
       );
-      const timedOut = expect(signing).rejects.toThrow(/timed out/iu);
+      const timedOut = signing.catch((error: unknown) => error);
       await reach(scenario.probe, phase);
       await vi.advanceTimersByTimeAsync(11);
-      await timedOut;
+      await expect(timedOut).resolves.toEqual(
+        new Error("capability wallet approval timed out"),
+      );
 
       const aborted =
         phase === "approval"

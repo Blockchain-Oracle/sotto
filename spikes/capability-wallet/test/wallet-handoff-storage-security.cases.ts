@@ -143,6 +143,30 @@ export function registerWalletHandoffStorageSecurityCases(
       ).resolves.toMatchObject({ id: "io-failure" });
     });
 
+    it("publishes exactly one durable request claim", async () => {
+      const fixture = await walletStorageFixture();
+      registerCleanup(fixture.cleanup);
+      await fixture.storage.create(artifact("request"));
+
+      const results = await Promise.allSettled([
+        fixture.storage.claim("handoff-1", "request"),
+        fixture.storage.claim("handoff-1", "request"),
+      ]);
+
+      expect(results.map(({ status }) => status).sort()).toEqual([
+        "fulfilled",
+        "rejected",
+      ]);
+      await expect(
+        fixture.storage.read("handoff-1", "request"),
+      ).resolves.toMatchObject({ id: "handoff-1" });
+      expect(await readdir(fixture.rootDirectory)).toEqual([
+        ".claimed-handoff-1.request",
+        ".used-handoff-1.request",
+        "handoff-1.request.json",
+      ]);
+    });
+
     it("erases an expired artifact and permanently prevents ID reuse", async () => {
       const fixture = await walletStorageFixture();
       registerCleanup(fixture.cleanup);

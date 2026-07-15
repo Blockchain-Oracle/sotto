@@ -57,15 +57,14 @@ describe("OpenRPC capability wallet", () => {
       provider,
     });
 
-    await expect(
-      createCapabilityWalletSigningSession({
-        connector,
-        connectorId: CONNECTOR_ID,
-        connectorOrigin: CONNECTOR_ORIGIN,
-        prepared: await verifiedCapabilityBootstrap(),
-        timeoutMilliseconds: 1_000,
-      }),
-    ).resolves.toMatchObject({
+    const result = await createCapabilityWalletSigningSession({
+      connector,
+      connectorId: CONNECTOR_ID,
+      connectorOrigin: CONNECTOR_ORIGIN,
+      prepared: await verifiedCapabilityBootstrap(),
+      timeoutMilliseconds: 1_000,
+    });
+    expect(result).toMatchObject({
       connectorKind: "openrpc",
       outcome: "approved",
       origin: CONNECTOR_ORIGIN,
@@ -118,6 +117,10 @@ describe("OpenRPC capability wallet", () => {
     expect(requests[1]!.params).not.toHaveProperty("actAs");
     expect(requests[1]!.params).not.toHaveProperty("userId");
     expect(requests[1]!.params).not.toHaveProperty("privateKey");
+    const rawPrepared = (
+      requests[1]!.params.request as Readonly<Record<string, unknown>>
+    ).preparedTransaction;
+    expect(JSON.stringify(result)).not.toContain(rawPrepared);
   });
 
   it("supports an embedded provider bound to its page origin", async () => {

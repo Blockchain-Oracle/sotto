@@ -97,7 +97,7 @@ export function registerCapabilityWalletConnectorContract(
         createCapabilityWalletSigningSession(
           sessionInput(harness, observed.connector, prepared),
         ),
-      ).rejects.toThrow(/identity/iu);
+      ).rejects.toThrow(/identity|discovery failed/iu);
       expect(observed.requestApproval).not.toHaveBeenCalled();
       expect(scenario.probe.signCalls()).toBe(0);
     });

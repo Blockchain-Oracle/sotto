@@ -24,6 +24,10 @@ export type OwnerOnlyWalletArtifactRecord<
 
 export type OwnerOnlyWalletStorage<Kind extends OwnerOnlyWalletArtifactKind> =
   Readonly<{
+    claim: (
+      id: string,
+      kind: Kind,
+    ) => Promise<OwnerOnlyWalletArtifactRecord<Kind>>;
     cleanupExpired: () => Promise<string[]>;
     create: (input: OwnerOnlyWalletArtifactInput<Kind>) => Promise<void>;
     read: (

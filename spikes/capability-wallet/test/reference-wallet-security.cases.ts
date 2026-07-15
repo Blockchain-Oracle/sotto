@@ -153,7 +153,7 @@ export function registerReferenceWalletSecurityCases(): void {
           prepared,
           timeoutMilliseconds: 1_000,
         }),
-      ).rejects.toThrow(/wallet.*policy/iu);
+      ).rejects.toThrow("capability wallet approval failed");
       expect(presentSummary).not.toHaveBeenCalled();
     });
   });

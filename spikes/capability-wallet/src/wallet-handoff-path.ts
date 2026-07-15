@@ -71,20 +71,25 @@ export function walletHandoffReservationName(
   return `.used-${id}.${kind}`;
 }
 
-export async function reserveWalletHandoffArtifact(
-  root: string,
+function walletHandoffClaimName(
   id: string,
   kind: OwnerOnlyWalletArtifactKind,
+): string {
+  return `.claimed-${id}.${kind}`;
+}
+
+async function createWalletHandoffMarker(
+  root: string,
+  name: string,
+  duplicateMessage: string,
 ): Promise<void> {
-  const path = join(root, walletHandoffReservationName(id, kind));
+  const path = join(root, name);
   let handle;
   try {
     handle = await open(path, RESERVE_FLAGS, 0o600);
   } catch (error) {
     if (errorCode(error) === "EEXIST") {
-      throw new Error("wallet handoff artifact already exists or was used", {
-        cause: error,
-      });
+      throw new Error(duplicateMessage, { cause: error });
     }
     throw error;
   }
@@ -96,4 +101,28 @@ export async function reserveWalletHandoffArtifact(
     await handle.close();
   }
   await syncWalletHandoffDirectory(root);
+}
+
+export async function reserveWalletHandoffArtifact(
+  root: string,
+  id: string,
+  kind: OwnerOnlyWalletArtifactKind,
+): Promise<void> {
+  await createWalletHandoffMarker(
+    root,
+    walletHandoffReservationName(id, kind),
+    "wallet handoff artifact already exists or was used",
+  );
+}
+
+export async function claimWalletHandoffArtifact(
+  root: string,
+  id: string,
+  kind: OwnerOnlyWalletArtifactKind,
+): Promise<void> {
+  await createWalletHandoffMarker(
+    root,
+    walletHandoffClaimName(id, kind),
+    "wallet handoff artifact is already claimed",
+  );
 }

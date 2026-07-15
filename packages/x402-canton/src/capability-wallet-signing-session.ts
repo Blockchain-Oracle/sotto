@@ -54,6 +54,17 @@ function requireActiveSession(signal: AbortSignal, expiresAt: number): void {
   }
 }
 
+async function callConnector<T>(
+  phase: "approval" | "discovery",
+  call: () => Promise<T>,
+): Promise<T> {
+  try {
+    return await call();
+  } catch {
+    throw new Error(`capability wallet ${phase} failed`);
+  }
+}
+
 export async function createCapabilityWalletSigningSession(
   input: CapabilityWalletSigningSessionInput,
 ): Promise<CapabilityWalletSigningResult> {
@@ -89,7 +100,9 @@ export async function createCapabilityWalletSigningSession(
         network: approval.network,
         payerParty: approval.payerParty,
       };
-      const discovery = await discover(Object.freeze({ signal }));
+      const discovery = await callConnector("discovery", () =>
+        discover(Object.freeze({ signal })),
+      );
       requireActiveSession(signal, expiresAtMilliseconds);
       const compatibility = parseCapabilityWalletCapabilities(
         discovery,
@@ -113,9 +126,8 @@ export async function createCapabilityWalletSigningSession(
         sessionId,
         version: CAPABILITY_WALLET_REQUEST_VERSION,
       });
-      const responseValue = await requestApproval(
-        request,
-        Object.freeze({ signal }),
+      const responseValue = await callConnector("approval", () =>
+        requestApproval(request, Object.freeze({ signal })),
       );
       requireActiveSession(signal, expiresAtMilliseconds);
       assertBoundedCapabilityBootstrapFresh(preparedState.request);

@@ -45,9 +45,11 @@ export function registerReferenceWalletRequestSecurityCases(): void {
     const rootDirectory = join(parent, ".capability-wallet");
     const storage = await createWalletHandoffStorage({ rootDirectory });
     const presentSummary = vi.fn();
+    let handoffId = "";
     const connector = createReferenceWalletConnector({
       capabilities: CONNECTOR_CAPABILITIES,
       exchange: async (id) => {
+        handoffId = id;
         const path = join(rootDirectory, `${id}.request.json`);
         const record = decodeCanonicalWalletHandoffJson(
           await readFile(path),
@@ -66,6 +68,7 @@ export function registerReferenceWalletRequestSecurityCases(): void {
     });
     return {
       presentSummary,
+      responseArtifact: () => storage.read(handoffId, "response"),
       signing: createCapabilityWalletSigningSession({
         connector,
         connectorId: CONNECTOR_ID,
@@ -83,7 +86,7 @@ export function registerReferenceWalletRequestSecurityCases(): void {
         approval.recipientParty = "sotto-attacker::1220participant";
       });
       await expect(scenario.signing).rejects.toThrow(
-        /prepared.*allowedRecipient/iu,
+        "capability wallet approval failed",
       );
       expect(scenario.presentSummary).not.toHaveBeenCalled();
     });
@@ -92,7 +95,9 @@ export function registerReferenceWalletRequestSecurityCases(): void {
       const scenario = await attempt((request) => {
         request.preparedTransactionHash = `sha256:${"0".repeat(64)}`;
       });
-      await expect(scenario.signing).rejects.toThrow(/prepared hash.*match/iu);
+      await expect(scenario.signing).rejects.toThrow(
+        "capability wallet approval failed",
+      );
       expect(scenario.presentSummary).not.toHaveBeenCalled();
     });
 
@@ -101,9 +106,60 @@ export function registerReferenceWalletRequestSecurityCases(): void {
         const approval = request.approval as Record<string, unknown>;
         approval.action = "transfer-everything";
       });
-      await expect(scenario.signing).rejects.toThrow(/approval action/iu);
+      await expect(scenario.signing).rejects.toThrow(
+        "capability wallet approval failed",
+      );
       expect(scenario.presentSummary).not.toHaveBeenCalled();
     });
+
+    it.each([
+      [
+        "connector origin",
+        (request: Record<string, unknown>) => {
+          request.connectorOrigin = "https://attacker.example";
+        },
+      ],
+      [
+        "payer",
+        (request: Record<string, unknown>) => {
+          (request.approval as Record<string, unknown>).payerParty =
+            "attacker::1220payer";
+        },
+      ],
+      [
+        "package",
+        (request: Record<string, unknown>) => {
+          (request.approval as Record<string, unknown>).packageId = "f".repeat(
+            64,
+          );
+        },
+      ],
+      [
+        "network",
+        (request: Record<string, unknown>) => {
+          (request.approval as Record<string, unknown>).network =
+            "canton:other";
+        },
+      ],
+      [
+        "synchronizer",
+        (request: Record<string, unknown>) => {
+          (request.approval as Record<string, unknown>).synchronizerId =
+            "other::1220synchronizer";
+        },
+      ],
+    ] as const)(
+      "rejects a changed %s before presentation",
+      async (_name, mutate) => {
+        const scenario = await attempt(mutate);
+
+        await expect(scenario.signing).rejects.toThrow(
+          "capability wallet approval failed",
+        );
+        expect(scenario.presentSummary).not.toHaveBeenCalled();
+        await expect(scenario.responseArtifact()).rejects.toThrow(/ENOENT/iu);
+      },
+    );
 
     it("rejects an excessive prepared record-time window", async () => {
       const scenario = await attempt(async (request) => {
@@ -129,7 +185,9 @@ export function registerReferenceWalletRequestSecurityCases(): void {
         (request.approval as Record<string, unknown>).preparedTransactionHash =
           hash;
       });
-      await expect(scenario.signing).rejects.toThrow(/record-time|metadata/iu);
+      await expect(scenario.signing).rejects.toThrow(
+        "capability wallet approval failed",
+      );
       expect(scenario.presentSummary).not.toHaveBeenCalled();
     });
   });

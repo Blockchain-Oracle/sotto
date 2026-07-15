@@ -36,11 +36,13 @@ import { registerReferenceWalletKeyCases } from "./reference-wallet-key.cases.js
 import { registerReferenceWalletCliCases } from "./reference-wallet-cli.cases.js";
 import { registerCapabilityWalletConnectorContract } from "../../../packages/x402-canton/test/capability-wallet-connector.contract.js";
 import { referenceWalletConnectorHarness } from "./reference-wallet-conformance.js";
+import { registerReferenceWalletReplayCases } from "./reference-wallet-replay.cases.js";
 
 registerReferenceWalletSecurityCases();
 registerReferenceWalletRequestSecurityCases();
 registerReferenceWalletKeyCases();
 registerReferenceWalletCliCases();
+registerReferenceWalletReplayCases();
 registerCapabilityWalletConnectorContract(referenceWalletConnectorHarness);
 
 const cleanups: Array<() => Promise<void>> = [];
@@ -169,6 +171,13 @@ describe("Wallet SDK reference connector", () => {
       `${handoffId}.request.json`,
       `${handoffId}.response.json`,
     ]);
+    const requestArtifact = JSON.parse(
+      await readFile(join(handoffRoot, `${handoffId}.request.json`), "utf8"),
+    ) as { payload: { request: { preparedTransaction: string } } };
+    const rawPrepared = requestArtifact.payload.request.preparedTransaction;
+    expect(approvalSummary).not.toContain(rawPrepared);
+    expect(JSON.stringify(session)).not.toContain(rawPrepared);
+    expect(JSON.stringify(verified)).not.toContain(rawPrepared);
     for (const name of handoffFiles) {
       expect(await readFile(join(handoffRoot, name), "utf8")).not.toContain(
         keys.privateKey,

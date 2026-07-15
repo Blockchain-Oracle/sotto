@@ -56,7 +56,7 @@ export function callOpenRpcSdkProvider<Request extends OpenRpcSdkRequest>(
       onAbort();
       return;
     }
-    let result: Promise<unknown>;
+    let result: unknown;
     try {
       result = provider.request(request);
     } catch (error) {
@@ -69,7 +69,7 @@ export function callOpenRpcSdkProvider<Request extends OpenRpcSdkRequest>(
       });
       return;
     }
-    void result.then(
+    void Promise.resolve(result).then(
       (value) => finish(() => resolve(value)),
       (error: unknown) =>
         finish(() => {

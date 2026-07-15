@@ -101,7 +101,7 @@ export async function runReferenceWalletApproval(
     rootDirectory: input.rootDirectory,
   });
   requireActive(signal);
-  const artifact = await storage.read(input.handoffId, "request");
+  const artifact = await storage.claim(input.handoffId, "request");
   requireActive(signal);
   const request = parseReferenceWalletRequest(artifact.payload);
   requireWalletRequestActive(signal, request.expiresAt);

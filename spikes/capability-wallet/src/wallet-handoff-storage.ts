@@ -16,6 +16,7 @@ import {
   requireWalletHandoffRoot,
   syncWalletHandoffDirectory,
 } from "./wallet-handoff-path.js";
+import { claimWalletHandoffRecord } from "./wallet-handoff-claim.js";
 import {
   createOwnerOnlyWalletArtifactRecord,
   parseOwnerOnlyWalletArtifactRecord,
@@ -136,6 +137,9 @@ export async function createOwnerOnlyWalletStorage<
     return record;
   };
 
+  const claim = (id: string, kind: Kind) =>
+    claimWalletHandoffRecord(root, id, kind, read);
+
   const cleanupExpired = async () => {
     await requireWalletHandoffRoot(root);
     const deleted: string[] = [];
@@ -180,7 +184,7 @@ export async function createOwnerOnlyWalletStorage<
     return deleted;
   };
 
-  return Object.freeze({ cleanupExpired, create, read });
+  return Object.freeze({ claim, cleanupExpired, create, read });
 }
 
 export function createWalletHandoffStorage(input: {

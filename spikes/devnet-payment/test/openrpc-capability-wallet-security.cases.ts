@@ -6,8 +6,10 @@ import {
 import { verifiedCapabilityBootstrap } from "../../../packages/x402-canton/test/capability-wallet-connector.fixtures.js";
 import {
   createOpenRpcCapabilityWallet,
+  OPENRPC_CAPABILITIES_METHOD,
   type OpenRpcCapabilityWalletRequest,
 } from "../src/openrpc-capability-wallet.js";
+import { callOpenRpcSdkProvider } from "../src/openrpc-capability-wallet-provider.js";
 import {
   OPENRPC_CAPABILITIES,
   OPENRPC_CONNECTOR_ID,
@@ -86,7 +88,7 @@ export function registerOpenRpcSecurityCases(): void {
       }));
 
       await expect(signWithOpenRpcProvider(provider)).rejects.toThrow(
-        /capability identity/iu,
+        "capability wallet discovery failed",
       );
       expect(provider).toHaveBeenCalledOnce();
     });
@@ -97,8 +99,40 @@ export function registerOpenRpcSecurityCases(): void {
       });
 
       await expect(signWithOpenRpcProvider(provider)).rejects.toThrow(
-        "OpenRPC wallet provider returned error code -32000",
+        "capability wallet discovery failed",
       );
+      await expect(
+        callOpenRpcSdkProvider(
+          { request: provider },
+          { method: OPENRPC_CAPABILITIES_METHOD, params: {} },
+          new AbortController().signal,
+        ),
+      ).rejects.toThrow("OpenRPC wallet provider returned error code -32000");
+    });
+
+    it("redacts a malformed provider thenable", async () => {
+      const secret = "-----BEGIN PRIVATE KEY-----provider-secret";
+      const result = Object.create(null) as Record<string, unknown>;
+      Object.defineProperty(result, "then", {
+        get: () => {
+          throw new Error(secret);
+        },
+      });
+      let failure: unknown;
+      try {
+        await callOpenRpcSdkProvider(
+          { request: () => result as never },
+          { method: OPENRPC_CAPABILITIES_METHOD, params: {} },
+          new AbortController().signal,
+        );
+      } catch (error) {
+        failure = error;
+      }
+
+      expect(failure).toEqual(
+        new Error("OpenRPC wallet provider request failed"),
+      );
+      expect(String(failure)).not.toContain(secret);
     });
   });
 }

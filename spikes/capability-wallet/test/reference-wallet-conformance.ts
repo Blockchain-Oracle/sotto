@@ -25,6 +25,11 @@ function memoryStorage() {
   const records = new Map<string, WalletHandoffRecord>();
   const key = (id: string, kind: string) => `${id}:${kind}`;
   const storage: WalletHandoffStorage = {
+    claim: async (id, kind) => {
+      const record = records.get(key(id, kind));
+      if (record === undefined) throw new Error("test handoff is absent");
+      return record as Awaited<ReturnType<WalletHandoffStorage["claim"]>>;
+    },
     cleanupExpired: async () => [],
     create: async (input) => {
       records.set(key(input.id, input.kind), {
