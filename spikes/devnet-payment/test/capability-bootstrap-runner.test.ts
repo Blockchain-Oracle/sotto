@@ -46,14 +46,9 @@ function fixture() {
     },
     contractId,
     request,
-    response: {
-      transaction: {
-        commandId: request.commandId,
-        events: [{ CreatedEvent: event }],
-        offset: 42,
-        synchronizerId: input.synchronizerId,
-        updateId: `1220${"b".repeat(64)}`,
-      },
+    completionResponse: {
+      completionOffset: 42,
+      updateId: `1220${"b".repeat(64)}`,
     },
   } as const;
 }
@@ -71,7 +66,7 @@ describe("runBoundedCapabilityBootstrap", () => {
       .fn()
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([setup.active]);
-    const submit = vi.fn(async () => setup.response);
+    const submit = vi.fn(async () => setup.completionResponse);
     const durable = persistence();
 
     await expect(
@@ -84,7 +79,7 @@ describe("runBoundedCapabilityBootstrap", () => {
     ).resolves.toMatchObject({
       contractId: setup.contractId,
       outcome: "submitted",
-      updateId: setup.response.transaction.updateId,
+      updateId: setup.completionResponse.updateId,
     });
     expect(submit).toHaveBeenCalledTimes(1);
     expect(readActiveCapabilities).toHaveBeenCalledTimes(2);
@@ -205,7 +200,7 @@ describe("runBoundedCapabilityBootstrap", () => {
     ).resolves.toMatchObject({
       contractId: setup.contractId,
       outcome: "reconciled-after-ambiguous",
-      updateId: setup.response.transaction.updateId,
+      updateId: setup.completionResponse.updateId,
     });
     expect(submit).toHaveBeenCalledTimes(1);
   });

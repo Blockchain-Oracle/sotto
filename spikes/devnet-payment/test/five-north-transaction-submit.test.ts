@@ -1,8 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import {
-  AmbiguousTransactionSubmissionError,
-  createFiveNorthTransactionSubmitter,
-} from "../src/five-north-transaction-submit.js";
+import { createFiveNorthTransactionSubmitter } from "../src/five-north-transaction-submit.js";
 
 const ledgerUrl = "https://ledger.example.test";
 
@@ -43,9 +40,9 @@ describe("Five North transaction submitter", () => {
     );
     const setup = submitter(fetcher);
 
-    await expect(setup.submit({ commands: [] })).rejects.toBeInstanceOf(
-      AmbiguousTransactionSubmissionError,
-    );
+    await expect(setup.submit({ commands: [] })).rejects.toMatchObject({
+      reason: "SUCCESS_RESPONSE_INVALID",
+    });
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
 
@@ -55,9 +52,10 @@ describe("Five North transaction submitter", () => {
     });
     const setup = submitter(fetcher);
 
-    await expect(setup.submit({ commands: [] })).rejects.toThrow(
-      "submission outcome is ambiguous",
-    );
+    await expect(setup.submit({ commands: [] })).rejects.toMatchObject({
+      message: "Five North transaction submission outcome is ambiguous",
+      reason: "TRANSPORT",
+    });
     await expect(setup.submit({ commands: [] })).rejects.not.toThrow(
       "secret socket detail",
     );
@@ -96,17 +94,24 @@ describe("Five North transaction submitter", () => {
     );
   });
 
-  it.each([408, 429, 500, 502, 503, 504])(
-    "classifies HTTP %i as an ambiguous submission outcome",
-    async (status) => {
+  it.each([
+    [408, "HTTP_RETRYABLE"],
+    [429, "HTTP_RETRYABLE"],
+    [500, "HTTP_SERVER_ERROR"],
+    [502, "HTTP_SERVER_ERROR"],
+    [503, "HTTP_SERVER_ERROR"],
+    [504, "HTTP_SERVER_ERROR"],
+  ] as const)(
+    "classifies HTTP %i as %s without exposing the response",
+    async (status, reason) => {
       const fetcher = vi.fn<typeof fetch>(async () =>
         Response.json({ code: "UNAVAILABLE" }, { status }),
       );
       const setup = submitter(fetcher);
 
-      await expect(setup.submit({ commands: [] })).rejects.toBeInstanceOf(
-        AmbiguousTransactionSubmissionError,
-      );
+      await expect(setup.submit({ commands: [] })).rejects.toMatchObject({
+        reason,
+      });
     },
   );
 
@@ -124,8 +129,34 @@ describe("Five North transaction submitter", () => {
     );
     const setup = submitter(fetcher);
 
-    await expect(setup.submit({ commands: [] })).rejects.toBeInstanceOf(
-      AmbiguousTransactionSubmissionError,
+    await expect(setup.submit({ commands: [] })).rejects.toMatchObject({
+      reason: "RESPONSE_UNREADABLE",
+    });
+  });
+
+  it("classifies a non-definitive client response without leaking it", async () => {
+    const fetcher = vi.fn<typeof fetch>(async () =>
+      Response.json({ code: "NOT_FOUND", secret: "hidden" }, { status: 404 }),
+    );
+    const setup = submitter(fetcher);
+
+    await expect(setup.submit({ commands: [] })).rejects.toMatchObject({
+      reason: "HTTP_CLIENT_ERROR",
+    });
+    await expect(setup.submit({ commands: [] })).rejects.not.toThrow("hidden");
+  });
+
+  it("classifies an invalid success envelope without leaking it", async () => {
+    const fetcher = vi.fn<typeof fetch>(
+      async () => new Response("private invalid response", { status: 200 }),
+    );
+    const setup = submitter(fetcher);
+
+    await expect(setup.submit({ commands: [] })).rejects.toMatchObject({
+      reason: "SUCCESS_RESPONSE_INVALID",
+    });
+    await expect(setup.submit({ commands: [] })).rejects.not.toThrow(
+      "private invalid response",
     );
   });
 

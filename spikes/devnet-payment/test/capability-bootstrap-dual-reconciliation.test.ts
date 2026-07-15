@@ -26,17 +26,10 @@ function activeCapability(request: ReturnType<typeof bootstrapRequest>) {
   };
 }
 
-function submissionResponse(request: ReturnType<typeof bootstrapRequest>) {
-  const active = activeCapability(request);
-  const event = active.contractEntry.JsActiveContract.createdEvent;
+function submissionResponse() {
   return {
-    transaction: {
-      commandId: request.commandId,
-      events: [{ CreatedEvent: event }],
-      offset: 42,
-      synchronizerId: request.synchronizerId,
-      updateId: `1220${"b".repeat(64)}`,
-    },
+    completionOffset: 42,
+    updateId: `1220${"b".repeat(64)}`,
   };
 }
 
@@ -55,7 +48,7 @@ function scenario(
     if (response === "ambiguous") {
       throw new AmbiguousTransactionSubmissionError();
     }
-    return submissionResponse(request);
+    return submissionResponse();
   });
   let activeReads = 0;
   const readActiveCapabilities = vi.fn(async () => {

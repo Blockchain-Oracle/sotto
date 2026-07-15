@@ -155,7 +155,7 @@ export function createLiveBootstrapFixture(
         throw new AmbiguousTransactionSubmissionError();
       }
       active = [activeCapability(request)];
-      return submissionResponse(request);
+      return submissionResponse();
     },
   };
   return {

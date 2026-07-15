@@ -108,16 +108,9 @@ export function activeCapability(request: BoundedCapabilityBootstrapRequest) {
   };
 }
 
-export function submissionResponse(request: BoundedCapabilityBootstrapRequest) {
-  const createdEvent =
-    activeCapability(request).contractEntry.JsActiveContract.createdEvent;
+export function submissionResponse() {
   return {
-    transaction: {
-      commandId: request.commandId,
-      events: [{ CreatedEvent: createdEvent }],
-      offset: 42,
-      synchronizerId: SYNCHRONIZER,
-      updateId: `1220${"f".repeat(64)}`,
-    },
+    completionOffset: 42,
+    updateId: `1220${"f".repeat(64)}`,
   };
 }

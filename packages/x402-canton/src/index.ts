@@ -1,4 +1,5 @@
 export * from "./authorization.js";
+export { parseBoundedCapabilityBootstrapCompletionResponse } from "./bounded-capability-bootstrap-completion-response.js";
 export {
   assertBoundedCapabilityBootstrapFresh,
   buildBoundedCapabilityBootstrap,

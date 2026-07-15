@@ -9,13 +9,34 @@ const TRANSACTION_RESPONSE_LIMIT = 2_000_000;
 const TRANSACTION_REQUEST_LIMIT = 65_536;
 const DEFINITIVE_BAD_REQUEST_PATTERN =
   /^Five North request failed with HTTP 400(?: \([A-Z][A-Z0-9_.-]{0,63}\))?$/u;
+const BOUNDED_HTTP_REJECTION_PATTERN =
+  /^Five North request failed with HTTP \d{3}(?: \([A-Z][A-Z0-9_.-]{0,63}\))?$/u;
+
+export type AmbiguousTransactionSubmissionReason =
+  | "HTTP_CLIENT_ERROR"
+  | "HTTP_RETRYABLE"
+  | "HTTP_SERVER_ERROR"
+  | "RESPONSE_UNREADABLE"
+  | "SUCCESS_RESPONSE_INVALID"
+  | "TRANSPORT"
+  | "UNKNOWN";
 
 export class AmbiguousTransactionSubmissionError extends Error {
   override readonly name = "AmbiguousTransactionSubmissionError";
 
-  constructor() {
+  constructor(
+    readonly reason: AmbiguousTransactionSubmissionReason = "UNKNOWN",
+  ) {
     super("Five North transaction submission outcome is ambiguous");
   }
+}
+
+function httpAmbiguityReason(
+  status: number,
+): AmbiguousTransactionSubmissionReason {
+  if (status === 408 || status === 429) return "HTTP_RETRYABLE";
+  if (status >= 500) return "HTTP_SERVER_ERROR";
+  return "HTTP_CLIENT_ERROR";
 }
 
 export function createFiveNorthTransactionSubmitter(input: {
@@ -54,7 +75,7 @@ export function createFiveNorthTransactionSubmitter(input: {
         },
       );
     } catch {
-      throw new AmbiguousTransactionSubmissionError();
+      throw new AmbiguousTransactionSubmissionError("TRANSPORT");
     }
     if (!response.ok) {
       try {
@@ -67,9 +88,16 @@ export function createFiveNorthTransactionSubmitter(input: {
         ) {
           throw error;
         }
-        throw new AmbiguousTransactionSubmissionError();
+        throw new AmbiguousTransactionSubmissionError(
+          error instanceof Error &&
+            BOUNDED_HTTP_REJECTION_PATTERN.test(error.message)
+            ? httpAmbiguityReason(response.status)
+            : "RESPONSE_UNREADABLE",
+        );
       }
-      throw new AmbiguousTransactionSubmissionError();
+      throw new AmbiguousTransactionSubmissionError(
+        httpAmbiguityReason(response.status),
+      );
     }
     try {
       return parseFiveNorthJson(
@@ -77,7 +105,7 @@ export function createFiveNorthTransactionSubmitter(input: {
         "Five North transaction response",
       );
     } catch {
-      throw new AmbiguousTransactionSubmissionError();
+      throw new AmbiguousTransactionSubmissionError("SUCCESS_RESPONSE_INVALID");
     }
   };
 }

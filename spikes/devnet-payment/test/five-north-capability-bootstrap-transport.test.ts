@@ -87,7 +87,15 @@ describe("Five North capability bootstrap transport", () => {
           },
         ]);
       }
-      return Response.json({ transaction: {} });
+      if (url.endsWith("/v2/commands/submit-and-wait")) {
+        expect(init?.method).toBe("POST");
+        expect(JSON.parse(String(init?.body))).toEqual(request());
+        return Response.json({
+          completionOffset: 42,
+          updateId: `1220${"c".repeat(64)}`,
+        });
+      }
+      throw new Error("unexpected test route");
     });
     const transport = createFiveNorthCapabilityBootstrapTransport(
       network,
@@ -115,8 +123,14 @@ describe("Five North capability bootstrap transport", () => {
       },
     ]);
     await expect(transport.submit(request())).resolves.toEqual({
-      transaction: {},
+      completionOffset: 42,
+      updateId: `1220${"c".repeat(64)}`,
     });
+    expect(
+      fetcher.mock.calls.filter(([url]) =>
+        url.endsWith("/v2/commands/submit-and-wait"),
+      ),
+    ).toHaveLength(1);
 
     expect(
       fetcher.mock.calls.filter(([url]) => url === network.tokenUrl),

@@ -1,12 +1,15 @@
 import {
   assertBoundedCapabilityBootstrapFresh,
-  parseBoundedCapabilityBootstrapResponse,
+  parseBoundedCapabilityBootstrapCompletionResponse,
   reconcileBoundedCapabilityBootstrapAcs,
   restoreBoundedCapabilityBootstrapIntent,
   type BoundedCapabilityBootstrapRequest,
 } from "@sotto/x402-canton";
 import type { CapabilityBootstrapCompletion } from "./capability-bootstrap-completion.js";
-import { AmbiguousTransactionSubmissionError } from "./five-north-transaction-submit.js";
+import {
+  AmbiguousTransactionSubmissionError,
+  type AmbiguousTransactionSubmissionReason,
+} from "./five-north-transaction-submit.js";
 
 type BootstrapRunnerInput = Readonly<{
   persistCompletionCursor: (beginExclusive: number) => Promise<void>;
@@ -50,7 +53,10 @@ function resolveDualEvidence(input: {
   active: unknown;
   completion: CapabilityBootstrapCompletion;
   request: BoundedCapabilityBootstrapRequest;
-  submitted?: ReturnType<typeof parseBoundedCapabilityBootstrapResponse>;
+  submitted?: ReturnType<
+    typeof parseBoundedCapabilityBootstrapCompletionResponse
+  >;
+  submissionAmbiguity?: AmbiguousTransactionSubmissionReason;
 }) {
   const contractId = optionalReconciliation(input.active, input.request);
   if (input.completion.classification !== "SUCCEEDED") {
@@ -63,15 +69,19 @@ function resolveDualEvidence(input: {
         input.completion.statusCode,
       );
     }
-    throw new Error("capability bootstrap outcome is unresolved");
+    const reason = input.submissionAmbiguity;
+    throw new Error(
+      `capability bootstrap outcome is unresolved${
+        reason === undefined || reason === "UNKNOWN" ? "" : ` (${reason})`
+      }`,
+    );
   }
   if (contractId === null) {
     throw new Error("successful completion has no exact active capability");
   }
   if (
     input.submitted !== undefined &&
-    (input.submitted.contractId !== contractId ||
-      input.submitted.offset !== input.completion.completionOffset ||
+    (input.submitted.offset !== input.completion.completionOffset ||
       input.submitted.updateId !== input.completion.updateId)
   ) {
     throw new Error("completion and submission response are inconsistent");
@@ -104,18 +114,25 @@ export async function runBoundedCapabilityBootstrap(
   await input.persistSubmissionStarted();
   assertBoundedCapabilityBootstrapFresh(input.request);
   let submitted:
-    ReturnType<typeof parseBoundedCapabilityBootstrapResponse> | undefined;
+    | ReturnType<typeof parseBoundedCapabilityBootstrapCompletionResponse>
+    | undefined;
   let response: unknown;
+  let submissionAmbiguity: AmbiguousTransactionSubmissionReason | undefined;
   try {
     response = await input.submit(input.request);
   } catch (error) {
     if (!(error instanceof AmbiguousTransactionSubmissionError)) throw error;
+    submissionAmbiguity = error.reason;
   }
   if (response !== undefined) {
-    submitted = parseBoundedCapabilityBootstrapResponse(
-      response,
-      input.request,
-    );
+    try {
+      submitted = parseBoundedCapabilityBootstrapCompletionResponse(
+        response,
+        input.request,
+      );
+    } catch {
+      submissionAmbiguity = "SUCCESS_RESPONSE_INVALID";
+    }
   }
   const completion = await input.readCompletion(beginExclusive, input.request);
   const resolved = resolveDualEvidence({
@@ -123,6 +140,7 @@ export async function runBoundedCapabilityBootstrap(
     completion,
     request: input.request,
     ...(submitted === undefined ? {} : { submitted }),
+    ...(submissionAmbiguity === undefined ? {} : { submissionAmbiguity }),
   });
   return Object.freeze({
     commandId: input.request.commandId,

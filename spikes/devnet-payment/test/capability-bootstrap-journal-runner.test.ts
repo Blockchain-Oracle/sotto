@@ -59,13 +59,8 @@ function fixture() {
     contractId,
     request,
     response: {
-      transaction: {
-        commandId: request.commandId,
-        events: [{ CreatedEvent: event }],
-        offset: 42,
-        synchronizerId: input.synchronizerId,
-        updateId: `1220${"b".repeat(64)}`,
-      },
+      completionOffset: 42,
+      updateId: `1220${"b".repeat(64)}`,
     },
   } as const;
 }
