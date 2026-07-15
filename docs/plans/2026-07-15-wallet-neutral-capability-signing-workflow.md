@@ -62,7 +62,7 @@ max_iterations: 4
 verify: PATH="$HOME/.local/share/mise/installs/node/24.18.0/bin:$PATH" pnpm vitest run packages/x402-canton/test/prepared-capability-bootstrap-hash.test.ts packages/x402-canton/test/prepared-capability-bootstrap-shape.test.ts packages/x402-canton/test/prepared-capability-bootstrap-approval.test.ts
 gate: human
 
-- [ ] **Step 9: Export the prepared-capability verifier boundary**
+- [x] **Step 9: Export the prepared-capability verifier boundary**
 action: Update `packages/x402-canton/src/index.ts` to export only the observer, verifier, redacted approval types, limits, and connector-safe claim API; keep raw state readers and mutable authority maps internal, and add a public-API test proving those internal readers are absent.
 loop: until package build, strict types, and focused tests pass
 max_iterations: 3

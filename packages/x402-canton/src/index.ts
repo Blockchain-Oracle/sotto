@@ -11,6 +11,18 @@ export {
   type PreparedCapabilityBootstrapTransportRequest,
 } from "./prepared-capability-bootstrap-observation.js";
 export {
+  projectPreparedCapabilityBootstrapApproval,
+  PREPARED_CAPABILITY_APPROVAL_VERSION,
+  type PreparedCapabilityBootstrapApproval,
+} from "./prepared-capability-bootstrap-approval.js";
+export {
+  claimHashVerifiedPreparedCapabilityBootstrap,
+  verifyPreparedCapabilityBootstrapHash,
+  type ClaimedPreparedCapabilityBootstrap,
+  type HashVerifiedPreparedCapabilityBootstrap,
+  type PreparedCapabilityBootstrapHashDependencies,
+} from "./prepared-capability-bootstrap-hash.js";
+export {
   assertBoundedCapabilityBootstrapFresh,
   buildBoundedCapabilityBootstrap,
   parseBoundedCapabilityBootstrapResponse,
