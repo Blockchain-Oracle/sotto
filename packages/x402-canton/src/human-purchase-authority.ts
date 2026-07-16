@@ -1,12 +1,13 @@
 import type {
-  HumanPurchaseCommitmentInput,
   HumanPurchaseCommitment,
+  ValidatedHumanPurchaseInput,
 } from "./human-purchase-commitment-types.js";
+import { createHumanAuthorizationReplayStore } from "./human-authorization-replay.js";
 
 const identityBindings = new WeakMap<object, string>();
 const packageBindings = new WeakMap<object, string>();
 const paymentBindings = new WeakMap<object, string>();
-const authorizationBindings = new Map<string, string>();
+const authorizationBindings = createHumanAuthorizationReplayStore();
 
 function requireObject(value: unknown, label: string): object {
   if (typeof value !== "object" || value === null) {
@@ -16,29 +17,35 @@ function requireObject(value: unknown, label: string): object {
 }
 
 export function bindHumanPurchaseAuthorities(
-  input: HumanPurchaseCommitmentInput,
+  authorities: ValidatedHumanPurchaseInput["authorities"],
   authorizationInstanceId: string,
   result: HumanPurchaseCommitment,
 ): void {
-  const identity = requireObject(input.payerIdentity, "human payer identity");
+  const identity = requireObject(
+    authorities.payerIdentity,
+    "human payer identity",
+  );
   const packages = requireObject(
-    input.packageSelection,
+    authorities.packageSelection,
     "human package selection",
   );
   const payment = requireObject(
-    input.paymentObservation,
+    authorities.paymentObservation,
     "human payment observation",
   );
   if (
     identityBindings.has(identity) ||
     packageBindings.has(packages) ||
-    paymentBindings.has(payment) ||
-    authorizationBindings.has(authorizationInstanceId)
+    paymentBindings.has(payment)
   ) {
     throw new Error("human purchase authority is already bound");
   }
+  authorizationBindings.reserve(
+    authorizationInstanceId,
+    result.commitment,
+    result.expiresAt,
+  );
   identityBindings.set(identity, result.commitment);
   packageBindings.set(packages, result.commitment);
   paymentBindings.set(payment, result.commitment);
-  authorizationBindings.set(authorizationInstanceId, result.commitment);
 }

@@ -13,7 +13,9 @@ export type HumanPurchaseCommitmentInput = Readonly<{
 
 export type HumanPurchaseTrustedConfiguration = Readonly<{
   contractId: string;
+  expectedAsset: string;
   expectedAdmin: string;
+  expectedInstrumentId: string;
   maximumAllowedFeeAtomic: string;
 }>;
 
@@ -37,7 +39,13 @@ export type CanonicalHumanPackageSelection = Readonly<{
 }>;
 
 export type ValidatedHumanPurchaseInput = Readonly<{
+  authorities: Readonly<{
+    packageSelection: AuthenticatedHumanPackagePreference;
+    payerIdentity: AuthenticatedHumanPayerIdentity;
+    paymentObservation: HumanPaymentObservation;
+  }>;
   binding: HttpRequestCommitment;
+  challengeId: `sha256:${string}`;
   expiresAt: string;
   identity: AuthenticatedHumanPayerIdentity;
   maximumFeeAtomic: string;

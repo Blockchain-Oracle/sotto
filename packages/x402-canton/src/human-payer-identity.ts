@@ -9,6 +9,12 @@ import {
   parseHumanPayerIdentity,
   validateHumanPayerIdentityReader,
 } from "./human-payer-identity-validation.js";
+import {
+  requireHumanObservationActive,
+  withHumanObservationDeadline,
+  type HumanObservationOptions,
+  type HumanObservationReadOptions,
+} from "./human-observation-deadline.js";
 
 export const HUMAN_PAYER_IDENTITY_VERSION =
   "sotto-human-payer-identity-v1" as const;
@@ -17,9 +23,15 @@ export const MAX_HUMAN_PAYER_IDENTITY_AGE_MS = 60_000;
 const CLOCK_ROLLBACK_TOLERANCE_MS = 5_000;
 
 export type HumanPayerIdentityReader = Readonly<{
-  readAuthenticatedSubject: () => Promise<unknown>;
-  readPayerIdentity: () => Promise<unknown>;
+  readAuthenticatedSubject: (
+    options?: HumanObservationReadOptions,
+  ) => Promise<unknown>;
+  readPayerIdentity: (
+    options?: HumanObservationReadOptions,
+  ) => Promise<unknown>;
 }>;
+
+export type HumanPayerIdentityObservationOptions = HumanObservationOptions;
 
 export type HumanPayerIdentityObservation = Readonly<{
   observationId: `sha256:${string}`;
@@ -81,47 +93,63 @@ function requireFresh(state: ObservationState): void {
 
 export function createHumanPayerIdentityObserver(
   candidate: HumanPayerIdentityReader,
-): () => Promise<HumanPayerIdentityObservation> {
+): (
+  options?: HumanPayerIdentityObservationOptions,
+) => Promise<HumanPayerIdentityObservation> {
   const source = validateHumanPayerIdentityReader(candidate);
-  return async () => {
-    const acquisitionStartedAt = Date.now();
-    const initialSubject = identifier(
-      await readUpstream("subject", () => source.readAuthenticatedSubject()),
-      "human payer authenticated subject",
-      256,
+  return async (options = {}) =>
+    await withHumanObservationDeadline(
+      "human payer identity",
+      MAX_HUMAN_PAYER_IDENTITY_ACQUISITION_MS,
+      options,
+      async (signal) => {
+        const readOptions = Object.freeze({ signal });
+        const acquisitionStartedAt = Date.now();
+        const initialSubject = identifier(
+          await readUpstream("subject", () =>
+            source.readAuthenticatedSubject(readOptions),
+          ),
+          "human payer authenticated subject",
+          256,
+        );
+        requireHumanObservationActive(signal, "human payer identity");
+        const candidateIdentity = await readUpstream("topology", () =>
+          source.readPayerIdentity(readOptions),
+        );
+        requireHumanObservationActive(signal, "human payer identity");
+        const finalSubject = identifier(
+          await readUpstream("subject", () =>
+            source.readAuthenticatedSubject(readOptions),
+          ),
+          "human payer authenticated subject",
+          256,
+        );
+        requireHumanObservationActive(signal, "human payer identity");
+        if (initialSubject !== finalSubject) {
+          throw new Error("human payer authenticated subject changed");
+        }
+        const capturedAt = Date.now();
+        const acquiredAt = new Date(capturedAt).toISOString();
+        const identity = parseHumanPayerIdentity(
+          candidateIdentity,
+          `sha256:${createHash("sha256").update(initialSubject).digest("hex")}`,
+          acquiredAt,
+        );
+        const observation = Object.freeze({
+          observationId: `sha256:${randomBytes(32).toString("hex")}` as const,
+          observedAt: acquiredAt,
+        });
+        const state = {
+          acquisitionStartedAt,
+          capturedAt,
+          claimed: false,
+          identity,
+        };
+        requireFresh(state);
+        observations.set(observation, state);
+        return observation;
+      },
     );
-    const candidateIdentity = await readUpstream("topology", () =>
-      source.readPayerIdentity(),
-    );
-    const finalSubject = identifier(
-      await readUpstream("subject", () => source.readAuthenticatedSubject()),
-      "human payer authenticated subject",
-      256,
-    );
-    if (initialSubject !== finalSubject) {
-      throw new Error("human payer authenticated subject changed");
-    }
-    const capturedAt = Date.now();
-    const acquiredAt = new Date(capturedAt).toISOString();
-    const identity = parseHumanPayerIdentity(
-      candidateIdentity,
-      `sha256:${createHash("sha256").update(initialSubject).digest("hex")}`,
-      acquiredAt,
-    );
-    const observation = Object.freeze({
-      observationId: `sha256:${randomBytes(32).toString("hex")}` as const,
-      observedAt: acquiredAt,
-    });
-    const state = {
-      acquisitionStartedAt,
-      capturedAt,
-      claimed: false,
-      identity,
-    };
-    requireFresh(state);
-    observations.set(observation, state);
-    return observation;
-  };
 }
 
 export function claimHumanPayerIdentity(

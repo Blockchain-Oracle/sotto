@@ -97,6 +97,43 @@ describe("human package preference security", () => {
     }
   });
 
+  it("enforces one deadline across trusted package reads", async () => {
+    const candidateScope = await scope();
+    let packageSignal: AbortSignal | undefined;
+    const finalSubject = vi.fn(async () => "validator-devnet-m2m");
+    const source = {
+      readAuthenticatedSubject: vi
+        .fn(async () => "validator-devnet-m2m")
+        .mockImplementationOnce(async () => "validator-devnet-m2m")
+        .mockImplementation(finalSubject),
+      readPackageReferences: vi.fn(
+        async (
+          _request: unknown,
+          options?: Readonly<{ signal: AbortSignal }>,
+        ) => {
+          packageSignal = options?.signal;
+          return new Promise<never>(() => undefined);
+        },
+      ),
+    };
+    const pending = createHumanPackagePreferenceObserver(source)(
+      candidateScope,
+      { timeoutMilliseconds: 10 } as never,
+    );
+    let rejection: unknown;
+    void pending.catch((error: unknown) => {
+      rejection = error;
+    });
+
+    await vi.advanceTimersByTimeAsync(10);
+
+    expect(rejection).toEqual(
+      new Error("human package preference deadline exceeded"),
+    );
+    expect(packageSignal?.aborted).toBe(true);
+    expect(finalSubject).not.toHaveBeenCalled();
+  });
+
   it("rejects invalid challenge timing and duplicate Parties", async () => {
     for (const mutate of [
       (value: Awaited<ReturnType<typeof scope>>) =>

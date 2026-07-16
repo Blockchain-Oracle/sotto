@@ -1,11 +1,20 @@
 import type { AuthenticatedHumanPayerIdentity } from "./human-payer-identity.js";
 import type { ReviewedPackagePreferenceClosure } from "./package-preference-closure.js";
-import type { PackagePreferenceReader } from "./package-preference-observation-types.js";
+import type { HumanObservationReadOptions } from "./human-observation-deadline.js";
+import type { PackagePreferenceReadRequest } from "./package-preference-observation-types.js";
 
 export const HUMAN_PACKAGE_SELECTION_VERSION =
   "sotto-human-package-selection-v1" as const;
 
-export type HumanPackagePreferenceReader = PackagePreferenceReader;
+export type HumanPackagePreferenceReader = Readonly<{
+  readAuthenticatedSubject: (
+    options?: HumanObservationReadOptions,
+  ) => Promise<unknown>;
+  readPackageReferences: (
+    request: PackagePreferenceReadRequest,
+    options?: HumanObservationReadOptions,
+  ) => Promise<unknown>;
+}>;
 
 export type HumanPackagePreferenceScope = Readonly<{
   adminParty: string;

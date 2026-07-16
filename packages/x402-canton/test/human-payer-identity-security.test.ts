@@ -58,6 +58,35 @@ describe("human payer identity security", () => {
     }
   });
 
+  it("enforces one deadline while the first trusted read hangs", async () => {
+    let readerSignal: AbortSignal | undefined;
+    const topology = vi.fn();
+    const source = {
+      readAuthenticatedSubject: vi.fn(
+        async (options?: Readonly<{ signal: AbortSignal }>) => {
+          readerSignal = options?.signal;
+          return new Promise<never>(() => undefined);
+        },
+      ),
+      readPayerIdentity: topology,
+    };
+    const pending = createHumanPayerIdentityObserver(source)({
+      timeoutMilliseconds: 10,
+    } as never);
+    let rejection: unknown;
+    void pending.catch((error: unknown) => {
+      rejection = error;
+    });
+
+    await vi.advanceTimersByTimeAsync(10);
+
+    expect(rejection).toEqual(
+      new Error("human payer identity deadline exceeded"),
+    );
+    expect(readerSignal?.aborted).toBe(true);
+    expect(topology).not.toHaveBeenCalled();
+  });
+
   it("rejects acquisition overrun, stale claims, and clock rollback", async () => {
     const delayed = reader();
     delayed.readPayerIdentity.mockImplementation(async () => {
@@ -65,7 +94,7 @@ describe("human payer identity security", () => {
       return identity();
     });
     await expect(createHumanPayerIdentityObserver(delayed)()).rejects.toThrow(
-      /stale/iu,
+      /deadline exceeded/iu,
     );
 
     vi.setSystemTime(new Date("2026-07-16T15:00:00.000Z"));

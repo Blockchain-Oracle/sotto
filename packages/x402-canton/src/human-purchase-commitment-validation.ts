@@ -26,25 +26,34 @@ import {
   identifier,
   objectValue,
 } from "./purchase-commitment-primitives.js";
-
 export const MIN_HUMAN_SIGNING_RESERVE_MS = 120_000;
 const CLOCK_ROLLBACK_TOLERANCE_MS = 5_000;
-
 export function validateHumanPurchaseConfiguration(
   candidate: HumanPurchaseTrustedConfiguration,
 ): HumanPurchaseTrustedConfiguration {
   const config = objectValue(candidate, "human purchase trusted configuration");
   exactKeys(
     config,
-    ["contractId", "expectedAdmin", "maximumAllowedFeeAtomic"],
+    [
+      "contractId",
+      "expectedAdmin",
+      "expectedAsset",
+      "expectedInstrumentId",
+      "maximumAllowedFeeAtomic",
+    ],
     "human purchase trusted configuration",
   );
   atomic(config.maximumAllowedFeeAtomic, "maximum allowed human fee");
   return Object.freeze({
     contractId: identifier(config.contractId, "human token factory contractId"),
+    expectedAsset: identifier(config.expectedAsset, "human expected asset"),
     expectedAdmin: identifier(
       config.expectedAdmin,
       "human token factory expected admin",
+    ),
+    expectedInstrumentId: identifier(
+      config.expectedInstrumentId,
+      "human expected instrument ID",
     ),
     maximumAllowedFeeAtomic: config.maximumAllowedFeeAtomic as string,
   });
@@ -65,7 +74,13 @@ export function validateHumanPurchaseInput(
     ],
     "human purchase commitment input",
   );
-  const identity = readAuthenticatedHumanPayerIdentity(input.payerIdentity);
+  const snapshot = Object.freeze({
+    maximumFeeAtomic: input.maximumFeeAtomic,
+    packageSelection: input.packageSelection,
+    payerIdentity: input.payerIdentity,
+    paymentObservation: input.paymentObservation,
+  });
+  const identity = readAuthenticatedHumanPayerIdentity(snapshot.payerIdentity);
   const now = Date.now();
   const identityAcquiredAt = canonicalTime(
     identity.acquiredAt,
@@ -77,14 +92,14 @@ export function validateHumanPurchaseInput(
   if (now - identityAcquiredAt > MAX_HUMAN_PAYER_IDENTITY_AGE_MS) {
     throw new Error("human payer identity is stale");
   }
-  const payment = readHumanPaymentAuthority(input.paymentObservation);
+  const payment = readHumanPaymentAuthority(snapshot.paymentObservation);
   const observation = readPaymentRequiredObservation(
     payment.paymentObservation,
   );
   if (
-    input.paymentObservation.challengeId !== observation.challengeId ||
-    input.paymentObservation.observedAt !== observation.observedAt ||
-    input.paymentObservation.requestCommitment !== payment.binding.commitment
+    snapshot.paymentObservation.challengeId !== observation.challengeId ||
+    snapshot.paymentObservation.observedAt !== observation.observedAt ||
+    snapshot.paymentObservation.requestCommitment !== payment.binding.commitment
   ) {
     throw new Error("human payment observation authority is inconsistent");
   }
@@ -125,7 +140,7 @@ export function validateHumanPurchaseInput(
   }
   const expiresAt = new Date(expiresAtMs).toISOString();
   const principal = atomic(requirement.amount, "human purchase amount");
-  const maximumFee = atomic(input.maximumFeeAtomic, "maximum human fee");
+  const maximumFee = atomic(snapshot.maximumFeeAtomic, "maximum human fee");
   const allowedFee = atomic(
     config.maximumAllowedFeeAtomic,
     "maximum allowed human fee",
@@ -140,14 +155,16 @@ export function validateHumanPurchaseInput(
     throw new Error("maximum human debit exceeds the bounded atomic range");
   }
   if (
+    config.expectedAsset !== requirement.asset ||
     config.expectedAdmin !== requirement.extra.instrumentId.admin ||
+    config.expectedInstrumentId !== requirement.extra.instrumentId.id ||
     config.expectedAdmin === identity.party ||
     config.contractId === ""
   ) {
     throw new Error("human token factory does not match the challenge");
   }
   const packageSelection = validateHumanPurchasePackageSelection(
-    input.packageSelection,
+    snapshot.packageSelection,
     {
       adminParty: config.expectedAdmin,
       challengeId: observation.challengeId,
@@ -158,7 +175,13 @@ export function validateHumanPurchaseInput(
     },
   );
   return Object.freeze({
+    authorities: Object.freeze({
+      packageSelection: snapshot.packageSelection,
+      payerIdentity: snapshot.payerIdentity,
+      paymentObservation: snapshot.paymentObservation,
+    }),
     binding: payment.binding,
+    challengeId: observation.challengeId,
     expiresAt,
     identity,
     maximumFeeAtomic: maximumFee.toString(),

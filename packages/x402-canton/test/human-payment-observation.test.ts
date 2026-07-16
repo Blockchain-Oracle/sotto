@@ -86,6 +86,95 @@ describe("trusted human HTTP payment observation", () => {
     });
   });
 
+  it("reads caller accessors once for both commitment and transport", async () => {
+    const reads = new Map<string, number>();
+    const once =
+      <T>(name: string, first: T, later: T): (() => T) =>
+      () => {
+        const count = (reads.get(name) ?? 0) + 1;
+        reads.set(name, count);
+        return count === 1 ? first : later;
+      };
+    const fetchAuthorized = vi.fn(async (request) => {
+      expect(request).toMatchObject({
+        body: new TextEncoder().encode("first-body"),
+        headers: [["x-request-mode", "first"]],
+        method: "GET",
+        url: URL,
+      });
+      return paymentRequired();
+    });
+    const input = Object.defineProperties(
+      {},
+      {
+        additionalAuthoritativeHeaders: {
+          enumerable: true,
+          get: once(
+            "additionalAuthoritativeHeaders",
+            ["x-request-mode"],
+            ["x-later"],
+          ),
+        },
+        body: {
+          enumerable: true,
+          get: once(
+            "body",
+            new TextEncoder().encode("first-body"),
+            new TextEncoder().encode("later-body"),
+          ),
+        },
+        headers: {
+          enumerable: true,
+          get: once(
+            "headers",
+            [["x-request-mode", "first"]],
+            [["x-later", "later"]],
+          ),
+        },
+        method: { enumerable: true, get: once("method", "GET", "POST") },
+        url: {
+          enumerable: true,
+          get: once("url", URL, "https://attacker.example/other"),
+        },
+      },
+    );
+
+    const observation = await createHumanPaymentObserver(fetchAuthorized)(
+      input as never,
+    );
+    const expected = commitHttpRequest({
+      additionalAuthoritativeHeaders: ["x-request-mode"],
+      body: new TextEncoder().encode("first-body"),
+      headers: [["x-request-mode", "first"]],
+      method: "GET",
+      url: URL,
+    });
+
+    expect(observation.requestCommitment).toBe(expected.commitment);
+    expect([...reads.values()]).toEqual([1, 1, 1, 1, 1]);
+  });
+
+  it.each([
+    "authorization",
+    "cookie",
+    "payment-signature",
+    "proxy-authorization",
+    "x-payment",
+    "x-payment-signature",
+  ])("rejects forbidden transport header %s before fetch", async (name) => {
+    const fetchAuthorized = vi.fn(async () => paymentRequired());
+    const observe = createHumanPaymentObserver(fetchAuthorized);
+
+    await expect(
+      observe({
+        headers: [[name, "caller-controlled-secret"]],
+        method: "GET",
+        url: URL,
+      }),
+    ).rejects.toThrow(/forbidden.*header/iu);
+    expect(fetchAuthorized).not.toHaveBeenCalled();
+  });
+
   it("rejects clones and standalone locally constructed responses", async () => {
     const observation = await createHumanPaymentObserver(async () =>
       paymentRequired(),

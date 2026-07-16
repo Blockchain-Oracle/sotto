@@ -1,8 +1,11 @@
 import {
+  type AuthenticatedHumanPayerIdentity,
   claimHumanPackagePreferenceObservation,
   commitHttpRequest,
   createHumanPaymentObserver,
   createHumanPackagePreferenceObserver,
+  type HttpRequestBindingInput,
+  type HumanPaymentObservation,
 } from "../src/index.js";
 import { buildReviewedPackagePreferenceClosure } from "../src/package-preference-closure.js";
 import { validClosureInput } from "./package-preference-closure.fixtures.js";
@@ -22,11 +25,46 @@ export const HUMAN_PURCHASE_MAXIMUM_DEBIT_ATOMIC = "3250000000";
 export const HUMAN_AUTHORIZATION_INSTANCE_ID = "human-authorization-1";
 export const HUMAN_TOKEN_FACTORY_CONFIGURATION = Object.freeze({
   contractId: "00tokenfactory7",
+  expectedAsset: "CC",
   expectedAdmin: DSO,
+  expectedInstrumentId: "Amulet",
   maximumAllowedFeeAtomic: "1000000000",
 });
 
-function humanClosure() {
+export type HumanChallengeFixture = {
+  accepts: Array<{
+    amount: string;
+    asset: string;
+    extra: {
+      assetTransferMethod: string;
+      executeBeforeSeconds: number;
+      feePayer: string;
+      instrumentId: { admin: string; id: string };
+      memo: string;
+      synchronizerId: string;
+      [key: string]: unknown;
+    };
+    maxTimeoutSeconds: number;
+    network: string;
+    payTo: string;
+    scheme: string;
+    [key: string]: unknown;
+  }>;
+  resource: { url: string; [key: string]: unknown };
+  x402Version: number;
+  [key: string]: unknown;
+};
+
+type HumanPurchaseFixtureOptions = Readonly<{
+  maximumFeeAtomic?: string;
+  mutateChallenge?: (challenge: HumanChallengeFixture) => void;
+  packageAdminParty?: string;
+  packageProviderParty?: string;
+  payerIdentity?: AuthenticatedHumanPayerIdentity;
+  request?: HttpRequestBindingInput;
+}>;
+
+export function humanPackageClosure() {
   const input = validClosureInput();
   input.artifacts = input.artifacts.filter(
     ({ name }) => name === "splice-amulet",
@@ -43,10 +81,39 @@ function humanClosure() {
   return buildReviewedPackagePreferenceClosure(input);
 }
 
-export async function createHumanPurchaseInput() {
-  const binding = commitHttpRequest({ method: "GET", url: RESOURCE_URL });
-  const payerIdentity = await authenticatedHumanPayerIdentity();
-  const challenge = {
+export async function createHumanPackageSelection(
+  payerIdentity: AuthenticatedHumanPayerIdentity,
+  paymentObservation: HumanPaymentObservation,
+  adminParty: string,
+  providerParty: string,
+  executeBefore: string,
+) {
+  const closure = humanPackageClosure();
+  const packageScope = {
+    adminParty,
+    challengeId: paymentObservation.challengeId,
+    challengeObservedAt: paymentObservation.observedAt,
+    closure,
+    executeBefore,
+    payerIdentity,
+    providerParty,
+    vettingValidAt: "2026-07-16T15:00:30.000Z",
+  };
+  const observation = await createHumanPackagePreferenceObserver({
+    readAuthenticatedSubject: async () => "validator-devnet-m2m",
+    readPackageReferences: async () => liveReferences(closure),
+  })(packageScope);
+  return claimHumanPackagePreferenceObservation(observation, packageScope);
+}
+
+export async function createHumanPurchaseInput(
+  options: HumanPurchaseFixtureOptions = {},
+) {
+  const request = options.request ?? { method: "GET", url: RESOURCE_URL };
+  const binding = commitHttpRequest(request);
+  const payerIdentity =
+    options.payerIdentity ?? (await authenticatedHumanPayerIdentity());
+  const challenge: HumanChallengeFixture = {
     x402Version: 2,
     resource: { url: RESOURCE_URL },
     accepts: [
@@ -68,6 +135,7 @@ export async function createHumanPurchaseInput() {
       },
     ],
   };
+  options.mutateChallenge?.(challenge);
   const paymentObservation = await createHumanPaymentObserver(
     async () =>
       new Response(null, {
@@ -78,28 +146,26 @@ export async function createHumanPurchaseInput() {
         },
         status: 402,
       }),
-  )({ method: "GET", url: RESOURCE_URL });
-  const closure = humanClosure();
-  const packageScope = {
-    adminParty: DSO,
-    challengeId: paymentObservation.challengeId,
-    challengeObservedAt: HUMAN_PURCHASE_NOW,
-    closure,
-    executeBefore: HUMAN_PURCHASE_EXPIRES_AT,
+  )(request);
+  const requirement = challenge.accepts[0]!;
+  const executeBefore = new Date(
+    Date.parse(paymentObservation.observedAt) +
+      Math.min(
+        requirement.maxTimeoutSeconds,
+        requirement.extra.executeBeforeSeconds,
+      ) *
+        1_000,
+  ).toISOString();
+  const packageSelection = await createHumanPackageSelection(
     payerIdentity,
-    providerParty: PROVIDER,
-    vettingValidAt: "2026-07-16T15:00:30.000Z",
-  };
-  const packageObservation = await createHumanPackagePreferenceObserver({
-    readAuthenticatedSubject: async () => "validator-devnet-m2m",
-    readPackageReferences: async () => liveReferences(closure),
-  })(packageScope);
-  const packageSelection = claimHumanPackagePreferenceObservation(
-    packageObservation,
-    packageScope,
+    paymentObservation,
+    options.packageAdminParty ?? requirement.extra.instrumentId.admin,
+    options.packageProviderParty ?? requirement.payTo,
+    executeBefore,
   );
   return {
-    maximumFeeAtomic: HUMAN_PURCHASE_MAXIMUM_FEE_ATOMIC,
+    maximumFeeAtomic:
+      options.maximumFeeAtomic ?? HUMAN_PURCHASE_MAXIMUM_FEE_ATOMIC,
     packageSelection,
     payerIdentity,
     paymentObservation,

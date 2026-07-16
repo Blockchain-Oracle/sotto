@@ -3,6 +3,11 @@ import {
   createHumanPaymentObserver,
   readHumanPaymentAuthority,
 } from "../src/human-payment-observation.js";
+import {
+  MAX_AUTHORITATIVE_HEADERS,
+  MAX_RAW_REQUEST_HEADERS,
+  MAX_REQUEST_BODY_BYTES,
+} from "../src/request-binding.js";
 
 const NOW = "2026-07-16T15:00:00.000Z";
 const URL = "https://provider.example/paid/weather";
@@ -96,4 +101,49 @@ describe("human HTTP payment observation security", () => {
       expect(fetcher).not.toHaveBeenCalled();
     },
   );
+
+  it("checks request cardinality before copying caller collections", async () => {
+    const fetcher = vi.fn(async () => paymentRequired());
+    const observe = createHumanPaymentObserver(fetcher);
+    const body = new Uint8Array(MAX_REQUEST_BODY_BYTES + 1);
+    Object.defineProperty(body, Symbol.iterator, {
+      value: () => {
+        throw new Error("oversized body was copied");
+      },
+    });
+    await expect(observe({ body, method: "POST", url: URL })).rejects.toThrow(
+      /body exceeds/iu,
+    );
+
+    const headers = Array.from(
+      { length: MAX_RAW_REQUEST_HEADERS + 1 },
+      () => ["x-test", "value"] as const,
+    );
+    Object.defineProperty(headers[MAX_RAW_REQUEST_HEADERS]!, 0, {
+      get: () => {
+        throw new Error("oversized headers were copied");
+      },
+    });
+    await expect(observe({ headers, method: "GET", url: URL })).rejects.toThrow(
+      /128 raw header/iu,
+    );
+
+    const authoritative = Array.from(
+      { length: MAX_AUTHORITATIVE_HEADERS },
+      (_, index) => `x-${index}`,
+    );
+    Object.defineProperty(authoritative, MAX_AUTHORITATIVE_HEADERS - 1, {
+      get: () => {
+        throw new Error("oversized authoritative headers were copied");
+      },
+    });
+    await expect(
+      observe({
+        additionalAuthoritativeHeaders: authoritative,
+        method: "GET",
+        url: URL,
+      }),
+    ).rejects.toThrow(/64 authoritative header/iu);
+    expect(fetcher).not.toHaveBeenCalled();
+  });
 });

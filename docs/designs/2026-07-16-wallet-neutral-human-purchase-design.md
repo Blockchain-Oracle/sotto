@@ -141,6 +141,12 @@ It contains no capability CID, agent Party, policy revision, or allowance. Fresh
 holdings and registry choice context are one-use preparation material, not
 durable purchase identity.
 
+The trusted human rail pins the exact `CC` asset, `Amulet` instrument ID,
+instrument admin, TransferFactory contract, and platform fee ceiling. The
+canonical purchase is capped at 32 KiB. Spike-local authorization replay state
+retains at most 4,096 live random IDs through purchase expiry plus five seconds;
+it is explicitly not restart-safe or multi-process durability evidence.
+
 The human lane uses a separate Token-only package closure. It resolves exactly
 the reviewed `splice-amulet` package for the authenticated payer, provider, and
 instrument admin on the challenge synchronizer. It does not require or select
@@ -281,6 +287,11 @@ reserve is insufficient, it discards all unsigned material and reacquires a
 fresh challenge and every challenge-bound observation. It never refreshes after
 approval is shown, signing begins, or execution is journaled.
 
+Payer-identity and Token-package acquisition each use one end-to-end ten-second
+deadline and pass the same abort signal through every trusted read. A hung
+reader settles the caller deadline even when its adapter ignores cancellation;
+it cannot mint an authority after the deadline.
+
 Every stage records a privacy-safe elapsed time. Latency claims require live
 p50/p95/p99 evidence and are not inferred from one spike purchase.
 
@@ -292,6 +303,10 @@ verify_steps:
   authority, amount, fee, package, time, and provenance mutation matrix.
 - Prove caller, connector, wallet, Party, topology, registered key, network, and
   synchronizer substitution fail before holdings, registry, prepare, or signing.
+- Prove request fields are snapshotted once for both commitment and transport,
+  credential/payment headers never reach the initial fetch, authority accessors
+  cannot substitute post-validation objects, and all bounded-work ceilings fail
+  before copying or binding.
 - Prove the human package observation selects only `splice-amulet` for the
   authenticated payer/provider/admin scope and rejects `sotto-control`, agents,
   missing parties, or extra package names.

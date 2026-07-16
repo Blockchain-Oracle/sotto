@@ -6,16 +6,13 @@ import type {
   HumanPaymentObservationOptions,
   HumanPaymentObserver,
 } from "./human-payment-observation-types.js";
+import { snapshotHumanPaymentRequest } from "./human-payment-request-snapshot.js";
 import {
   capturePaymentRequiredResponse,
   readPaymentRequiredObservation,
   type PaymentRequiredObservation,
 } from "./payment-observation.js";
-import {
-  commitHttpRequest,
-  type HttpRequestBindingInput,
-  type HttpRequestCommitment,
-} from "./request-binding.js";
+import type { HttpRequestCommitment } from "./request-binding.js";
 
 export const MAX_HUMAN_PAYMENT_FETCH_MS = 10_000;
 
@@ -25,31 +22,6 @@ type ObservationState = Readonly<{
 }>;
 
 const observations = new WeakMap<object, ObservationState>();
-
-function requestSnapshot(input: HttpRequestBindingInput) {
-  const binding = commitHttpRequest(input);
-  const body =
-    input.body === undefined ? undefined : Uint8Array.from(input.body);
-  const headers = Object.freeze(
-    (input.headers ?? []).map(([name, value]) =>
-      Object.freeze([name, value] as const),
-    ),
-  );
-  const additionalAuthoritativeHeaders = Object.freeze([
-    ...(input.additionalAuthoritativeHeaders ?? []),
-  ]);
-  return {
-    binding: Object.freeze({
-      ...binding,
-      canonicalBytes: Uint8Array.from(binding.canonicalBytes),
-    }),
-    body,
-    headers,
-    additionalAuthoritativeHeaders,
-    method: input.method.toUpperCase(),
-    url: new URL(input.url).toString(),
-  };
-}
 
 function optionsSignal(options: HumanPaymentObservationOptions): AbortSignal {
   const timeout = options.timeoutMilliseconds ?? MAX_HUMAN_PAYMENT_FETCH_MS;
@@ -115,7 +87,7 @@ export function createHumanPaymentObserver(
     throw new Error("human payment trusted fetcher is required");
   }
   return async (input, options = {}) => {
-    const snapshot = requestSnapshot(input);
+    const snapshot = snapshotHumanPaymentRequest(input);
     const signal = optionsSignal(options);
     const request = Object.freeze({
       ...(snapshot.body === undefined

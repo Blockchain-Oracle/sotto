@@ -15,6 +15,7 @@ import {
   TOKEN_TRANSFER_FACTORY_INTERFACE_ID,
 } from "./purchase-commitment-validation.js";
 import { identifier, sha256Hex } from "./purchase-commitment-primitives.js";
+import { encodeBoundedHumanPurchaseCanonical } from "./human-purchase-canonical.js";
 
 export const HUMAN_PURCHASE_COMMITMENT_VERSION =
   "sotto-human-purchase-v1" as const;
@@ -54,7 +55,7 @@ function commitWithAuthorization(
     },
     challenge: {
       x402Version: 2,
-      challengeId: input.paymentObservation.challengeId,
+      challengeId: validated.challengeId,
       observedAt: validated.observedAt,
       expiresAt: validated.expiresAt,
       network: identity.network,
@@ -101,19 +102,23 @@ function commitWithAuthorization(
   const attemptId = hash(
     JSON.stringify({ version: HUMAN_PURCHASE_ATTEMPT_VERSION, purchase }),
   );
-  const canonicalBytes = new TextEncoder().encode(
+  const canonicalBytes = encodeBoundedHumanPurchaseCanonical(
     JSON.stringify({ ...purchase, attemptId }),
   );
   const result: HumanPurchaseCommitment = Object.freeze({
     attemptId,
     canonicalBytes,
-    challengeId: input.paymentObservation.challengeId,
+    challengeId: validated.challengeId,
     commitment: hash(canonicalBytes),
     expiresAt: validated.expiresAt,
     requestCommitment: validated.binding.commitment,
     version: HUMAN_PURCHASE_COMMITMENT_VERSION,
   });
-  bindHumanPurchaseAuthorities(input, authorizationInstanceId, result);
+  bindHumanPurchaseAuthorities(
+    validated.authorities,
+    authorizationInstanceId,
+    result,
+  );
   authenticCommitments.set(result, {
     attemptId,
     challengeId: result.challengeId,

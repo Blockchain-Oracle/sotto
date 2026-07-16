@@ -33,12 +33,14 @@ describe("authenticated human payer identity", () => {
 
   afterEach(() => vi.useRealTimers());
 
-  it("captures one trusted zero-argument Five North payer identity", async () => {
+  it("captures one trusted Five North payer identity with a deadline signal", async () => {
     const source = reader();
     const observation = await createHumanPayerIdentityObserver(source)();
     const identity = claimHumanPayerIdentity(observation);
 
-    expect(source.readPayerIdentity).toHaveBeenCalledWith();
+    expect(source.readPayerIdentity).toHaveBeenCalledWith({
+      signal: expect.any(AbortSignal),
+    });
     expect(identity).toEqual({
       acquiredAt: "2026-07-16T15:00:00.000Z",
       keyPurpose: "SIGNING",

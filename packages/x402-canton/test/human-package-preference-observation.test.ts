@@ -72,16 +72,19 @@ describe("human Token-only package preference", () => {
       expectedScope,
     );
 
-    expect(source.readPackageReferences).toHaveBeenCalledWith({
-      packageRequirements: [
-        {
-          packageName: "splice-amulet",
-          parties: [DSO, HUMAN_PAYER, PROVIDER].sort(),
-        },
-      ],
-      synchronizerId: HUMAN_SYNCHRONIZER,
-      vettingValidAt: VETTING_VALID_AT,
-    });
+    expect(source.readPackageReferences).toHaveBeenCalledWith(
+      {
+        packageRequirements: [
+          {
+            packageName: "splice-amulet",
+            parties: [DSO, HUMAN_PAYER, PROVIDER].sort(),
+          },
+        ],
+        synchronizerId: HUMAN_SYNCHRONIZER,
+        vettingValidAt: VETTING_VALID_AT,
+      },
+      { signal: expect.any(AbortSignal) },
+    );
     expect(selection.version).toBe("sotto-human-package-selection-v1");
     expect(selection.references).toHaveLength(1);
     expect(selection.references[0]?.packageName).toBe("splice-amulet");
