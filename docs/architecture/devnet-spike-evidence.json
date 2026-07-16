@@ -25,6 +25,19 @@
       "verdict": "passed",
       "appliesToCommit": "ba1173c92f6bca30abd2692365671e00344c845b"
     },
+    "externalAgentRemediationCleanCloneVerification": {
+      "appliesToCommit": "0f1d872ec59ca5fb9c8dc07e67043ece2e0e1e10",
+      "nonLocalClone": true,
+      "gitObjectAlternatesAbsent": true,
+      "privateArtifactsAbsent": true,
+      "emptyDependencyStore": true,
+      "frozenInstall": "passed",
+      "testFilesPassed": 172,
+      "testsPassed": 1487,
+      "freshDamlBuild": "passed",
+      "repositoryGuards": "passed",
+      "verdict": "passed"
+    },
     "toolchain": {
       "damlSdk": "3.5.2",
       "dpm": "1.0.21",

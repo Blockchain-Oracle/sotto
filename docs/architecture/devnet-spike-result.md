@@ -31,6 +31,10 @@ not established.
 - The earlier July 13 implementation passed a non-shared, cache-disabled clone
   proof with a frozen install, 104 tests across 17 files, every repository
   guard, both Daml builds, and five Daml Script suites.
+- The external-agent remediation evidence commit `0f1d872` passed a separate
+  non-local clean clone with no Git alternates or private artifacts, an empty
+  dependency store, a frozen install, 1,487 tests across 172 files, fresh Daml
+  builds/tests, and every repository guard.
 - The original July 13 research DAR is `sotto-control` 0.1.0, built with Daml
   SDK 3.5.2. Node 24.18.0, pnpm 11.12.0, Java 21.0.11, and DPM 1.0.21 are
   pinned.
