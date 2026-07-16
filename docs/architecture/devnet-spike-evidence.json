@@ -1,10 +1,11 @@
 {
   "schemaVersion": 1,
-  "recordedAt": "2026-07-13T08:59:29Z",
+  "recordedAt": "2026-07-16T09:50:40Z",
   "verdict": "NO_GO",
   "source": {
     "implementationCommit": "ba1173c92f6bca30abd2692365671e00344c845b",
     "initialPostRunCommit": "01d2d2acad4596fdae9c55601399902fb95543e7",
+    "walletCapabilityRemediationCommit": "ac2c60907ee020757f0daf8c2512322630d73227",
     "liveRunSourceCommit": "not-available",
     "relationshipToLiveRun": "post-run hardened snapshot; the exact pre-run uncommitted worktree cannot be reconstructed as an immutable commit",
     "cleanCloneVerification": {
@@ -44,8 +45,8 @@
     "liveBridgeRoutePreservation": "not-proven at execution; fixed and unit-tested in the post-run implementation commit",
     "relayUsed": false,
     "upstreamRelayEquivalence": "not-proven",
-    "externalPartySigner": "not-proven",
-    "nonCustody": "not-proven"
+    "externalPartySigner": "proven for one wallet-signed capability create; agent-only purchase not yet proven",
+    "nonCustody": "raw payer key remained in the reference-wallet process for the capability-create proof; production wallet custody not proven"
   },
   "request": {
     "method": "GET",
@@ -110,6 +111,35 @@
       "recordTime": "2026-07-13T07:03:52.479815Z"
     }
   },
+  "walletCapabilityRemediation": {
+    "schema": "sotto-live-wallet-capability-bootstrap-v1",
+    "observedAt": "2026-07-16T09:50:40.917Z",
+    "sourceCommit": "ac2c60907ee020757f0daf8c2512322630d73227",
+    "connector": "wallet-sdk-reference",
+    "payerKind": "external-party-wallet-key",
+    "policyAuthorization": "sha256:8d683d4776b36aa0bf4b3c6f643af92040bac35681cb45ac2ec88f31a8e2cc61",
+    "commandId": "sotto-capability-bootstrap-v1-0b3d3f62f58573f4a8ee79d4df55cb7917ec5c8d88fc1aacb7ddb59738612909",
+    "updateId": "12203c28c0e7986e52e2198b1b3401deccbdb5897f7b4a27ade589d2b2d396494496",
+    "offset": 4392791,
+    "capabilityContractId": "0025b865a38a3a1cea1c730549e2c281f9b8073cdc3b1bf3b1199f7aa48057f877ca121220380798b67236d566550aed355fd3688d0df4f1f5369215726d92753f121b8e4e",
+    "completionClassification": "SUCCEEDED",
+    "activeMatchingCapabilities": 1,
+    "rawPayerKeyEnteredApplication": false,
+    "oneUsePolicyClaimed": true,
+    "replayedAfterAmbiguity": false,
+    "purchaseCommands": 0,
+    "settlementCommands": 0,
+    "tokenTransferCommands": 0,
+    "proves": "one externally signed bounded capability create on Five North",
+    "doesNotProve": [
+      "agent-only capability purchase",
+      "matched direct-transfer authorization rejection",
+      "Loop compatibility",
+      "production wallet custody",
+      "funding",
+      "settlement"
+    ]
+  },
   "atomicPurchase": {
     "attemptId": "sha256:ddf4c78367ab53edb38f73f76270ff42cfe2512e527b31afc35342a20114ea64",
     "policyCreateCommandId": "sotto-atomic-policy-ddf4c78367ab53edb38f73f76270ff42cfe2512e527b31afc35342a20114ea64",
@@ -161,8 +191,8 @@
     "exactLiveRejectionReasonsRetained": false
   },
   "blockingGates": [
-    "bypass-resistant signer and funding boundary",
-    "complete challenge and policy commitment at the constrained signer",
+    "agent-only constrained purchase and matched direct-transfer bypass oracle",
+    "live complete challenge and policy commitment at the constrained signer",
     "Five North-compatible Loop human approval",
     "public settlement visibility with outsider-private-context absence",
     "explicit Q-003 through Q-006 decisions"

@@ -1,20 +1,24 @@
 # Five North DevNet Spike Result
 
-Date: 2026-07-13
+Date: 2026-07-16 (original payment run: 2026-07-13)
 
 ## Verdict
 
 `NO_GO` for production planning. The research path proved a real
 participant-hosted payment, private Daml state, atomic composition, rollback,
-and delivery reconciliation through Sotto's direct Five North adapter. It did
-not prove a bypass-resistant signer, upstream relay equivalence, an exact Loop
-human-payment path on the Five North participant, or public Scan visibility for
-the accepted transfer.
+and delivery reconciliation through Sotto's direct Five North adapter. A later
+remediation also proved one wallet-signed external-payer capability create on
+Five North without a purchase or token transfer. It has not yet proved the
+agent-only constrained purchase, its direct-transfer bypass oracle, upstream
+relay equivalence, an exact Loop human-payment path on the Five North
+participant, or public Scan visibility for the accepted transfer.
 
 ## Source And Evidence
 
 - Reviewed implementation commit: `ba1173c92f6bca30abd2692365671e00344c845b`.
 - Initial post-run snapshot: `01d2d2acad4596fdae9c55601399902fb95543e7`.
+- Wallet-capability remediation commit:
+  `ac2c60907ee020757f0daf8c2512322630d73227`.
 - Structured redacted evidence:
   [devnet-spike-evidence.json](devnet-spike-evidence.json).
 - A non-shared, cache-disabled clone of the implementation commit passed a
@@ -33,6 +37,27 @@ live evidence.
 
 The evidence bundle contains no credential, access token, raw key, prepared
 transaction, request body, or paid response body.
+
+## Proven Live Capability Remediation
+
+- On July 16, a wallet-controlled external payer signed one exact
+  `BoundedPurchaseCapability` create through the Wallet SDK reference connector.
+  The Sotto application never received the raw payer key.
+- The wallet independently checked the prepared transaction and Canton V2 hash,
+  matched a mode-`0600` one-use policy, persisted the claim before key access,
+  and returned one signature. The application recorded execution intent before
+  dispatch and did not replay after the immediate response became ambiguous.
+- Read-only completion reconciliation found the exact command succeeded at
+  offset `4392791`. A payer-scoped ACS read found exactly one matching active
+  capability, contract
+  `0025b865a38a3a1cea1c730549e2c281f9b8073cdc3b1bf3b1199f7aa48057f877ca121220380798b67236d566550aed355fd3688d0df4f1f5369215726d92753f121b8e4e`.
+- The accepted update is
+  `12203c28c0e7986e52e2198b1b3401deccbdb5897f7b4a27ade589d2b2d396494496`. The
+  action created one capability and submitted zero purchase, settlement, or
+  Canton Coin transfer commands.
+- This proves the capability-creation custody boundary for the reference-wallet
+  spike. It does not prove Loop compatibility, a production wallet service,
+  agent-only purchase execution, funding, or bypass resistance.
 
 ## Network And Adapter Boundary
 
@@ -83,6 +108,8 @@ transaction, request body, or paid response body.
 | Atomic payment/policy/context update | `1220a32bf2bc1e922dc6afab829b8d04de41630d23548df495cd78d75273595da7e7`                                                                       |
 | Atomic reduced policy                | `00e32e7e431d20e4466fea529293d086e43bfeac5e7185a708104a21d8e935bd88ca1212208f5964421a15cf31097c298f0d6e17ea17273263e80c4c7c6c1047b51b5d0462` |
 | Atomic private context               | `001a9e05a9616f0cdde67eebadbeb1321261690642bfe15888e06debf94071e361ca12122022d61e5456ec74dd464e61b0b101a1826697e90cc8062e0a31868be49ce5bd6d` |
+| Wallet capability create update      | `12203c28c0e7986e52e2198b1b3401deccbdb5897f7b4a27ade589d2b2d396494496`                                                                       |
+| Wallet-created capability            | `0025b865a38a3a1cea1c730549e2c281f9b8073cdc3b1bf3b1199f7aa48057f877ca121220380798b67236d566550aed355fd3688d0df4f1f5369215726d92753f121b8e4e` |
 
 The payment amount was 0.2500000000 test Canton Coin. The baseline settlement
 was recorded at `2026-07-13T06:37:38.471765Z`; the atomic settlement was
@@ -107,12 +134,12 @@ public Scan absence were not completed and are not claimed.
   Sotto policy. The baseline transfer succeeded before the policy existed, so
   that signer and funding model was bypassable.
 - A July 15 read-only authority recheck found 66 current rights. Participant
-  administration and execute-as-any-party remained, but named payer `CanActAs`
-  was absent. A reviewed one-shot capability bootstrap reached Five North and
-  returned HTTP `403`; completion history and exact payer-scoped ACS contained
-  no matching result. Interactive preparation of the same create had succeeded,
-  so the current blocker is payer signing/submission authority, not network or
-  package reachability. This state still does not prove a constrained signer.
+  administration and execute-as-any-party remained, but named external-payer
+  `CanActAs` was absent. The July 16 wallet-signed capability create then
+  succeeded without granting that authority to the Sotto application. The
+  remaining authority proof is narrower: an agent-only capability purchase must
+  succeed while an otherwise-valid generic payer transfer with the same agent
+  identity fails for missing payer authority.
 - Atomic composition is available, but the current canonical identifier does not
   independently commit every required challenge, expiry, policy-CID, and
   policy-revision field at a constrained signer boundary. Full purchase
@@ -139,9 +166,9 @@ public Scan absence were not completed and are not claimed.
 
 ## Decision Inputs
 
-- Q-003 remains unresolved. Atomic composition works, but the available
-  credential can bypass policy through a generic transfer. That candidate is
-  rejected for bounded authority.
+- Q-003 remains unresolved. Wallet-controlled capability creation now works, but
+  the agent-only constrained purchase and matched direct-transfer rejection are
+  not yet live-proven.
 - Q-004 remains unresolved. The fixture audience proved owner, agent, payer, and
   provider visibility, but it does not select the production receipt readers.
 - Q-005 remains unresolved. Loop is authenticated on a different participant
@@ -151,8 +178,8 @@ public Scan absence were not completed and are not claimed.
 
 ## Gate Consequence
 
-The spike must not authorize marketplace, Composer, CLI/MCP, bounded-agent, or
-Coolify production implementation. Next work is limited to blocker remediation:
-a credential that cannot authorize generic transfers, a complete canonical
-purchase commitment at that signer boundary, the exact Five North-compatible
-human approval route, and public settlement observation.
+The spike must not yet authorize marketplace, Composer, CLI/MCP, bounded-agent,
+or Coolify production implementation. Next work is the fresh agent-only
+capability purchase and direct-transfer rejection oracle, followed by the exact
+Five North-compatible human approval route, public settlement observation, and
+the remaining production decisions.

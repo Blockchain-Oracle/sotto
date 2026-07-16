@@ -57,7 +57,23 @@ formats/readers, and their result proved Daml stakeholder visibility rather than
 credential isolation. That historical token state could satisfy both `Consume`
 controllers and was an explicit negative signer-boundary result.
 
-On July 15, a read-only recheck found that named payer `CanActAs` was no longer
-present, although participant administration and execute-as-any-party remained.
-That change prevents current direct payer submission but does not retroactively
-strengthen the privacy proof or satisfy the bounded-authority gate.
+On July 15, a read-only recheck found that named external-payer `CanActAs` was
+absent, although participant administration and execute-as-any-party remained.
+On July 16, that external payer used a wallet-held key to create one real
+`BoundedPurchaseCapability`; the Sotto application did not receive the key or
+payer authority. Completion history and payer-scoped ACS agreed on exactly one
+active capability. No purchase or Canton Coin transfer was part of that action.
+
+## Delegated Capability Matrix
+
+| Operation                 | Contract authority                        | Root `actAs` | Proven state                                      |
+| ------------------------- | ----------------------------------------- | ------------ | ------------------------------------------------- |
+| Create bounded capability | external payer signatory                  | payer        | Live through Wallet SDK reference connector       |
+| Exercise bounded purchase | payer consequence authority; agent choice | agent        | Deterministic Daml and prepared-effect tests only |
+| Generic payer transfer    | transfer sender/controller is payer       | agent        | Deterministic rejection; matched live oracle next |
+| Pause/revoke capability   | payer-controlled lifecycle                | payer        | Deterministic tests only                          |
+
+The live create proves the setup custody boundary, not the final autonomous
+purchase boundary. Production remains `NO_GO` until the same restricted agent
+identity succeeds through the capability and fails an otherwise-valid direct
+payer transfer, with exact completion and ACS evidence for both conclusions.
