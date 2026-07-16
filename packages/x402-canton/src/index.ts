@@ -115,6 +115,11 @@ export {
   type HumanPurchaseLedgerIntent,
 } from "./human-purchase-ledger-intent.js";
 export {
+  buildHumanPurchasePrepareRequest,
+  type HumanPurchasePrepareRequest,
+  type HumanPurchaseTransferChoiceArgument,
+} from "./human-purchase-command.js";
+export {
   createHumanPurchaseHoldingObserver,
   MAX_HUMAN_HOLDING_ACQUISITION_MS,
   MAX_HUMAN_HOLDING_OBSERVATION_AGE_MS,

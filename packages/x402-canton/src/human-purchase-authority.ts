@@ -4,6 +4,7 @@ import type {
   ValidatedHumanPurchaseInput,
 } from "./human-purchase-commitment-types.js";
 import type { AuthenticatedHumanPayerIdentity } from "./human-payer-identity.js";
+import type { AuthenticatedHumanPackagePreference } from "./human-package-preference-types.js";
 import { createHumanAuthorizationReplayStore } from "./human-authorization-replay.js";
 
 const identityBindings = new WeakMap<object, string>();
@@ -17,7 +18,9 @@ const purchaseAuthorities = new WeakMap<
 
 export type HumanPurchaseCommandAuthority = {
   readonly packageSelection: CanonicalHumanPackageSelection;
+  readonly packageSelectionAuthority: AuthenticatedHumanPackagePreference;
   readonly payerIdentity: AuthenticatedHumanPayerIdentity;
+  readonly payerIdentityAuthority: AuthenticatedHumanPayerIdentity;
   commandClaimed: boolean;
 };
 
@@ -63,7 +66,9 @@ export function bindHumanPurchaseAuthorities(
   paymentBindings.set(payment, result.commitment);
   purchaseAuthorities.set(result, {
     packageSelection: input.packageSelection,
+    packageSelectionAuthority: authorities.packageSelection,
     payerIdentity: input.identity,
+    payerIdentityAuthority: authorities.payerIdentity,
     commandClaimed: false,
   });
 }

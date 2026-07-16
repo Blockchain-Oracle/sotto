@@ -73,6 +73,7 @@ function cloneMaterial(
 function readState(
   observation: unknown,
   candidateIntent: unknown,
+  now = Date.now(),
 ): HumanHoldingState {
   const intent = readAuthenticatedHumanPurchaseLedgerIntent(candidateIntent);
   if (typeof observation !== "object" || observation === null) {
@@ -82,12 +83,7 @@ function readState(
   if (state === undefined) {
     throw new Error("human holding observation is not authenticated");
   }
-  requireTimes(
-    state.intent,
-    state.acquisitionStartedAt,
-    state.capturedAt,
-    Date.now(),
-  );
+  requireTimes(state.intent, state.acquisitionStartedAt, state.capturedAt, now);
   if (
     state.intent !== intent ||
     state.attemptId !== intent.attemptId ||
@@ -130,7 +126,38 @@ export function readHumanPurchaseHoldingObservation(
   observation: unknown,
   intent: unknown,
 ): HumanPurchaseHoldingExecutionMaterial {
-  return cloneMaterial(readState(observation, intent));
+  return readHumanPurchaseHoldingObservationAt(observation, intent, Date.now());
+}
+
+/** @internal Human registry and command preflight only. */
+export function readHumanPurchaseHoldingObservationAt(
+  observation: unknown,
+  intent: unknown,
+  now: number,
+): HumanPurchaseHoldingExecutionMaterial {
+  return cloneMaterial(readState(observation, intent, now));
+}
+
+/** @internal Human command construction only. */
+export function prepareHumanPurchaseHoldingClaim(
+  observation: unknown,
+  intent: unknown,
+  now: number,
+) {
+  const state = readState(observation, intent, now);
+  if (
+    Date.parse(state.intent.challenge.executeBefore) - now <
+    MIN_HUMAN_SIGNING_RESERVE_MS
+  ) {
+    throw new Error("human holding challenge lacks the signing reserve");
+  }
+  const material = cloneMaterial(state);
+  return Object.freeze({
+    material,
+    commit: () => {
+      state.claimed = true;
+    },
+  });
 }
 
 /** @internal Human command construction only. */
@@ -138,13 +165,11 @@ export function claimHumanPurchaseHoldingObservation(
   observation: unknown,
   intent: unknown,
 ): HumanPurchaseHoldingExecutionMaterial {
-  const state = readState(observation, intent);
-  if (
-    Date.parse(state.intent.challenge.executeBefore) - Date.now() <
-    MIN_HUMAN_SIGNING_RESERVE_MS
-  ) {
-    throw new Error("human holding challenge lacks the signing reserve");
-  }
-  state.claimed = true;
-  return cloneMaterial(state);
+  const ticket = prepareHumanPurchaseHoldingClaim(
+    observation,
+    intent,
+    Date.now(),
+  );
+  ticket.commit();
+  return ticket.material;
 }

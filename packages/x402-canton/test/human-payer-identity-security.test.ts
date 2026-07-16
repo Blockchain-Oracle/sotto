@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   claimHumanPayerIdentity,
   createHumanPayerIdentityObserver,
+  readAuthenticatedHumanPayerIdentity,
 } from "../src/human-payer-identity.js";
 
 const FINGERPRINT = `1220${"a".repeat(64)}`;
@@ -101,6 +102,14 @@ describe("human payer identity security", () => {
     const stale = await createHumanPayerIdentityObserver(reader())();
     vi.advanceTimersByTime(60_001);
     expect(() => claimHumanPayerIdentity(stale)).toThrow(/stale/iu);
+
+    vi.setSystemTime(new Date("2026-07-16T15:00:00.000Z"));
+    const claimed = await createHumanPayerIdentityObserver(reader())();
+    const authenticated = claimHumanPayerIdentity(claimed);
+    vi.advanceTimersByTime(60_001);
+    expect(() => readAuthenticatedHumanPayerIdentity(authenticated)).toThrow(
+      /stale/iu,
+    );
 
     vi.setSystemTime(new Date("2026-07-16T15:00:00.000Z"));
     const rollback = await createHumanPayerIdentityObserver(reader())();

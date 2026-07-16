@@ -1,5 +1,5 @@
 import { MIN_HUMAN_SIGNING_RESERVE_MS } from "./human-purchase-commitment-validation.js";
-import { readHumanPurchaseHoldingObservation } from "./human-purchase-holding-observation.js";
+import { readHumanPurchaseHoldingObservationAt } from "./human-purchase-holding-state.js";
 import type { HumanPurchaseHoldingObservation } from "./human-purchase-holding-types.js";
 import {
   readAuthenticatedHumanPurchaseLedgerIntent,
@@ -92,11 +92,13 @@ function readState(
   observation: unknown,
   candidateIntent: unknown,
   candidateHoldings: unknown,
+  now = Date.now(),
 ): HumanTransferFactoryState {
   const intent = readAuthenticatedHumanPurchaseLedgerIntent(candidateIntent);
-  const holdings = readHumanPurchaseHoldingObservation(
+  const holdings = readHumanPurchaseHoldingObservationAt(
     candidateHoldings,
     intent,
+    now,
   );
   if (typeof observation !== "object" || observation === null) {
     throw new Error("human TransferFactory observation is not authenticated");
@@ -105,12 +107,7 @@ function readState(
   if (state === undefined) {
     throw new Error("human TransferFactory observation is not authenticated");
   }
-  requireTimes(
-    state.intent,
-    state.acquisitionStartedAt,
-    state.capturedAt,
-    Date.now(),
-  );
+  requireTimes(state.intent, state.acquisitionStartedAt, state.capturedAt, now);
   if (state.intent !== intent) {
     throw new Error(
       "human TransferFactory observation belongs to another purchase",
@@ -157,7 +154,7 @@ export function readHumanTransferFactoryObservation(
   intent: unknown,
   holdings: unknown,
 ): HumanTransferFactoryExecutionMaterial {
-  return cloneMaterial(readState(observation, intent, holdings));
+  return cloneMaterial(readState(observation, intent, holdings, Date.now()));
 }
 
 export function claimHumanTransferFactoryObservation(
@@ -165,15 +162,37 @@ export function claimHumanTransferFactoryObservation(
   intent: unknown,
   holdings: unknown,
 ): HumanTransferFactoryExecutionMaterial {
-  const state = readState(observation, intent, holdings);
+  const ticket = prepareHumanTransferFactoryClaim(
+    observation,
+    intent,
+    holdings,
+    Date.now(),
+  );
+  ticket.commit();
+  return ticket.material;
+}
+
+/** @internal Human command construction only. */
+export function prepareHumanTransferFactoryClaim(
+  observation: unknown,
+  intent: unknown,
+  holdings: unknown,
+  now: number,
+) {
+  const state = readState(observation, intent, holdings, now);
   if (
-    Date.parse(state.intent.challenge.executeBefore) - Date.now() <
+    Date.parse(state.intent.challenge.executeBefore) - now <
     MIN_HUMAN_SIGNING_RESERVE_MS
   ) {
     throw new Error(
       "human TransferFactory challenge lacks the signing reserve",
     );
   }
-  state.claimed = true;
-  return cloneMaterial(state);
+  const material = cloneMaterial(state);
+  return Object.freeze({
+    material,
+    commit: () => {
+      state.claimed = true;
+    },
+  });
 }

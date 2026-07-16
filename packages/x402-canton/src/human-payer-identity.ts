@@ -61,10 +61,7 @@ type ObservationState = {
 };
 
 const observations = new WeakMap<object, ObservationState>();
-const authenticatedIdentities = new WeakMap<
-  object,
-  AuthenticatedHumanPayerIdentity
->();
+const authenticatedIdentities = new WeakMap<object, ObservationState>();
 
 async function readUpstream(
   phase: "subject" | "topology",
@@ -77,8 +74,7 @@ async function readUpstream(
   }
 }
 
-function requireFresh(state: ObservationState): void {
-  const now = Date.now();
+function requireFresh(state: ObservationState, now = Date.now()): void {
   if (now - state.capturedAt < -CLOCK_ROLLBACK_TOLERANCE_MS) {
     throw new Error("human payer identity clock moved backwards");
   }
@@ -165,19 +161,28 @@ export function claimHumanPayerIdentity(
   requireFresh(state);
   if (state.claimed) throw new Error("human payer identity is already claimed");
   state.claimed = true;
-  authenticatedIdentities.set(state.identity, state.identity);
+  authenticatedIdentities.set(state.identity, state);
+  return state.identity;
+}
+
+/** @internal Human purchase and command authority only. */
+export function readAuthenticatedHumanPayerIdentityAt(
+  candidate: unknown,
+  now: number,
+): AuthenticatedHumanPayerIdentity {
+  if (typeof candidate !== "object" || candidate === null) {
+    throw new Error("human payer identity is not authenticated");
+  }
+  const state = authenticatedIdentities.get(candidate);
+  if (state === undefined) {
+    throw new Error("human payer identity is not authenticated");
+  }
+  requireFresh(state, now);
   return state.identity;
 }
 
 export function readAuthenticatedHumanPayerIdentity(
   candidate: unknown,
 ): AuthenticatedHumanPayerIdentity {
-  if (typeof candidate !== "object" || candidate === null) {
-    throw new Error("human payer identity is not authenticated");
-  }
-  const identity = authenticatedIdentities.get(candidate);
-  if (identity === undefined) {
-    throw new Error("human payer identity is not authenticated");
-  }
-  return identity;
+  return readAuthenticatedHumanPayerIdentityAt(candidate, Date.now());
 }

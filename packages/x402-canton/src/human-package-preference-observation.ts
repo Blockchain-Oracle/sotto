@@ -32,8 +32,7 @@ const authenticated = new WeakMap<object, ObservationState>();
 
 export type HumanPackagePreferenceObservationOptions = HumanObservationOptions;
 
-function requireFresh(state: ObservationState): void {
-  const now = Date.now();
+function requireFresh(state: ObservationState, now = Date.now()): void {
   if (now - state.capturedAt < -CLOCK_ROLLBACK_TOLERANCE_MS) {
     throw new Error("human package preference clock moved backwards");
   }
@@ -127,6 +126,14 @@ export function claimHumanPackagePreferenceObservation(
 export function readAuthenticatedHumanPackagePreference(
   candidate: unknown,
 ): AuthenticatedHumanPackagePreference {
+  return readAuthenticatedHumanPackagePreferenceAt(candidate, Date.now());
+}
+
+/** @internal Human command authority only. */
+export function readAuthenticatedHumanPackagePreferenceAt(
+  candidate: unknown,
+  now: number,
+): AuthenticatedHumanPackagePreference {
   if (typeof candidate !== "object" || candidate === null) {
     throw new Error("human package preference is not authenticated");
   }
@@ -134,7 +141,7 @@ export function readAuthenticatedHumanPackagePreference(
   if (state === undefined) {
     throw new Error("human package preference is not authenticated");
   }
-  requireFresh(state);
+  requireFresh(state, now);
   return state.projection;
 }
 

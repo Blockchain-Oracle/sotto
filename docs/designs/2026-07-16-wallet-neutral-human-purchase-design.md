@@ -193,6 +193,20 @@ holdings. The future Five North adapter must enforce the same absolute deadline
 and two-megabyte response limit before allocation, including its single
 authenticated retry.
 
+Human command construction produces exactly one payer-root
+`TransferFactory_Transfer` with payer-only `actAs`, empty `readAs`, the
+committed synchronizer and deadline, the Token-only package preference, exact
+holdings, registry context, and privacy-safe Sotto metadata. It never accepts a
+caller package selection or authority override. Payer identity, package
+preference, holdings, registry context, disclosure merging, and the two-minute
+signing reserve are preflighted against one captured clock value before anything
+is consumed. The resulting no-fail commit suffix claims all four authorities
+once; any failed preflight or construction leaves every still-valid input
+reusable. The authenticated prepare request privately retains the original payer
+and package authorities and rechecks their freshness plus the signing reserve at
+transport time, so a request cannot wait in memory beyond the authority that
+selected its payer or packages.
+
 ## Prepared Transfer Contract
 
 Before a wallet is called, Sotto must prove:
