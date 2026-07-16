@@ -88,6 +88,15 @@ export {
   type HumanPayerIdentityReader,
 } from "./human-payer-identity.js";
 export {
+  createHumanPaymentObserver,
+  MAX_HUMAN_PAYMENT_FETCH_MS,
+  type HumanPaymentFetcher,
+  type HumanPaymentFetchRequest,
+  type HumanPaymentObservation,
+  type HumanPaymentObservationOptions,
+  type HumanPaymentObserver,
+} from "./human-payment-observation.js";
+export {
   claimHumanPackagePreferenceObservation,
   createHumanPackagePreferenceObserver,
   MAX_HUMAN_PACKAGE_ACQUISITION_MS,
