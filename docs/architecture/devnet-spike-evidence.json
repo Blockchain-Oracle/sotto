@@ -1,20 +1,29 @@
 {
-  "schemaVersion": 1,
-  "recordedAt": "2026-07-16T09:50:40Z",
+  "schemaVersion": 2,
+  "recordedAt": "2026-07-16T14:23:28Z",
   "verdict": "NO_GO",
   "source": {
-    "implementationCommit": "ba1173c92f6bca30abd2692365671e00344c845b",
+    "implementationCommit": "3780b220de9b44b20c2cdcab92314c706721236c",
+    "implementationCommits": {
+      "externalAgentPurchaseHardening": "d0d2d40d24b07784355ae2557a972b63a1d73130",
+      "pinnedFiveNorthHoldingAcceptance": "3780b220de9b44b20c2cdcab92314c706721236c"
+    },
+    "historicalImplementationCommit": "ba1173c92f6bca30abd2692365671e00344c845b",
     "initialPostRunCommit": "01d2d2acad4596fdae9c55601399902fb95543e7",
     "walletCapabilityRemediationCommit": "ac2c60907ee020757f0daf8c2512322630d73227",
     "liveRunSourceCommit": "not-available",
-    "relationshipToLiveRun": "post-run hardened snapshot; the exact pre-run uncommitted worktree cannot be reconstructed as an immutable commit",
+    "trackedSourceCommitAtExternalAgentRun": "d12363f42e5bc2d56108986aa93187e764642372",
+    "verifierChangesUncommittedAtExternalAgentRun": true,
+    "relationshipToExternalAgentRun": "the live purchase began from tracked commit d12363f42e5bc2d56108986aa93187e764642372 with verifier changes still uncommitted; d0d2d40d24b07784355ae2557a972b63a1d73130 and 3780b220de9b44b20c2cdcab92314c706721236c are reviewed post-run implementation snapshots, not retroactive live-run source commits",
+    "relationshipToLiveRun": "historical phase-three evidence used a post-run hardened snapshot; the exact pre-run uncommitted worktree cannot be reconstructed as an immutable commit",
     "cleanCloneVerification": {
       "cacheDisabled": true,
       "damlScriptSuitesPassed": 5,
       "frozenInstall": "passed",
       "testFilesPassed": 17,
       "testsPassed": 104,
-      "verdict": "passed"
+      "verdict": "passed",
+      "appliesToCommit": "ba1173c92f6bca30abd2692365671e00344c845b"
     },
     "toolchain": {
       "damlSdk": "3.5.2",
@@ -36,17 +45,25 @@
     },
     "credentialBoundary": "shared participant-admin M2M credential with read-any and named actAs rights",
     "payerBoundary": "participant-hosted Sotto payer",
-    "providerBoundary": "participant-hosted Sotto provider"
+    "providerBoundary": "participant-hosted Sotto provider",
+    "externalAgentPurchaseBoundary": {
+      "payer": "external-party wallet key outside the Sotto application",
+      "agent": "external-party wallet key with agent authority and no payer actAs",
+      "provider": "participant-hosted Sotto provider"
+    }
   },
   "compatibility": {
     "httpChallenge": "x402 v2-compatible exact canton:devnet challenge",
     "settlementAdapter": "direct Ledger API v2 AmuletRules_Transfer",
-    "preparedTransactionVerification": "not-used; the spike submitted a typed direct Ledger API command",
+    "preparedTransactionVerification": {
+      "historicalBaseline": "not-used; the original spike submitted a typed direct Ledger API command",
+      "externalAgentPurchase": "used; the dirty live verifier decoded and checked the actual prepared transaction before the external agent signed it, while stricter post-run false-acceptance coverage is preserved in d0d2d40d24b07784355ae2557a972b63a1d73130"
+    },
     "liveBridgeRoutePreservation": "not-proven at execution; fixed and unit-tested in the post-run implementation commit",
     "relayUsed": false,
     "upstreamRelayEquivalence": "not-proven",
-    "externalPartySigner": "proven for one wallet-signed capability create; agent-only purchase not yet proven",
-    "nonCustody": "raw payer key remained in the reference-wallet process for the capability-create proof; production wallet custody not proven"
+    "externalPartySigner": "proven for one payer-wallet-signed capability create and one external-agent-only bounded purchase; production connector custody remains unproven",
+    "nonCustody": "the payer key remained outside the Sotto application for the external-agent purchase; the reference-wallet process still held the payer key during capability creation, and production wallet custody is not proven"
   },
   "request": {
     "method": "GET",
@@ -140,6 +157,115 @@
       "settlement"
     ]
   },
+  "externalAgentPurchase": {
+    "schema": "sotto-live-external-agent-purchase-evidence-v1",
+    "damlPackage": {
+      "name": "sotto-control",
+      "version": "0.2.0",
+      "packageId": "4d614496ec9b30b22545fd350ecb9ec999164cfb0b5953f46dbbf937f8918f57",
+      "templateId": "4d614496ec9b30b22545fd350ecb9ec999164cfb0b5953f46dbbf937f8918f57:Sotto.Control.PurchaseCapability:BoundedPurchaseCapability"
+    },
+    "parties": {
+      "payer": "sotto-external-payer::1220e5e6be928d5264069d480d0c30198236a71e2af7d42f519841483fc83fe8b012",
+      "agent": "sotto-external-agent::12206e0e95b6aa27cfb8836e30d432e19ab918a01a5507eb1601004ac2a007d5cdbf",
+      "provider": "sotto-spike-provider-20260713::1220a14ca128063b8dc9d1ebb0bd22633be9f2168500f4dbc1ecaeb1855b14e5acf8"
+    },
+    "commandId": "sotto-purchase-v3-84f4985631a7d1f99c122f55d2c7f17bfcb35e8f0da5d22a3a5c948fec534e42",
+    "updateId": "1220a389588fc2b677ce956c03af93f65ce537b29aea244e815022cde54b492811e3",
+    "offset": 4404758,
+    "completionClassification": "SUCCEEDED",
+    "reconciledAt": "2026-07-16T13:05:59.000Z",
+    "synchronizerId": "global-domain::1220be58c29e65de40bf273be1dc2b266d43a9a002ea5b18955aeef7aac881bb471a",
+    "purchaseCommitment": "sha256:84f4985631a7d1f99c122f55d2c7f17bfcb35e8f0da5d22a3a5c948fec534e42",
+    "attemptId": "sha256:b2bfdc417cb1de5ee12bc3cb15b024ff6f99f691661ae891bd16355679631efa",
+    "challengeId": "sha256:84a0414589be83f03f12972361bce4279bc1067a8a5588cd2506b03791b26f76",
+    "requestCommitment": "sha256:433bf6865292680d4110afefb16d9281721da2cd86476fa2e2a3759673372fe8",
+    "resourceHash": "sha256:047401110fced14522cb54ee647802040f579befd40c7b1647438d31d5e3c1bc",
+    "authority": {
+      "purchaseRoot": "agent-only",
+      "payerActAsGrantedToAgent": false,
+      "payerKeyEnteredApplication": false
+    },
+    "completionReconciliation": {
+      "beginExclusive": 4404757,
+      "earlyObservation": {
+        "classification": "ABSENT_COMPLETE",
+        "offset": 4404757,
+        "terminal": false,
+        "authoritative": false
+      },
+      "authoritativeObservation": {
+        "classification": "SUCCEEDED",
+        "offset": 4404758,
+        "terminal": true,
+        "authoritative": true
+      },
+      "implementationRule": "absence is non-terminal; only an exact success or rejection is terminal"
+    },
+    "effects": {
+      "consumedCapabilityContractId": "0064787984bb73e373a06f5ae135ed5ef65306a0338e74332ffcdbb396841ec0ebca12122058dadf777c2a587d942576b976ab83bf9d932662ffc98e56731853e2d9a2a705",
+      "contextContractId": "0045489cef9040083ab47b7eca5c96e19de7fe1c16a408045aa0b68dd62eff34cbca121220b4985be823bd87c69df4ec645d58f321d7f5b3051a596bef7e0c5f1bd1174846",
+      "replacementCapability": {
+        "contractId": "00e1e9a1448e74338e64518e192bccbf8e16219d5148b8807943240ed527ee7d70ca1212206aacb2c64230641268bcf687b2ea81b38029ec183a25443a207844d09f7d1fa2",
+        "revision": "1",
+        "remainingAllowanceCantonCoin": "0.0750000000"
+      },
+      "providerHolding": {
+        "contractId": "0007ac3633e627b1f627e2bf154f214eccd661964216611e715eee4682c1ebd8bbca1212201bae50e4661e76983c86eff5622035b030923ac9283bc63df964c86480b82968",
+        "amountCantonCoin": "0.2500000000"
+      },
+      "payerChangeHolding": {
+        "contractId": "000675f60b5ef9db29be91ef263a9e149491b0c1670d16a6a9dbab758bea3a756fca1212203217c6ce6f3484aac0ec30c980fd8f3644a0c660b58f0a81a33a753165c185f8",
+        "amountCantonCoin": "0.7500000000"
+      }
+    },
+    "delivery": {
+      "ledgerReconciled": true,
+      "initialHttpStatus": 200,
+      "exactProofHttpStatus": 200,
+      "mutatedAttemptHttpStatus": 402,
+      "cachedReplayHttpStatus": 200,
+      "cachedResponseIdentical": true,
+      "secondPaymentSubmitted": false,
+      "storageDurability": "process-memory-spike-only; production-requires-postgresql",
+      "unknownDeliveryOutcomeBoundary": "retained in process and never automatically retried; process restart durability is not proven"
+    },
+    "directAuthorityControl": {
+      "mode": "prepare-only",
+      "agent": "MISSING_PAYER_AUTHORITY",
+      "payer": "PREPARED",
+      "executeCalls": 0,
+      "holdingCount": 1,
+      "offset": 4406019,
+      "commandId": "sotto-direct-authority-control-v1-e0dcf8e5a266e4254df4a46c760e0144f0764f5bcb2df32e91a9b22d8cfb7611",
+      "trackedSourceCommit": "d0d2d40d24b07784355ae2557a972b63a1d73130",
+      "holdingParserChangesUncommittedAtRun": true,
+      "postRunImplementationCommit": "3780b220de9b44b20c2cdcab92314c706721236c",
+      "proves": "the external agent cannot prepare the exact direct payer transfer that the payer can prepare",
+      "doesNotProve": "an executed direct-transfer rejection; neither variant was signed or executed"
+    },
+    "sourceProvenance": {
+      "trackedSourceCommit": "d12363f42e5bc2d56108986aa93187e764642372",
+      "verifierChangesUncommittedAtRun": true,
+      "postRunImplementationCommits": [
+        "d0d2d40d24b07784355ae2557a972b63a1d73130",
+        "3780b220de9b44b20c2cdcab92314c706721236c"
+      ]
+    },
+    "proves": [
+      "one real external-agent-only bounded purchase on Five North",
+      "one Canton transaction containing capability consumption, payer transfer, private context, and replacement capability",
+      "exact paid delivery and byte-identical in-process replay without a second payment",
+      "prepare-only direct payer-transfer authority separation"
+    ],
+    "doesNotProve": [
+      "production wallet custody",
+      "one-call human wallet approval",
+      "public explorer settlement visibility",
+      "durable delivery recovery across process restart",
+      "production topology"
+    ]
+  },
   "atomicPurchase": {
     "attemptId": "sha256:ddf4c78367ab53edb38f73f76270ff42cfe2512e527b31afc35342a20114ea64",
     "policyCreateCommandId": "sotto-atomic-policy-ddf4c78367ab53edb38f73f76270ff42cfe2512e527b31afc35342a20114ea64",
@@ -171,31 +297,73 @@
       "provider": { "policy": 0, "context": 1 },
       "outsider": { "policy": 0, "context": 0 }
     },
+    "externalAgentPurchase": {
+      "activeAtOffset": 4405009,
+      "updateId": "1220a389588fc2b677ce956c03af93f65ce537b29aea244e815022cde54b492811e3",
+      "agent": { "context": 1, "transaction": "VISIBLE" },
+      "payer": { "context": 1, "transaction": "VISIBLE" },
+      "provider": { "context": 1, "transaction": "VISIBLE" },
+      "outsider": { "context": 0, "transaction": "ABSENT_HTTP_404" },
+      "publicExplorer": {
+        "host": "lighthouse.devnet.cantonloop.com",
+        "queriedAt": "2026-07-16T13:28:46Z",
+        "transactionHttpStatus": 404,
+        "latestIndexedRecordTime": "2026-07-15T05:03:54.799667Z",
+        "indexState": "stale-at-query-time",
+        "verdict": "NOT_PUBLICLY_VISIBLE_AT_QUERY_TIME"
+      }
+    },
     "provesStakeholderSemantics": true,
     "provesCredentialIsolation": false,
-    "outsiderEventLookup": "not-run",
-    "outsiderDirectLookup": "not-run",
-    "publicExplorerSettlement": "not-proven"
+    "historicalOutsiderEventLookup": "not-run",
+    "historicalOutsiderDirectLookup": "not-run",
+    "historicalPublicExplorerSettlement": "not-proven",
+    "outsiderEventLookup": "external-agent update returned HTTP 404 to the outsider",
+    "outsiderDirectLookup": "external-agent private context count was zero for the outsider",
+    "publicExplorerSettlement": "not-proven; Lighthouse returned HTTP 404 while its latest indexed record time was stale"
   },
   "deliveryFailure": {
     "providerUnavailableAfterPriorSuccessfulDeliveries": true,
     "settlementStillReconciled": true,
     "allowanceRestored": false,
     "secondPaymentSubmitted": false,
-    "firstDeliveryFailure": "not-proven"
+    "firstDeliveryFailure": "not-proven",
+    "externalAgentReplay": {
+      "exactProofHttpStatus": 200,
+      "cachedResponseIdentical": true,
+      "mutatedAttemptHttpStatus": 402,
+      "secondPaymentSubmitted": false,
+      "durability": "process-memory-spike-only; production-requires-postgresql"
+    }
   },
   "negativeControls": {
     "genericTransferWithoutPolicySucceeded": true,
     "sharedCredentialRejectedForBoundedAuthority": true,
+    "externalAgentDirectTransfer": {
+      "mode": "prepare-only",
+      "agentResult": "MISSING_PAYER_AUTHORITY",
+      "payerControlResult": "PREPARED",
+      "executeCalls": 0,
+      "offset": 4406019
+    },
     "completeLiveFailureMatrix": false,
+    "historicalExactLiveRejectionReasonsRetained": false,
+    "externalAgentDirectAuthorityReasonRetained": true,
     "exactLiveRejectionReasonsRetained": false
   },
-  "blockingGates": [
+  "historicalBlockingGatesAtSchemaVersion1": [
     "agent-only constrained purchase and matched direct-transfer bypass oracle",
     "live complete challenge and policy commitment at the constrained signer",
     "Five North-compatible Loop human approval",
     "public settlement visibility with outsider-private-context absence",
     "explicit Q-003 through Q-006 decisions"
+  ],
+  "blockingGates": [
+    "wallet-neutral one-call human approval on Five North",
+    "public settlement visibility; outsider-private-context absence is proven but Lighthouse settlement visibility is not",
+    "durable PostgreSQL-backed delivery, unknown-outcome recovery, and idempotency across process restart",
+    "production custody and service topology",
+    "explicit Q-004 through Q-006 decisions"
   ],
   "redaction": {
     "rawKeysIncluded": false,

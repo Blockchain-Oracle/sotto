@@ -17,16 +17,21 @@ production deployment.
 
 The research spike has now produced:
 
-1. a real Canton DevNet `402 -> payment -> 200` request;
-2. an uploaded and exercised Sotto research Daml package;
-3. one accepted update combining policy consumption, private context, and Canton
-   Coin transfer, plus a rejected rollback probe;
-4. party-scoped Daml stakeholder visibility and a post-success provider-outage
-   reconciliation check.
+1. a real Five North `402 -> settle -> 200` purchase in which an external agent
+   alone exercised a payer-signed bounded capability;
+2. one accepted update that paid the provider 0.25 Canton Coin, returned 0.75 to
+   the payer, and created a revision-1 capability with 0.075 remaining;
+3. a byte-identical cached `200` retry with no second Ledger submission;
+4. a prepare-only direct-transfer control in which the agent was rejected for
+   missing payer authority, the payer control prepared, and execution remained
+   disabled; and
+5. party-scoped private-context visibility for payer, agent, and provider, with
+   an outsider seeing no context and receiving `404` for the transaction.
 
-The production gate is `NO_GO`. The available machine credential can bypass the
-policy with a generic transfer, the Loop human-payment path is on a different
-participant topology, and public explorer visibility is not proven. The
+The spike's signer/funding-authority blocker is closed. The production gate is
+still `NO_GO`: exact human one-call wallet approval, public explorer visibility,
+durable PostgreSQL-backed delivery/recovery, the production topology, and
+decisions Q-004 through Q-006 remain open. The
 [redacted spike result](docs/architecture/devnet-spike-result.md) records the
 evidence and remaining blockers.
 

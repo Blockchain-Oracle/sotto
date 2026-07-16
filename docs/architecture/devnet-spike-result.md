@@ -4,14 +4,16 @@ Date: 2026-07-16 (original payment run: 2026-07-13)
 
 ## Verdict
 
-`NO_GO` for production planning. The research path proved a real
-participant-hosted payment, private Daml state, atomic composition, rollback,
-and delivery reconciliation through Sotto's direct Five North adapter. A later
-remediation also proved one wallet-signed external-payer capability create on
-Five North without a purchase or token transfer. It has not yet proved the
-agent-only constrained purchase, its direct-transfer bypass oracle, upstream
-relay equivalence, an exact Loop human-payment path on the Five North
-participant, or public Scan visibility for the accepted transfer.
+`NO_GO` for production planning. The research path now proves a real
+external-agent-only bounded purchase, private Daml state, atomic settlement and
+capability reduction, exact paid delivery, cached replay without a second
+submission, and a matched prepare-only direct-transfer authority control on Five
+North. The signer/funding-authority blocker is closed for the spike.
+
+Production remains blocked by the exact human one-call wallet path, public
+explorer visibility, durable PostgreSQL-backed delivery/recovery, the production
+topology, and decisions Q-004 through Q-006. Upstream relay equivalence is also
+not established.
 
 ## Source And Evidence
 
@@ -19,21 +21,28 @@ participant, or public Scan visibility for the accepted transfer.
 - Initial post-run snapshot: `01d2d2acad4596fdae9c55601399902fb95543e7`.
 - Wallet-capability remediation commit:
   `ac2c60907ee020757f0daf8c2512322630d73227`.
+- External-agent purchase implementation checkpoints: `d0d2d40` and `3780b22`.
+- The live external-agent purchase recorded `d12363f` as its tracked source
+  commit. Prepared-transaction verifier and provider changes were still dirty
+  and uncommitted during that run, so neither later implementation checkpoint is
+  retroactively claimed as its exact source.
 - Structured redacted evidence:
   [devnet-spike-evidence.json](devnet-spike-evidence.json).
-- A non-shared, cache-disabled clone of the implementation commit passed a
-  frozen install, 104 tests across 17 files, every repository guard, both Daml
-  builds, and five Daml Script suites.
-- The research DAR is `sotto-control` 0.1.0, built with Daml SDK 3.5.2. Node
-  24.18.0, pnpm 11.12.0, Java 21.0.11, and DPM 1.0.21 are pinned.
+- The earlier July 13 implementation passed a non-shared, cache-disabled clone
+  proof with a frozen install, 104 tests across 17 files, every repository
+  guard, both Daml builds, and five Daml Script suites.
+- The original July 13 research DAR is `sotto-control` 0.1.0, built with Daml
+  SDK 3.5.2. Node 24.18.0, pnpm 11.12.0, Java 21.0.11, and DPM 1.0.21 are
+  pinned.
 
-The live transactions were executed from the preceding uncommitted worktree. The
-initial post-run commit is the first immutable snapshot; the reviewed
+The July 13 transactions were executed from the preceding uncommitted worktree.
+The initial post-run commit is their first immutable snapshot; the reviewed
 implementation commit adds route binding, exact rejection oracles, exact
 AmuletRules identity, pre-submission request-binding enforcement, and exact
-Sotto package identity. The exact source commit at live execution time is
-therefore unavailable, and none of this hardening is retroactively claimed as
-live evidence.
+Sotto package identity. The exact July 13 source commit is therefore
+unavailable. The July 16 external-agent purchase has the narrower provenance
+statement above: `d12363f` is the tracked base, not an exact snapshot of the
+dirty verifier/provider worktree.
 
 The evidence bundle contains no credential, access token, raw key, prepared
 transaction, request body, or paid response body.
@@ -56,8 +65,38 @@ transaction, request body, or paid response body.
   action created one capability and submitted zero purchase, settlement, or
   Canton Coin transfer commands.
 - This proves the capability-creation custody boundary for the reference-wallet
-  spike. It does not prove Loop compatibility, a production wallet service,
-  agent-only purchase execution, funding, or bypass resistance.
+  spike. It does not prove Loop compatibility or a production wallet service.
+  The subsequent purchase and authority-control evidence is recorded separately
+  below.
+
+## Proven Live External-Agent Purchase
+
+- One fresh x402 challenge completed an exact `402 -> settle -> 200` flow on
+  Five North. The external agent alone exercised the `Purchase` choice; the
+  application did not submit with payer `actAs` authority.
+- Accepted update
+  `1220a389588fc2b677ce956c03af93f65ce537b29aea244e815022cde54b492811e3` settled
+  at offset `4404758`. Its effects paid the provider 0.25 Canton Coin, returned
+  0.75 to the payer, and created a revision-1 replacement capability with 0.075
+  remaining allowance.
+- An early lookup at offset `4404757` found no terminal result. Later exact
+  reconciliation at offset `4404758` proved success. The implementation now
+  treats absence as non-terminal and recognizes only exact success or rejection
+  as terminal command completion.
+- The first paid retry returned `200`. A byte-identical cached replay returned
+  `200` again without a second Ledger submission.
+- A matched direct-transfer prepare-only control ran at offset `4406019`. The
+  agent result was exactly `MISSING_PAYER_AUTHORITY`, the payer control was
+  `PREPARED`, and `executeCalls` remained zero. No direct-transfer control was
+  signed, executed, or submitted, so this is an exact authorization oracle, not
+  an executed rejection claim.
+- The direct control ran with `d0d2d40` as the tracked commit and the exact
+  pinned-holding parser fix still uncommitted. `3780b22` is the immediate
+  post-run snapshot of that source tree, not a retroactive run-time commit.
+- Implementation checkpoints `d0d2d40` and `3780b22` preserve the hardened
+  verifier, signer authorization, provider retry boundary, terminal recovery,
+  and direct authority control. They are post-run snapshots rather than a
+  retroactive exact source claim for the live purchase.
 
 ## Network And Adapter Boundary
 
@@ -66,11 +105,13 @@ transaction, request body, or paid response body.
   `global-domain::1220be58c29e65de40bf273be1dc2b266d43a9a002ea5b18955aeef7aac881bb471a`.
 - Ledger API, OIDC, validator Scan-proxy, and Lighthouse service hosts are
   listed without credentials in the structured evidence.
-- Settlement used a narrow Ledger API v2 `AmuletRules_Transfer` adapter and a
-  temporary Sotto x402-v2-compatible provider. No upstream FTPtech relay or
-  provider was used, so upstream interoperability is not established.
+- The original July 13 settlement used a narrow Ledger API v2
+  `AmuletRules_Transfer` adapter. The external-agent remediation exercised the
+  Sotto `Purchase` capability and nested standard token transfer through the
+  direct Five North adapter and temporary Sotto provider. No upstream FTPtech
+  relay or provider was used, so upstream interoperability is not established.
 
-## Proven Live
+## Earlier July 13 Live Evidence
 
 - A participant-hosted Sotto payer completed a real
   `402 -> Canton Coin transfer -> 200` through Sotto's direct Five North adapter
@@ -110,6 +151,7 @@ transaction, request body, or paid response body.
 | Atomic private context               | `001a9e05a9616f0cdde67eebadbeb1321261690642bfe15888e06debf94071e361ca12122022d61e5456ec74dd464e61b0b101a1826697e90cc8062e0a31868be49ce5bd6d` |
 | Wallet capability create update      | `12203c28c0e7986e52e2198b1b3401deccbdb5897f7b4a27ade589d2b2d396494496`                                                                       |
 | Wallet-created capability            | `0025b865a38a3a1cea1c730549e2c281f9b8073cdc3b1bf3b1199f7aa48057f877ca121220380798b67236d566550aed355fd3688d0df4f1f5369215726d92753f121b8e4e` |
+| External-agent purchase update       | `1220a389588fc2b677ce956c03af93f65ce537b29aea244e815022cde54b492811e3`                                                                       |
 
 The payment amount was 0.2500000000 test Canton Coin. The baseline settlement
 was recorded at `2026-07-13T06:37:38.471765Z`; the atomic settlement was
@@ -119,12 +161,19 @@ evidence.
 
 ## Visibility Result
 
+For the external-agent purchase, payer, agent, and provider could each read the
+private purchase context. The outsider read found zero matching contexts, and
+the outsider's direct transaction lookup returned `404`. Lighthouse also
+returned `404` while its index was stale, so public explorer visibility is not
+proven.
+
 The atomic context was visible to agent, owner, payer, and provider. The reduced
 policy was visible to agent, owner, and payer, but not provider. A fresh
 outsider party saw neither contract in explicit party-scoped ACS queries. They
 prove Daml stakeholder semantics, not credential isolation, because the shared
-machine credential can read as any party. Outsider event/direct lookup and
-public Scan absence were not completed and are not claimed.
+machine credential can read as any party. Those earlier results remain
+historical evidence; the external-agent visibility result above is the current
+spike boundary.
 
 ## Negative Results And Boundaries
 
@@ -136,50 +185,51 @@ public Scan absence were not completed and are not claimed.
 - A July 15 read-only authority recheck found 66 current rights. Participant
   administration and execute-as-any-party remained, but named external-payer
   `CanActAs` was absent. The July 16 wallet-signed capability create then
-  succeeded without granting that authority to the Sotto application. The
-  remaining authority proof is narrower: an agent-only capability purchase must
-  succeed while an otherwise-valid generic payer transfer with the same agent
-  identity fails for missing payer authority.
-- Atomic composition is available, but the current canonical identifier does not
-  independently commit every required challenge, expiry, policy-CID, and
-  policy-revision field at a constrained signer boundary. Full purchase
-  commitment enforcement is therefore not proven.
-- At live execution time, the temporary local provider bridge reconstructed the
-  configured public URL instead of preserving the incoming path/query. The
-  successful client did request that configured URL, but live route-mutation
-  rejection is not proven. The implementation commit fixes this boundary and
-  adds wrong-path/query tests.
+  succeeded without granting that authority to the Sotto application. The later
+  agent-only capability purchase and matched direct prepare-only authority
+  control close this signer/funding blocker for the spike. The control was not
+  executed and is not claimed as an on-ledger rejected transfer.
+- At the July 13 live execution time, the temporary local provider bridge
+  reconstructed the configured public URL instead of preserving the incoming
+  path/query. The successful client did request that configured URL, but that
+  run did not prove live route-mutation rejection. The implementation commit
+  fixes this boundary and adds wrong-path/query tests.
 - Loop and Seaport are authenticated and Seaport exposes custom DAR upload, but
   the Personal workspace has no validator configuration. The Loop party belongs
   to a different participant topology and was rejected as an unknown informee by
   the Five North transfer path. Exact human one-call payment is not proven.
-- Outsider absence is proven only for party-scoped ACS queries. Outsider
-  event/direct lookup is not proven. Public explorer/Scan visibility of the
-  accepted Canton Coin transfer is also not proven because the available route
-  did not expose the transaction.
+- Outsider private-context absence and outsider direct-transaction `404` are
+  proven for the external-agent update. Public explorer/Scan visibility is not:
+  Lighthouse returned `404` while its index was stale.
 - The provider-failure check used a stopped temporary provider after successful
   deliveries. It proves settlement/delivery separation and no automatic
   repayment, but not first-delivery failure handling in a durable runtime.
+- The latest provider retry and unknown-delivery state is explicitly
+  process-memory spike state. A process restart loses that coordination;
+  PostgreSQL-backed delivery, replay, and recovery state is required before
+  production.
 - Pre/post authoritative balance snapshots, the exact raw challenge hash, and
   the paid-response hash were not preserved. Same-command submission replay and
   a genuinely ambiguous submission outcome were not exercised live.
 
 ## Decision Inputs
 
-- Q-003 remains unresolved. Wallet-controlled capability creation now works, but
-  the agent-only constrained purchase and matched direct-transfer rejection are
-  not yet live-proven.
-- Q-004 remains unresolved. The fixture audience proved owner, agent, payer, and
-  provider visibility, but it does not select the production receipt readers.
+- Q-003 is resolved for the spike. The agent-only bounded purchase succeeded,
+  and the matched prepare-only direct-transfer oracle proved missing payer
+  authority with zero execute calls.
+- Q-004 remains unresolved. The current audience proof covers payer, agent, and
+  provider with outsider absence, but it does not select the production receipt
+  readers.
 - Q-005 remains unresolved. Loop is authenticated on a different participant
   topology and did not authorize the same Five North payment.
-- Q-006 remains unresolved. A production process/database/queue topology cannot
-  be selected before the signer and recovery boundaries are closed.
+- Q-006 remains unresolved. Durable PostgreSQL delivery/recovery and the final
+  process/database/queue topology are not selected.
 
 ## Gate Consequence
 
 The spike must not yet authorize marketplace, Composer, CLI/MCP, bounded-agent,
-or Coolify production implementation. Next work is the fresh agent-only
-capability purchase and direct-transfer rejection oracle, followed by the exact
-Five North-compatible human approval route, public settlement observation, and
-the remaining production decisions.
+or Coolify production implementation. The signer/funding-authority proof is no
+longer the blocker. Next work is the exact Five North-compatible human one-call
+approval route, public settlement observation, durable PostgreSQL-backed
+delivery/recovery and production topology, and explicit decisions Q-004 through
+Q-006.

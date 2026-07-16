@@ -38,37 +38,47 @@
   consumption, private context creation, and the standard Canton Coin transfer.
 - The shared Five North machine credential can also submit the transfer without
   consuming policy, so it is not a bounded signer or funding boundary.
+- A later Five North run used an external agent that alone exercised a
+  payer-signed `Purchase` capability. The accepted update paid the provider,
+  returned payer change, and reduced the capability in one transaction.
+- An otherwise identical direct-transfer preparation failed for the external
+  agent with the exact missing-payer-authority oracle, while the payer control
+  prepared. Execution was disabled for both controls, so this is not claimed as
+  an executed rejection.
 - Seaport Personal supports custom DAR upload but currently has no configured
   validator; its Loop party is not hosted by the Five North spike participant.
-- The successful paid path used Sotto's direct Five North adapter and temporary
-  provider, not an upstream FTPtech relay/provider. It does not establish
-  external-party signer or upstream interoperability.
+- The original July 13 paid path used Sotto's direct Five North adapter and
+  temporary provider, not an upstream FTPtech relay/provider. The later
+  external-agent run establishes that signer boundary, but neither run
+  establishes upstream interoperability.
 
-## 2026-07-13 Spike Decision Inputs
+## Spike Decision Inputs
 
-- Q-003: reject the shared M2M credential as the bounded-agent candidate because
-  it can authorize a generic transfer without consuming Sotto policy. Continue
-  only with a credential/funding candidate that cannot take that path, or
-  present an explicit custodian trust boundary for user acceptance.
-- Q-004: the live fixture proved Daml visibility for owner, agent, payer, and
-  the selected provider, with outsider-zero ACS. This is evidence, not a
-  production receipt-audience decision.
+- Q-003: resolved for the spike. Reject the shared M2M credential, and use the
+  externally controlled payer plus agent-only bounded capability. The live
+  purchase succeeded with only external-agent authority; the matched direct
+  prepare control failed for missing payer authority while the payer control
+  prepared, with zero execute calls.
+- Q-004: the latest live purchase context was visible to payer, agent, and
+  provider. An outsider saw zero contexts and received `404` for direct
+  transaction lookup. This is evidence, not a production receipt-audience
+  decision.
 - Q-005: the current Loop party is on a different participant topology and did
   not complete the same Five North payment. Human one-call approval remains
   unselected.
 - Q-006: no production web/API/MCP/worker/database/queue topology is selected
-  under `NO_GO`; durable first-delivery failure and recovery remain unproven.
+  under `NO_GO`. The spike retry/unknown-delivery state is process memory only;
+  durable PostgreSQL-backed delivery and recovery remain unproven.
 
 ## Open Gates
 
-- A signer/funding model whose credential cannot bypass Sotto policy through a
-  generic transfer path.
 - Private receipt reader set.
 - Compatible human one-call approval path.
 - Public explorer evidence for the accepted Canton Coin transfer.
-- Complete canonical challenge/policy commitment enforcement at the final signer
-  boundary.
-- Final web/API/MCP/worker/database/queue/Coolify topology.
+- Durable PostgreSQL-backed delivery, unknown-outcome recovery, and replay
+  state.
+- Final web/API/MCP/worker/database/queue/Coolify topology and a reviewed
+  production `GO`.
 
 These questions are resolved only from the DevNet spike and explicit product
 decisions. Code, prototypes, and research cannot approve themselves.
