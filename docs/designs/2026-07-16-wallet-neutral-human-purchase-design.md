@@ -177,6 +177,22 @@ while the two-minute signing reserve remains. The Five North adapter must bound
 the HTTP response before JSON parsing; the pure observer's parsed-response limit
 is not network-memory evidence.
 
+Human TransferFactory acquisition is also separate from the autonomous observer.
+It derives one direct-transfer registry request from the authenticated human
+intent and exact holding handle, and places exactly four plain-string values in
+Token metadata: versioned Sotto keys for the attempt, challenge, purchase, and
+request hashes. A factory disclosure may be omitted when the participant already
+has the input contract in its local store; every supplied disclosure must still
+match the committed factory CID, creation template, and synchronizer. The
+prepared-transaction verifier proves the actual factory input and effects. The
+opaque result is bound to the exact intent, holding handle, and choice-argument
+digest; it expires after one minute, uses a ten-second end-to-end abortable
+acquisition deadline, and is claimable once only while the two-minute signing
+reserve remains. Failed acquisition or a mismatched claim does not consume the
+holdings. The future Five North adapter must enforce the same absolute deadline
+and two-megabyte response limit before allocation, including its single
+authenticated retry.
+
 ## Prepared Transfer Contract
 
 Before a wallet is called, Sotto must prove:

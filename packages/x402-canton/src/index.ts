@@ -122,6 +122,14 @@ export {
   type HumanPurchaseHoldingReader,
 } from "./human-purchase-holding-observation.js";
 export {
+  createHumanTransferFactoryObserver,
+  MAX_HUMAN_TRANSFER_FACTORY_ACQUISITION_MS,
+  MAX_HUMAN_TRANSFER_FACTORY_OBSERVATION_AGE_MS,
+  type HumanTransferFactoryObservation,
+  type HumanTransferFactoryRegistryReader,
+  type HumanTransferFactoryRegistryRequest,
+} from "./human-transfer-factory-observation.js";
+export {
   claimHumanPackagePreferenceObservation,
   createHumanPackagePreferenceObserver,
   MAX_HUMAN_PACKAGE_ACQUISITION_MS,

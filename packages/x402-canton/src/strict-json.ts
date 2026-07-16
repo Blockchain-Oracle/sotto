@@ -47,7 +47,7 @@ class StrictJsonScanner {
       this.space();
       if (this.source[this.index] !== '"') this.invalid();
       const key = this.string();
-      if (keys.has(key)) throw new Error(`duplicate JSON key: ${key}`);
+      if (keys.has(key)) throw new Error("duplicate JSON key");
       keys.add(key);
       this.space();
       if (!this.take(":")) this.invalid();

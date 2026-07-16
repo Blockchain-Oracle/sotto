@@ -35,6 +35,12 @@ export function humanHoldingEntry(contractId: string, amount: string) {
 
 export async function authenticatedHumanPurchaseIntent() {
   const input = await createHumanPurchaseInput();
+  return commitHumanIntent(input);
+}
+
+function commitHumanIntent(
+  input: Awaited<ReturnType<typeof createHumanPurchaseInput>>,
+) {
   return readHumanPurchaseLedgerIntent(
     commitHumanPurchaseForTest(
       input,
@@ -42,6 +48,18 @@ export async function authenticatedHumanPurchaseIntent() {
       `${HUMAN_AUTHORIZATION_INSTANCE_ID}-${++authorizationSequence}`,
     ),
   );
+}
+
+export async function authenticatedHumanPurchaseIntentWithWindow(
+  seconds: number,
+) {
+  const input = await createHumanPurchaseInput({
+    mutateChallenge: (challenge) => {
+      challenge.accepts[0]!.maxTimeoutSeconds = seconds;
+      challenge.accepts[0]!.extra.executeBeforeSeconds = seconds;
+    },
+  });
+  return commitHumanIntent(input);
 }
 
 function closureForPackage(packageId: string) {
