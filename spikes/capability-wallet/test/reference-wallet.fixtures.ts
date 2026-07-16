@@ -27,6 +27,7 @@ export async function walletSdkVerifiedCapabilityBootstrap(): Promise<HashVerifi
     transferFactoryContractId: VALID_TRANSFER_FACTORY_ID,
   });
   const prepared = validPreparedCapabilityBootstrap(request);
+  prepared.metadata!.synchronizerId = `${CAPABILITY_BOOTSTRAP_INPUT.synchronizerId}::35-3`;
   const root = prepared.transaction?.nodes[0]?.versionedNode;
   if (root?.oneofKind !== "v1") throw new Error("test root is absent");
   const value = root.v1.nodeType;

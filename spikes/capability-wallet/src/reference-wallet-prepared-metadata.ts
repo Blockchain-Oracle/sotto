@@ -1,4 +1,5 @@
 import type { Metadata } from "@canton-network/core-ledger-proto";
+import { preparedSynchronizerMatches } from "@sotto/x402-canton";
 import type { SerializedReferenceWalletRequest } from "./reference-wallet-types.js";
 
 const UUID =
@@ -17,7 +18,10 @@ export function verifyReferenceWalletPreparedMetadata(
       `sotto-capability-bootstrap-v1-${intentHash}` ||
     JSON.stringify(metadata.submitterInfo.actAs) !==
       JSON.stringify([approval.payerParty]) ||
-    metadata.synchronizerId !== approval.synchronizerId ||
+    !preparedSynchronizerMatches(
+      metadata.synchronizerId,
+      approval.synchronizerId,
+    ) ||
     metadata.inputContracts.length !== 0 ||
     metadata.globalKeyMapping.length !== 0
   ) {

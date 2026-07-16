@@ -23,6 +23,7 @@ export type {
   VerifiedCapabilityWalletSignature,
 } from "./capability-wallet-signature-types.js";
 export { parseBoundedCapabilityBootstrapCompletionResponse } from "./bounded-capability-bootstrap-completion-response.js";
+export { preparedSynchronizerMatches } from "./prepared-synchronizer.js";
 export {
   createPreparedCapabilityBootstrapObserver,
   MAX_PREPARED_CAPABILITY_RESPONSE_BYTES,
