@@ -88,6 +88,20 @@ export {
   type HumanPayerIdentityReader,
 } from "./human-payer-identity.js";
 export {
+  claimHumanPackagePreferenceObservation,
+  createHumanPackagePreferenceObserver,
+  MAX_HUMAN_PACKAGE_ACQUISITION_MS,
+  MAX_HUMAN_PACKAGE_OBSERVATION_AGE_MS,
+  readAuthenticatedHumanPackagePreference,
+} from "./human-package-preference-observation.js";
+export {
+  HUMAN_PACKAGE_SELECTION_VERSION,
+  type AuthenticatedHumanPackagePreference,
+  type HumanPackagePreferenceObservation,
+  type HumanPackagePreferenceReader,
+  type HumanPackagePreferenceScope,
+} from "./human-package-preference-types.js";
+export {
   signBoundedPurchase,
   type BoundedPurchaseAttemptClaim,
   type BoundedPurchaseSignerDependencies,
