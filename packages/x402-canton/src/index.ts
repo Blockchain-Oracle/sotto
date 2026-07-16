@@ -107,6 +107,10 @@ export {
   type HumanPurchaseTrustedConfiguration,
 } from "./human-purchase-commitment.js";
 export {
+  createHumanPurchaseEvidence,
+  type HumanPurchaseEvidence,
+} from "./human-purchase-evidence.js";
+export {
   claimHumanPackagePreferenceObservation,
   createHumanPackagePreferenceObserver,
   MAX_HUMAN_PACKAGE_ACQUISITION_MS,

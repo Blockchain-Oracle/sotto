@@ -155,6 +155,10 @@ instrument admin on the challenge synchronizer. It does not require or select
 The transfer carries only privacy-safe Sotto hashes in standard Token metadata.
 The command ID also derives from the purchase commitment. Raw URL, query,
 headers, body, challenge, and provider response never become public metadata.
+The pre-settlement public projection is a fixed frozen allowlist containing only
+the protocol version, `human-wallet` mode, and the attempt, challenge, request,
+and purchase hashes. It remains valid as historical evidence after authorization
+expiry and never retains canonical purchase bytes or wallet identity.
 
 ## Prepared Transfer Contract
 
