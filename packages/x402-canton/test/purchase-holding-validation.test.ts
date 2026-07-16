@@ -9,6 +9,7 @@ import {
   readPurchaseHoldingObservation,
 } from "../src/purchase-holding-observation.js";
 import {
+  HOLDING_IMPLEMENTATION_PACKAGE_ID,
   HOLDING_TEMPLATE_PACKAGE_ID,
   authenticatedPurchaseIntent,
   holdingEntry,
@@ -27,6 +28,23 @@ async function rejectionFor(entry: unknown): Promise<string> {
 }
 
 describe("purchase holding validation", () => {
+  it("accepts the pinned current Five North Holding creation package", async () => {
+    const intent = authenticatedPurchaseIntent();
+    const observation = await createPurchaseHoldingObserver(
+      holdingReader([
+        holdingEntry("00current-holding", "0.3250000000", {
+          createdEvent: {
+            templateId: `${HOLDING_IMPLEMENTATION_PACKAGE_ID}:Splice.Amulet:Amulet`,
+          },
+        }),
+      ]),
+    )(intent);
+
+    expect(
+      readPurchaseHoldingObservation(observation, intent).contractIds,
+    ).toEqual(["00current-holding"]);
+  });
+
   it.each([
     [
       "interface",

@@ -79,8 +79,12 @@ function parseEntry(
   const contractId = identifier(event.contractId, "holding contractId");
   const templateId = identifier(event.templateId, "holding templateId", 512);
   if (
-    templateId !==
-    `${FIVE_NORTH_HOLDING_TEMPLATE_PACKAGE_ID}:Splice.Amulet:Amulet`
+    ![
+      FIVE_NORTH_HOLDING_TEMPLATE_PACKAGE_ID,
+      FIVE_NORTH_HOLDING_IMPLEMENTATION_PACKAGE_ID,
+    ]
+      .map((packageId) => `${packageId}:Splice.Amulet:Amulet`)
+      .includes(templateId)
   ) {
     throw new Error("holding templateId package is not approved");
   }
