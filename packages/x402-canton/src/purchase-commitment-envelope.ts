@@ -2,8 +2,8 @@ import {
   parsePaymentChallenge,
   type CantonPaymentRequirement,
 } from "./payment-requirement.js";
+import type { HttpRequestCommitment } from "./request-binding.js";
 import { REQUEST_BINDING_VERSION } from "./request-binding.js";
-import type { BoundedPurchaseCommitmentInput } from "./purchase-commitment.js";
 import {
   exactKeys,
   identifier,
@@ -15,7 +15,13 @@ import {
 import { assertStrictJson } from "./strict-json.js";
 import { validateRequestBindingCanonical } from "./request-binding-validation.js";
 
-export function validateBinding(input: BoundedPurchaseCommitmentInput): URL {
+export type PurchaseEnvelopeAuthority = Readonly<{
+  binding: HttpRequestCommitment;
+  expectedNetwork: `canton:${string}`;
+  payerParty: string;
+}>;
+
+export function validateBinding(input: PurchaseEnvelopeAuthority): URL {
   const binding = objectValue(input.binding, "request binding");
   exactKeys(
     binding,
@@ -52,7 +58,7 @@ export function validateBinding(input: BoundedPurchaseCommitmentInput): URL {
 }
 
 export function selectRequirement(
-  input: BoundedPurchaseCommitmentInput,
+  input: PurchaseEnvelopeAuthority,
   requestUrl: URL,
   challengeBytes: Uint8Array,
 ): CantonPaymentRequirement {

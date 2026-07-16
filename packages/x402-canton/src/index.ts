@@ -97,6 +97,16 @@ export {
   type HumanPaymentObserver,
 } from "./human-payment-observation.js";
 export {
+  assertAuthenticHumanPurchase,
+  createHumanPurchaseCommitter,
+  HUMAN_PURCHASE_ATTEMPT_VERSION,
+  HUMAN_PURCHASE_COMMITMENT_VERSION,
+  type HumanPurchaseCommitment,
+  type HumanPurchaseCommitmentInput,
+  type HumanPurchaseCommitter,
+  type HumanPurchaseTrustedConfiguration,
+} from "./human-purchase-commitment.js";
+export {
   claimHumanPackagePreferenceObservation,
   createHumanPackagePreferenceObserver,
   MAX_HUMAN_PACKAGE_ACQUISITION_MS,
