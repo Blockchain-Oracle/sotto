@@ -77,6 +77,17 @@ export {
   type DirectTransferAuthorityProbe,
 } from "./direct-transfer-authority-control.js";
 export {
+  claimHumanPayerIdentity,
+  createHumanPayerIdentityObserver,
+  HUMAN_PAYER_IDENTITY_VERSION,
+  MAX_HUMAN_PAYER_IDENTITY_ACQUISITION_MS,
+  MAX_HUMAN_PAYER_IDENTITY_AGE_MS,
+  readAuthenticatedHumanPayerIdentity,
+  type AuthenticatedHumanPayerIdentity,
+  type HumanPayerIdentityObservation,
+  type HumanPayerIdentityReader,
+} from "./human-payer-identity.js";
+export {
   signBoundedPurchase,
   type BoundedPurchaseAttemptClaim,
   type BoundedPurchaseSignerDependencies,
