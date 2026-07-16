@@ -160,6 +160,12 @@ the protocol version, `human-wallet` mode, and the attempt, challenge, request,
 and purchase hashes. It remains valid as historical evidence after authorization
 expiry and never retains canonical purchase bytes or wallet identity.
 
+The internal Ledger intent is a separate authenticated, deeply frozen projection
+cached once per commitment. It authorizes exactly `actAs: [payer]`, pins the
+CC/Amulet direct-transfer rail, key identity, fee/debit ceiling,
+TransferFactory, and Token-only package selection, and carries no capability,
+agent, policy, allowance, raw request, challenge bytes, or authorization nonce.
+
 ## Prepared Transfer Contract
 
 Before a wallet is called, Sotto must prove:

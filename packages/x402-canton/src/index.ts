@@ -111,6 +111,10 @@ export {
   type HumanPurchaseEvidence,
 } from "./human-purchase-evidence.js";
 export {
+  readHumanPurchaseLedgerIntent,
+  type HumanPurchaseLedgerIntent,
+} from "./human-purchase-ledger-intent.js";
+export {
   claimHumanPackagePreferenceObservation,
   createHumanPackagePreferenceObserver,
   MAX_HUMAN_PACKAGE_ACQUISITION_MS,

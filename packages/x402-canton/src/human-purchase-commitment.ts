@@ -114,11 +114,7 @@ function commitWithAuthorization(
     requestCommitment: validated.binding.commitment,
     version: HUMAN_PURCHASE_COMMITMENT_VERSION,
   });
-  bindHumanPurchaseAuthorities(
-    validated.authorities,
-    authorizationInstanceId,
-    result,
-  );
+  bindHumanPurchaseAuthorities(validated, authorizationInstanceId, result);
   authenticCommitments.set(result, {
     attemptId,
     challengeId: result.challengeId,
