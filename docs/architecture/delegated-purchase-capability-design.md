@@ -16,6 +16,48 @@ selected design's authority direction, but it is not proof of the final boundary
 because the identity still has participant administration and
 execute-as-any-party, and no payer-controlled external signer is connected.
 
+Live update, 2026-07-16: Five North accepted one externally wallet-signed
+capability creation without granting the shared machine identity payer rights.
+That capability is deliberately unusable for the next paid call because its
+exact resource binding names an expired temporary provider origin. It must not
+be reused or weakened to fit a replacement origin.
+
+## External-Payer Replacement Execution
+
+The approved remediation reuses the existing external payer rather than
+allocating another payer or abandoning active authority. The sequence is:
+
+1. Use the official Wallet SDK DevNet tap flow to prepare funding for the exact
+   external payer, decode and verify the prepared mint effects, and sign only in
+   the isolated wallet process.
+2. Prepare `Revoke` against the exact obsolete capability. The wallet requires
+   one consuming root exercise, payer-only acting authority, no descendants or
+   value effects, the approved Sotto package/template, and the expected
+   synchronizer before it signs.
+3. Reconcile both operations from Ledger completion and ACS evidence before
+   continuing. An unknown outcome is read-only until resolved; neither command
+   is blindly replayed.
+4. Start the paid provider and a fresh spike-only tunnel only after funding and
+   revocation are complete. Derive the replacement resource binding from the
+   observed public provider URL and create one replacement capability through
+   the already proven wallet boundary.
+5. Immediately run the strict prepared-purchase verifier, execute with agent
+   authority only, reconcile settlement, retry the identical HTTP request, and
+   require the authentic paid `200` response.
+6. Run the otherwise-valid direct payer-transfer negative control with the same
+   agent credential and require rejection for missing payer authority.
+
+The alternative of allocating another external payer is rejected because it
+would leave obsolete authority active and multiply key, funding, and recovery
+state. Reusing the expired capability or relaxing request/resource equality is
+also rejected because it would invalidate the signer-boundary evidence.
+
+The Wallet SDK tap is a DevNet/LocalNet funding mechanism, not a production
+faucet or custody design. A Cloudflare quick tunnel is permitted only as a
+short-lived spike transport and is not a production provider topology. The
+production verdict remains `NO_GO` until the entire agent-only paid call,
+negative control, visibility, and recovery evidence pass.
+
 ## Decision
 
 Use a payer-signed Daml purchase capability for opt-in autonomous buying. The
