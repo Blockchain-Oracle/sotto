@@ -166,6 +166,17 @@ CC/Amulet direct-transfer rail, key identity, fee/debit ceiling,
 TransferFactory, and Token-only package selection, and carries no capability,
 agent, policy, allowance, raw request, challenge bytes, or authorization nonce.
 
+Human holding acquisition uses a separate authenticated, one-use observer rather
+than widening the autonomous capability observer. It reads a new Ledger end for
+each acquisition, queries only the committed payer's Holding interface, passes
+one abort signal through a ten-second end-to-end deadline, and selects the
+smallest deterministic input set covering the full committed debit ceiling. The
+opaque handle is bound to the exact attempt and purchase, expires after one
+minute or with the challenge, and can be claimed for command construction only
+while the two-minute signing reserve remains. The Five North adapter must bound
+the HTTP response before JSON parsing; the pure observer's parsed-response limit
+is not network-memory evidence.
+
 ## Prepared Transfer Contract
 
 Before a wallet is called, Sotto must prove:

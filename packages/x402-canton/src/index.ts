@@ -115,6 +115,13 @@ export {
   type HumanPurchaseLedgerIntent,
 } from "./human-purchase-ledger-intent.js";
 export {
+  createHumanPurchaseHoldingObserver,
+  MAX_HUMAN_HOLDING_ACQUISITION_MS,
+  MAX_HUMAN_HOLDING_OBSERVATION_AGE_MS,
+  type HumanPurchaseHoldingObservation,
+  type HumanPurchaseHoldingReader,
+} from "./human-purchase-holding-observation.js";
+export {
   claimHumanPackagePreferenceObservation,
   createHumanPackagePreferenceObserver,
   MAX_HUMAN_PACKAGE_ACQUISITION_MS,
