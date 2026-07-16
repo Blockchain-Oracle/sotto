@@ -16,6 +16,7 @@ export type {
   CapabilityWalletSigningSessionInput,
   CapabilityWalletUnsupportedResult,
 } from "./capability-wallet-connector-types.js";
+export { MAX_CAPABILITY_WALLET_SESSION_MS } from "./capability-wallet-connector-types.js";
 export type {
   CapabilityWalletPublicKeyFormat,
   CapabilityWalletRegisteredPublicKeyQuery,

@@ -50,6 +50,7 @@ export function registerReferenceWalletReplayCases(): void {
           const approval = () =>
             runReferenceWalletApproval({
               approved: true,
+              authorization: { mode: "interactive" },
               handoffId: id,
               keyFile,
               presentSummary: (summary) => {

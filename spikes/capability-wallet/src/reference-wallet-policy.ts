@@ -5,51 +5,10 @@ import type {
   ReferenceWalletPolicy,
   SerializedReferenceWalletRequest,
 } from "./reference-wallet-types.js";
-
-const POLICY_FIELDS = [
-  "agentParty",
-  "connectorId",
-  "connectorOrigin",
-  "instrumentAdmin",
-  "instrumentId",
-  "network",
-  "packageId",
-  "payerParty",
-  "signingFingerprint",
-  "synchronizerId",
-  "templateId",
-  "transferFactoryContractId",
-] as const;
-const PACKAGE_ID = /^[0-9a-f]{64}$/u;
-const FINGERPRINT = /^1220[0-9a-f]{64}$/u;
-
-function exactIdentifier(value: unknown): value is string {
-  return (
-    typeof value === "string" &&
-    value !== "" &&
-    value.isWellFormed() &&
-    Buffer.byteLength(value, "utf8") <= 512 &&
-    ![...value].some((character) => character.trim() === "")
-  );
-}
-
-function parsePolicy(value: unknown): ReferenceWalletPolicy {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    throw new Error("reference wallet policy is invalid");
-  }
-  const policy = value as Record<string, unknown>;
-  if (
-    JSON.stringify(Object.keys(policy).sort()) !==
-      JSON.stringify([...POLICY_FIELDS].sort()) ||
-    POLICY_FIELDS.some((field) => !exactIdentifier(policy[field])) ||
-    !PACKAGE_ID.test(policy.packageId as string) ||
-    !FINGERPRINT.test(policy.signingFingerprint as string) ||
-    !(policy.network as string).startsWith("canton:")
-  ) {
-    throw new Error("reference wallet policy fields are invalid");
-  }
-  return Object.freeze({ ...policy }) as ReferenceWalletPolicy;
-}
+import {
+  isPolicyAuthorizedReferenceWallet,
+  parseReferenceWalletPolicy,
+} from "./reference-wallet-policy-validation.js";
 
 export async function readReferenceWalletPolicy(
   path: string,
@@ -71,7 +30,7 @@ export async function readReferenceWalletPolicy(
     ) {
       throw new Error("reference wallet policy file is not owner-only");
     }
-    return parsePolicy(
+    return parseReferenceWalletPolicy(
       decodeCanonicalWalletHandoffJson(await handle.readFile()),
     );
   } finally {
@@ -83,7 +42,7 @@ export function requireReferenceWalletPolicy(
   request: SerializedReferenceWalletRequest,
   candidate: unknown,
 ): ReferenceWalletPolicy {
-  const policy = parsePolicy(candidate);
+  const policy = parseReferenceWalletPolicy(candidate);
   const approval = request.approval;
   const expected = [
     [request.connectorId, policy.connectorId],
@@ -100,6 +59,29 @@ export function requireReferenceWalletPolicy(
   ];
   if (expected.some(([actual, trusted]) => actual !== trusted)) {
     throw new Error("reference wallet request does not match wallet policy");
+  }
+  if (isPolicyAuthorizedReferenceWallet(policy)) {
+    const exact = [
+      [approval.recipientParty, policy.recipientParty],
+      [approval.resourceHash, policy.resourceHash],
+      [approval.revision, policy.revision],
+      [approval.limits.maximumTotalDebitAtomic, policy.maximumTotalDebitAtomic],
+      [approval.limits.perCallLimitAtomic, policy.perCallLimitAtomic],
+      [
+        approval.limits.remainingAllowanceAtomic,
+        policy.remainingAllowanceAtomic,
+      ],
+    ];
+    const lifetime =
+      Date.parse(approval.expiresAt) - Date.parse(request.createdAt);
+    if (
+      exact.some(([actual, trusted]) => actual !== trusted) ||
+      Date.now() >= Date.parse(policy.validUntil) ||
+      lifetime < 1 ||
+      lifetime > policy.maximumCapabilityLifetimeSeconds * 1_000
+    ) {
+      throw new Error("reference wallet request exceeds wallet policy");
+    }
   }
   return policy;
 }

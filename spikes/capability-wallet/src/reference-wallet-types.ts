@@ -54,7 +54,7 @@ type ReferenceWalletRunBase = Readonly<{
   walletPolicy: ReferenceWalletPolicy;
 }>;
 
-export type ReferenceWalletPolicy = Readonly<{
+export type ReferenceWalletIdentityPolicy = Readonly<{
   agentParty: string;
   connectorId: string;
   connectorOrigin: string;
@@ -69,8 +69,33 @@ export type ReferenceWalletPolicy = Readonly<{
   transferFactoryContractId: string;
 }>;
 
+export type ReferenceWalletPolicyAuthorization = Readonly<{
+  approvalMode: "policy";
+  authorizationId: `sha256:${string}`;
+  maximumApprovals: 1;
+  maximumCapabilityLifetimeSeconds: number;
+  maximumTotalDebitAtomic: string;
+  perCallLimitAtomic: string;
+  recipientParty: string;
+  remainingAllowanceAtomic: string;
+  resourceHash: `sha256:${string}`;
+  revision: string;
+  validUntil: string;
+  version: "sotto-reference-wallet-policy-v2";
+}>;
+
+export type ReferenceWalletPolicy =
+  | ReferenceWalletIdentityPolicy
+  | (ReferenceWalletIdentityPolicy & ReferenceWalletPolicyAuthorization);
+
 export type ReferenceWalletRunInput = ReferenceWalletRunBase &
   (
     | Readonly<{ approved: false; keyFile?: never }>
-    | Readonly<{ approved: true; keyFile: string }>
+    | Readonly<{
+        approved: true;
+        authorization:
+          | Readonly<{ mode: "interactive" }>
+          | Readonly<{ mode: "policy"; policyFile: string }>;
+        keyFile: string;
+      }>
   );

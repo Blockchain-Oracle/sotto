@@ -128,6 +128,7 @@ describe("Wallet SDK reference connector", () => {
         handoffId = id;
         await runReferenceWalletApproval({
           approved: true,
+          authorization: { mode: "interactive" },
           handoffId: id,
           keyFile,
           presentSummary: (summary) => {

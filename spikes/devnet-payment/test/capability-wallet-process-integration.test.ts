@@ -10,6 +10,7 @@ import {
   lstat,
   mkdtemp,
   readFile,
+  readdir,
   realpath,
   rm,
   writeFile,
@@ -42,6 +43,7 @@ async function processScenario(
     rootDirectory: string;
     signal: AbortSignal;
   }) => Promise<unknown>,
+  policyAuthorized = false,
 ) {
   const parent = await realpath(
     await mkdtemp(join(tmpdir(), "sotto-wallet-process-")),
@@ -58,6 +60,7 @@ async function processScenario(
     policyFile,
     prepared.approval,
     publicIdentity.fingerprint,
+    policyAuthorized,
   );
   const connector = createReferenceWalletConnector({
     capabilities: prepared.capabilities,
@@ -78,18 +81,118 @@ async function processScenario(
 async function signingSession(
   scenario: Awaited<ReturnType<typeof processScenario>>,
   signal?: AbortSignal,
+  prepared = scenario.prepared.prepared,
 ) {
   return createCapabilityWalletSigningSession({
     connector: scenario.connector,
     connectorId: scenario.prepared.capabilities.connectorId,
     connectorOrigin: scenario.prepared.capabilities.origin,
-    prepared: scenario.prepared.prepared,
+    prepared,
     ...(signal === undefined ? {} : { signal }),
     timeoutMilliseconds: 10_000,
   });
 }
 
+async function mutatePolicy(
+  path: string,
+  mutate: (policy: Record<string, unknown>) => void,
+): Promise<void> {
+  const policy = JSON.parse(await readFile(path, "utf8")) as Record<
+    string,
+    unknown
+  >;
+  mutate(policy);
+  const canonical = Object.fromEntries(
+    Object.entries(policy).sort(([left], [right]) =>
+      Buffer.compare(Buffer.from(left, "utf8"), Buffer.from(right, "utf8")),
+    ),
+  );
+  await writeFile(path, JSON.stringify(canonical));
+}
+
+type PolicyMutation = (policy: Record<string, unknown>) => void;
+
 describe("separate-process capability wallet", () => {
+  it("signs from one exact policy without terminal input", async () => {
+    const scenario = await processScenario(async (input) => {
+      await runReferenceWalletProcess({
+        ...input,
+        approvalMode: "policy",
+      });
+    }, true);
+
+    await expect(signingSession(scenario)).resolves.toMatchObject({
+      outcome: "approved",
+    });
+    const claims = (await readdir(scenario.parent)).filter((name) =>
+      name.startsWith(".used-reference-wallet-policy-"),
+    );
+    expect(claims).toHaveLength(1);
+    expect((await lstat(join(scenario.parent, claims[0]!))).mode & 0o777).toBe(
+      0o600,
+    );
+
+    const replay = await createProcessPreparedCapability();
+    await expect(
+      signingSession(scenario, undefined, replay.prepared),
+    ).rejects.toThrow(/approval failed/iu);
+  });
+
+  const policyMutations: ReadonlyArray<readonly [string, PolicyMutation]> = [
+    [
+      "recipient",
+      (policy) => {
+        policy.recipientParty = "sotto-attacker::1220participant";
+      },
+    ],
+    [
+      "resource",
+      (policy) => {
+        policy.resourceHash = `sha256:${"d".repeat(64)}`;
+      },
+    ],
+    [
+      "limit",
+      (policy) => {
+        policy.perCallLimitAtomic = "2400000000";
+      },
+    ],
+    [
+      "lifetime",
+      (policy) => {
+        policy.maximumCapabilityLifetimeSeconds = 300;
+      },
+    ],
+    [
+      "expiry",
+      (policy) => {
+        policy.validUntil = new Date(Date.now() - 1).toISOString();
+      },
+    ],
+  ];
+
+  it.each(policyMutations)(
+    "rejects a mismatched policy %s without a claim",
+    async (_name, mutate) => {
+      const scenario = await processScenario(async (input) => {
+        await runReferenceWalletProcess({
+          ...input,
+          approvalMode: "policy",
+        });
+      }, true);
+      await mutatePolicy(scenario.policyFile, mutate);
+
+      await expect(signingSession(scenario)).rejects.toThrow(
+        /approval failed/iu,
+      );
+      expect(
+        (await readdir(scenario.parent)).filter((name) =>
+          name.startsWith(".used-reference-wallet-policy-"),
+        ),
+      ).toEqual([]);
+    },
+  );
+
   it("verifies the real child-process signature and reaches execute", async () => {
     const outputs: string[] = [];
     const scenario = await processScenario(async (input) => {

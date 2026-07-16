@@ -10,6 +10,7 @@ import {
   requireReferenceWalletPolicy,
   requireReferenceWalletSigningKey,
 } from "./reference-wallet-policy.js";
+import { claimReferenceWalletPolicyAuthorization } from "./reference-wallet-policy-authorization.js";
 import {
   parseReferenceWalletRequest,
   parseReferenceWalletResponse,
@@ -109,7 +110,6 @@ export async function runReferenceWalletApproval(
   requireActive(signal);
   const request = parseReferenceWalletRequest(artifact.payload);
   requireWalletRequestActive(signal, request.expiresAt);
-  const policy = requireReferenceWalletPolicy(request, input.walletPolicy);
   const sdk = SDK.createOffline();
   const computed = await sdk.utils.hash.preparedTransaction(
     request.preparedTransaction,
@@ -119,6 +119,10 @@ export async function runReferenceWalletApproval(
     throw new Error("reference wallet prepared transaction hash mismatch");
   }
   verifyReferenceWalletPreparedApproval(request);
+  const requestedPolicy = requireReferenceWalletPolicy(
+    request,
+    input.walletPolicy,
+  );
   await input.presentSummary(JSON.stringify(request.approval, null, 2));
   requireWalletRequestActive(signal, request.expiresAt);
   let response: ReferenceWalletApprovalResponse;
@@ -128,6 +132,13 @@ export async function runReferenceWalletApproval(
       reason: "user-rejected" as const,
     });
   } else {
+    const policy =
+      input.authorization.mode === "policy"
+        ? await claimReferenceWalletPolicyAuthorization(
+            input.authorization.policyFile,
+            request,
+          )
+        : requestedPolicy;
     response = await withReferenceWalletPrivateKey(
       input.keyFile,
       async (key) => {

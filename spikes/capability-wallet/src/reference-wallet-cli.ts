@@ -44,35 +44,51 @@ async function main(): Promise<void> {
   const keyFile = flag("--key-file");
   const policyFile = flag("--policy-file");
   const approve = process.argv.includes("--approve");
+  const policyAuthorized = process.argv.includes("--policy-authorized");
   const reject = process.argv.includes("--reject");
+  const decisions = [approve, policyAuthorized, reject].filter(Boolean).length;
   if (
     rootDirectory === undefined ||
     handoffId === undefined ||
     policyFile === undefined ||
-    approve === reject ||
-    (approve && keyFile === undefined)
+    decisions !== 1 ||
+    ((approve || policyAuthorized) && keyFile === undefined)
   ) {
     throw new Error(
-      "usage: reference-wallet --root DIR --handoff-id ID --policy-file FILE (--approve --key-file FILE | --reject)",
+      "usage: reference-wallet --root DIR --handoff-id ID --policy-file FILE ((--approve | --policy-authorized) --key-file FILE | --reject)",
     );
   }
   const base = {
     handoffId,
     presentSummary: (summary: string) =>
-      confirmReferenceWalletApproval({
-        approved: approve,
-        handoffId,
-        present: (value) => console.log(value),
-        prompt: terminalPrompt,
-        summary,
-      }),
+      policyAuthorized
+        ? console.log(summary)
+        : confirmReferenceWalletApproval({
+            approved: approve,
+            handoffId,
+            present: (value) => console.log(value),
+            prompt: terminalPrompt,
+            summary,
+          }),
     rootDirectory,
     walletPolicy: await readReferenceWalletPolicy(policyFile),
   };
   const response = await runReferenceWalletApproval(
-    approve
-      ? { ...base, approved: true, keyFile: keyFile! }
-      : { ...base, approved: false },
+    policyAuthorized
+      ? {
+          ...base,
+          approved: true,
+          authorization: { mode: "policy", policyFile },
+          keyFile: keyFile!,
+        }
+      : approve
+        ? {
+            ...base,
+            approved: true,
+            authorization: { mode: "interactive" },
+            keyFile: keyFile!,
+          }
+        : { ...base, approved: false },
   );
   console.log(JSON.stringify({ outcome: response.outcome }));
 }

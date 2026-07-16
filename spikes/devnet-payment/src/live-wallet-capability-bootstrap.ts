@@ -7,6 +7,7 @@ import {
   recomputeReferenceWalletPreparedHash,
 } from "@sotto/capability-wallet";
 import {
+  MAX_CAPABILITY_WALLET_SESSION_MS,
   SOTTO_CONTROL_PACKAGE_ID,
   type BoundedCapabilityBootstrapRequest,
 } from "@sotto/x402-canton";
@@ -20,7 +21,7 @@ import { createFiveNorthTokenProvider } from "./five-north-token.js";
 import { startFiveNorthWalletCapabilityBootstrap } from "./five-north-wallet-capability-bootstrap.js";
 import { createFiveNorthWalletCapabilityTransport } from "./five-north-wallet-capability-transport.js";
 import {
-  createReferenceWalletInteractiveExchange,
+  createReferenceWalletPolicyExchange,
   readReferenceWalletChildIdentity,
   registeredReferenceWalletKeyResolver,
 } from "./reference-wallet-child-process.js";
@@ -115,7 +116,7 @@ async function main(): Promise<void> {
         signingAlgorithms: ["SIGNING_ALGORITHM_SPEC_ED25519"],
         version: "sotto-capability-wallet-capabilities-v1",
       },
-      exchange: createReferenceWalletInteractiveExchange({
+      exchange: createReferenceWalletPolicyExchange({
         keyFile: input.keyFile,
         policyFile: input.policyFile,
         rootDirectory: walletRoot,
@@ -145,7 +146,7 @@ async function main(): Promise<void> {
           payerParty: input.payerParty,
         }),
         signal: controller.signal,
-        timeoutMilliseconds: 60_000,
+        timeoutMilliseconds: MAX_CAPABILITY_WALLET_SESSION_MS,
       },
       sourceCommit,
       workspaceRoot,

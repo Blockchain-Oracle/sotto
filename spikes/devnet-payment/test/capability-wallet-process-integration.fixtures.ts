@@ -193,8 +193,9 @@ export async function writeProcessWalletPolicy(
     ReturnType<typeof createProcessPreparedCapability>
   >["approval"],
   signingFingerprint: string,
+  policyAuthorized = false,
 ) {
-  const policy = {
+  const identity = {
     agentParty: approval.agentParty,
     connectorId: CONNECTOR_ID,
     connectorOrigin: CONNECTOR_ORIGIN,
@@ -208,11 +209,37 @@ export async function writeProcessWalletPolicy(
     templateId: approval.templateId,
     transferFactoryContractId: approval.transferFactoryContractId,
   };
-  await writeFile(path, JSON.stringify(policy), { flag: "wx", mode: 0o600 });
+  const policy = policyAuthorized
+    ? {
+        ...identity,
+        approvalMode: "policy",
+        authorizationId: `sha256:${"c".repeat(64)}`,
+        maximumApprovals: 1,
+        maximumCapabilityLifetimeSeconds: 3_600,
+        maximumTotalDebitAtomic: approval.limits.maximumTotalDebitAtomic,
+        perCallLimitAtomic: approval.limits.perCallLimitAtomic,
+        recipientParty: approval.recipientParty,
+        remainingAllowanceAtomic: approval.limits.remainingAllowanceAtomic,
+        resourceHash: approval.resourceHash,
+        revision: approval.revision,
+        validUntil: new Date(Date.now() + 10 * 60_000).toISOString(),
+        version: "sotto-reference-wallet-policy-v2",
+      }
+    : identity;
+  const canonical = Object.fromEntries(
+    Object.entries(policy).sort(([left], [right]) =>
+      Buffer.compare(Buffer.from(left, "utf8"), Buffer.from(right, "utf8")),
+    ),
+  );
+  await writeFile(path, JSON.stringify(canonical), {
+    flag: "wx",
+    mode: 0o600,
+  });
 }
 
 export function runReferenceWalletProcess(input: {
   approveInput?: boolean;
+  approvalMode?: "interactive" | "policy";
   handoffId: string;
   keyFile: string;
   policyFile: string;
@@ -220,6 +247,8 @@ export function runReferenceWalletProcess(input: {
   signal: AbortSignal;
 }) {
   const cli = resolve("spikes/capability-wallet/dist/reference-wallet-cli.js");
+  const approvalFlag =
+    input.approvalMode === "policy" ? "--policy-authorized" : "--approve";
   return runProcess(
     [
       cli,
@@ -229,11 +258,15 @@ export function runReferenceWalletProcess(input: {
       input.handoffId,
       "--policy-file",
       input.policyFile,
-      "--approve",
+      approvalFlag,
       "--key-file",
       input.keyFile,
     ],
-    input.approveInput === false ? null : `${input.handoffId}\n`,
+    input.approvalMode === "policy"
+      ? undefined
+      : input.approveInput === false
+        ? null
+        : `${input.handoffId}\n`,
     input.signal,
   );
 }

@@ -63,6 +63,7 @@ export function registerReferenceWalletSecurityCases(): void {
         exchange: async (id, { signal }) => {
           wallet = runReferenceWalletApproval({
             approved: true,
+            authorization: { mode: "interactive" },
             handoffId: id,
             keyFile: join(parent, "missing.key"),
             presentSummary: async () => {
@@ -107,6 +108,7 @@ export function registerReferenceWalletSecurityCases(): void {
         exchange: async (id) => {
           wallet = runReferenceWalletApproval({
             approved: true,
+            authorization: { mode: "interactive" },
             handoffId: id,
             keyFile: join(parent, "missing.key"),
             presentSummary: async () => {
