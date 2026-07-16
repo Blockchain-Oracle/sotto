@@ -8,6 +8,11 @@ export {
 } from "./wallet-handoff-storage.js";
 export { createReferenceWalletConnector } from "./reference-wallet.js";
 export {
+  readReferenceWalletPublicIdentity,
+  recomputeReferenceWalletPreparedHash,
+  type ReferenceWalletPublicIdentity,
+} from "./reference-wallet-public-identity.js";
+export {
   createEphemeralExternalPartyPreflightIdentity,
   type ExternalPartyPreflightIdentity,
 } from "./external-party-preflight-key.js";
