@@ -7,6 +7,7 @@ import {
   validatePreparedValue,
 } from "./prepared-purchase-limits.js";
 import type { PreparedPurchaseMetadata } from "./prepared-purchase-metadata-types.js";
+import { preparedSynchronizerMatches } from "./prepared-synchronizer.js";
 import {
   MAX_PREPARED_EVENT_BLOB_BYTES,
   MAX_PREPARED_INPUT_CONTRACTS,
@@ -72,7 +73,12 @@ export function validatePreparedPurchaseMetadata(
   ) {
     throw new Error("prepared submitter metadata does not match");
   }
-  if (metadata.synchronizerId !== request.synchronizerId) {
+  if (
+    !preparedSynchronizerMatches(
+      metadata.synchronizerId,
+      request.synchronizerId,
+    )
+  ) {
     throw new Error("prepared synchronizer does not match");
   }
   identifier(metadata.transactionUuid, "prepared transaction UUID", 128);

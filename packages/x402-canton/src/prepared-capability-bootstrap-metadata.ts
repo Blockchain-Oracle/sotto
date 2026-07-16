@@ -1,5 +1,6 @@
 import type { Metadata } from "@canton-network/core-ledger-proto";
 import type { BoundedCapabilityBootstrapPrepareRequest } from "./bounded-capability-bootstrap-prepare.js";
+import { preparedSynchronizerMatches } from "./prepared-synchronizer.js";
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
@@ -21,7 +22,12 @@ export function validatePreparedCapabilityBootstrapMetadata(
   ) {
     throw new Error("prepared capability submitter metadata does not match");
   }
-  if (metadata.synchronizerId !== request.synchronizerId) {
+  if (
+    !preparedSynchronizerMatches(
+      metadata.synchronizerId,
+      request.synchronizerId,
+    )
+  ) {
     throw new Error("prepared capability synchronizer does not match");
   }
   if (
