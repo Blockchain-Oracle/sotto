@@ -32,7 +32,7 @@ describe("capability wallet session expiry", () => {
   beforeEach(() => vi.useFakeTimers({ now: NOW }));
   afterEach(() => vi.useRealTimers());
 
-  it("advertises the authenticated authority deadline", async () => {
+  it("advertises the prepared-verified wallet session deadline", async () => {
     const prepared = await verifiedCapabilityBootstrap(() =>
       vi.advanceTimersByTime(1_000),
     );
@@ -54,17 +54,37 @@ describe("capability wallet session expiry", () => {
 
     expect(requestApproval.mock.calls[0]![0]).toMatchObject({
       createdAt: "2026-07-15T10:00:01.000Z",
-      expiresAt: "2026-07-15T10:01:00.000Z",
+      expiresAt: "2026-07-15T10:10:01.000Z",
     });
   });
 
-  it("ends active approval at the prepared authority deadline", async () => {
+  it("allows approval after the bootstrap authority window", async () => {
+    const prepared = await verifiedCapabilityBootstrap();
+
+    await expect(
+      createCapabilityWalletSigningSession({
+        connector: {
+          discover: async () => CONNECTOR_CAPABILITIES,
+          requestApproval: async () => {
+            vi.advanceTimersByTime(2 * 60_000);
+            return APPROVED_SIGNATURE;
+          },
+        },
+        connectorId: CONNECTOR_ID,
+        connectorOrigin: CONNECTOR_ORIGIN,
+        prepared,
+        timeoutMilliseconds: 600_000,
+      }),
+    ).resolves.toMatchObject({ outcome: "approved" });
+  });
+
+  it("ends active approval at the prepared-verified session deadline", async () => {
     const prepared = await verifiedCapabilityBootstrap();
     const signing = createCapabilityWalletSigningSession({
       connector: {
         discover: async () => CONNECTOR_CAPABILITIES,
         requestApproval: async () => {
-          vi.advanceTimersByTime(60_001);
+          vi.advanceTimersByTime(600_001);
           return APPROVED_SIGNATURE;
         },
       },

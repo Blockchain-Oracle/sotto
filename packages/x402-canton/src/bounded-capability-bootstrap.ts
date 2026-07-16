@@ -7,6 +7,7 @@ import {
   boundedCapabilityBootstrapState,
   MAX_BOOTSTRAP_AUTHORITY_AGE_MS,
   matchesExpectedBootstrapCapability,
+  MINIMUM_BOOTSTRAP_CAPABILITY_LIFETIME_MS,
   registerBoundedCapabilityBootstrap,
   type ExpectedBootstrapCapability,
   validateBoundedCapabilityBootstrapNetwork,
@@ -21,7 +22,6 @@ import {
   sha256Hex,
 } from "./purchase-commitment-primitives.js";
 
-const MINIMUM_LIFETIME_MS = 5 * 60 * 1_000;
 const MAXIMUM_LIFETIME_MS = 24 * 60 * 60 * 1_000;
 const CLOCK_ROLLBACK_TOLERANCE_MS = 5_000;
 const MAXIMUM_ALLOWANCE_ATOMIC = 10_000_000_000n;
@@ -91,7 +91,7 @@ export function buildBoundedCapabilityBootstrapAt(
     throw new Error("maximum total debit exceeds remaining allowance");
   }
   const expiresAt = canonicalTime(input.expiresAt, "capability expiresAt");
-  if (expiresAt - nowMilliseconds < MINIMUM_LIFETIME_MS) {
+  if (expiresAt - nowMilliseconds < MINIMUM_BOOTSTRAP_CAPABILITY_LIFETIME_MS) {
     throw new Error("expiry must leave at least five minutes");
   }
   if (expiresAt - nowMilliseconds > MAXIMUM_LIFETIME_MS) {
@@ -208,7 +208,7 @@ export function assertBoundedCapabilityBootstrapFresh(request: unknown): void {
     state.expected.expiresAt,
     "capability expiresAt",
   );
-  if (expiresAt - nowMilliseconds < MINIMUM_LIFETIME_MS) {
+  if (expiresAt - nowMilliseconds < MINIMUM_BOOTSTRAP_CAPABILITY_LIFETIME_MS) {
     throw new Error("expiry must leave at least five minutes");
   }
   if (nowMilliseconds - validatedAt > MAX_BOOTSTRAP_AUTHORITY_AGE_MS) {

@@ -17,6 +17,7 @@ export type BoundedCapabilityBootstrapState = Readonly<{
 const states = new WeakMap<object, BoundedCapabilityBootstrapState>();
 
 export const MAX_BOOTSTRAP_AUTHORITY_AGE_MS = 60_000;
+export const MINIMUM_BOOTSTRAP_CAPABILITY_LIFETIME_MS = 5 * 60 * 1_000;
 const MAXIMUM_CANTON_NETWORK_BYTES = 128;
 const CANONICAL_CANTON_NETWORK_PATTERN =
   /^canton:[a-z0-9]+(?:[._-][a-z0-9]+)*$/u;

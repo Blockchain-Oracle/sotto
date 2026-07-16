@@ -1,10 +1,6 @@
 import { randomBytes } from "node:crypto";
-import { assertBoundedCapabilityBootstrapFresh } from "./bounded-capability-bootstrap.js";
 import { persistCapabilityWalletApprovalStarted } from "./capability-wallet-approval-persistence.js";
-import {
-  boundedCapabilityBootstrapState,
-  MAX_BOOTSTRAP_AUTHORITY_AGE_MS,
-} from "./bounded-capability-bootstrap-state.js";
+import { boundedCapabilityBootstrapState } from "./bounded-capability-bootstrap-state.js";
 import {
   CAPABILITY_WALLET_REQUEST_VERSION,
   MAX_CAPABILITY_WALLET_SESSION_MS,
@@ -15,6 +11,7 @@ import {
 } from "./capability-wallet-connector-types.js";
 import { parseCapabilityWalletCapabilities } from "./capability-wallet-connector-validation.js";
 import { withCapabilityWalletDeadline } from "./capability-wallet-deadline.js";
+import { capabilityWalletSessionExpiresAt } from "./capability-wallet-session-window.js";
 import { parseCapabilityWalletApprovalResponse } from "./capability-wallet-response-validation.js";
 import { requireNegotiatedCapabilityWalletSignatureScheme } from "./capability-wallet-signature-scheme.js";
 import { registerApprovedCapabilityWalletSigningSession } from "./capability-wallet-signing-session-state.js";
@@ -83,12 +80,12 @@ export async function createCapabilityWalletSigningSession(
   const bootstrapState = boundedCapabilityBootstrapState(preparedState.request);
   const approval = projectPreparedCapabilityBootstrapApproval(prepared);
   const intentHash = capabilityIntentHash(preparedState.request.commandId);
-  const authorityExpiresAt =
-    Date.parse(bootstrapState.validatedAt) + MAX_BOOTSTRAP_AUTHORITY_AGE_MS;
-  const expiresAtMilliseconds = Math.min(
-    startedAt + timeoutMilliseconds,
-    authorityExpiresAt,
-  );
+  const expiresAtMilliseconds = capabilityWalletSessionExpiresAt({
+    capabilityExpiresAt: bootstrapState.expected.expiresAt,
+    preparedCapturedAt: preparedState.capturedAt,
+    startedAt,
+    timeoutMilliseconds,
+  });
   const effectiveTimeoutMilliseconds = expiresAtMilliseconds - startedAt;
   if (effectiveTimeoutMilliseconds < 1) {
     throw new Error("capability wallet signing authority has expired");
@@ -140,7 +137,6 @@ export async function createCapabilityWalletSigningSession(
         requestApproval(request, Object.freeze({ signal })),
       );
       requireActiveSession(signal, expiresAtMilliseconds);
-      assertBoundedCapabilityBootstrapFresh(preparedState.request);
       const response = parseCapabilityWalletApprovalResponse(responseValue);
       const resultIdentity = {
         connectorId: compatibility.capabilities.connectorId,
