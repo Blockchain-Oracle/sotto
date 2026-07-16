@@ -37,6 +37,7 @@
     "spike:capability:start": "tsx spikes/devnet-payment/src/live-capability-bootstrap.ts start",
     "spike:capability:recover": "tsx spikes/devnet-payment/src/live-capability-bootstrap.ts recover",
     "spike:wallet:preflight": "tsx spikes/devnet-payment/src/live-five-north-wallet-preflight.ts",
+    "spike:wallet:tap": "tsx spikes/capability-wallet/src/five-north-external-payer-tap-cli.ts",
     "spike:package": "tsx spikes/devnet-payment/src/live-sotto-control-package.ts",
     "test": "node scripts/build-workspaces.mjs && vitest run",
     "test:unit": "vitest run",
