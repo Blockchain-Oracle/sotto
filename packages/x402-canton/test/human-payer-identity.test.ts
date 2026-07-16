@@ -13,9 +13,13 @@ function reader() {
   return {
     readAuthenticatedSubject: vi.fn(async () => "validator-devnet-m2m"),
     readPayerIdentity: vi.fn(async () => ({
+      keyPurpose: "SIGNING",
       network: "canton:devnet",
       party: PARTY,
+      publicKeyFormat: "PUBLIC_KEY_FORMAT_RAW",
       publicKeyFingerprint: FINGERPRINT,
+      signatureFormat: "SIGNATURE_FORMAT_CONCAT",
+      signingAlgorithm: "SIGNING_ALGORITHM_SPEC_ED25519",
       synchronizerId: SYNCHRONIZER,
       topologyHash: `1220${"c".repeat(64)}`,
     })),
@@ -37,9 +41,13 @@ describe("authenticated human payer identity", () => {
     expect(source.readPayerIdentity).toHaveBeenCalledWith();
     expect(identity).toEqual({
       acquiredAt: "2026-07-16T15:00:00.000Z",
+      keyPurpose: "SIGNING",
       network: "canton:devnet",
       party: PARTY,
+      publicKeyFormat: "PUBLIC_KEY_FORMAT_RAW",
       publicKeyFingerprint: FINGERPRINT,
+      signatureFormat: "SIGNATURE_FORMAT_CONCAT",
+      signingAlgorithm: "SIGNING_ALGORITHM_SPEC_ED25519",
       subjectHash: expect.stringMatching(/^sha256:[0-9a-f]{64}$/u),
       synchronizerId: SYNCHRONIZER,
       topologyHash: `1220${"c".repeat(64)}`,
@@ -64,9 +72,13 @@ describe("authenticated human payer identity", () => {
   it("rejects Party fingerprint substitution and subject changes", async () => {
     const wrongParty = reader();
     wrongParty.readPayerIdentity.mockResolvedValue({
+      keyPurpose: "SIGNING",
       network: "canton:devnet",
       party: `sotto-external-payer::1220${"d".repeat(64)}`,
+      publicKeyFormat: "PUBLIC_KEY_FORMAT_RAW",
       publicKeyFingerprint: FINGERPRINT,
+      signatureFormat: "SIGNATURE_FORMAT_CONCAT",
+      signingAlgorithm: "SIGNING_ALGORITHM_SPEC_ED25519",
       synchronizerId: SYNCHRONIZER,
       topologyHash: `1220${"c".repeat(64)}`,
     });

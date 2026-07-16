@@ -1,4 +1,9 @@
 import { createHash, randomBytes } from "node:crypto";
+import type {
+  CapabilityWalletSignatureFormat,
+  CapabilityWalletSigningAlgorithm,
+} from "./capability-wallet-connector-types.js";
+import type { CapabilityWalletPublicKeyFormat } from "./capability-wallet-signature-types.js";
 import { identifier } from "./purchase-commitment-primitives.js";
 import {
   parseHumanPayerIdentity,
@@ -23,9 +28,13 @@ export type HumanPayerIdentityObservation = Readonly<{
 
 export type AuthenticatedHumanPayerIdentity = Readonly<{
   acquiredAt: string;
+  keyPurpose: "SIGNING";
   network: `canton:${string}`;
   party: string;
+  publicKeyFormat: CapabilityWalletPublicKeyFormat;
   publicKeyFingerprint: `1220${string}`;
+  signatureFormat: CapabilityWalletSignatureFormat;
+  signingAlgorithm: CapabilityWalletSigningAlgorithm;
   subjectHash: `sha256:${string}`;
   synchronizerId: string;
   topologyHash: string;

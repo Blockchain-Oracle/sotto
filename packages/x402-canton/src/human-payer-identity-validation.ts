@@ -4,6 +4,11 @@ import {
   objectValue,
 } from "./purchase-commitment-primitives.js";
 import {
+  capabilityWalletSignatureFormat,
+  capabilityWalletSigningAlgorithm,
+  isSupportedCapabilityWalletSignatureScheme,
+} from "./capability-wallet-signature-scheme.js";
+import {
   HUMAN_PAYER_IDENTITY_VERSION,
   type AuthenticatedHumanPayerIdentity,
   type HumanPayerIdentityReader,
@@ -46,15 +51,41 @@ export function parseHumanPayerIdentity(
   exactKeys(
     record,
     [
+      "keyPurpose",
       "network",
       "party",
+      "publicKeyFormat",
       "publicKeyFingerprint",
+      "signatureFormat",
+      "signingAlgorithm",
       "synchronizerId",
       "topologyHash",
     ],
     "human payer identity",
   );
   const party = identifier(record.party, "human payer Party", 512);
+  const signatureFormat = capabilityWalletSignatureFormat(
+    record.signatureFormat,
+  );
+  const signingAlgorithm = capabilityWalletSigningAlgorithm(
+    record.signingAlgorithm,
+  );
+  if (
+    record.keyPurpose !== "SIGNING" ||
+    !isSupportedCapabilityWalletSignatureScheme(
+      signatureFormat,
+      signingAlgorithm,
+    )
+  ) {
+    throw new Error("human payer key must use a supported signing purpose");
+  }
+  const expectedPublicKeyFormat =
+    signingAlgorithm === "SIGNING_ALGORITHM_SPEC_ED25519"
+      ? "PUBLIC_KEY_FORMAT_RAW"
+      : "PUBLIC_KEY_FORMAT_DER_SPKI";
+  if (record.publicKeyFormat !== expectedPublicKeyFormat) {
+    throw new Error("human payer public-key format does not match its scheme");
+  }
   const fingerprint = record.publicKeyFingerprint;
   if (
     typeof fingerprint !== "string" ||
@@ -66,9 +97,13 @@ export function parseHumanPayerIdentity(
   }
   return Object.freeze({
     acquiredAt,
+    keyPurpose: "SIGNING" as const,
     network: cantonNetwork(record.network),
     party,
+    publicKeyFormat: expectedPublicKeyFormat,
     publicKeyFingerprint: fingerprint as `1220${string}`,
+    signatureFormat,
+    signingAlgorithm,
     subjectHash,
     synchronizerId: identifier(
       record.synchronizerId,

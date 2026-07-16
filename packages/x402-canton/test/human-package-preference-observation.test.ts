@@ -15,6 +15,7 @@ import {
 } from "./human-payer-identity.fixtures.js";
 
 const VETTING_VALID_AT = "2026-07-16T15:00:30.000Z";
+const CHALLENGE_ID = `sha256:${"d".repeat(64)}` as const;
 
 function humanClosure() {
   const input = validClosureInput();
@@ -43,6 +44,7 @@ function reader(closure = humanClosure()) {
 async function scope(closure = humanClosure()) {
   return {
     adminParty: DSO,
+    challengeId: CHALLENGE_ID,
     challengeObservedAt: "2026-07-16T15:00:00.000Z",
     closure,
     executeBefore: "2026-07-16T15:10:00.000Z",

@@ -9,6 +9,7 @@ export type HumanPackagePreferenceReader = PackagePreferenceReader;
 
 export type HumanPackagePreferenceScope = Readonly<{
   adminParty: string;
+  challengeId: `sha256:${string}`;
   challengeObservedAt: string;
   closure: ReviewedPackagePreferenceClosure;
   executeBefore: string;
@@ -44,6 +45,7 @@ export type AuthenticatedHumanPackagePreference = Readonly<{
 
 export type ValidatedHumanPackagePreferenceScope = Readonly<{
   adminParty: string;
+  challengeId: `sha256:${string}`;
   challengeObservedAt: string;
   closure: ReviewedPackagePreferenceClosure;
   executeBefore: string;

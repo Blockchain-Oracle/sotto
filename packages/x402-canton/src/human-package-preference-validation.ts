@@ -14,6 +14,7 @@ import {
   exactKeys,
   identifier,
   objectValue,
+  SHA256_PATTERN,
 } from "./purchase-commitment-primitives.js";
 
 const CLOCK_ROLLBACK_TOLERANCE_MS = 5_000;
@@ -59,6 +60,7 @@ export function validateHumanPackagePreferenceScope(
     record,
     [
       "adminParty",
+      "challengeId",
       "challengeObservedAt",
       "closure",
       "executeBefore",
@@ -71,6 +73,12 @@ export function validateHumanPackagePreferenceScope(
   const payerIdentity = readAuthenticatedHumanPayerIdentity(
     record.payerIdentity,
   );
+  if (
+    typeof record.challengeId !== "string" ||
+    !SHA256_PATTERN.test(record.challengeId)
+  ) {
+    throw new Error("human package challengeId must be a SHA-256 identifier");
+  }
   const now = Date.now();
   const payerAcquiredAtMs = canonicalTime(
     payerIdentity.acquiredAt,
@@ -116,6 +124,7 @@ export function validateHumanPackagePreferenceScope(
   }
   return Object.freeze({
     adminParty,
+    challengeId: record.challengeId as `sha256:${string}`,
     challengeObservedAt: record.challengeObservedAt as string,
     closure: requireHumanClosure(record.closure),
     executeBefore: record.executeBefore as string,

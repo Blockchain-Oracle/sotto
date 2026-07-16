@@ -27,10 +27,7 @@ type ObservationState = {
 };
 
 const observations = new WeakMap<object, ObservationState>();
-const authenticated = new WeakMap<
-  object,
-  AuthenticatedHumanPackagePreference
->();
+const authenticated = new WeakMap<object, ObservationState>();
 
 async function readUpstream(
   phase: "packages" | "subject",
@@ -65,6 +62,7 @@ function sameScope(
     left.closure === right.closure &&
     left.payerIdentity === right.payerIdentity &&
     left.adminParty === right.adminParty &&
+    left.challengeId === right.challengeId &&
     left.providerParty === right.providerParty &&
     left.challengeObservedAt === right.challengeObservedAt &&
     left.executeBefore === right.executeBefore &&
@@ -176,7 +174,7 @@ export function claimHumanPackagePreferenceObservation(
     throw new Error("human package preference is already claimed");
   }
   state.claimed = true;
-  authenticated.set(state.projection, state.projection);
+  authenticated.set(state.projection, state);
   return state.projection;
 }
 
@@ -186,9 +184,16 @@ export function readAuthenticatedHumanPackagePreference(
   if (typeof candidate !== "object" || candidate === null) {
     throw new Error("human package preference is not authenticated");
   }
-  const projection = authenticated.get(candidate);
-  if (projection === undefined) {
+  const state = authenticated.get(candidate);
+  if (state === undefined) {
     throw new Error("human package preference is not authenticated");
   }
-  return projection;
+  requireFresh(state);
+  return state.projection;
+}
+
+/** @internal Human purchase construction only. */
+export function readHumanPackagePreferenceAuthority(candidate: unknown) {
+  readAuthenticatedHumanPackagePreference(candidate);
+  return authenticated.get(candidate as object)!.scope;
 }

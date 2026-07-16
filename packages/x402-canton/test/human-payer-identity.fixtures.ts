@@ -11,9 +11,13 @@ export async function authenticatedHumanPayerIdentity() {
   const observation = await createHumanPayerIdentityObserver({
     readAuthenticatedSubject: async () => "validator-devnet-m2m",
     readPayerIdentity: async () => ({
+      keyPurpose: "SIGNING",
       network: "canton:devnet",
       party: HUMAN_PAYER,
+      publicKeyFormat: "PUBLIC_KEY_FORMAT_RAW",
       publicKeyFingerprint: HUMAN_PAYER_FINGERPRINT,
+      signatureFormat: "SIGNATURE_FORMAT_CONCAT",
+      signingAlgorithm: "SIGNING_ALGORITHM_SPEC_ED25519",
       synchronizerId: HUMAN_SYNCHRONIZER,
       topologyHash: `1220${"c".repeat(64)}`,
     }),

@@ -3,6 +3,7 @@ import {
   claimHumanPackagePreferenceObservation,
   createHumanPackagePreferenceObserver,
   readAuthenticatedHumanPackagePreference,
+  readHumanPackagePreferenceAuthority,
 } from "../src/human-package-preference-observation.js";
 import { buildReviewedPackagePreferenceClosure } from "../src/package-preference-closure.js";
 import { validClosureInput } from "./package-preference-closure.fixtures.js";
@@ -14,6 +15,7 @@ import {
 } from "./human-payer-identity.fixtures.js";
 
 const VETTING = "2026-07-16T15:00:30.000Z";
+const CHALLENGE_ID = `sha256:${"d".repeat(64)}` as const;
 
 function closure() {
   const input = validClosureInput();
@@ -42,6 +44,7 @@ function reader(expected = closure()) {
 async function scope() {
   return {
     adminParty: DSO,
+    challengeId: CHALLENGE_ID,
     challengeObservedAt: "2026-07-16T15:00:00.000Z",
     closure: closure(),
     executeBefore: "2026-07-16T15:10:00.000Z",
@@ -121,6 +124,12 @@ describe("human package preference security", () => {
     expect(() =>
       claimHumanPackagePreferenceObservation(observation, {
         ...candidateScope,
+        challengeId: `sha256:${"e".repeat(64)}`,
+      }),
+    ).toThrow(/scope/iu);
+    expect(() =>
+      claimHumanPackagePreferenceObservation(observation, {
+        ...candidateScope,
         providerParty: "sotto-other-provider::1220provider",
       }),
     ).toThrow(/scope/iu);
@@ -129,6 +138,10 @@ describe("human package preference security", () => {
       candidateScope,
     );
     expect(readAuthenticatedHumanPackagePreference(selection)).toBe(selection);
+    const authority = readHumanPackagePreferenceAuthority(selection);
+    expect(authority.challengeId).toBe(CHALLENGE_ID);
+    expect(authority.payerIdentity).toBe(candidateScope.payerIdentity);
+    expect(authority.executeBefore).toBe(candidateScope.executeBefore);
     expect(selection.synchronizerId).toBe(HUMAN_SYNCHRONIZER);
     expect(Object.isFrozen(selection.references[0]?.artifactIds)).toBe(true);
   });

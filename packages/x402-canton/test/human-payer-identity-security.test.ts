@@ -10,9 +10,13 @@ const SYNCHRONIZER = `global-domain::1220${"b".repeat(64)}`;
 
 function identity() {
   return {
+    keyPurpose: "SIGNING",
     network: "canton:devnet",
     party: PARTY,
+    publicKeyFormat: "PUBLIC_KEY_FORMAT_RAW",
     publicKeyFingerprint: FINGERPRINT,
+    signatureFormat: "SIGNATURE_FORMAT_CONCAT",
+    signingAlgorithm: "SIGNING_ALGORITHM_SPEC_ED25519",
     synchronizerId: SYNCHRONIZER,
     topologyHash: `1220${"c".repeat(64)}`,
   };
@@ -86,6 +90,19 @@ describe("human payer identity security", () => {
     ],
     ["blank synchronizer", { ...identity(), synchronizerId: "" }],
     ["blank topology hash", { ...identity(), topologyHash: "" }],
+    ["wrong key purpose", { ...identity(), keyPurpose: "ENCRYPTION" }],
+    [
+      "mismatched signature scheme",
+      {
+        ...identity(),
+        signatureFormat: "SIGNATURE_FORMAT_DER",
+        signingAlgorithm: "SIGNING_ALGORITHM_SPEC_ED25519",
+      },
+    ],
+    [
+      "mismatched public-key format",
+      { ...identity(), publicKeyFormat: "PUBLIC_KEY_FORMAT_DER_SPKI" },
+    ],
   ])("rejects %s", async (_name, candidate) => {
     await expect(
       createHumanPayerIdentityObserver(reader(candidate))(),
