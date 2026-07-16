@@ -6,6 +6,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@canton-network/core-provider-dapp": "1.8.0",
+    "@sotto/capability-wallet": "workspace:*",
     "@sotto/evidence": "workspace:*",
     "@sotto/x402-canton": "workspace:*"
   },

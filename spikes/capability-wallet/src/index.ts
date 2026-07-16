@@ -7,6 +7,10 @@ export {
   type WalletHandoffStorage,
 } from "./wallet-handoff-storage.js";
 export { createReferenceWalletConnector } from "./reference-wallet.js";
+export {
+  createEphemeralExternalPartyPreflightIdentity,
+  type ExternalPartyPreflightIdentity,
+} from "./external-party-preflight-key.js";
 
 export const CANTON_WALLET_SDK_REFERENCE = Object.freeze({
   packageName: "@canton-network/wallet-sdk",

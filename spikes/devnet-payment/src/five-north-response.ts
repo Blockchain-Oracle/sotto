@@ -1,5 +1,23 @@
 const ERROR_RESPONSE_LIMIT = 65_536;
 const ERROR_CODE_PATTERN = /^[A-Z][A-Z0-9_.-]{0,63}$/u;
+const UNSUPPORTED_STATUSES = new Set([404, 405, 501]);
+
+export class FiveNorthRequestFailure extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+    this.name = "FiveNorthRequestFailure";
+  }
+}
+
+export function isFiveNorthUnsupportedResponse(error: unknown): boolean {
+  return (
+    error instanceof FiveNorthRequestFailure &&
+    UNSUPPORTED_STATUSES.has(error.status)
+  );
+}
 
 async function cancelBody(response: Response): Promise<void> {
   await response.body?.cancel().catch(() => undefined);
@@ -99,8 +117,9 @@ export async function readFiveNorthResponse(
   );
   if (!response.ok) {
     const code = failureCode(bytes);
-    throw new Error(
+    throw new FiveNorthRequestFailure(
       `Five North request failed with HTTP ${response.status}${code === "" ? "" : ` (${code})`}`,
+      response.status,
     );
   }
   return bytes;

@@ -124,14 +124,14 @@ export function createFiveNorthCapabilityReadinessTransport(
         `${network.ledgerUrl}/v2/packages/${packageId}`,
         { method: "GET", redirect: "error" },
       );
+      const bytes = await readFiveNorthResponse(
+        response,
+        MAX_LEDGER_PACKAGE_BYTES,
+      );
       if (response.headers.get("canton-package-hash") !== packageId) {
-        await response.body?.cancel().catch(() => undefined);
         throw new Error("Ledger package hash header does not match package ID");
       }
-      return verifyLedgerPackagePresence(
-        await readFiveNorthResponse(response, MAX_LEDGER_PACKAGE_BYTES),
-        packageId,
-      );
+      return verifyLedgerPackagePresence(bytes, packageId);
     },
     readPreferredSottoPackage: (payerParty, agentParty) =>
       ledgerJson(
