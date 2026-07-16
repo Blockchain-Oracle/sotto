@@ -17,7 +17,7 @@ export const SOTTO_CONTROL_PACKAGE_ID =
 export const APPROVED_BOUNDED_PURCHASE_CAPABILITY_TEMPLATE_ID =
   `${SOTTO_CONTROL_PACKAGE_ID}:${BOUNDED_PURCHASE_CAPABILITY_TEMPLATE}` as const;
 const DAML_TIME_PATTERN =
-  /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.(\d{3}|\d{6}))?Z$/;
+  /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.(\d{1,6}))?Z$/;
 
 export type PurchaseCapabilitySnapshot = Readonly<{
   agentParty: string;
@@ -46,8 +46,8 @@ function normalizeDamlTime(value: unknown, label: string): string {
   if (match === null) {
     throw new Error(`${label} must be a Daml timestamp`);
   }
-  const fraction = match[2] ?? "000";
-  if (fraction.length === 6 && fraction.slice(3) !== "000") {
+  const fraction = (match[2] ?? "").padEnd(6, "0");
+  if (fraction.slice(3) !== "000") {
     throw new Error(`${label} has unsupported sub-millisecond precision`);
   }
   const normalized = `${match[1]}.${fraction.slice(0, 3)}Z`;
