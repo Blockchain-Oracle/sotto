@@ -39,10 +39,11 @@ const FLAGS = new Set([
 ]);
 
 function argumentsFor(values: ReadonlyArray<string>) {
+  const normalized = values[0] === "--" ? values.slice(1) : values;
   const parsed = new Map<string, string>();
-  for (let index = 0; index < values.length; index += 2) {
-    const name = values[index];
-    const value = values[index + 1];
+  for (let index = 0; index < normalized.length; index += 2) {
+    const name = normalized[index];
+    const value = normalized[index + 1];
     if (
       name === undefined ||
       value === undefined ||

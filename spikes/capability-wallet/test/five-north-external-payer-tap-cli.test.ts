@@ -18,6 +18,7 @@ it("runs the exact unattended tap without a confirmation argument", async () => 
     runFiveNorthExternalPayerTapCli(
       {
         arguments: [
+          "--",
           "--expected-fingerprint",
           fingerprint,
           "--key-file",
