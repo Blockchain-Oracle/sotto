@@ -20,7 +20,7 @@ import { createFiveNorthTokenProvider } from "./five-north-token.js";
 import { startFiveNorthWalletCapabilityBootstrap } from "./five-north-wallet-capability-bootstrap.js";
 import { createFiveNorthWalletCapabilityTransport } from "./five-north-wallet-capability-transport.js";
 import {
-  createReferenceWalletChildExchange,
+  createReferenceWalletInteractiveExchange,
   readReferenceWalletChildIdentity,
   registeredReferenceWalletKeyResolver,
 } from "./reference-wallet-child-process.js";
@@ -115,7 +115,7 @@ async function main(): Promise<void> {
         signingAlgorithms: ["SIGNING_ALGORITHM_SPEC_ED25519"],
         version: "sotto-capability-wallet-capabilities-v1",
       },
-      exchange: createReferenceWalletChildExchange({
+      exchange: createReferenceWalletInteractiveExchange({
         keyFile: input.keyFile,
         policyFile: input.policyFile,
         rootDirectory: walletRoot,

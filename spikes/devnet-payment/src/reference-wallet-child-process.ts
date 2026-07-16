@@ -20,7 +20,6 @@ async function runWalletChild(input: {
   arguments: string[];
   script: string;
   signal: AbortSignal;
-  standardInput?: string;
   workspaceRoot: string;
 }): Promise<string> {
   if (!isAbsolute(input.workspaceRoot) || input.signal.aborted) {
@@ -62,7 +61,42 @@ async function runWalletChild(input: {
       }
       resolveOutput(output.toString("utf8"));
     });
-    child.stdin.end(input.standardInput ?? "");
+    child.stdin.end();
+  });
+}
+
+type InteractiveInput = Readonly<{
+  arguments: string[];
+  script: string;
+  signal: AbortSignal;
+  workspaceRoot: string;
+}>;
+
+async function runWalletInteractive(input: InteractiveInput): Promise<void> {
+  if (!isAbsolute(input.workspaceRoot) || input.signal.aborted) {
+    throw new Error("reference wallet interactive scope is invalid");
+  }
+  await new Promise<void>((resolveChild, reject) => {
+    const child = spawn(
+      process.execPath,
+      ["--import", "tsx", input.script, ...input.arguments],
+      {
+        cwd: input.workspaceRoot,
+        env: walletEnvironment(),
+        signal: input.signal,
+        stdio: "inherit",
+      },
+    );
+    child.once("error", () =>
+      reject(new Error("reference wallet interactive process failed")),
+    );
+    child.once("close", (code) => {
+      if (code !== 0) {
+        reject(new Error("reference wallet interactive process failed"));
+        return;
+      }
+      resolveChild();
+    });
   });
 }
 
@@ -120,17 +154,22 @@ export async function readReferenceWalletChildIdentity(input: {
   return parsed;
 }
 
-export function createReferenceWalletChildExchange(input: {
-  keyFile: string;
-  policyFile: string;
-  rootDirectory: string;
-  workspaceRoot: string;
-}) {
+export function createReferenceWalletInteractiveExchange(
+  input: Readonly<{
+    keyFile: string;
+    policyFile: string;
+    rootDirectory: string;
+    workspaceRoot: string;
+  }>,
+  dependencies: Readonly<{
+    runInteractive: (input: InteractiveInput) => Promise<void>;
+  }> = { runInteractive: runWalletInteractive },
+) {
   return async (handoffId: string, options: { signal: AbortSignal }) => {
     if (!HANDOFF_ID.test(handoffId)) {
       throw new Error("reference wallet handoff ID is invalid");
     }
-    const output = await runWalletChild({
+    await dependencies.runInteractive({
       arguments: [
         "--root",
         input.rootDirectory,
@@ -147,12 +186,8 @@ export function createReferenceWalletChildExchange(input: {
         "spikes/capability-wallet/src/reference-wallet-cli.ts",
       ),
       signal: options.signal,
-      standardInput: `${handoffId}\n`,
       workspaceRoot: input.workspaceRoot,
     });
-    if (!/\{"outcome":"approved"\}\s*$/u.test(output)) {
-      throw new Error("reference wallet approval did not complete");
-    }
   };
 }
 
