@@ -7,22 +7,22 @@ import type { preparedCreate } from "./prepared-purchase-factory-effects.fixture
 
 function appendCreate(
   prepared: Parameters<typeof preparedCreate>[0],
-  parentId: "0" | "101",
+  parentId: "0" | "108",
 ): void {
   const transaction = prepared.transaction!;
   const duplicate = structuredClone(
     transaction.nodes.find(({ nodeId }) => nodeId === "103")!,
   );
-  duplicate.nodeId = "108";
+  duplicate.nodeId = "113";
   const wrapper = duplicate.versionedNode;
   if (wrapper.oneofKind !== "v1") throw new Error("missing Holding clone");
   const node = wrapper.v1.nodeType;
   if (node.oneofKind !== "create") throw new Error("clone is not a create");
   node.create.contractId = "00unclassified-holding";
   transaction.nodes.push(duplicate);
-  factoryExercise(prepared, parentId).children.push("108");
+  factoryExercise(prepared, parentId).children.push("113");
   transaction.nodeSeeds.push({
-    nodeId: 108,
+    nodeId: 113,
     seed: new Uint8Array(32).fill(8),
   });
 }
@@ -31,7 +31,7 @@ function reparentFactoryCreate(
   prepared: Parameters<typeof preparedCreate>[0],
   nodeId: "103" | "104",
 ): void {
-  const factory = factoryExercise(prepared, "101");
+  const factory = factoryExercise(prepared, "108");
   factory.children = factory.children.filter((child) => child !== nodeId);
   factoryExercise(prepared, "0").children.push(nodeId);
 }
@@ -58,7 +58,7 @@ export function registerPreparedHoldingStructureCases(): void {
 
     it("rejects an unclassified factory Holding create", async () => {
       await expectFactoryEffectRejection((prepared) =>
-        appendCreate(prepared, "101"),
+        appendCreate(prepared, "108"),
       );
     });
 

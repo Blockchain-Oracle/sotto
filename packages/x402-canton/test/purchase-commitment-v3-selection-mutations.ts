@@ -1,4 +1,4 @@
-import { AGENT, DSO, PAYER, PROVIDER } from "./purchase-commitment.fixtures.js";
+import { AGENT, PAYER, PROVIDER } from "./purchase-commitment.fixtures.js";
 import type { PackageSelectionFixture } from "./purchase-package-selection.fixtures.js";
 
 export type SelectionMutation = (selection: PackageSelectionFixture) => void;
@@ -105,7 +105,6 @@ export const authenticInvalidSelections: ReadonlyArray<
     (value) =>
       substituteParty(value, PROVIDER, "sotto-provider-2::1220provider"),
   ],
-  ["admin", (value) => substituteParty(value, DSO, "DSO-2::1220dso")],
   ["synchronizer", (value) => (value.synchronizerId = "other::1220sync")],
   [
     "vetting before acquisition",

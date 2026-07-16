@@ -133,7 +133,6 @@ export function projectPurchasePackageSelection(
   assertLexicalUnique(packageIds, "purchase package IDs");
   assertLexicalUnique(referenceNames, "purchase package reference names");
   const expectedParties = [
-    scope.adminParty,
     scope.agentParty,
     scope.payerParty,
     scope.recipientParty,

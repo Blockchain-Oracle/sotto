@@ -1,5 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { signBoundedPurchase } from "../src/index.js";
+import {
+  claimBoundedPurchaseSigningAuthorization,
+  signBoundedPurchase,
+} from "../src/index.js";
 import {
   SIGNER_BOUNDARY_DIGEST,
   signerBoundaryFixture,
@@ -43,14 +46,36 @@ describe("bounded Purchase zero-signing boundary", () => {
       purchaseCommitment: intent.purchaseCommitment,
       signingReference: "signing:opaque-reference",
     });
-    expect(dependencies.signOpaque).toHaveBeenCalledWith({
+    const authorization = dependencies.signOpaque.mock.calls[0]![0];
+    expect(authorization).toMatchObject({
       attemptId: intent.attemptId,
-      preparedTransactionHash,
+      executeBefore: intent.challenge.executeBefore,
+      party: intent.capability.agentParty,
+      purchaseCommitment: intent.purchaseCommitment,
     });
+    expect(authorization).toHaveProperty(
+      "authorizationId",
+      expect.stringMatching(/^sha256:[0-9a-f]{64}$/u),
+    );
+    expect(authorization).not.toHaveProperty("preparedTransactionHash");
     expect(dependencies.signOpaque).toHaveBeenCalledOnce();
     expect(
       Object.isFrozen(dependencies.signOpaque.mock.calls[0]![0] as object),
     ).toBe(true);
+    const material = claimBoundedPurchaseSigningAuthorization(authorization);
+    expect(material).toMatchObject({
+      attemptId: intent.attemptId,
+      party: intent.capability.agentParty,
+      purchaseCommitment: intent.purchaseCommitment,
+    });
+    expect(material.preparedTransactionHash).toEqual(SIGNER_BOUNDARY_DIGEST);
+    material.preparedTransactionHash.fill(0);
+    expect(() =>
+      claimBoundedPurchaseSigningAuthorization(authorization),
+    ).toThrow(/already claimed/iu);
+    expect(() =>
+      claimBoundedPurchaseSigningAuthorization(structuredClone(authorization)),
+    ).toThrow(/not authenticated/iu);
     expect(receipt).not.toHaveProperty("preparedTransaction");
   });
 

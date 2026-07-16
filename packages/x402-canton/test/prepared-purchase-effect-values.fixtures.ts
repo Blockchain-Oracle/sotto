@@ -156,7 +156,7 @@ export function factoryResult(intent: BoundedPurchaseLedgerIntent): Value {
         "senderChangeCids",
         fixtureContractIds([PREPARED_PURCHASE_EFFECT_CIDS.senderChangeHolding]),
       ],
-      ["meta", fixtureMetadata()],
+      ["meta", fixtureMetadata({ "splice.example/fee": "0.025" })],
     ],
   );
 }

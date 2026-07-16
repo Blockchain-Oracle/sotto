@@ -19,7 +19,7 @@ import {
 } from "../../../packages/x402-canton/test/purchase-commitment.fixtures.js";
 import { holdingEntry } from "../../../packages/x402-canton/test/purchase-holding-observation.fixtures.js";
 import {
-  factoryResponse,
+  externalFactoryResponse,
   responseBytes,
 } from "../../../packages/x402-canton/test/transfer-factory-observation.fixtures.js";
 import type { FiveNorthPurchaseReaders } from "../src/five-north-purchase-readers.js";
@@ -123,7 +123,7 @@ it("acquires exact authenticated package scope after the observed 402", async ()
     },
     registry: async () => {
       if (intent === undefined) throw new Error("intent was not committed");
-      return responseBytes(factoryResponse(intent));
+      return responseBytes(externalFactoryResponse(intent));
     },
     prepared: async ({ body }) => {
       if (intent === undefined) throw new Error("intent was not committed");

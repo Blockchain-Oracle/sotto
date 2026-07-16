@@ -10,7 +10,7 @@ export const SYNCHRONIZER = "global-domain::1220sync";
 export const SUBJECT = "validator-devnet-m2m";
 export const OBSERVED_AT = "2026-07-14T10:00:00.000Z";
 export const VETTING_VALID_AT = "2026-07-14T10:00:30.000Z";
-export const PARTIES = Object.freeze([DSO, AGENT, PAYER, PROVIDER].sort());
+export const PARTIES = Object.freeze([AGENT, PAYER, PROVIDER].sort());
 
 export function observationClosure(): ReviewedPackagePreferenceClosure {
   return buildReviewedPackagePreferenceClosure(validClosureInput());

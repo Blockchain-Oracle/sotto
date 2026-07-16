@@ -26,9 +26,17 @@ function validateFactoryIdentity(
   exercise: Exercise,
   intent: BoundedPurchaseLedgerIntent,
 ): void {
+  const selectedPackageId = intent.packageSelection.references.find(
+    ({ packageName }) => packageName === "splice-amulet",
+  )?.packageId;
+  const [, moduleName, entityName] =
+    intent.tokenFactory.creationTemplateId.split(":");
+  if (selectedPackageId === undefined || !moduleName || !entityName) {
+    throw new Error("prepared TransferFactory package authority is invalid");
+  }
   preparedIdentifier(
     exercise.templateId,
-    intent.tokenFactory.creationTemplateId,
+    `${selectedPackageId}:${moduleName}:${entityName}`,
     "TransferFactory creation template",
   );
   preparedIdentifier(

@@ -1,16 +1,19 @@
 import { commitHttpRequest } from "@sotto/x402-canton";
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
+import { createInMemoryProviderDeliveryClaims } from "./provider-delivery-claim.js";
+import {
+  encodeSettlementProof,
+  parseSettlementProofHeader,
+  type SettlementProof,
+} from "./provider-settlement-proof.js";
 
-export type SettlementProof = Readonly<{
-  attemptId: `sha256:${string}`;
-  requestCommitment: `sha256:${string}`;
-  updateId: string;
-}>;
+export { encodeSettlementProof, type SettlementProof };
 
 type ProviderConfig = Readonly<{
   amount: string;
   assetTransferMethod?: "amulet-rules-transfer" | "transfer-factory";
+  deliverPaidResource?: (proof: SettlementProof) => Promise<Response>;
   dsoParty: string;
   maxTimeoutSeconds: number;
   payerParty: string;
@@ -19,40 +22,6 @@ type ProviderConfig = Readonly<{
   synchronizerId: string;
   verifySettlement: (proof: SettlementProof) => Promise<boolean>;
 }>;
-
-const sha256Reference = /^sha256:[0-9a-f]{64}$/;
-const updateId = /^1220[0-9a-f]{64}$/;
-
-function parseSettlementProof(value: string): SettlementProof {
-  if (Buffer.byteLength(value, "utf8") > 4_096) {
-    throw new Error("PAYMENT-SIGNATURE exceeds 4096 bytes");
-  }
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(Buffer.from(value, "base64").toString("utf8"));
-  } catch {
-    throw new Error("PAYMENT-SIGNATURE must contain base64-encoded JSON");
-  }
-  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
-    throw new Error("Settlement proof must be an object");
-  }
-  const proof = parsed as Record<string, unknown>;
-  if (
-    typeof proof.attemptId !== "string" ||
-    !sha256Reference.test(proof.attemptId) ||
-    typeof proof.requestCommitment !== "string" ||
-    !sha256Reference.test(proof.requestCommitment) ||
-    typeof proof.updateId !== "string" ||
-    !updateId.test(proof.updateId)
-  ) {
-    throw new Error("Settlement proof fields are invalid");
-  }
-  return proof as SettlementProof;
-}
-
-export function encodeSettlementProof(proof: SettlementProof): string {
-  return Buffer.from(JSON.stringify(proof), "utf8").toString("base64");
-}
 
 function challengeResponse(
   config: ProviderConfig,
@@ -97,6 +66,7 @@ function challengeResponse(
 }
 
 export function createPaidResourceHandler(config: ProviderConfig) {
+  const deliveryClaims = createInMemoryProviderDeliveryClaims();
   const assetTransferMethod =
     config.assetTransferMethod ?? "amulet-rules-transfer";
   if (
@@ -120,7 +90,7 @@ export function createPaidResourceHandler(config: ProviderConfig) {
     }
     let proof: SettlementProof;
     try {
-      proof = parseSettlementProof(header);
+      proof = parseSettlementProofHeader(header);
     } catch (error) {
       return Response.json(
         {
@@ -130,17 +100,28 @@ export function createPaidResourceHandler(config: ProviderConfig) {
         { status: 400 },
       );
     }
-    if (
-      proof.requestCommitment !== requestCommitment ||
-      !(await config.verifySettlement(proof))
-    ) {
+    if (proof.requestCommitment !== requestCommitment) {
       return challengeResponse(config, assetTransferMethod);
     }
-    return Response.json({
-      paid: true,
-      result: { condition: "clear", temperatureCelsius: 24 },
-      settlement: { attemptId: proof.attemptId, updateId: proof.updateId },
+    const response = await deliveryClaims.claim(proof, {
+      verify: () => config.verifySettlement(proof),
+      deliver: () => {
+        if (config.deliverPaidResource !== undefined) {
+          return config.deliverPaidResource(proof);
+        }
+        return Promise.resolve(
+          Response.json({
+            paid: true,
+            result: { condition: "clear", temperatureCelsius: 24 },
+            settlement: {
+              attemptId: proof.attemptId,
+              updateId: proof.updateId,
+            },
+          }),
+        );
+      },
     });
+    return response ?? challengeResponse(config, assetTransferMethod);
   };
 }
 

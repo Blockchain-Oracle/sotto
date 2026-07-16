@@ -4,10 +4,10 @@ import type {
   BoundedPurchasePrepareRequest,
 } from "../src/index.js";
 import {
-  buildEffectfulPreparedPurchaseInputs,
   buildEffectfulPreparedPurchaseNodes,
   buildEffectfulPreparedPurchaseSeeds,
 } from "./prepared-purchase-effect.fixtures.js";
+import { buildEffectfulPreparedPurchaseInputs } from "./prepared-purchase-effect-inputs.fixtures.js";
 
 export type PreparedPurchaseFixture = ReturnType<
   typeof PreparedTransaction.create

@@ -6,6 +6,7 @@ import {
   REGISTRY_TIMEOUT_MS,
   TRANSFER_FACTORY_REGISTRY_PATH,
   type BoundedPurchasePrepareRequest,
+  type DirectTransferAuthorityPrepareRequest,
 } from "@sotto/x402-canton";
 import type { SpikeConfig } from "./config.js";
 import {
@@ -46,7 +47,9 @@ export type FiveNorthPrepareTransport = Readonly<{
   readCapabilityContracts: (activeAtOffset: number) => Promise<unknown>;
   readHoldingContracts: (activeAtOffset: number) => Promise<unknown>;
   readRegistry: (body: string) => Promise<Uint8Array>;
-  readPrepare: (body: BoundedPurchasePrepareRequest) => Promise<Uint8Array>;
+  readPrepare: (
+    body: BoundedPurchasePrepareRequest | DirectTransferAuthorityPrepareRequest,
+  ) => Promise<Uint8Array>;
   readPreferredWalletPackage: (
     receiverParty: string,
     validatorParty: string,

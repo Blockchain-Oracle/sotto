@@ -31,16 +31,16 @@ function duplicateCreate(
   const duplicate = structuredClone(
     transaction.nodes.find(({ nodeId }) => nodeId === sourceId)!,
   );
-  duplicate.nodeId = "108";
+  duplicate.nodeId = "113";
   const wrapper = duplicate.versionedNode;
   if (wrapper.oneofKind !== "v1") throw new Error("missing create clone");
   const node = wrapper.v1.nodeType;
   if (node.oneofKind !== "create") throw new Error("clone is not a create");
   node.create.contractId = "00duplicate-sotto-create";
   transaction.nodes.push(duplicate);
-  factoryExercise(prepared, "0").children.push("108");
+  factoryExercise(prepared, "0").children.push("113");
   transaction.nodeSeeds.push({
-    nodeId: 108,
+    nodeId: 113,
     seed: new Uint8Array(32).fill(8),
   });
 }

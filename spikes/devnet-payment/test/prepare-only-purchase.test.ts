@@ -17,7 +17,7 @@ import {
 } from "../../../packages/x402-canton/test/purchase-commitment.fixtures.js";
 import { holdingEntry } from "../../../packages/x402-canton/test/purchase-holding-observation.fixtures.js";
 import {
-  factoryResponse,
+  externalFactoryResponse,
   responseBytes,
 } from "../../../packages/x402-canton/test/transfer-factory-observation.fixtures.js";
 import type { FiveNorthPurchaseReaders } from "../src/five-north-purchase-readers.js";
@@ -108,7 +108,7 @@ async function readers(): Promise<FiveNorthPurchaseReaders> {
         holdingEntry("00holding-a", "0.3250000000"),
       ],
     },
-    registry: async () => responseBytes(factoryResponse(intent)),
+    registry: async () => responseBytes(externalFactoryResponse(intent)),
     prepared: async ({ body }) =>
       preparedResponse(preparedPurchaseBytes(intent, body)),
   };

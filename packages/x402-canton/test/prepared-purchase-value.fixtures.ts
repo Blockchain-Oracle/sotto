@@ -68,6 +68,50 @@ function fixtureTextMap(values: Readonly<Record<string, string>>): Value {
   };
 }
 
+function fixtureChoiceContextMap(
+  values: Readonly<Record<string, unknown>>,
+): Value {
+  return {
+    sum: {
+      oneofKind: "textMap",
+      textMap: {
+        entries: Object.entries(values)
+          .sort(([left], [right]) => left.localeCompare(right))
+          .map(([key, value]) => {
+            if (
+              typeof value !== "object" ||
+              value === null ||
+              Array.isArray(value) ||
+              Object.keys(value).sort().join() !== "tag,value" ||
+              (value as { tag?: unknown }).tag !== "AV_ContractId" ||
+              typeof (value as { value?: unknown }).value !== "string"
+            ) {
+              throw new Error("test choice context AnyValue is invalid");
+            }
+            return {
+              key,
+              value: {
+                sum: {
+                  oneofKind: "variant" as const,
+                  variant: {
+                    variantId: fixtureIdentifier(
+                      `${METADATA_PACKAGE_ID}:Splice.Api.Token.MetadataV1:AnyValue`,
+                    ),
+                    constructor: "AV_ContractId",
+                    value: fixtureScalar(
+                      "contractId",
+                      (value as { value: string }).value,
+                    ),
+                  },
+                },
+              },
+            };
+          }),
+      },
+    },
+  };
+}
+
 export function fixtureMetadata(
   values: Readonly<Record<string, string>> = {},
 ): Value {
@@ -82,11 +126,7 @@ export function fixtureExtraArgs(
 ): Value {
   const source = request.commands[0]!.ExerciseCommand.choiceArgument.extraArgs;
   const context = source.context as { values?: unknown };
-  if (
-    typeof context.values !== "object" ||
-    context.values === null ||
-    Object.values(context.values).some((value) => typeof value !== "string")
-  ) {
+  if (typeof context.values !== "object" || context.values === null) {
     throw new Error("test choice context is invalid");
   }
   return fixtureRecord(
@@ -99,7 +139,9 @@ export function fixtureExtraArgs(
           [
             [
               "values",
-              fixtureTextMap(context.values as Record<string, string>),
+              fixtureChoiceContextMap(
+                context.values as Record<string, unknown>,
+              ),
             ],
           ],
         ),

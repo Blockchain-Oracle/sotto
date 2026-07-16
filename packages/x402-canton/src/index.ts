@@ -69,6 +69,14 @@ export type {
   BoundedPurchasePrepareRequest,
 } from "./bounded-purchase-command-types.js";
 export {
+  buildDirectTransferAuthorityControl,
+  type DirectTransferAuthorityChoiceArgument,
+  type DirectTransferAuthorityControl,
+  type DirectTransferAuthorityControlInput,
+  type DirectTransferAuthorityPrepareRequest,
+  type DirectTransferAuthorityProbe,
+} from "./direct-transfer-authority-control.js";
+export {
   signBoundedPurchase,
   type BoundedPurchaseAttemptClaim,
   type BoundedPurchaseSignerDependencies,
@@ -129,6 +137,12 @@ export {
   type PreparedPurchaseHashDependencies,
 } from "./prepared-purchase-hash.js";
 export { recomputeWalletPreparedHashPrecheck } from "./prepared-purchase-wallet-precheck.js";
+export {
+  authorizeHashVerifiedPreparedPurchase,
+  claimBoundedPurchaseSigningAuthorization,
+  type BoundedPurchaseSigningAuthorization,
+  type BoundedPurchaseSigningMaterial,
+} from "./bounded-purchase-signing-authorization.js";
 export * from "./purchase-commitment.js";
 export {
   atomic as parseBoundedAtomic,

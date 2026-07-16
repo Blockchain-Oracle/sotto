@@ -18,7 +18,6 @@ export const SYNCHRONIZER = `global-domain::1220${"e".repeat(64)}`;
 export const VETTING_VALID_AT = "2026-07-14T10:00:30.000Z";
 export const PARTIES = Object.freeze(
   [
-    `DSO::1220${"d".repeat(64)}`,
     `sotto-agent::1220${"a".repeat(64)}`,
     `sotto-payer::1220${"b".repeat(64)}`,
     `sotto-provider::1220${"c".repeat(64)}`,

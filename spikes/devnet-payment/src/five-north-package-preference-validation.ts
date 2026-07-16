@@ -79,7 +79,7 @@ function canonicalTime(value: unknown, label: string): string {
 }
 
 function exactParties(value: unknown): string[] {
-  const parties = exactArray(value, 4, "package preference parties").map(
+  const parties = exactArray(value, 3, "package preference parties").map(
     (party) => boundedIdentifier(party, "package preference party", 512),
   );
   if (

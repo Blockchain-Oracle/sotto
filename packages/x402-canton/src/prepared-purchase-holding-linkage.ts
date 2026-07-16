@@ -64,7 +64,7 @@ function exactNode<T extends CreateNode | FetchNode>(
   return matches[0]!;
 }
 
-function factoryChildren(graph: PreparedPurchaseGraph): ReadonlySet<string> {
+function factoryDescendants(graph: PreparedPurchaseGraph): ReadonlySet<string> {
   const matches = [...graph.nodes.values()].filter(
     (node): node is Extract<PreparedPurchaseGraphNode, { kind: "exercise" }> =>
       node.kind === "exercise" &&
@@ -73,16 +73,33 @@ function factoryChildren(graph: PreparedPurchaseGraph): ReadonlySet<string> {
   if (matches.length !== 1) {
     throw new Error("prepared Holding factory effect is ambiguous");
   }
-  return new Set(matches[0]!.children);
+  const descendants = new Set<string>();
+  const pending = [...matches[0]!.children];
+  while (pending.length > 0) {
+    const nodeId = pending.pop()!;
+    if (descendants.has(nodeId)) continue;
+    descendants.add(nodeId);
+    const node = graph.nodes.get(nodeId);
+    if (node?.kind === "exercise") pending.push(...node.children);
+  }
+  return descendants;
 }
 
 function validateFetch(
   fetch: Fetch,
-  templateId: string,
+  templateIds: readonly string[],
   intent: BoundedPurchaseLedgerIntent,
   label: string,
 ): void {
-  preparedIdentifier(fetch.templateId, templateId, `${label} template`);
+  const template = fetch.templateId;
+  if (
+    template === undefined ||
+    !templateIds.includes(
+      `${template.packageId}:${template.moduleName}:${template.entityName}`,
+    )
+  ) {
+    throw new Error(`prepared ${label} template does not match`);
+  }
   preparedIdentifier(
     fetch.interfaceId,
     HOLDING_INTERFACE_ID,
@@ -98,7 +115,7 @@ function validateFetch(
   );
   preparedParties(
     fetch.signatories,
-    [intent.tokenFactory.expectedAdmin],
+    [intent.tokenFactory.expectedAdmin, intent.challenge.payerParty],
     `${label} signatory`,
   );
   preparedParties(
@@ -134,13 +151,16 @@ export function validatePreparedHoldingLinkage(
     creates.map(({ create }) => create.contractId),
     [...outputIds, capabilityCid, contextCid],
   );
+  const rootFetches = fetches.filter((node) =>
+    root.children.includes(node.nodeId),
+  );
   exactIds(
-    fetches.map(({ fetch }) => fetch.contractId),
+    rootFetches.map(({ fetch }) => fetch.contractId),
     [...inputIds, ...factory.senderChangeCids],
   );
   const historical = `${FIVE_NORTH_HOLDING_TEMPLATE_PACKAGE_ID}:Splice.Amulet:Amulet`;
   const current = selectedHoldingTemplate(intent);
-  const factoryChildIds = factoryChildren(graph);
+  const factoryChildIds = factoryDescendants(graph);
   let input = 0n;
   for (const [contractId, create] of inputHoldings) {
     input += validatePreparedHoldingValue(
@@ -150,13 +170,18 @@ export function validatePreparedHoldingLinkage(
       intent,
       "input Holding",
     );
-    const fetch = exactNode(fetches, contractId, "input Holding fetch");
+    const fetch = exactNode(rootFetches, contractId, "input Holding fetch");
     if (!root.children.includes(fetch.nodeId)) {
       throw new Error(
         "prepared input Holding fetch is not a direct root effect",
       );
     }
-    validateFetch(fetch.fetch, historical, intent, "input Holding fetch");
+    validateFetch(
+      fetch.fetch,
+      [historical, current],
+      intent,
+      "input Holding fetch",
+    );
   }
   let receiver = 0n;
   for (const contractId of factory.receiverHoldingCids) {
@@ -187,13 +212,13 @@ export function validatePreparedHoldingLinkage(
       intent,
       "change Holding",
     );
-    const fetch = exactNode(fetches, contractId, "change Holding fetch");
+    const fetch = exactNode(rootFetches, contractId, "change Holding fetch");
     if (!root.children.includes(fetch.nodeId)) {
       throw new Error(
         "prepared change Holding fetch is not a direct root effect",
       );
     }
-    validateFetch(fetch.fetch, current, intent, "change Holding fetch");
+    validateFetch(fetch.fetch, [current], intent, "change Holding fetch");
   }
   return Object.freeze({ input, receiver, change });
 }

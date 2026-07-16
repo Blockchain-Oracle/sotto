@@ -99,12 +99,12 @@ export function validateObservationScope(
   );
   const closure = requireReviewedPackagePreferenceClosure(record.closure);
   requireExactPackageNames(closure);
+  identifier(record.adminParty, "package preference admin party");
   const parties = Object.freeze(
     [
       identifier(record.payerParty, "package preference payer party"),
       identifier(record.agentParty, "package preference agent party"),
       identifier(record.providerParty, "package preference provider party"),
-      identifier(record.adminParty, "package preference admin party"),
     ]
       .filter((party, index, values) => values.indexOf(party) === index)
       .sort(utf8Compare),

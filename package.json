@@ -30,6 +30,7 @@
     "spike:daml:reconcile": "tsx spikes/devnet-payment/src/live-daml-reconciliation.ts",
     "spike:atomic": "tsx spikes/devnet-payment/src/live-atomic-purchase.ts",
     "spike:atomic:reconcile": "tsx spikes/devnet-payment/src/live-atomic-reconciliation.ts",
+    "spike:authority:direct": "tsx spikes/devnet-payment/src/live-five-north-direct-transfer-authority-control.ts",
     "spike:prepare:local": "tsx spikes/devnet-payment/src/local-prepare-smoke-cli.ts",
     "spike:preapproval": "tsx spikes/devnet-payment/src/live-provider-preapproval.ts start",
     "spike:preapproval:recover": "tsx spikes/devnet-payment/src/live-provider-preapproval.ts recover",

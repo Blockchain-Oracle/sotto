@@ -4,7 +4,7 @@ import {
   preparedIdentifier,
   preparedRecord,
 } from "./prepared-purchase-effect-values.js";
-import { preparedEmptyMetadata } from "./prepared-purchase-metadata-values.js";
+import { preparedMetadata } from "./prepared-purchase-metadata-values.js";
 import { MAX_PREPARED_HOLDING_OUTPUTS } from "./prepared-purchase-resource-envelope.js";
 import type { BoundedPurchaseLedgerIntent } from "./purchase-ledger-intent.js";
 
@@ -63,7 +63,7 @@ export function validatePreparedFactoryResult(
       "prepared TransferFactory change output effects exceed limit",
     );
   }
-  preparedEmptyMetadata(result.get("meta"), "TransferFactory result metadata");
+  preparedMetadata(result.get("meta"), "TransferFactory result metadata");
   return Object.freeze({
     receiverHoldingCids: Object.freeze(receiverHoldingCids),
     senderChangeCids: Object.freeze(senderChangeCids),

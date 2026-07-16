@@ -102,5 +102,5 @@ export async function expectFactoryEffectRejection(
   const observe = createPreparedPurchaseObserver(async () =>
     response(transaction),
   );
-  await expect(observe(request)).rejects.toThrow(/prepared.*effect/iu);
+  await expect(observe(request)).rejects.toThrow(/prepared/iu);
 }

@@ -50,20 +50,23 @@ describe("redacted prepared Purchase shape", () => {
 
     expect(shape).toMatchObject({
       version: "sotto-prepared-purchase-shape-v1",
-      nodeCount: 9,
-      edgeCount: 8,
-      inputContractCount: 3,
-      nodeKinds: { create: 4, exercise: 3, fetch: 2 },
+      nodeCount: 14,
+      edgeCount: 13,
+      inputContractCount: 6,
+      nodeKinds: { create: 4, exercise: 6, fetch: 4 },
     });
     expect(shape.valueWorkUnits).toBeGreaterThan(0);
     expect(shape.verificationElapsedMicroseconds).toBeGreaterThanOrEqual(0);
-    expect(shape.nodes).toHaveLength(9);
+    expect(shape.nodes).toHaveLength(14);
     expect(
       shape.nodes.find(({ choice }) => choice === "Purchase"),
     ).toMatchObject({ kind: "exercise", consuming: true, childCount: 5 });
     expect(
       shape.nodes.find(({ choice }) => choice === "TransferFactory_Transfer"),
-    ).toMatchObject({ kind: "exercise", consuming: false, childCount: 3 });
+    ).toMatchObject({ kind: "exercise", consuming: false, childCount: 1 });
+    expect(
+      shape.nodes.find(({ choice }) => choice === "TransferPreapproval_SendV2"),
+    ).toMatchObject({ kind: "exercise", consuming: false, childCount: 7 });
     for (const node of shape.nodes) {
       for (const hash of node.valueShapeHashes) {
         expect(hash).toMatch(/^sha256:[a-f0-9]{64}$/u);

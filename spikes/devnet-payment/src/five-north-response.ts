@@ -6,6 +6,7 @@ export class FiveNorthRequestFailure extends Error {
   constructor(
     message: string,
     readonly status: number,
+    readonly code = "",
   ) {
     super(message);
     this.name = "FiveNorthRequestFailure";
@@ -71,7 +72,14 @@ async function boundedBytes(
 }
 
 function plainTextFailureCode(value: string): string {
-  if (/authoriz|permission|actas/iu.test(value)) {
+  if (
+    /requires authorizers\b[\s\S]*\bbut only\b[\s\S]*\bwere given\b/iu.test(
+      value,
+    )
+  ) {
+    return "MISSING_REQUIRED_AUTHORIZERS";
+  }
+  if (/authoriz|permission|actas|missing.{0,32}authorit/iu.test(value)) {
     return "AUTHORIZATION_REJECTED";
   }
   if (/vett|topolog|synchronizer|domain/iu.test(value)) {
@@ -98,6 +106,17 @@ function failureCode(bytes: Uint8Array): string {
       return "";
     }
     const record = value as Record<string, unknown>;
+    const explanatoryText = [
+      record.message,
+      record.reason,
+      record.cause,
+      record.error_description,
+      record.details === undefined ? undefined : JSON.stringify(record.details),
+    ]
+      .filter((candidate): candidate is string => typeof candidate === "string")
+      .join(" ");
+    const semanticCode = plainTextFailureCode(explanatoryText);
+    if (semanticCode !== "") return semanticCode;
     const code = [record.code, record.error, record.status].find(
       (candidate): candidate is string => typeof candidate === "string",
     );
@@ -120,6 +139,7 @@ export async function readFiveNorthResponse(
     throw new FiveNorthRequestFailure(
       `Five North request failed with HTTP ${response.status}${code === "" ? "" : ` (${code})`}`,
       response.status,
+      code,
     );
   }
   return bytes;

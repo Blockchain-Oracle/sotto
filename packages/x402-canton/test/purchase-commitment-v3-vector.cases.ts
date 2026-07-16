@@ -6,9 +6,9 @@ import {
 } from "./purchase-package-selection.fixtures.js";
 
 const ATTEMPT_ID =
-  "sha256:a5045ca2c04fa0249b87a7011e52a7b2b82f1b87f6e2f2e5125bd863f7866283";
+  "sha256:4fc0c663b37d3d52f375e8d127126a3288498eae66d866e5afd14466a61656a4";
 const COMMITMENT =
-  "sha256:e85893f89a62367dd70e381de5635c3be28f1549b143b4458fe4968c05c86611";
+  "sha256:3c79e3733158f40a058899eef2354e1d3bec197e6261f15e4b21d3aa3edbdcc5";
 
 const EXPECTED_CANONICAL = [
   '{"version":"sotto-purchase-v3","authorizationMode":"bounded-capability",',
@@ -39,9 +39,9 @@ const EXPECTED_CANONICAL = [
   '"observationId":"sha256:8888888888888888888888888888888888888888888888888888888888888888",',
   '"closureHash":"sha256:4a1bcf39aac8d5232b1e6e4caee93a39a3022a2ff235e13574e5d91c61cd299d",',
   '"requirements":[{"packageName":"sotto-control",',
-  '"parties":["DSO::1220dso","sotto-agent::1220agent","sotto-payer::1220payer","sotto-provider::1220provider"]},',
+  '"parties":["sotto-agent::1220agent","sotto-payer::1220payer","sotto-provider::1220provider"]},',
   '{"packageName":"splice-amulet",',
-  '"parties":["DSO::1220dso","sotto-agent::1220agent","sotto-payer::1220payer","sotto-provider::1220provider"]}],',
+  '"parties":["sotto-agent::1220agent","sotto-payer::1220payer","sotto-provider::1220provider"]}],',
   '"references":[{"packageId":"4d614496ec9b30b22545fd350ecb9ec999164cfb0b5953f46dbbf937f8918f57",',
   '"packageName":"sotto-control","packageVersion":"0.2.0",',
   '"artifactIds":["sotto-control-0.2.0"]},',
@@ -50,13 +50,13 @@ const EXPECTED_CANONICAL = [
   '"artifactIds":["splice-amulet-0.1.21"]}],',
   '"packageIds":["4d614496ec9b30b22545fd350ecb9ec999164cfb0b5953f46dbbf937f8918f57",',
   '"73e9ffdb6b0bc19a5f67372b118103926da11547ab9109eccae47e4e4cc35d6f"],',
-  '"parties":["DSO::1220dso","sotto-agent::1220agent","sotto-payer::1220payer","sotto-provider::1220provider"],',
+  '"parties":["sotto-agent::1220agent","sotto-payer::1220payer","sotto-provider::1220provider"],',
   '"synchronizerId":"global-domain::1220sync",',
   '"vettingValidAt":"2026-07-13T10:00:30.000Z",',
   '"acquiredAt":"2026-07-13T10:00:00.000Z",',
   '"authenticatedSubject":"validator-devnet-m2m"},',
   '"authorizationInstanceId":"authorization-7",',
-  '"attemptId":"sha256:a5045ca2c04fa0249b87a7011e52a7b2b82f1b87f6e2f2e5125bd863f7866283"}',
+  '"attemptId":"sha256:4fc0c663b37d3d52f375e8d127126a3288498eae66d866e5afd14466a61656a4"}',
 ].join("");
 
 export function registerPurchaseV3VectorCases(): void {

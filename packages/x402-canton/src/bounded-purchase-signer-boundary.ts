@@ -2,6 +2,10 @@ import { readBoundedPurchasePrepareRequest } from "./bounded-purchase-command.js
 import type { BoundedPurchasePrepareRequest } from "./bounded-purchase-command-types.js";
 import { requireBoundedPurchaseCommandPreferenceFresh } from "./bounded-purchase-command-preference.js";
 import {
+  createBoundedPurchaseSigningAuthorization,
+  type BoundedPurchaseSigningAuthorization,
+} from "./bounded-purchase-signing-authorization.js";
+import {
   claimHashVerifiedPreparedPurchase,
   verifyPreparedPurchaseHash,
 } from "./prepared-purchase-hash.js";
@@ -30,10 +34,7 @@ export type BoundedPurchaseSignerDependencies = Readonly<{
   ) => Promise<Uint8Array>;
   claimAttempt: (claim: BoundedPurchaseAttemptClaim) => Promise<boolean>;
   signOpaque: (
-    input: Readonly<{
-      attemptId: `sha256:${string}`;
-      preparedTransactionHash: string;
-    }>,
+    authorization: BoundedPurchaseSigningAuthorization,
   ) => Promise<Readonly<{ signingReference: string }>>;
 }>;
 
@@ -92,10 +93,7 @@ export async function signBoundedPurchase(
   );
   requireBoundedPurchaseCommandPreferenceFresh(state.intent);
   const signed = await ports.signOpaque(
-    Object.freeze({
-      attemptId: claim.attemptId,
-      preparedTransactionHash: claim.preparedTransactionHash,
-    }),
+    createBoundedPurchaseSigningAuthorization(state),
   );
   const signingReference = identifier(
     signed.signingReference,

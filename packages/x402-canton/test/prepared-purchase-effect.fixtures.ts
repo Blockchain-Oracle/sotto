@@ -4,8 +4,6 @@ import type {
   DamlTransaction_NodeSeed,
   Exercise,
   Fetch,
-  Metadata_InputContract,
-  Value,
 } from "@canton-network/core-ledger-proto";
 import type {
   BoundedPurchaseLedgerIntent,
@@ -20,8 +18,6 @@ import {
   factoryResult,
   HISTORICAL_HOLDING_TEMPLATE_ID,
   HOLDING_INTERFACE_ID,
-  holdingArgument,
-  INPUT_AMOUNT,
   PREPARED_PURCHASE_EFFECT_CIDS,
   PRINCIPAL,
   REPLACEMENT_ALLOWANCE,
@@ -33,6 +29,15 @@ import {
   fixtureIdentifier,
   fixtureRecord,
 } from "./prepared-purchase-value.fixtures.js";
+import {
+  EXTERNAL_PREAPPROVAL_THIRD_PARTY,
+  externalEventChoice,
+  externalHoldingArgument,
+  externalPreapprovalChoice,
+  externalPreapprovalResult,
+} from "./prepared-purchase-external-values.fixtures.js";
+import { EXTERNAL_PURCHASE_CONTEXT } from "./transfer-factory-observation.fixtures.js";
+import { TRANSFER_EVENT_PACKAGE_ID } from "../src/prepared-purchase-event-log-values.js";
 
 export { PREPARED_PURCHASE_EFFECT_CIDS };
 
@@ -85,7 +90,7 @@ export function buildEffectfulPreparedPurchaseNodes(
     packageName: "splice-amulet",
     templateId: fixtureIdentifier(templateId),
     interfaceId: fixtureIdentifier(HOLDING_INTERFACE_ID),
-    signatories: [admin],
+    signatories: [admin, payer],
     stakeholders: [admin, payer],
     actingParties: [payer],
   });
@@ -98,8 +103,13 @@ export function buildEffectfulPreparedPurchaseNodes(
     contractId,
     packageName: "splice-amulet",
     templateId: fixtureIdentifier(currentHoldingTemplate),
-    argument: holdingArgument(currentHoldingTemplate, intent, owner, amount),
-    signatories: [admin],
+    argument: externalHoldingArgument(
+      currentHoldingTemplate,
+      intent,
+      owner,
+      amount,
+    ),
+    signatories: [admin, owner],
     stakeholders: [admin, owner],
   });
   return [
@@ -128,7 +138,9 @@ export function buildEffectfulPreparedPurchaseNodes(
       ...common,
       contractId: intent.tokenFactory.contractId,
       packageName: "splice-amulet",
-      templateId: fixtureIdentifier(intent.tokenFactory.creationTemplateId),
+      templateId: fixtureIdentifier(
+        `${selectedSplicePackage(intent)}:Splice.ExternalPartyAmuletRules:ExternalPartyAmuletRules`,
+      ),
       interfaceId: fixtureIdentifier(intent.tokenFactory.interfaceId),
       signatories: [admin],
       stakeholders: [admin],
@@ -136,7 +148,7 @@ export function buildEffectfulPreparedPurchaseNodes(
       choiceId: "TransferFactory_Transfer",
       chosenValue: factoryChoice(intent, request),
       consuming: false,
-      children: ["102", "103", "104"],
+      children: ["108"],
       exerciseResult: factoryResult(intent),
     }),
     exerciseNode("102", {
@@ -145,9 +157,9 @@ export function buildEffectfulPreparedPurchaseNodes(
       packageName: "splice-amulet",
       templateId: fixtureIdentifier(HISTORICAL_HOLDING_TEMPLATE_ID),
       interfaceId: fixtureIdentifier(HOLDING_INTERFACE_ID),
-      signatories: [admin],
+      signatories: [admin, payer],
       stakeholders: [admin, payer],
-      actingParties: [admin],
+      actingParties: [admin, payer],
       choiceId: "Archive",
       chosenValue: fixtureRecord(ARCHIVE_RECORD_ID, []),
       consuming: true,
@@ -197,85 +209,80 @@ export function buildEffectfulPreparedPurchaseNodes(
       signatories: [payer],
       stakeholders: [payer, agent],
     }),
+    exerciseNode("108", {
+      ...common,
+      contractId: EXTERNAL_PURCHASE_CONTEXT.transferPreapproval,
+      packageName: "splice-amulet",
+      templateId: fixtureIdentifier(
+        `${selectedSplicePackage(intent)}:Splice.AmuletRules:TransferPreapproval`,
+      ),
+      signatories: [admin, provider, EXTERNAL_PREAPPROVAL_THIRD_PARTY],
+      stakeholders: [admin, provider, EXTERNAL_PREAPPROVAL_THIRD_PARTY],
+      actingParties: [payer],
+      choiceId: "TransferPreapproval_SendV2",
+      chosenValue: externalPreapprovalChoice(intent, request),
+      consuming: false,
+      children: ["102", "103", "104", "109", "110", "111", "112"],
+      exerciseResult: externalPreapprovalResult(intent),
+    }),
+    fetchNode("109", {
+      lfVersion: "2.1",
+      contractId: EXTERNAL_PURCHASE_CONTEXT.externalPartyConfigState,
+      packageName: "splice-amulet",
+      templateId: fixtureIdentifier(
+        `${selectedSplicePackage(intent)}:Splice.ExternalPartyConfigState:ExternalPartyConfigState`,
+      ),
+      signatories: [admin],
+      stakeholders: [admin],
+      actingParties: [admin],
+    }),
+    fetchNode("110", {
+      lfVersion: "2.1",
+      contractId: EXTERNAL_PURCHASE_CONTEXT.featuredAppRight,
+      packageName: "splice-amulet",
+      templateId: fixtureIdentifier(
+        `${selectedSplicePackage(intent)}:Splice.AmuletRules:FeaturedAppRight`,
+      ),
+      signatories: [EXTERNAL_PREAPPROVAL_THIRD_PARTY],
+      stakeholders: [EXTERNAL_PREAPPROVAL_THIRD_PARTY],
+      actingParties: [EXTERNAL_PREAPPROVAL_THIRD_PARTY],
+    }),
+    ...[
+      ["111", payer],
+      ["112", provider],
+    ].map(([nodeId, owner]) =>
+      exerciseNode(nodeId!, {
+        ...common,
+        contractId: EXTERNAL_PURCHASE_CONTEXT.externalPartyConfigState,
+        packageName: "splice-amulet",
+        templateId: fixtureIdentifier(
+          `${selectedSplicePackage(intent)}:Splice.ExternalPartyConfigState:ExternalPartyConfigState`,
+        ),
+        interfaceId: fixtureIdentifier(
+          `${TRANSFER_EVENT_PACKAGE_ID}:Splice.Api.Token.TransferEventsV2:EventLog`,
+        ),
+        signatories: [admin],
+        stakeholders: [admin],
+        actingParties: [admin],
+        choiceId: "EventLog_HoldingsChange",
+        chosenValue: externalEventChoice(intent, owner!),
+        consuming: false,
+        children: [],
+        choiceObservers: [owner!],
+        exerciseResult: fixtureRecord(
+          `${TRANSFER_EVENT_PACKAGE_ID}:Splice.Api.Token.TransferEventsV2:EventLog_HoldingsChangeResult`,
+          [],
+        ),
+      }),
+    ),
   ];
 }
 
 export function buildEffectfulPreparedPurchaseSeeds(): DamlTransaction_NodeSeed[] {
-  return [0, 101, 102, 103, 104, 106, 107].map((nodeId, index) => ({
-    nodeId,
-    seed: new Uint8Array(32).fill(index + 1),
-  }));
-}
-
-function inputContract(
-  contractId: string,
-  packageName: string,
-  templateId: string,
-  argument: Value,
-  signatories: string[],
-  stakeholders: string[],
-  marker: number,
-): Metadata_InputContract {
-  return {
-    contract: {
-      oneofKind: "v1",
-      v1: {
-        lfVersion: "2.1",
-        contractId,
-        packageName,
-        templateId: fixtureIdentifier(templateId),
-        argument,
-        signatories,
-        stakeholders,
-      },
-    },
-    createdAt: BigInt(marker),
-    eventBlob: new Uint8Array([marker]),
-  };
-}
-
-export function buildEffectfulPreparedPurchaseInputs(
-  intent: BoundedPurchaseLedgerIntent,
-): Metadata_InputContract[] {
-  const payer = intent.challenge.payerParty;
-  const agent = intent.capability.agentParty;
-  const admin = intent.tokenFactory.expectedAdmin;
-  return [
-    inputContract(
-      intent.capability.contractId,
-      "sotto-control",
-      intent.capability.templateId,
-      capabilityArgument(
-        intent,
-        "1.0000000000",
-        intent.capability.expectedRevision,
-      ),
-      [payer],
-      [payer, agent],
-      1,
-    ),
-    inputContract(
-      intent.tokenFactory.contractId,
-      "splice-amulet",
-      intent.tokenFactory.creationTemplateId,
-      fixtureRecord(intent.tokenFactory.creationTemplateId, []),
-      [admin],
-      [admin],
-      2,
-    ),
-    inputContract(
-      PREPARED_PURCHASE_EFFECT_CIDS.inputHolding,
-      "splice-amulet",
-      HISTORICAL_HOLDING_TEMPLATE_ID,
-      holdingArgument(
-        HISTORICAL_HOLDING_TEMPLATE_ID,
-        intent,
-        payer,
-        INPUT_AMOUNT,
-      ),
-      [admin],
-      [admin, payer],
-      3,
-    ),
-  ];
+  return [0, 101, 102, 103, 104, 106, 107, 108, 111, 112].map(
+    (nodeId, index) => ({
+      nodeId,
+      seed: new Uint8Array(32).fill(index + 1),
+    }),
+  );
 }

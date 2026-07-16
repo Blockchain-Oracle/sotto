@@ -2,7 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { buildBoundedPurchasePrepareRequest } from "../src/index.js";
 import { readPurchaseHoldingObservation } from "../src/purchase-holding-observation.js";
 import { readTransferFactoryObservation } from "../src/transfer-factory-observation.js";
-import { purchaseCommandInputs } from "./transfer-factory-observation.fixtures.js";
+import {
+  EXTERNAL_PURCHASE_CONTEXT,
+  purchaseCommandInputs,
+} from "./transfer-factory-observation.fixtures.js";
 import { registerCommandPreferenceContractCases } from "./bounded-purchase-command-preference.cases.js";
 
 registerCommandPreferenceContractCases();
@@ -100,7 +103,13 @@ describe("bounded Purchase prepare request", () => {
 
     expect(
       request.disclosedContracts.map(({ contractId }) => contractId),
-    ).toEqual(["00holding-a", intent.tokenFactory.contractId]);
+    ).toEqual([
+      EXTERNAL_PURCHASE_CONTEXT.externalPartyConfigState,
+      EXTERNAL_PURCHASE_CONTEXT.featuredAppRight,
+      "00holding-a",
+      intent.tokenFactory.contractId,
+      EXTERNAL_PURCHASE_CONTEXT.transferPreapproval,
+    ]);
   });
 
   it("omits every unsupported or caller-controlled prepare field", async () => {

@@ -8,14 +8,16 @@ import {
 import type { PreparedPurchaseMetadata } from "./prepared-purchase-metadata-types.js";
 import type { BoundedPurchaseLedgerIntent } from "./purchase-ledger-intent.js";
 
-function exactIds(
+function validateInputIds(
   actual: readonly string[],
-  expected: readonly string[],
+  allowed: ReadonlySet<string>,
+  required: readonly string[],
 ): void {
+  const actualSet = new Set(actual);
   if (
-    actual.length !== expected.length ||
-    new Set(actual).size !== actual.length ||
-    JSON.stringify([...actual].sort()) !== JSON.stringify([...expected].sort())
+    actualSet.size !== actual.length ||
+    actual.some((value) => !allowed.has(value)) ||
+    required.some((value) => !actualSet.has(value))
   ) {
     throw new Error("prepared metadata input effects do not match");
   }
@@ -45,6 +47,40 @@ function validateFactoryInput(
   );
 }
 
+function validateDisclosedInputs(
+  metadata: PreparedPurchaseMetadata,
+  intent: BoundedPurchaseLedgerIntent,
+  request: BoundedPurchasePrepareRequest,
+): void {
+  const disclosures = new Map(
+    request.disclosedContracts.map((value) => [value.contractId, value]),
+  );
+  if (disclosures.size !== request.disclosedContracts.length) {
+    throw new Error("prepared disclosed metadata input effects repeat");
+  }
+  for (const [contractId, input] of metadata.inputContracts) {
+    if (contractId === intent.capability.contractId) continue;
+    const disclosure = disclosures.get(contractId);
+    const eventBlob = metadata.inputEventBlobs.get(contractId);
+    if (
+      disclosure === undefined ||
+      eventBlob === undefined ||
+      !Buffer.from(eventBlob).equals(
+        Buffer.from(disclosure.createdEventBlob, "base64"),
+      )
+    ) {
+      throw new Error(
+        "prepared disclosed metadata input effect does not match",
+      );
+    }
+    preparedIdentifier(
+      input.templateId,
+      disclosure.templateId,
+      "disclosed metadata input template",
+    );
+  }
+}
+
 export function validatePreparedPurchaseInputEffects(
   metadata: PreparedPurchaseMetadata,
   intent: BoundedPurchaseLedgerIntent,
@@ -52,14 +88,16 @@ export function validatePreparedPurchaseInputEffects(
 ): ReadonlyMap<string, Create> {
   const holdingIds =
     request.commands[0]!.ExerciseCommand.choiceArgument.inputHoldingCids;
-  exactIds(
-    [...metadata.inputContracts.keys()],
-    [
-      intent.capability.contractId,
-      intent.tokenFactory.contractId,
-      ...holdingIds,
-    ],
-  );
+  const expectedIds = new Set([
+    intent.capability.contractId,
+    intent.tokenFactory.contractId,
+    ...request.disclosedContracts.map(({ contractId }) => contractId),
+  ]);
+  validateInputIds([...metadata.inputContracts.keys()], expectedIds, [
+    intent.capability.contractId,
+    intent.tokenFactory.contractId,
+    ...holdingIds,
+  ]);
   const capability = metadata.inputContracts.get(intent.capability.contractId);
   const factory = metadata.inputContracts.get(intent.tokenFactory.contractId);
   if (capability === undefined || factory === undefined) {
@@ -67,6 +105,7 @@ export function validatePreparedPurchaseInputEffects(
   }
   validatePreparedSourceCapability(capability, intent);
   validateFactoryInput(factory, intent);
+  validateDisclosedInputs(metadata, intent, request);
   return new Map(
     holdingIds.map((contractId) => [
       contractId,

@@ -84,15 +84,26 @@ export function registerPreparedFactoryResultCases(): void {
             "meta",
           ),
       ],
-      [
-        "result",
-        (prepared: Parameters<typeof factoryExercise>[0]) =>
-          factoryRecordField(factoryExercise(prepared).exerciseResult, "meta"),
-      ],
     ])("rejects nonempty %s metadata", async (_label, select) => {
       await expectFactoryEffectRejection((prepared) =>
         addMetadataEntry(select(prepared)),
       );
+    });
+
+    it("rejects non-text result metadata", async () => {
+      await expectFactoryEffectRejection((prepared) => {
+        const metadata = factoryRecordField(
+          factoryExercise(prepared).exerciseResult,
+          "meta",
+        );
+        const values = factoryRecordField(metadata, "values");
+        if (values.sum.oneofKind !== "textMap") {
+          throw new Error("missing result metadata map");
+        }
+        values.sum.textMap.entries[0]!.value = {
+          sum: { oneofKind: "bool", bool: true },
+        };
+      });
     });
   });
 }

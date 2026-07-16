@@ -59,7 +59,6 @@ export function validatePurchasePackageSelection(
     throw new Error("package selection IDs do not match its named references");
   }
   const expectedParties = [
-    scope.adminParty,
     scope.agentParty,
     scope.payerParty,
     scope.providerParty,

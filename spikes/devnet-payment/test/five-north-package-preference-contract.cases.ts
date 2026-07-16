@@ -151,7 +151,7 @@ export function registerFiveNorthPreferenceContractCases(
         },
       ],
       [
-        "fifth party",
+        "fourth party",
         (value: ReturnType<typeof preferenceRequest>) => {
           for (const requirement of value.packageRequirements) {
             requirement.parties.push(`sotto-attacker::1220${"f".repeat(64)}`);

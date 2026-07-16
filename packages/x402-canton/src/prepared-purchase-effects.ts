@@ -6,6 +6,8 @@ import {
   preparedRecord,
 } from "./prepared-purchase-effect-values.js";
 import { validatePreparedPurchaseFactory } from "./prepared-purchase-factory.js";
+import { validatePreparedPurchaseEventLogs } from "./prepared-purchase-event-log.js";
+import { validatePreparedPurchaseFetchEffects } from "./prepared-purchase-fetch-effects.js";
 import type {
   PreparedPurchaseGraph,
   PreparedPurchaseGraphNode,
@@ -19,6 +21,7 @@ import {
 } from "./purchase-holding-types.js";
 import type { BoundedPurchaseLedgerIntent } from "./purchase-ledger-intent.js";
 import { validatePreparedPurchaseSottoEffects } from "./prepared-purchase-sotto-effects.js";
+import { selectPreparedTransferRoot } from "./prepared-purchase-transfer-preapproval.js";
 
 function selectedPackageId(
   intent: BoundedPurchaseLedgerIntent,
@@ -58,6 +61,8 @@ function requireFactoryNode(
 function validateArchiveEffects(
   graph: PreparedPurchaseGraph,
   factory: Extract<PreparedPurchaseGraphNode, { kind: "exercise" }>,
+  transfer: Extract<PreparedPurchaseGraphNode, { kind: "exercise" }>,
+  eventNodeIds: ReadonlySet<string>,
   intent: BoundedPurchaseLedgerIntent,
   request: BoundedPurchasePrepareRequest,
 ): void {
@@ -66,8 +71,11 @@ function validateArchiveEffects(
   for (const node of graph.nodes.values()) {
     if (node.kind !== "exercise" || node.nodeId === graph.rootId) continue;
     if (node.nodeId === factory.nodeId) continue;
+    if (node.nodeId === transfer.nodeId || eventNodeIds.has(node.nodeId)) {
+      continue;
+    }
     if (
-      !factory.children.includes(node.nodeId) ||
+      !transfer.children.includes(node.nodeId) ||
       node.exercise.choiceId !== "Archive"
     ) {
       throw new Error("prepared Purchase has an unknown exercise effect");
@@ -85,16 +93,27 @@ function validateArchiveEffects(
     throw new Error("prepared Holding archive effects do not match inputs");
   }
   for (const { exercise } of archives) {
-    preparedIdentifier(
-      exercise.templateId,
-      `${FIVE_NORTH_HOLDING_TEMPLATE_PACKAGE_ID}:Splice.Amulet:Amulet`,
-      "Holding archive template",
-    );
-    preparedIdentifier(
-      exercise.interfaceId,
-      HOLDING_INTERFACE_ID,
-      "Holding archive interface",
-    );
+    const template = exercise.templateId;
+    if (
+      template === undefined ||
+      template.moduleName !== "Splice.Amulet" ||
+      template.entityName !== "Amulet" ||
+      ![
+        FIVE_NORTH_HOLDING_TEMPLATE_PACKAGE_ID,
+        selectedPackageId(intent, "splice-amulet"),
+      ].includes(template.packageId)
+    ) {
+      throw new Error(
+        "prepared Holding archive template effect identifier does not match",
+      );
+    }
+    if (exercise.interfaceId !== undefined) {
+      preparedIdentifier(
+        exercise.interfaceId,
+        HOLDING_INTERFACE_ID,
+        "Holding archive interface",
+      );
+    }
     if (
       exercise.packageName !== "splice-amulet" ||
       !exercise.consuming ||
@@ -106,12 +125,12 @@ function validateArchiveEffects(
     }
     preparedParties(
       exercise.actingParties,
-      [intent.tokenFactory.expectedAdmin],
+      [intent.tokenFactory.expectedAdmin, intent.challenge.payerParty],
       "Holding archive acting",
     );
     preparedParties(
       exercise.signatories,
-      [intent.tokenFactory.expectedAdmin],
+      [intent.tokenFactory.expectedAdmin, intent.challenge.payerParty],
       "Holding archive signatory",
     );
     preparedParties(
@@ -128,10 +147,10 @@ function validateArchiveEffects(
 
 function validateFactoryCreates(
   graph: PreparedPurchaseGraph,
-  factory: Extract<PreparedPurchaseGraphNode, { kind: "exercise" }>,
+  transfer: Extract<PreparedPurchaseGraphNode, { kind: "exercise" }>,
   intent: BoundedPurchaseLedgerIntent,
 ): void {
-  const creates = factory.children
+  const creates = transfer.children
     .map((nodeId) => graph.nodes.get(nodeId))
     .filter(
       (node): node is Extract<PreparedPurchaseGraphNode, { kind: "create" }> =>
@@ -151,13 +170,6 @@ function validateFactoryCreates(
       throw new Error("prepared TransferFactory create effect package differs");
     }
   }
-  if (
-    factory.children.some((nodeId) => graph.nodes.get(nodeId)?.kind === "fetch")
-  ) {
-    throw new Error(
-      "prepared TransferFactory effect contains an unknown fetch",
-    );
-  }
 }
 
 export function validatePreparedPurchaseEffects(
@@ -172,12 +184,43 @@ export function validatePreparedPurchaseEffects(
     intent,
     request,
   );
-  validateArchiveEffects(graph, factory, intent, request);
-  validateFactoryCreates(graph, factory, intent);
+  const transfer = selectPreparedTransferRoot(
+    graph,
+    factory,
+    intent,
+    request,
+    factoryResult,
+    metadata,
+  );
+  const eventNodeIds = validatePreparedPurchaseEventLogs(
+    graph,
+    transfer,
+    intent,
+    request,
+    factoryResult,
+  );
+  validateArchiveEffects(
+    graph,
+    factory,
+    transfer,
+    eventNodeIds,
+    intent,
+    request,
+  );
+  validateFactoryCreates(graph, transfer, intent);
   const inputHoldings = validatePreparedPurchaseInputEffects(
     metadata,
     intent,
     request,
+  );
+  validatePreparedPurchaseFetchEffects(
+    graph,
+    metadata,
+    factory,
+    transfer,
+    intent,
+    request,
+    factoryResult.senderChangeCids,
   );
   const result = validatePreparedPurchaseSottoEffects(
     graph,

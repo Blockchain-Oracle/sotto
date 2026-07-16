@@ -50,7 +50,6 @@ export function registerFiveNorthPreferenceHardeningCases(
 
     it("accepts canonical UTF-8 party ordering", async () => {
       const parties = [
-        `DSO::1220${"d".repeat(64)}`,
         `sotto-agent::1220${"a".repeat(64)}`,
         `sotto-\ue000::1220${"b".repeat(64)}`,
         `sotto-\u{10000}::1220${"c".repeat(64)}`,

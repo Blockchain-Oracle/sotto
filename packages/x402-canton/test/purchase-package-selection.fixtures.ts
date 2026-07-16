@@ -5,7 +5,6 @@ import { PACKAGE_SELECTION_VERSION } from "../src/package-preference-observation
 import { observationClosure } from "./package-preference-observation.fixtures.js";
 import {
   AGENT,
-  DSO,
   PAYER,
   PROVIDER,
   createPurchaseInput,
@@ -71,7 +70,7 @@ export function rawPackageSelection(
     closureHash: closure.closureHash,
     references,
     packageIds: references.map(({ packageId }) => packageId).sort(utf8Compare),
-    parties: [DSO, AGENT, PAYER, PROVIDER].sort(utf8Compare),
+    parties: [AGENT, PAYER, PROVIDER].sort(utf8Compare),
     synchronizerId: "global-domain::1220sync",
     vettingValidAt: "2026-07-13T10:00:30.000Z",
     acquiredAt: "2026-07-13T10:00:00.000Z",

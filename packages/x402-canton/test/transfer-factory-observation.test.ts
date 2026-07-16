@@ -87,7 +87,9 @@ describe("TransferFactory observation", () => {
       holdings,
     );
     expect(material.choiceContextData).toEqual({
-      values: { "splice.example/round": "00round" },
+      values: {
+        "splice.example/round": { tag: "AV_ContractId", value: "00round" },
+      },
     });
     expect(material.disclosedContracts).toHaveLength(1);
     expect(Object.isFrozen(material)).toBe(true);
