@@ -8,7 +8,7 @@ export function validateHumanDisclosedInputIdentity(
   expectedModule: string,
   expectedEntity: string,
   label: string,
-): void {
+): string {
   const matches = request.disclosedContracts.filter(
     ({ contractId }) => contractId === input.contractId,
   );
@@ -27,4 +27,5 @@ export function validateHumanDisclosedInputIdentity(
     throw new Error(`prepared ${label} identity does not match`);
   }
   preparedIdentifier(input.templateId, sourceTemplateId, label);
+  return packageId;
 }

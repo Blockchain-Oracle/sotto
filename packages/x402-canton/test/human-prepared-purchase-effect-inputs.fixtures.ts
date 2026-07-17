@@ -46,6 +46,7 @@ function trafficBasedRewards(packageId: string): Value {
 function externalConfigArgument(
   intent: HumanPurchaseLedgerIntent,
   packageId: string,
+  includeTokenTtl: boolean,
 ): Value {
   const archiveAfter = new Date(
     Date.parse(intent.challenge.executeBefore) + 60_000,
@@ -73,7 +74,11 @@ function externalConfigArgument(
           ["maxNumInputs", fixtureScalar("int64", "16")],
           ["maxNumOutputs", fixtureScalar("int64", "16")],
           ["maxNumLockHolders", fixtureScalar("int64", "16")],
-          ["tokenStandardMaxTTL", optional()],
+          ...(includeTokenTtl
+            ? ([["tokenStandardMaxTTL", optional()]] as ReadonlyArray<
+                readonly [string, Value]
+              >)
+            : []),
         ]),
       ],
       ["targetArchiveAfter", fixtureTimestamp(archiveAfter)],
@@ -156,6 +161,11 @@ export function humanPreparedPurchaseInputs(
       marker,
       new TextEncoder().encode(`external:${contractId}`),
     );
+  const externalConfigTemplate = disclosedTemplate(
+    EXTERNAL_PURCHASE_CONTEXT.externalPartyConfigState,
+    "Splice.ExternalPartyConfigState",
+    "ExternalPartyConfigState",
+  );
   return [
     inputContract(
       intent.tokenFactory.contractId,
@@ -208,12 +218,14 @@ export function humanPreparedPurchaseInputs(
     ),
     external(
       EXTERNAL_PURCHASE_CONTEXT.externalPartyConfigState,
-      disclosedTemplate(
-        EXTERNAL_PURCHASE_CONTEXT.externalPartyConfigState,
-        "Splice.ExternalPartyConfigState",
-        "ExternalPartyConfigState",
+      externalConfigTemplate,
+      externalConfigArgument(
+        intent,
+        packageId,
+        !externalConfigTemplate.startsWith(
+          `${HISTORICAL_HOLDING_TEMPLATE_ID.split(":")[0]}:`,
+        ),
       ),
-      externalConfigArgument(intent, packageId),
       [admin],
       [admin],
       21,
