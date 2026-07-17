@@ -18,7 +18,10 @@ export type HumanPreparedPurchaseState = Readonly<{
 
 const states = new WeakMap<object, HumanPreparedPurchaseState>();
 
-function requireFresh(state: HumanPreparedPurchaseState): void {
+/** @internal Human prepared-state transitions only. */
+export function assertHumanPreparedPurchaseStateFresh(
+  state: HumanPreparedPurchaseState,
+): void {
   const now = Date.now();
   if (
     state.capturedAt - state.acquisitionStartedAt >
@@ -47,7 +50,7 @@ function readState(candidate: unknown): HumanPreparedPurchaseState {
   if (state === undefined) {
     throw new Error("human prepared Purchase observation is not authenticated");
   }
-  requireFresh(state);
+  assertHumanPreparedPurchaseStateFresh(state);
   return state;
 }
 
@@ -55,7 +58,7 @@ export function registerHumanPreparedPurchaseObservation(
   observation: object,
   state: HumanPreparedPurchaseState,
 ): void {
-  requireFresh(state);
+  assertHumanPreparedPurchaseStateFresh(state);
   states.set(observation, {
     ...state,
     preparedTransaction: new Uint8Array(state.preparedTransaction),
