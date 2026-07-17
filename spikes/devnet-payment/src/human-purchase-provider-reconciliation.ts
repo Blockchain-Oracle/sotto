@@ -140,7 +140,10 @@ export function reconcileHumanPurchaseProviderTransaction(
   const events = transaction?.events;
   if (
     transaction?.updateId !== proof.updateId ||
-    transaction.commandId !== expected.commandId ||
+    transaction === undefined ||
+    (Object.hasOwn(transaction, "commandId") &&
+      transaction.commandId !== "" &&
+      transaction.commandId !== expected.commandId) ||
     transaction.synchronizerId !== expected.synchronizerId ||
     !Number.isSafeInteger(transaction.offset) ||
     !Array.isArray(events) ||

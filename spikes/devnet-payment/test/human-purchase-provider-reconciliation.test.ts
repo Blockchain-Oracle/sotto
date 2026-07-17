@@ -66,6 +66,36 @@ describe("human provider settlement reconciliation", () => {
     ).toBe(false);
   });
 
+  it("accepts only provider-private redacted or omitted command IDs", async () => {
+    const { expected, proof, response } = await humanSettlementFixture();
+    const privateView = clone(response);
+    setValue(privateView, ["transaction", "commandId"], "");
+    const omittedView = clone(response);
+    const transaction = child(omittedView, "transaction");
+    if (
+      typeof transaction !== "object" ||
+      transaction === null ||
+      Array.isArray(transaction)
+    ) {
+      throw new Error("test transaction is invalid");
+    }
+    delete (transaction as Record<string, unknown>).commandId;
+
+    expect(
+      reconcileHumanPurchaseProviderTransaction(privateView, proof, expected),
+    ).toBe(true);
+    expect(
+      reconcileHumanPurchaseProviderTransaction(omittedView, proof, expected),
+    ).toBe(true);
+    for (const invalid of [undefined, null, " ", "wrong-command"]) {
+      const changed = clone(response);
+      setValue(changed, ["transaction", "commandId"], invalid);
+      expect(
+        reconcileHumanPurchaseProviderTransaction(changed, proof, expected),
+      ).toBe(false);
+    }
+  });
+
   it("mints opaque settlement provenance only after exact reconciliation", async () => {
     const { expected, proof, response } = await humanSettlementFixture();
     const mutableProof = { ...proof };
