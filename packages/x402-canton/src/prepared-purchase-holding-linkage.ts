@@ -176,12 +176,7 @@ export function validatePreparedHoldingLinkage(
         "prepared input Holding fetch is not a direct root effect",
       );
     }
-    validateFetch(
-      fetch.fetch,
-      [historical, current],
-      intent,
-      "input Holding fetch",
-    );
+    validateFetch(fetch.fetch, [current], intent, "input Holding fetch");
   }
   let receiver = 0n;
   for (const contractId of factory.receiverHoldingCids) {

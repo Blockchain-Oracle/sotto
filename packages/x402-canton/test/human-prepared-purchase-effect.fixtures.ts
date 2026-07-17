@@ -12,7 +12,6 @@ import type {
 import { TRANSFER_EVENT_PACKAGE_ID } from "../src/prepared-purchase-event-log-values.js";
 import {
   ARCHIVE_RECORD_ID,
-  HISTORICAL_HOLDING_TEMPLATE_ID,
   HOLDING_INTERFACE_ID,
   PREPARED_PURCHASE_EFFECT_CIDS,
   PRINCIPAL,
@@ -122,7 +121,7 @@ export function humanPreparedPurchaseNodes(
       lfVersion: "2.1",
       contractId,
       packageName: "splice-amulet",
-      templateId: fixtureIdentifier(HISTORICAL_HOLDING_TEMPLATE_ID),
+      templateId: fixtureIdentifier(currentHolding),
       ...(includeInterface
         ? { interfaceId: fixtureIdentifier(HOLDING_INTERFACE_ID) }
         : {}),
@@ -135,8 +134,7 @@ export function humanPreparedPurchaseNodes(
       ...common,
       contractId,
       packageName: "splice-amulet",
-      templateId: fixtureIdentifier(HISTORICAL_HOLDING_TEMPLATE_ID),
-      interfaceId: fixtureIdentifier(HOLDING_INTERFACE_ID),
+      templateId: fixtureIdentifier(currentHolding),
       signatories: [admin, payer],
       stakeholders: [admin, payer],
       actingParties: [admin, payer],

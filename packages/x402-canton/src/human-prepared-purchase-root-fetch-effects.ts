@@ -22,12 +22,13 @@ function validateIdentity(
   const input = metadata.inputContracts.get(fetch.contractId);
   const template = fetch.templateId;
   const source = input?.templateId;
+  const selectedPackage = intent.packageSelection.packageIds[0];
   if (
     input === undefined ||
     template === undefined ||
     source === undefined ||
     fetch.lfVersion !== "2.1" ||
-    template.packageId !== source.packageId ||
+    template.packageId !== selectedPackage ||
     template.moduleName !== source.moduleName ||
     template.entityName !== source.entityName ||
     fetch.packageName !== input.packageName

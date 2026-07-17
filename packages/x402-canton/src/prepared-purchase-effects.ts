@@ -15,13 +15,12 @@ import type {
 import { validatePreparedHoldingLinkage } from "./prepared-purchase-holding-linkage.js";
 import { validatePreparedPurchaseInputEffects } from "./prepared-purchase-input-effects.js";
 import type { PreparedPurchaseMetadata } from "./prepared-purchase-metadata-types.js";
-import {
-  FIVE_NORTH_HOLDING_TEMPLATE_PACKAGE_ID,
-  HOLDING_INTERFACE_ID,
-} from "./purchase-holding-types.js";
 import type { BoundedPurchaseLedgerIntent } from "./purchase-ledger-intent.js";
 import { validatePreparedPurchaseSottoEffects } from "./prepared-purchase-sotto-effects.js";
 import { selectPreparedTransferRoot } from "./prepared-purchase-transfer-preapproval.js";
+
+const ARCHIVE_RECORD_ID =
+  "9e70a8b3510d617f8a136213f33d6a903a10ca0eeec76bb06ba55d1ed9680f69:DA.Internal.Template:Archive";
 
 function selectedPackageId(
   intent: BoundedPurchaseLedgerIntent,
@@ -98,24 +97,15 @@ function validateArchiveEffects(
       template === undefined ||
       template.moduleName !== "Splice.Amulet" ||
       template.entityName !== "Amulet" ||
-      ![
-        FIVE_NORTH_HOLDING_TEMPLATE_PACKAGE_ID,
-        selectedPackageId(intent, "splice-amulet"),
-      ].includes(template.packageId)
+      template.packageId !== selectedPackageId(intent, "splice-amulet")
     ) {
       throw new Error(
         "prepared Holding archive template effect identifier does not match",
       );
     }
-    if (exercise.interfaceId !== undefined) {
-      preparedIdentifier(
-        exercise.interfaceId,
-        HOLDING_INTERFACE_ID,
-        "Holding archive interface",
-      );
-    }
     if (
       exercise.packageName !== "splice-amulet" ||
+      exercise.interfaceId !== undefined ||
       !exercise.consuming ||
       exercise.choiceObservers.length !== 0
     ) {
@@ -138,7 +128,12 @@ function validateArchiveEffects(
       [intent.tokenFactory.expectedAdmin, intent.challenge.payerParty],
       "Holding archive stakeholder",
     );
-    preparedRecord(exercise.chosenValue, [], "Holding archive choice");
+    preparedRecord(
+      exercise.chosenValue,
+      [],
+      "Holding archive choice",
+      ARCHIVE_RECORD_ID,
+    );
     if (exercise.exerciseResult?.sum.oneofKind !== "unit") {
       throw new Error("prepared Holding archive result is not unit");
     }

@@ -1,6 +1,7 @@
 import {
   createPurchaseHoldingObserver,
   createTransferFactoryObserver,
+  FIVE_NORTH_HOLDING_TEMPLATE_PACKAGE_ID,
   type BoundedPurchaseLedgerIntent,
   type PurchaseHoldingObservation,
   type TransferFactoryObservation,
@@ -44,14 +45,6 @@ export const EXTERNAL_PURCHASE_CONTEXT = Object.freeze({
   transferPreapproval: "00transfer-preapproval",
 });
 
-function selectedSplicePackage(intent: BoundedPurchaseLedgerIntent): string {
-  const matches = intent.packageSelection.references.filter(
-    ({ packageName }) => packageName === "splice-amulet",
-  );
-  if (matches.length !== 1) throw new Error("test Splice package is absent");
-  return matches[0]!.packageId;
-}
-
 function externalDisclosure(
   intent: BoundedPurchaseLedgerIntent,
   contractId: string,
@@ -59,7 +52,7 @@ function externalDisclosure(
   entityName: string,
 ) {
   return {
-    templateId: `${selectedSplicePackage(intent)}:${moduleName}:${entityName}`,
+    templateId: `${FIVE_NORTH_HOLDING_TEMPLATE_PACKAGE_ID}:${moduleName}:${entityName}`,
     contractId,
     createdEventBlob: Buffer.from(`external:${contractId}`).toString("base64"),
     synchronizerId: intent.challenge.synchronizerId,

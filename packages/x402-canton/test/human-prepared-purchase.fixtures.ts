@@ -20,8 +20,10 @@ import {
 import type { HumanPurchaseFixtureOptions } from "./human-purchase-commitment.fixtures.js";
 import {
   externalFactoryResponse,
+  EXTERNAL_PURCHASE_CONTEXT,
   responseBytes,
 } from "./transfer-factory-observation.fixtures.js";
+import { HISTORICAL_HOLDING_TEMPLATE_ID } from "./prepared-purchase-effect-values.fixtures.js";
 
 export type HumanPreparedPurchaseFixture = ReturnType<
   typeof PreparedTransaction.create
@@ -43,7 +45,7 @@ export async function humanPreparedPurchaseCommandInputs(
 
 export async function humanPreparedPurchaseCommandInputsWithUnusedDisclosures() {
   const intent = await authenticatedHumanPurchaseIntent();
-  const response = externalFactoryResponse(intent as never);
+  const response = historicalContextFactoryResponse(intent);
   const packageId = intent.packageSelection.packageIds[0];
   const unused = (contractId: string, templateId: string) => ({
     contractId,
@@ -68,6 +70,35 @@ export async function humanPreparedPurchaseCommandInputsWithUnusedDisclosures() 
   );
 }
 
+function historicalContextFactoryResponse(intent: HumanPurchaseLedgerIntent) {
+  const response = externalFactoryResponse(intent as never);
+  const historicalPackageId = HISTORICAL_HOLDING_TEMPLATE_ID.split(":")[0]!;
+  const contextIds = new Set<string>([
+    EXTERNAL_PURCHASE_CONTEXT.externalPartyConfigState,
+    EXTERNAL_PURCHASE_CONTEXT.featuredAppRight,
+    EXTERNAL_PURCHASE_CONTEXT.transferPreapproval,
+  ]);
+  return {
+    ...response,
+    choiceContext: {
+      ...response.choiceContext,
+      disclosedContracts: response.choiceContext.disclosedContracts.map(
+        (disclosure) => {
+          if (!contextIds.has(disclosure.contractId)) return disclosure;
+          const [, moduleName, entityName] = disclosure.templateId.split(":");
+          if (!moduleName || !entityName) {
+            throw new Error("test context template is invalid");
+          }
+          return {
+            ...disclosure,
+            templateId: `${historicalPackageId}:${moduleName}:${entityName}`,
+          };
+        },
+      ),
+    },
+  };
+}
+
 export async function humanPreparedPurchaseCommandInputsFor(
   contracts: unknown[],
 ) {
@@ -89,7 +120,7 @@ export async function humanPreparedPurchaseCommandInputsWithWindow(
 async function commandInputsForIntent(
   intent: HumanPurchaseLedgerIntent,
   contracts: unknown[],
-  registryResponse: unknown = externalFactoryResponse(intent as never),
+  registryResponse: unknown = historicalContextFactoryResponse(intent),
 ) {
   const holdings = await createHumanPurchaseHoldingObserver(
     humanHoldingReader(contracts),

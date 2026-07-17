@@ -20,12 +20,13 @@ function validateFetch(
 ): void {
   const actual = fetch.templateId;
   const source = input.templateId;
+  const selectedPackage = intent.packageSelection.packageIds[0];
   if (
     actual === undefined ||
     source === undefined ||
     actual.moduleName !== source.moduleName ||
     actual.entityName !== source.entityName ||
-    actual.packageId !== source.packageId ||
+    actual.packageId !== selectedPackage ||
     fetch.packageName !== input.packageName ||
     fetch.interfaceId !== undefined
   ) {

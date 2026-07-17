@@ -1,6 +1,7 @@
 import type { Create, Value } from "@canton-network/core-ledger-proto";
 import type { HumanPurchasePrepareRequest } from "./human-purchase-command-types.js";
 import type { HumanPurchaseLedgerIntent } from "./human-purchase-ledger-intent.js";
+import { validateHumanDisclosedInputIdentity } from "./human-prepared-purchase-disclosed-input.js";
 import {
   preparedIdentifier,
   preparedNumeric,
@@ -100,14 +101,13 @@ export function validateHumanPreparedExternalConfig(
   request: HumanPurchasePrepareRequest,
 ): HumanPreparedExternalConfig {
   const packageId = intent.packageSelection.packageIds[0];
-  preparedIdentifier(
-    input.templateId,
-    `${packageId}:Splice.ExternalPartyConfigState:ExternalPartyConfigState`,
-    "human external config template",
+  validateHumanDisclosedInputIdentity(
+    input,
+    request,
+    "Splice.ExternalPartyConfigState",
+    "ExternalPartyConfigState",
+    "human external config",
   );
-  if (input.lfVersion !== "2.1" || input.packageName !== "splice-amulet") {
-    throw new Error("prepared human external config identity does not match");
-  }
   preparedParties(
     input.signatories,
     [intent.tokenFactory.expectedAdmin],

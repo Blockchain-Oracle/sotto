@@ -2,7 +2,10 @@ import type {
   Metadata_InputContract,
   Value,
 } from "@canton-network/core-ledger-proto";
-import type { BoundedPurchaseLedgerIntent } from "../src/index.js";
+import {
+  FIVE_NORTH_HOLDING_TEMPLATE_PACKAGE_ID,
+  type BoundedPurchaseLedgerIntent,
+} from "../src/index.js";
 import {
   capabilityArgument,
   HISTORICAL_HOLDING_TEMPLATE_ID,
@@ -86,7 +89,7 @@ export function buildEffectfulPreparedPurchaseInputs(
       "splice-amulet",
       HISTORICAL_HOLDING_TEMPLATE_ID,
       externalHoldingArgument(
-        HISTORICAL_HOLDING_TEMPLATE_ID,
+        `${splicePackage}:Splice.Amulet:Amulet`,
         intent,
         payer,
         INPUT_AMOUNT,
@@ -101,7 +104,7 @@ export function buildEffectfulPreparedPurchaseInputs(
     inputContract(
       EXTERNAL_PURCHASE_CONTEXT.transferPreapproval,
       "splice-amulet",
-      `${splicePackage}:Splice.AmuletRules:TransferPreapproval`,
+      `${FIVE_NORTH_HOLDING_TEMPLATE_PACKAGE_ID}:Splice.AmuletRules:TransferPreapproval`,
       fixtureRecord(
         `${splicePackage}:Splice.AmuletRules:TransferPreapproval`,
         [],
@@ -124,7 +127,7 @@ export function buildEffectfulPreparedPurchaseInputs(
     inputContract(
       EXTERNAL_PURCHASE_CONTEXT.externalPartyConfigState,
       "splice-amulet",
-      `${splicePackage}:Splice.ExternalPartyConfigState:ExternalPartyConfigState`,
+      `${FIVE_NORTH_HOLDING_TEMPLATE_PACKAGE_ID}:Splice.ExternalPartyConfigState:ExternalPartyConfigState`,
       fixtureRecord(
         `${splicePackage}:Splice.ExternalPartyConfigState:ExternalPartyConfigState`,
         [],
@@ -139,7 +142,7 @@ export function buildEffectfulPreparedPurchaseInputs(
     inputContract(
       EXTERNAL_PURCHASE_CONTEXT.featuredAppRight,
       "splice-amulet",
-      `${splicePackage}:Splice.Amulet:FeaturedAppRight`,
+      `${FIVE_NORTH_HOLDING_TEMPLATE_PACKAGE_ID}:Splice.Amulet:FeaturedAppRight`,
       fixtureRecord(`${splicePackage}:Splice.Amulet:FeaturedAppRight`, []),
       [admin],
       [admin, provider],

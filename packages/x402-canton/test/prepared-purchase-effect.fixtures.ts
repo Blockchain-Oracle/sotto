@@ -16,7 +16,6 @@ import {
   contextArgument,
   factoryChoice,
   factoryResult,
-  HISTORICAL_HOLDING_TEMPLATE_ID,
   HOLDING_INTERFACE_ID,
   PREPARED_PURCHASE_EFFECT_CIDS,
   PRINCIPAL,
@@ -131,7 +130,7 @@ export function buildEffectfulPreparedPurchaseNodes(
       "100",
       holdingFetch(
         PREPARED_PURCHASE_EFFECT_CIDS.inputHolding,
-        HISTORICAL_HOLDING_TEMPLATE_ID,
+        currentHoldingTemplate,
       ),
     ),
     exerciseNode("101", {
@@ -155,8 +154,7 @@ export function buildEffectfulPreparedPurchaseNodes(
       ...common,
       contractId: PREPARED_PURCHASE_EFFECT_CIDS.inputHolding,
       packageName: "splice-amulet",
-      templateId: fixtureIdentifier(HISTORICAL_HOLDING_TEMPLATE_ID),
-      interfaceId: fixtureIdentifier(HOLDING_INTERFACE_ID),
+      templateId: fixtureIdentifier(currentHoldingTemplate),
       signatories: [admin, payer],
       stakeholders: [admin, payer],
       actingParties: [admin, payer],

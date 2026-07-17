@@ -80,10 +80,7 @@ export function readHumanPreparedHoldingValue(
     ["dso", "owner", "amount"],
     `${label} argument`,
   );
-  const packages = [
-    templateId.split(":")[0]!,
-    intent.packageSelection.packageIds[0],
-  ];
+  const packages = [intent.packageSelection.packageIds[0]];
   const amount = argument.get("amount");
   recordId(
     amount,

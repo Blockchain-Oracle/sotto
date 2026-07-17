@@ -1,13 +1,13 @@
 import type { Create, Value } from "@canton-network/core-ledger-proto";
 import type { HumanPurchasePrepareRequest } from "./human-purchase-command-types.js";
 import type { HumanPurchaseLedgerIntent } from "./human-purchase-ledger-intent.js";
+import { validateHumanDisclosedInputIdentity } from "./human-prepared-purchase-disclosed-input.js";
 import {
   validateHumanPreparedExternalConfig,
   type HumanPreparedExternalConfig,
 } from "./human-prepared-purchase-config-input.js";
 import { validateHumanPreparedFactoryInput } from "./human-prepared-purchase-factory-input.js";
 import {
-  preparedIdentifier,
   preparedParties,
   preparedRecord,
   preparedScalar,
@@ -29,24 +29,19 @@ function party(value: Value | undefined, label: string): string {
   return value.sum.party;
 }
 
-function requireInputIdentity(
-  input: Create,
-  templateId: string,
-  label: string,
-): void {
-  preparedIdentifier(input.templateId, templateId, label);
-  if (input.lfVersion !== "2.1" || input.packageName !== "splice-amulet") {
-    throw new Error(`prepared ${label} identity does not match`);
-  }
-}
-
 function validatePreapproval(
   input: Create,
   intent: HumanPurchaseLedgerIntent,
   request: HumanPurchasePrepareRequest,
 ): string {
   const templateId = `${intent.packageSelection.packageIds[0]}:Splice.AmuletRules:TransferPreapproval`;
-  requireInputIdentity(input, templateId, "human TransferPreapproval input");
+  validateHumanDisclosedInputIdentity(
+    input,
+    request,
+    "Splice.AmuletRules",
+    "TransferPreapproval",
+    "human TransferPreapproval input",
+  );
   const argument = preparedRecord(
     input.argument,
     ["dso", "receiver", "provider", "validFrom", "lastRenewedAt", "expiresAt"],
@@ -109,10 +104,17 @@ function validatePreapproval(
 function validateFeaturedRight(
   input: Create,
   intent: HumanPurchaseLedgerIntent,
+  request: HumanPurchasePrepareRequest,
   provider: string,
 ): void {
   const templateId = `${intent.packageSelection.packageIds[0]}:Splice.Amulet:FeaturedAppRight`;
-  requireInputIdentity(input, templateId, "human FeaturedAppRight input");
+  validateHumanDisclosedInputIdentity(
+    input,
+    request,
+    "Splice.Amulet",
+    "FeaturedAppRight",
+    "human FeaturedAppRight input",
+  );
   const argument = preparedRecord(
     input.argument,
     ["dso", "provider"],
@@ -165,7 +167,12 @@ export function validateHumanPreparedContextInputs(
     intent,
     request,
   );
-  validateFeaturedRight(required("featured-app-right"), intent, provider);
+  validateFeaturedRight(
+    required("featured-app-right"),
+    intent,
+    request,
+    provider,
+  );
   return Object.freeze({
     configuration: validateHumanPreparedExternalConfig(
       required("external-party-config-state"),

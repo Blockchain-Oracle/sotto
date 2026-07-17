@@ -11,6 +11,7 @@ import { registerPreparedHoldingStructureCases } from "./prepared-purchase-holdi
 import { registerPreparedPreapprovalEffectCases } from "./prepared-purchase-preapproval-effects.cases.js";
 import { registerPreparedPreapprovalResultCases } from "./prepared-purchase-preapproval-result.cases.js";
 import { registerPreparedSottoStructureCases } from "./prepared-purchase-sotto-structure.cases.js";
+import { registerPreparedUpgradeEffectCases } from "./prepared-purchase-upgrade-effects.cases.js";
 
 registerPreparedFactoryEffectCases();
 registerPreparedFactoryResultCases();
@@ -25,3 +26,4 @@ registerPreparedFetchEffectCases();
 registerPreparedPreapprovalEffectCases();
 registerPreparedPreapprovalResultCases();
 registerPreparedEventLogEffectCases();
+registerPreparedUpgradeEffectCases();

@@ -51,7 +51,7 @@ function validateTemplate(
     source === undefined ||
     actual.moduleName !== source.moduleName ||
     actual.entityName !== source.entityName ||
-    ![source.packageId, selectedPackageId].includes(actual.packageId) ||
+    actual.packageId !== selectedPackageId ||
     fetch.packageName !== input.packageName
   ) {
     throw new Error("prepared authenticated fetch template does not match");

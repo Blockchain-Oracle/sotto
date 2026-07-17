@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fixtureIdentifier } from "./prepared-purchase-value.fixtures.js";
 import { fixtureScalar } from "./prepared-purchase-value.fixtures.js";
+import { HISTORICAL_HOLDING_TEMPLATE_ID } from "./prepared-purchase-effect-values.fixtures.js";
 import { HUMAN_PURCHASE_NOW } from "./human-purchase-commitment.fixtures.js";
 import { EXTERNAL_PURCHASE_CONTEXT } from "./transfer-factory-observation.fixtures.js";
 import {
@@ -15,11 +16,11 @@ describe("human prepared transfer authority effects", () => {
   beforeEach(() => vi.useFakeTimers({ now: new Date(HUMAN_PURCHASE_NOW) }));
   afterEach(() => vi.useRealTimers());
 
-  it("rejects an approved but different input Holding template", async () => {
+  it("rejects the historical input Holding Archive template", async () => {
     await expect(
-      inspectHumanPreparedMutation((prepared, packageId) => {
+      inspectHumanPreparedMutation((prepared) => {
         humanPreparedExercise(prepared, "2").templateId = fixtureIdentifier(
-          `${packageId}:Splice.Amulet:Amulet`,
+          HISTORICAL_HOLDING_TEMPLATE_ID,
         );
       }),
     ).rejects.toThrow(/prepared/iu);

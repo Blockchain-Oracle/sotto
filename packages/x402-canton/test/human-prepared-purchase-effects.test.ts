@@ -8,6 +8,7 @@ import {
   humanPreparedPurchaseCommandInputsWithUnusedDisclosures,
   rootOnlyHumanPreparedPurchaseBytes,
 } from "./human-prepared-purchase.fixtures.js";
+import { EXTERNAL_PURCHASE_CONTEXT } from "./transfer-factory-observation.fixtures.js";
 
 describe("human prepared transfer effects", () => {
   beforeEach(() => vi.useFakeTimers({ now: new Date(HUMAN_PURCHASE_NOW) }));
@@ -15,6 +16,13 @@ describe("human prepared transfer effects", () => {
 
   it("accepts the complete payer-authorized Token transfer graph", async () => {
     const { intent, request } = await humanPreparedPurchaseCommandInputs();
+    const preapproval = request.disclosedContracts.find(
+      ({ contractId }) =>
+        contractId === EXTERNAL_PURCHASE_CONTEXT.transferPreapproval,
+    );
+    expect(preapproval?.templateId.split(":")[0]).not.toBe(
+      intent.packageSelection.packageIds[0],
+    );
     const shape = inspectHumanPreparedPurchaseStructure(
       humanPreparedPurchaseBytes(intent, request),
       intent,

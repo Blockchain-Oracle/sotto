@@ -118,9 +118,7 @@ export function validatePreparedHoldingValue(
     selected.length !== 1 ||
     argumentId?.oneofKind !== "record" ||
     argumentId.record.recordId === undefined ||
-    ![templateId.split(":")[0], selected[0]!.packageId].includes(
-      argumentId.record.recordId.packageId,
-    ) ||
+    argumentId.record.recordId.packageId !== selected[0]!.packageId ||
     argumentId.record.recordId.moduleName !== "Splice.Amulet" ||
     argumentId.record.recordId.entityName !== "Amulet"
   ) {
@@ -179,11 +177,7 @@ export function validatePreparedHoldingValue(
   }
   const amount = argument.get("amount");
   if (concrete) {
-    return expiringAmount(
-      amount,
-      [templateId.split(":")[0]!, selected[0]!.packageId],
-      `${label} amount`,
-    );
+    return expiringAmount(amount, [selected[0]!.packageId], `${label} amount`);
   }
   if (amount?.sum.oneofKind !== "numeric") {
     throw new Error(`prepared ${label} amount is not numeric`);

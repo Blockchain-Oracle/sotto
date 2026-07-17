@@ -118,6 +118,26 @@ export function humanPreparedPurchaseInputs(
   const provider = intent.challenge.recipientParty;
   const admin = intent.tokenFactory.expectedAdmin;
   const packageId = intent.packageSelection.packageIds[0];
+  const disclosedTemplate = (
+    contractId: string,
+    moduleName: string,
+    entityName: string,
+  ): string => {
+    const matches = request.disclosedContracts.filter(
+      (disclosure) => disclosure.contractId === contractId,
+    );
+    const templateId = matches[0]?.templateId;
+    const [, actualModule, actualEntity] = templateId?.split(":") ?? [];
+    if (
+      matches.length !== 1 ||
+      !templateId ||
+      actualModule !== moduleName ||
+      actualEntity !== entityName
+    ) {
+      throw new Error("test disclosed context template is invalid");
+    }
+    return templateId;
+  };
   const external = (
     contractId: string,
     templateId: string,
@@ -156,7 +176,7 @@ export function humanPreparedPurchaseInputs(
         "splice-amulet",
         HISTORICAL_HOLDING_TEMPLATE_ID,
         externalHoldingArgument(
-          HISTORICAL_HOLDING_TEMPLATE_ID,
+          `${packageId}:Splice.Amulet:Amulet`,
           intent as never,
           payer,
           amount,
@@ -169,7 +189,11 @@ export function humanPreparedPurchaseInputs(
     ),
     external(
       EXTERNAL_PURCHASE_CONTEXT.transferPreapproval,
-      `${packageId}:Splice.AmuletRules:TransferPreapproval`,
+      disclosedTemplate(
+        EXTERNAL_PURCHASE_CONTEXT.transferPreapproval,
+        "Splice.AmuletRules",
+        "TransferPreapproval",
+      ),
       fixtureRecord(`${packageId}:Splice.AmuletRules:TransferPreapproval`, [
         ["dso", fixtureScalar("party", admin)],
         ["receiver", fixtureScalar("party", provider)],
@@ -184,7 +208,11 @@ export function humanPreparedPurchaseInputs(
     ),
     external(
       EXTERNAL_PURCHASE_CONTEXT.externalPartyConfigState,
-      `${packageId}:Splice.ExternalPartyConfigState:ExternalPartyConfigState`,
+      disclosedTemplate(
+        EXTERNAL_PURCHASE_CONTEXT.externalPartyConfigState,
+        "Splice.ExternalPartyConfigState",
+        "ExternalPartyConfigState",
+      ),
       externalConfigArgument(intent, packageId),
       [admin],
       [admin],
@@ -192,7 +220,11 @@ export function humanPreparedPurchaseInputs(
     ),
     external(
       EXTERNAL_PURCHASE_CONTEXT.featuredAppRight,
-      `${packageId}:Splice.Amulet:FeaturedAppRight`,
+      disclosedTemplate(
+        EXTERNAL_PURCHASE_CONTEXT.featuredAppRight,
+        "Splice.Amulet",
+        "FeaturedAppRight",
+      ),
       fixtureRecord(`${packageId}:Splice.Amulet:FeaturedAppRight`, [
         ["dso", fixtureScalar("party", admin)],
         ["provider", fixtureScalar("party", EXTERNAL_PREAPPROVAL_THIRD_PARTY)],
