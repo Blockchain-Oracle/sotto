@@ -14,15 +14,10 @@ function utf8Compare(left: string, right: string): number {
   return Buffer.compare(Buffer.from(left, "utf8"), Buffer.from(right, "utf8"));
 }
 
-export function digestHumanTransferContext(
-  value: unknown,
-): `sha256:${string}` {
+export function digestHumanTransferContext(value: unknown): `sha256:${string}` {
   const context = objectValue(value, "human transfer context");
   exactKeys(context, ["values"], "human transfer context");
-  const values = objectValue(
-    context.values,
-    "human transfer context values",
-  );
+  const values = objectValue(context.values, "human transfer context values");
   const entries = Object.entries(values);
   if (entries.length === 0 || entries.length > MAX_CONTEXT_ENTRIES) {
     throw new Error("human transfer context entry count is invalid");
