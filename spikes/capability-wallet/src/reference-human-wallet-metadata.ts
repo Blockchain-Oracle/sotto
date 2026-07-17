@@ -1,5 +1,8 @@
 import type { Create, Metadata } from "@canton-network/core-ledger-proto";
-import type { HumanWalletApprovalRequest } from "@sotto/x402-canton";
+import {
+  preparedSynchronizerMatches,
+  type HumanWalletApprovalRequest,
+} from "@sotto/x402-canton";
 import type { ReferenceHumanWalletRoot } from "./reference-human-wallet-root.js";
 import type { ReferenceHumanWalletTransfer } from "./reference-human-wallet-transfer.js";
 import { referenceHumanParties } from "./reference-human-wallet-values.js";
@@ -32,7 +35,10 @@ export function validateReferenceHumanWalletMetadata(
   if (
     metadata.submitterInfo?.commandId !==
       `sotto-human-purchase-v1-${approval.purchaseCommitment.slice(7)}` ||
-    metadata.synchronizerId !== approval.synchronizerId ||
+    !preparedSynchronizerMatches(
+      metadata.synchronizerId,
+      approval.synchronizerId,
+    ) ||
     metadata.maxRecordTime !== executeBefore ||
     metadata.preparationTime === undefined ||
     metadata.preparationTime <= root.requestedAtMicros ||

@@ -20,6 +20,12 @@ type Mutation = (prepared: HumanPreparedPurchaseFixture) => void;
 
 const mutations: ReadonlyArray<readonly [string, Mutation]> = [
   [
+    "different physical synchronizer",
+    (prepared) => {
+      prepared.metadata!.synchronizerId = "other-domain::1220other::35-3";
+    },
+  ],
+  [
     "global key mapping",
     (prepared) => void prepared.metadata!.globalKeyMapping.push({}),
   ],
@@ -104,6 +110,22 @@ const mutations: ReadonlyArray<readonly [string, Mutation]> = [
 describe("reference human wallet prepared metadata", () => {
   beforeEach(() => vi.useFakeTimers({ now: new Date(HUMAN_PURCHASE_NOW) }));
   afterEach(() => vi.useRealTimers());
+
+  it("accepts the participant protocol-version suffix on the exact synchronizer", async () => {
+    const input = await referenceHumanWalletInputs();
+    const bytes = humanPreparedPurchaseBytes(
+      input.intent,
+      input.request,
+      (prepared) => {
+        prepared.metadata!.synchronizerId = `${input.approval.synchronizerId}::35-3`;
+      },
+    );
+    const request = referenceHumanWalletApprovalRequest(bytes, input.approval);
+
+    expect(() =>
+      verifyReferenceHumanWalletPreparedApproval(request),
+    ).not.toThrow();
+  });
 
   it.each(mutations)("rejects a %s", async (_name, mutate) => {
     const input = await referenceHumanWalletInputs();
