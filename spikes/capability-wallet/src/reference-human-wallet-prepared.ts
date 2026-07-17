@@ -1,7 +1,9 @@
 import { PreparedTransaction } from "@canton-network/core-ledger-proto";
 import type { HumanWalletApprovalRequest } from "@sotto/x402-canton";
 import { referenceHumanWalletHoldingOwner } from "./reference-human-wallet-holdings.js";
+import { validateReferenceHumanWalletGraph } from "./reference-human-wallet-graph.js";
 import { validateReferenceHumanWalletRoot } from "./reference-human-wallet-root.js";
+import { validateReferenceHumanWalletTransfer } from "./reference-human-wallet-transfer.js";
 import { referenceHumanParties } from "./reference-human-wallet-values.js";
 
 const MAX_PREPARED_BYTES = 2 * 1024 * 1024;
@@ -49,26 +51,12 @@ export function verifyReferenceHumanWalletPreparedApproval(
   const prepared = decode(request);
   const transaction = prepared.transaction;
   const metadata = prepared.metadata;
-  if (
-    transaction === undefined ||
-    metadata === undefined ||
-    transaction.version !== "2.1" ||
-    JSON.stringify(transaction.roots) !== '["0"]' ||
-    transaction.nodes.length > 128
-  ) {
+  if (transaction === undefined || metadata === undefined) {
     fail("graph");
   }
-  const root = transaction.nodes.find(({ nodeId }) => nodeId === "0");
-  if (
-    root?.versionedNode.oneofKind !== "v1" ||
-    root.versionedNode.v1.nodeType.oneofKind !== "exercise"
-  ) {
-    fail("root");
-  }
-  validateReferenceHumanWalletRoot(
-    root.versionedNode.v1.nodeType.exercise,
-    request,
-  );
+  const graph = validateReferenceHumanWalletGraph(transaction);
+  validateReferenceHumanWalletRoot(graph.root, request);
+  const transfer = validateReferenceHumanWalletTransfer(graph, request);
   const owners = transaction.nodes.flatMap(({ versionedNode }) =>
     versionedNode.oneofKind === "v1" &&
     versionedNode.v1.nodeType.oneofKind === "create"
@@ -76,6 +64,7 @@ export function verifyReferenceHumanWalletPreparedApproval(
           referenceHumanWalletHoldingOwner(
             versionedNode.v1.nodeType.create,
             request,
+            transfer.changeAmount,
           ),
         ]
       : [],
@@ -94,6 +83,8 @@ export function verifyReferenceHumanWalletPreparedApproval(
     "submitter",
   );
   if (
+    metadata.submitterInfo?.commandId !==
+      `sotto-human-purchase-v1-${request.approval.purchaseCommitment.slice(7)}` ||
     metadata.synchronizerId !== request.approval.synchronizerId ||
     metadata.maxRecordTime !==
       BigInt(Date.parse(request.approval.executeBefore)) * 1_000n

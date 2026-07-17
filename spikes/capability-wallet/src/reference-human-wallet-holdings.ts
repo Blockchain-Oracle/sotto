@@ -15,6 +15,7 @@ function fail(label: string): never {
 export function referenceHumanWalletHoldingOwner(
   create: Create,
   request: HumanWalletApprovalRequest,
+  payerChangeAmount: string,
 ): string {
   const approval = request.approval;
   const template = `${approval.selectedPackage.packageId}:Splice.Amulet:Amulet`;
@@ -58,6 +59,13 @@ export function referenceHumanWalletHoldingOwner(
       "numeric",
       referenceHumanDecimal(approval.amountAtomic),
       "provider amount",
+    );
+  } else if (owner.sum.party === approval.payerParty) {
+    referenceHumanScalar(
+      amount.get("initialAmount"),
+      "numeric",
+      payerChangeAmount,
+      "payer change amount",
     );
   }
   return owner.sum.party;
