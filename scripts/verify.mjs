@@ -34,6 +34,7 @@ runPnpm("lint", "lint");
 runPnpm("build", "build");
 runPnpm("typecheck", "typecheck");
 runPnpm("unit tests", "test:unit");
+runPnpm("PostgreSQL integration", "test:postgres");
 for (const check of [
   "check:files",
   "check:source",
