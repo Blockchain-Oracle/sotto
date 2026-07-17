@@ -105,7 +105,9 @@ export function validatePreparedTransactionMetadata(
   if (
     minimum === undefined ||
     maximum === undefined ||
-    minimum <= requestedAt ||
+    minimum < requestedAt ||
+    metadata.preparationTime <= requestedAt ||
+    metadata.preparationTime >= executeBefore ||
     maximum >= executeBefore ||
     minimum > maximum ||
     metadata.preparationTime < minimum ||

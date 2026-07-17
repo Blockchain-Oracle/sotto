@@ -41,6 +41,59 @@ describe("human prepared transaction metadata", () => {
     expect(metadata.inputEventBlobs.size).toBe(0);
   });
 
+  it("accepts an inclusive requestedAt ledger-time bound", async () => {
+    const input = await humanPreparedRootInputs();
+    const metadata = exactMetadata(input);
+    metadata.minLedgerEffectiveTime =
+      BigInt(Date.parse(input.intent.challenge.requestedAt)) * 1_000n;
+
+    expect(() =>
+      validateHumanPreparedPurchaseMetadata(
+        metadata,
+        input.intent,
+        input.request,
+        { items: 0 },
+      ),
+    ).not.toThrow();
+  });
+
+  it("rejects a ledger-time bound before requestedAt", async () => {
+    const input = await humanPreparedRootInputs();
+    const metadata = exactMetadata(input);
+    metadata.minLedgerEffectiveTime =
+      BigInt(Date.parse(input.intent.challenge.requestedAt)) * 1_000n - 1n;
+
+    expect(() =>
+      validateHumanPreparedPurchaseMetadata(
+        metadata,
+        input.intent,
+        input.request,
+        { items: 0 },
+      ),
+    ).toThrow(/ledger-time bounds/iu);
+  });
+
+  it.each([
+    ["at requestedAt", 0n],
+    ["at executeBefore", 600_000_000n],
+  ])("rejects preparation time %s", async (_label, offset) => {
+    const input = await humanPreparedRootInputs();
+    const metadata = exactMetadata(input);
+    const requestedAt =
+      BigInt(Date.parse(input.intent.challenge.requestedAt)) * 1_000n;
+    metadata.minLedgerEffectiveTime = requestedAt;
+    metadata.preparationTime = requestedAt + offset;
+
+    expect(() =>
+      validateHumanPreparedPurchaseMetadata(
+        metadata,
+        input.intent,
+        input.request,
+        { items: 0 },
+      ),
+    ).toThrow(/ledger-time bounds/iu);
+  });
+
   it.each([
     [
       "payer authority",
