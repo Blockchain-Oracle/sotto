@@ -57,6 +57,7 @@ describe("Five North read-only human provider session", () => {
       };
       return await handler(new Request(url, requestInit));
     });
+    const createPinnedFetcher = vi.fn(() => fetcher);
     const session = await startFiveNorthHumanProviderSession(
       {
         dsoParty: DSO,
@@ -67,8 +68,8 @@ describe("Five North read-only human provider session", () => {
         synchronizerId: SYNCHRONIZER,
       },
       {
-        fetcher,
-        resolveOrigin: async () => undefined,
+        createPinnedFetcher,
+        resolveOrigin: async () => ["104.16.0.1"],
         startProvider,
         startTunnel: async () => {
           events.push("tunnel-start");
@@ -88,9 +89,15 @@ describe("Five North read-only human provider session", () => {
     expect(session.resourceUrl).toBe(
       "https://human-live.trycloudflare.com/paid/weather",
     );
+    expect(createPinnedFetcher).toHaveBeenCalledWith(
+      expect.objectContaining({ address: "104.16.0.1", family: 4 }),
+      session.resourceUrl,
+    );
     await expect(
       session.fetchAuthorized(request(session.resourceUrl)),
     ).resolves.toMatchObject({ status: 402 });
+    expect(createPinnedFetcher).toHaveBeenCalledOnce();
+    expect(fetcher).toHaveBeenCalledTimes(2);
     await expect(
       session.fetchAuthorized(
         request(session.resourceUrl, [["PAYMENT-SIGNATURE", "forbidden"]]),
@@ -113,8 +120,8 @@ describe("Five North read-only human provider session", () => {
           synchronizerId: SYNCHRONIZER,
         },
         {
-          fetcher: vi.fn(),
-          resolveOrigin: async () => undefined,
+          createPinnedFetcher: () => vi.fn(),
+          resolveOrigin: async () => ["104.16.0.1"],
           startProvider: async () => {
             throw new Error("private bind detail");
           },
@@ -158,8 +165,8 @@ describe("Five North read-only human provider session", () => {
         synchronizerId: SYNCHRONIZER,
       },
       {
-        fetcher: async (url, init) =>
-          handler(
+        createPinnedFetcher: () => async (url, init) =>
+          await handler(
             new Request(url, {
               ...(init?.method === undefined ? {} : { method: init.method }),
             }),
@@ -167,6 +174,7 @@ describe("Five North read-only human provider session", () => {
         resolveOrigin: async (hostname) => {
           events.push(`resolve:${hostname}`);
           if (hostname.startsWith("missing-")) throw new Error("ENOTFOUND");
+          return ["104.16.0.1"];
         },
         startProvider: async (input) => {
           handler = input.handler;
@@ -213,12 +221,12 @@ describe("Five North read-only human provider session", () => {
         synchronizerId: SYNCHRONIZER,
       },
       {
-        fetcher: async () =>
+        createPinnedFetcher: () => async () =>
           new Response(null, {
             headers: { "PAYMENT-REQUIRED": "challenge" },
             status: 402,
           }),
-        resolveOrigin: async () => undefined,
+        resolveOrigin: async () => ["104.16.0.1"],
         startProvider: async () => ({
           close: closeProvider,
           localUrl: "http://127.0.0.1:8791/paid/weather",

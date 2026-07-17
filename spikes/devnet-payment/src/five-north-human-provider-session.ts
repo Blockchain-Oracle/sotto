@@ -2,6 +2,7 @@ import type {
   HumanPaymentFetcher,
   HumanPaymentFetchRequest,
 } from "@sotto/x402-canton";
+import { createPinnedCloudflareFetcher } from "./cloudflare-pinned-fetch.js";
 import { startCloudflareQuickTunnel } from "./cloudflare-quick-tunnel.js";
 import {
   acquireResolvableCloudflareQuickTunnel,
@@ -27,8 +28,9 @@ type StartProvider = (
     resourceUrl: string;
   }>,
 ) => Promise<ProviderHandle>;
+type CreatePinnedFetcher = typeof createPinnedCloudflareFetcher;
 type Dependencies = Readonly<{
-  fetcher: Fetcher;
+  createPinnedFetcher: CreatePinnedFetcher;
   resolveOrigin?: CloudflareTunnelOriginResolver;
   startProvider: StartProvider;
   startTunnel: typeof startCloudflareQuickTunnel;
@@ -125,7 +127,7 @@ export async function startFiveNorthHumanProviderSession(
     synchronizerId: string;
   }>,
   dependencies: Dependencies = {
-    fetcher: fetch,
+    createPinnedFetcher: createPinnedCloudflareFetcher,
     startProvider: startPaidProvider,
     startTunnel: startCloudflareQuickTunnel,
   },
@@ -156,6 +158,7 @@ export async function startFiveNorthHumanProviderSession(
   let provider: ProviderHandle | undefined;
   try {
     const resourceUrl = `${tunnel.origin}${PAID_PATH}`;
+    const fetcher = dependencies.createPinnedFetcher(tunnel, resourceUrl);
     const handler = createPaidResourceHandler({
       amount: AMOUNT_ATOMIC,
       assetTransferMethod: "transfer-factory",
@@ -175,11 +178,11 @@ export async function startFiveNorthHumanProviderSession(
     if (provider.localUrl !== `http://127.0.0.1:${input.port}${PAID_PATH}`) {
       throw new Error("human provider local route does not match");
     }
-    await awaitReadiness(dependencies.fetcher, resourceUrl, input.signal);
+    await awaitReadiness(fetcher, resourceUrl, input.signal);
     let closed: Promise<void> | undefined;
     return Object.freeze({
       resourceUrl,
-      fetchAuthorized: createUnsignedFetcher(dependencies.fetcher, resourceUrl),
+      fetchAuthorized: createUnsignedFetcher(fetcher, resourceUrl),
       close: () =>
         (closed ??= closeFiveNorthHumanProviderResources(provider, tunnel)),
     });
