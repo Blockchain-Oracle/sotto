@@ -131,6 +131,7 @@ export async function prepareHumanPurchaseAuthority(
         }),
       ),
     );
+    requireActive(scope);
     const intent = readHumanPurchaseLedgerIntent(
       commitPurchase({
         maximumFeeAtomic: input.maximumFeeAtomic,

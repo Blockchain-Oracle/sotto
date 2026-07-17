@@ -89,6 +89,37 @@ describe("prepare-only policy-free human purchase", () => {
     expect(events).toEqual([]);
   });
 
+  it("cancels after package acquisition before consuming it or reading Ledger state", async () => {
+    const events: string[] = [];
+    const input = await prepareOnlyHumanInput(events);
+    events.length = 0;
+    const controller = new AbortController();
+    const createReaders = vi.fn(input.createReaders);
+
+    await expect(
+      prepareOnlyHumanPurchase({
+        ...input,
+        claimPackageSelection: ((scope: never) => {
+          const selected = input.claimPackageSelection(scope);
+          return {
+            then: (
+              resolve: (value: unknown) => void,
+              reject: (error: unknown) => void,
+            ) =>
+              selected.then((value) => {
+                resolve(value);
+                controller.abort("private reason");
+              }, reject),
+          } as Promise<never>;
+        }) as never,
+        createReaders,
+        signal: controller.signal,
+      }),
+    ).rejects.toThrow("human purchase cancelled");
+    expect(createReaders).not.toHaveBeenCalled();
+    expect(events).toEqual(["wallet-preflight", "payment-402"]);
+  });
+
   it.each([0, 30_001, 1.5, Number.POSITIVE_INFINITY])(
     "rejects invalid total timeout %s before callbacks",
     async (timeoutMilliseconds) => {

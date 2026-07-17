@@ -52,7 +52,9 @@ function active(signal: unknown): asserts signal is AbortSignal {
   if (signal.aborted) throw new Error("Five North human wallet cancelled");
 }
 
-function capabilities(profile: FiveNorthHumanWalletProfile) {
+export function createFiveNorthHumanWalletCapabilities(
+  profile: FiveNorthHumanWalletProfile,
+) {
   return Object.freeze({
     version: HUMAN_WALLET_CAPABILITIES_VERSION,
     approvalVersions: Object.freeze([HUMAN_PURCHASE_APPROVAL_VERSION]),
@@ -79,7 +81,7 @@ function capabilities(profile: FiveNorthHumanWalletProfile) {
 export function createFiveNorthReadOnlyHumanWalletConnector(
   profile: FiveNorthHumanWalletProfile,
 ): HumanWalletConnector {
-  const discovered = capabilities(profile);
+  const discovered = createFiveNorthHumanWalletCapabilities(profile);
   return Object.freeze({
     discover: async ({ signal }) => {
       active(signal);
