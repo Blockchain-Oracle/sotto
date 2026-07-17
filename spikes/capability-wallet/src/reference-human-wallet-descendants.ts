@@ -3,6 +3,7 @@ import {
   type HumanWalletApprovalRequest,
 } from "@sotto/x402-canton";
 import type { ReferenceHumanWalletGraph } from "./reference-human-wallet-graph.js";
+import { validateReferenceHumanWalletEventLog } from "./reference-human-wallet-event-logs.js";
 import {
   referenceHumanWalletCreate,
   referenceHumanWalletExercise,
@@ -11,13 +12,6 @@ import {
   validateReferenceHumanWalletFetch,
 } from "./reference-human-wallet-descendant-nodes.js";
 import type { ReferenceHumanWalletTransfer } from "./reference-human-wallet-transfer.js";
-import {
-  referenceHumanIdentifier,
-  referenceHumanParties,
-} from "./reference-human-wallet-values.js";
-
-const EVENT_PACKAGE_ID =
-  "5c1097a9bad0af4bcfe6d3fb0fe55112d3d11f18eae57ddfb14c20836fee226c";
 
 function fail(label: string): never {
   throw new Error(`reference human wallet prepared ${label} does not match`);
@@ -144,22 +138,6 @@ export function validateReferenceHumanWalletDescendants(
       graph,
       preapproval.children[offset++]!,
     );
-    referenceHumanIdentifier(
-      event.interfaceId,
-      `${EVENT_PACKAGE_ID}:Splice.Api.Token.TransferEventsV2:EventLog`,
-      "EventLog interface",
-    );
-    if (
-      event.contractId !== transfer.configContractId ||
-      event.choiceId !== "EventLog_HoldingsChange" ||
-      event.consuming ||
-      event.children.length !== 0
-    ) {
-      fail("EventLog identity");
-    }
-    referenceHumanParties(event.actingParties, [admin], "EventLog acting");
-    referenceHumanParties(event.signatories, [admin], "EventLog signatory");
-    referenceHumanParties(event.stakeholders, [admin], "EventLog stakeholder");
-    referenceHumanParties(event.choiceObservers, [owner], "EventLog observer");
+    validateReferenceHumanWalletEventLog(event, request, transfer, owner);
   }
 }
