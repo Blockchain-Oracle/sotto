@@ -162,7 +162,6 @@ export function humanPreapprovalResult(
           ),
         ),
       ],
-      ["meta", optional()],
     ],
   );
   return fixtureRecord(

@@ -122,16 +122,28 @@ describe("human prepared transfer accounting effects", () => {
     ).rejects.toThrow(/prepared/iu);
   });
 
-  it("rejects unstripped inner transfer metadata", async () => {
+  it("rejects explicit inner transfer metadata", async () => {
     await expect(
       inspectHumanPreparedMutation((prepared) => {
-        humanPreparedReplaceField(transferResult(prepared), "meta", {
-          sum: {
-            oneofKind: "optional",
-            optional: { value: fixtureMetadata({ injected: "secret" }) },
+        const transfer = transferResult(prepared);
+        if (transfer.sum.oneofKind !== "record") {
+          throw new Error("test transfer result is absent");
+        }
+        if (transfer.sum.record.fields.some(({ label }) => label === "meta")) {
+          throw new Error("test transfer metadata is already present");
+        }
+        transfer.sum.record.fields.push({
+          label: "meta",
+          value: {
+            sum: {
+              oneofKind: "optional",
+              optional: { value: fixtureMetadata({ injected: "secret" }) },
+            },
           },
         });
       }),
-    ).rejects.toThrow(/prepared/iu);
+    ).rejects.toThrow(
+      "prepared human transfer result effect fields do not match",
+    );
   });
 });

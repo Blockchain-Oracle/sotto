@@ -113,7 +113,7 @@ export function validateHumanPreapprovalResult(
   );
   const transfer = preparedRecord(
     outer.get("result"),
-    ["round", "summary", "createdAmulets", "senderChangeAmulet", "meta"],
+    ["round", "summary", "createdAmulets", "senderChangeAmulet"],
     "human transfer result",
     `${packageId}:Splice.AmuletRules:TransferResult`,
   );
@@ -132,13 +132,6 @@ export function validateHumanPreapprovalResult(
     change === undefined ? [] : [contractId(change, "human sender change")];
   if (JSON.stringify(changeIds) !== JSON.stringify(factory.senderChangeCids)) {
     throw new Error("prepared human sender change result does not match");
-  }
-  const innerMeta = optionalValue(
-    transfer.get("meta"),
-    "human transfer metadata",
-  );
-  if (innerMeta !== undefined) {
-    throw new Error("prepared human transfer result metadata is not stripped");
   }
   validateHumanResultMetadata(
     outer.get("meta"),
