@@ -1,8 +1,6 @@
-import type {
-  HumanPaymentFetcher,
-  HumanPaymentFetchRequest,
-} from "@sotto/x402-canton";
+import type { HumanPaymentFetcher } from "@sotto/x402-canton";
 import { createPinnedCloudflareFetcher } from "./cloudflare-pinned-fetch.js";
+import { createPinnedCloudflarePaidFetcher } from "./cloudflare-pinned-paid-fetch.js";
 import { startCloudflareQuickTunnel } from "./cloudflare-quick-tunnel.js";
 import {
   acquireResolvableCloudflareQuickTunnel,
@@ -10,7 +8,15 @@ import {
 } from "./cloudflare-quick-tunnel-resolution.js";
 import { readinessParty } from "./five-north-capability-readiness-validation.js";
 import { closeFiveNorthHumanProviderResources } from "./five-north-human-provider-cleanup.js";
-import { createPaidResourceHandler, startPaidProvider } from "./provider.js";
+import {
+  createPaidHumanProviderRetry,
+  createUnsignedHumanProviderFetcher,
+} from "./five-north-human-provider-fetch.js";
+import {
+  createPaidResourceHandler,
+  startPaidProvider,
+  type SettlementProof,
+} from "./provider.js";
 
 const AMOUNT_ATOMIC = "2500000000";
 const HUMAN_WINDOW_SECONDS = 600;
@@ -31,6 +37,7 @@ type StartProvider = (
 type CreatePinnedFetcher = typeof createPinnedCloudflareFetcher;
 type Dependencies = Readonly<{
   createPinnedFetcher: CreatePinnedFetcher;
+  createPinnedPaidFetcher?: typeof createPinnedCloudflarePaidFetcher;
   resolveOrigin?: CloudflareTunnelOriginResolver;
   startProvider: StartProvider;
   startTunnel: typeof startCloudflareQuickTunnel;
@@ -40,6 +47,7 @@ export type FiveNorthHumanProviderSession = Readonly<{
   close: () => Promise<void>;
   fetchAuthorized: HumanPaymentFetcher;
   resourceUrl: string;
+  retryPaid: (proof: SettlementProof) => Promise<Response>;
 }>;
 
 function active(signal: AbortSignal): void {
@@ -89,34 +97,6 @@ async function awaitReadiness(
   throw new Error("Five North human provider tunnel is not reachable");
 }
 
-function createUnsignedFetcher(
-  fetcher: Fetcher,
-  resourceUrl: string,
-): HumanPaymentFetcher {
-  return async (request: HumanPaymentFetchRequest) => {
-    if (
-      request.url !== resourceUrl ||
-      request.method !== "GET" ||
-      request.redirect !== "error" ||
-      !(request.signal instanceof AbortSignal) ||
-      "body" in request ||
-      !Array.isArray(request.headers) ||
-      request.headers.length !== 0
-    ) {
-      throw new Error(
-        "read-only human provider request forbids signatures and headers",
-      );
-    }
-    active(request.signal);
-    return await fetcher(resourceUrl, {
-      headers: new Headers(),
-      method: "GET",
-      redirect: "error",
-      signal: request.signal,
-    });
-  };
-}
-
 export async function startFiveNorthHumanProviderSession(
   input: Readonly<{
     dsoParty: string;
@@ -125,6 +105,7 @@ export async function startFiveNorthHumanProviderSession(
     providerParty: string;
     signal: AbortSignal;
     synchronizerId: string;
+    verifySettlement?: (proof: SettlementProof) => Promise<boolean>;
   }>,
   dependencies: Dependencies = {
     createPinnedFetcher: createPinnedCloudflareFetcher,
@@ -134,6 +115,12 @@ export async function startFiveNorthHumanProviderSession(
 ): Promise<FiveNorthHumanProviderSession> {
   if (!(input.signal instanceof AbortSignal)) {
     throw new Error("Five North human provider signal is invalid");
+  }
+  if (
+    input.verifySettlement !== undefined &&
+    typeof input.verifySettlement !== "function"
+  ) {
+    throw new Error("Five North human settlement verifier is invalid");
   }
   active(input.signal);
   const payerParty = readinessParty(input.payerParty, "human payer", true);
@@ -159,6 +146,9 @@ export async function startFiveNorthHumanProviderSession(
   try {
     const resourceUrl = `${tunnel.origin}${PAID_PATH}`;
     const fetcher = dependencies.createPinnedFetcher(tunnel, resourceUrl);
+    const paidFetcher = (
+      dependencies.createPinnedPaidFetcher ?? createPinnedCloudflarePaidFetcher
+    )(tunnel, resourceUrl);
     const handler = createPaidResourceHandler({
       amount: AMOUNT_ATOMIC,
       assetTransferMethod: "transfer-factory",
@@ -168,7 +158,7 @@ export async function startFiveNorthHumanProviderSession(
       providerParty,
       resourceUrl,
       synchronizerId,
-      verifySettlement: async () => false,
+      verifySettlement: input.verifySettlement ?? (async () => false),
     });
     provider = await dependencies.startProvider({
       handler,
@@ -182,7 +172,12 @@ export async function startFiveNorthHumanProviderSession(
     let closed: Promise<void> | undefined;
     return Object.freeze({
       resourceUrl,
-      fetchAuthorized: createUnsignedFetcher(fetcher, resourceUrl),
+      fetchAuthorized: createUnsignedHumanProviderFetcher(fetcher, resourceUrl),
+      retryPaid: createPaidHumanProviderRetry(
+        paidFetcher,
+        resourceUrl,
+        input.signal,
+      ),
       close: () =>
         (closed ??= closeFiveNorthHumanProviderResources(provider, tunnel)),
     });

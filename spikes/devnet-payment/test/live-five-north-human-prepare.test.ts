@@ -107,6 +107,7 @@ function dependencies(events: string[], prepareError?: Error) {
         close,
         fetchAuthorized: vi.fn(),
         resourceUrl: RESOURCE,
+        retryPaid: vi.fn(async () => Response.json({ paid: true })),
       };
     }),
   };
