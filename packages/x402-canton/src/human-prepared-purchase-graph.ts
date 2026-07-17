@@ -12,7 +12,22 @@ export function validateHumanPreparedPurchaseGraph(
   request: HumanPurchasePrepareRequest,
   budget: PreparedStructureBudget,
 ): PreparedPurchaseGraph {
-  return validatePreparedTransactionGraph(transaction, budget, (root) =>
+  if (transaction.version !== "2.1") {
+    throw new Error("prepared human transaction version is unsupported");
+  }
+  const graph = validatePreparedTransactionGraph(transaction, budget, (root) =>
     validateHumanPreparedPurchaseRoot(root, intent, request),
   );
+  for (const node of graph.nodes.values()) {
+    const lfVersion =
+      node.kind === "exercise"
+        ? node.exercise.lfVersion
+        : node.kind === "create"
+          ? node.create.lfVersion
+          : node.fetch.lfVersion;
+    if (lfVersion !== "2.1") {
+      throw new Error("prepared human effect LF version is unsupported");
+    }
+  }
+  return graph;
 }

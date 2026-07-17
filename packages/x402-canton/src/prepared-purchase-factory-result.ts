@@ -6,7 +6,7 @@ import {
 } from "./prepared-purchase-effect-values.js";
 import { preparedMetadata } from "./prepared-purchase-metadata-values.js";
 import { MAX_PREPARED_HOLDING_OUTPUTS } from "./prepared-purchase-resource-envelope.js";
-import type { BoundedPurchaseLedgerIntent } from "./purchase-ledger-intent.js";
+import type { PreparedTokenTransferIntent } from "./prepared-token-transfer-types.js";
 
 export type PreparedFactoryResult = Readonly<{
   receiverHoldingCids: readonly string[];
@@ -15,7 +15,7 @@ export type PreparedFactoryResult = Readonly<{
 
 export function validatePreparedFactoryResult(
   exercise: Exercise,
-  intent: BoundedPurchaseLedgerIntent,
+  intent: PreparedTokenTransferIntent,
 ): PreparedFactoryResult {
   const packageId = intent.tokenFactory.interfaceId.split(":")[0]!;
   const result = preparedRecord(

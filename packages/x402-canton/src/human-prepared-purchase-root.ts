@@ -8,18 +8,12 @@ import {
   preparedRecord,
   preparedScalar,
 } from "./prepared-purchase-effect-values.js";
-import {
-  preparedExtraArgs,
-  preparedMetadata,
-} from "./prepared-purchase-metadata-values.js";
+import { preparedExtraArgs } from "./prepared-purchase-metadata-values.js";
+import { preparedMetadataMatches } from "./prepared-purchase-metadata-match.js";
 import { HOLDING_INTERFACE_ID } from "./purchase-holding-types.js";
 
 function micros(value: string): string {
   return (BigInt(Date.parse(value)) * 1_000n).toString();
-}
-
-function utf8Compare(left: string, right: string): number {
-  return Buffer.compare(Buffer.from(left, "utf8"), Buffer.from(right, "utf8"));
 }
 
 function validateIdentity(
@@ -145,14 +139,13 @@ function validateTransfer(
   ) {
     throw new Error("prepared human TransferFactory inputs do not match");
   }
-  const actualMetadata = preparedMetadata(
-    transfer.get("meta"),
-    "human TransferFactory metadata",
-  );
-  const expectedMetadata = Object.entries(expected.transfer.meta.values).sort(
-    ([left], [right]) => utf8Compare(left, right),
-  );
-  if (JSON.stringify(actualMetadata) !== JSON.stringify(expectedMetadata)) {
+  if (
+    !preparedMetadataMatches(
+      transfer.get("meta"),
+      expected.transfer.meta.values,
+      "human TransferFactory metadata",
+    )
+  ) {
     throw new Error("prepared human TransferFactory metadata does not match");
   }
   preparedExtraArgs(

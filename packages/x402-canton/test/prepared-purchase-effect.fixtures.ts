@@ -241,11 +241,11 @@ export function buildEffectfulPreparedPurchaseNodes(
       contractId: EXTERNAL_PURCHASE_CONTEXT.featuredAppRight,
       packageName: "splice-amulet",
       templateId: fixtureIdentifier(
-        `${selectedSplicePackage(intent)}:Splice.AmuletRules:FeaturedAppRight`,
+        `${selectedSplicePackage(intent)}:Splice.Amulet:FeaturedAppRight`,
       ),
-      signatories: [EXTERNAL_PREAPPROVAL_THIRD_PARTY],
-      stakeholders: [EXTERNAL_PREAPPROVAL_THIRD_PARTY],
-      actingParties: [EXTERNAL_PREAPPROVAL_THIRD_PARTY],
+      signatories: [admin],
+      stakeholders: [admin, provider],
+      actingParties: [admin],
     }),
     ...[
       ["111", payer],

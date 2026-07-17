@@ -102,7 +102,7 @@ export function externalFactoryResponse(intent: BoundedPurchaseLedgerIntent) {
         externalDisclosure(
           intent,
           EXTERNAL_PURCHASE_CONTEXT.featuredAppRight,
-          "Splice.AmuletRules",
+          "Splice.Amulet",
           "FeaturedAppRight",
         ),
         externalDisclosure(

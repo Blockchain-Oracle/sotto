@@ -1,5 +1,4 @@
 import type { Value } from "@canton-network/core-ledger-proto";
-import type { BoundedPurchasePrepareRequest } from "./bounded-purchase-command-types.js";
 import {
   preparedIdentifier,
   preparedRecord,
@@ -8,7 +7,10 @@ import {
 import type { PreparedFactoryResult } from "./prepared-purchase-factory-result.js";
 import { preparedMetadata } from "./prepared-purchase-metadata-values.js";
 import type { PreparedPurchaseGraphNode } from "./prepared-purchase-graph-types.js";
-import type { BoundedPurchaseLedgerIntent } from "./purchase-ledger-intent.js";
+import type {
+  PreparedTokenTransferExpectation,
+  PreparedTokenTransferIntent,
+} from "./prepared-token-transfer-types.js";
 
 type ExerciseNode = Extract<PreparedPurchaseGraphNode, { kind: "exercise" }>;
 
@@ -24,8 +26,8 @@ function optionalValue(
 
 export function validateTransferPreapprovalChoice(
   node: ExerciseNode,
-  intent: BoundedPurchaseLedgerIntent,
-  request: BoundedPurchasePrepareRequest,
+  intent: PreparedTokenTransferIntent,
+  expected: PreparedTokenTransferExpectation,
   packageId: string,
   contextIds: ReadonlyMap<string, string>,
 ): void {
@@ -74,7 +76,6 @@ export function validateTransferPreapprovalChoice(
     }
     return input.sum.variant.value.sum.contractId;
   });
-  const expected = request.commands[0]!.ExerciseCommand.choiceArgument;
   if (JSON.stringify(inputIds) !== JSON.stringify(expected.inputHoldingCids)) {
     throw new Error("prepared TransferPreapproval inputs do not match");
   }

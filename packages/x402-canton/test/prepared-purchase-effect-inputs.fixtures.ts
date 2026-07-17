@@ -54,6 +54,7 @@ export function buildEffectfulPreparedPurchaseInputs(
   const payer = intent.challenge.payerParty;
   const agent = intent.capability.agentParty;
   const admin = intent.tokenFactory.expectedAdmin;
+  const provider = intent.challenge.recipientParty;
   const splicePackage = selectedSplicePackage(intent);
   return [
     inputContract(
@@ -138,10 +139,10 @@ export function buildEffectfulPreparedPurchaseInputs(
     inputContract(
       EXTERNAL_PURCHASE_CONTEXT.featuredAppRight,
       "splice-amulet",
-      `${splicePackage}:Splice.AmuletRules:FeaturedAppRight`,
-      fixtureRecord(`${splicePackage}:Splice.AmuletRules:FeaturedAppRight`, []),
-      [EXTERNAL_PREAPPROVAL_THIRD_PARTY],
-      [EXTERNAL_PREAPPROVAL_THIRD_PARTY],
+      `${splicePackage}:Splice.Amulet:FeaturedAppRight`,
+      fixtureRecord(`${splicePackage}:Splice.Amulet:FeaturedAppRight`, []),
+      [admin],
+      [admin, provider],
       6,
       new TextEncoder().encode(
         `external:${EXTERNAL_PURCHASE_CONTEXT.featuredAppRight}`,

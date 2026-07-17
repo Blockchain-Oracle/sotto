@@ -164,7 +164,11 @@ export function selectPreparedTransferRoot(
   validateTransferPreapprovalChoice(
     node,
     intent,
-    request,
+    {
+      amount: request.commands[0]!.ExerciseCommand.choiceArgument.amount,
+      inputHoldingCids:
+        request.commands[0]!.ExerciseCommand.choiceArgument.inputHoldingCids,
+    },
     packageId,
     contextIds,
   );

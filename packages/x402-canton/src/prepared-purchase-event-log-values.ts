@@ -6,7 +6,8 @@ import {
   preparedScalar,
 } from "./prepared-purchase-effect-values.js";
 import { preparedEmptyMetadata } from "./prepared-purchase-metadata-values.js";
-import type { BoundedPurchaseLedgerIntent } from "./purchase-ledger-intent.js";
+import { preparedMetadataMatches } from "./prepared-purchase-metadata-match.js";
+import type { PreparedTokenTransferIntent } from "./prepared-token-transfer-types.js";
 
 export const TRANSFER_EVENT_PACKAGE_ID =
   "5c1097a9bad0af4bcfe6d3fb0fe55112d3d11f18eae57ddfb14c20836fee226c";
@@ -68,11 +69,12 @@ export type TransferEventExpectation = Readonly<{
   otherSide: string;
   outputCids: readonly string[];
   side: "SenderSide" | "ReceiverSide";
+  metadata?: Readonly<Record<string, string>>;
 }>;
 
 export function validateTransferEventChoice(
   value: Value | undefined,
-  intent: BoundedPurchaseLedgerIntent,
+  intent: PreparedTokenTransferIntent,
   amount: string,
   expected: TransferEventExpectation,
 ): void {
@@ -120,7 +122,7 @@ export function validateTransferEventChoice(
 
 function validateTransferLeg(
   value: Value | undefined,
-  intent: BoundedPurchaseLedgerIntent,
+  intent: PreparedTokenTransferIntent,
   amount: string,
   expected: TransferEventExpectation,
 ): void {
@@ -159,7 +161,19 @@ function validateTransferLeg(
     intent.challenge.instrument.id,
     "EventLog instrument",
   );
-  preparedEmptyMetadata(leg.get("meta"), "EventLog transfer leg metadata");
+  if (expected.metadata === undefined) {
+    preparedEmptyMetadata(leg.get("meta"), "EventLog transfer leg metadata");
+  } else {
+    if (
+      !preparedMetadataMatches(
+        leg.get("meta"),
+        expected.metadata,
+        "EventLog transfer leg metadata",
+      )
+    ) {
+      throw new Error("prepared EventLog transfer leg metadata does not match");
+    }
+  }
 }
 
 function validateEmptyExtraArgs(value: Value | undefined): void {
@@ -176,11 +190,9 @@ function validateEmptyExtraArgs(value: Value | undefined): void {
     "4ded6b668cb3b64f7a88a30874cd41c75829f5e064b3fbbadf41ec7e8363354f:Splice.Api.Token.MetadataV1:ChoiceContext",
   );
   const values = context.get("values");
-  if (
-    values?.sum.oneofKind !== "textMap" ||
-    values.sum.textMap.entries.length !== 0
-  ) {
-    throw new Error("prepared EventLog context is not empty");
-  }
+  const empty =
+    values?.sum.oneofKind === "textMap" &&
+    values.sum.textMap.entries.length === 0;
+  if (!empty) throw new Error("prepared EventLog context is not empty");
   preparedEmptyMetadata(extra.get("meta"), "EventLog metadata");
 }

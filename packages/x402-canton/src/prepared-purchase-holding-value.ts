@@ -7,7 +7,7 @@ import {
 } from "./prepared-purchase-effect-values.js";
 import { HOLDING_INTERFACE_ID } from "./purchase-holding-types.js";
 import { damlDecimalToAtomic } from "./purchase-commitment-primitives.js";
-import type { BoundedPurchaseLedgerIntent } from "./purchase-ledger-intent.js";
+import type { PreparedTokenTransferIntent } from "./prepared-token-transfer-types.js";
 
 function validateRecordId(
   value: Value | undefined,
@@ -93,7 +93,7 @@ export function validatePreparedHoldingValue(
   create: Create,
   templateId: string,
   owner: string,
-  intent: BoundedPurchaseLedgerIntent,
+  intent: PreparedTokenTransferIntent,
   label: string,
 ): bigint {
   preparedIdentifier(create.templateId, templateId, `${label} template`);
