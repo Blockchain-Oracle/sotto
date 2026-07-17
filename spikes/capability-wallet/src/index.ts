@@ -7,6 +7,11 @@ export {
   type WalletHandoffStorage,
 } from "./wallet-handoff-storage.js";
 export { createReferenceWalletConnector } from "./reference-wallet.js";
+export { createReferenceHumanWalletConnector } from "./reference-human-wallet.js";
+export type {
+  ReferenceHumanWalletConnector,
+  ReferenceHumanWalletConnectorInput,
+} from "./reference-human-wallet-types.js";
 export {
   readReferenceWalletPublicIdentity,
   recomputeReferenceWalletPreparedHash,

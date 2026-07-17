@@ -64,11 +64,18 @@ function sdkFixtureContractId(value: string): string {
   return `00${createHash("sha256").update(`human-wallet:${value}`).digest("hex")}`;
 }
 
-function rewriteSdkFixtureContractIds(value: unknown): void {
-  if (typeof value !== "object" || value === null) return;
+function rewriteSdkFixtureValues(
+  value: unknown,
+  replacements: ReadonlyMap<string, string>,
+): unknown {
+  if (typeof value === "string") return replacements.get(value) ?? value;
+  if (typeof value !== "object" || value === null) return value;
+  if (value instanceof Uint8Array) return value;
   if (Array.isArray(value)) {
-    value.forEach(rewriteSdkFixtureContractIds);
-    return;
+    value.forEach((entry, index) => {
+      value[index] = rewriteSdkFixtureValues(entry, replacements);
+    });
+    return value;
   }
   const record = value as Record<string, unknown>;
   for (const [key, entry] of Object.entries(record)) {
@@ -81,30 +88,51 @@ function rewriteSdkFixtureContractIds(value: unknown): void {
     ) {
       record[key] = sdkFixtureContractId(entry);
     } else {
-      rewriteSdkFixtureContractIds(entry);
+      record[key] = rewriteSdkFixtureValues(entry, replacements);
     }
   }
+  return value;
 }
 
-export async function sdkCompatibleReferenceHumanWalletRequest(): Promise<HumanWalletApprovalRequest> {
+export async function sdkCompatibleReferenceHumanWalletRequest(
+  identity?: Readonly<{
+    payerParty: string;
+    signerFingerprint: `1220${string}`;
+  }>,
+): Promise<HumanWalletApprovalRequest> {
   const input = await referenceHumanWalletInputs();
+  const replacements = new Map<string, string>();
+  if (identity !== undefined) {
+    replacements.set(input.approval.payerParty, identity.payerParty);
+    replacements.set(
+      input.approval.signer.publicKeyFingerprint,
+      identity.signerFingerprint,
+    );
+  }
   const prepared = PreparedTransaction.fromBinary(input.transaction, {
     readUnknownField: "throw",
   });
-  rewriteSdkFixtureContractIds(prepared);
+  rewriteSdkFixtureValues(prepared, replacements);
   const transaction = PreparedTransaction.toBinary(prepared, {
     writeUnknownFields: false,
   });
   const context = structuredClone(
     input.request.commands[0].ExerciseCommand.choiceArgument.extraArgs.context,
   );
-  rewriteSdkFixtureContractIds(context);
+  rewriteSdkFixtureValues(context, replacements);
   const digest = await recomputeWalletPreparedHashPrecheck(transaction);
   const preparedTransactionHash =
     `sha256:${Buffer.from(digest).toString("hex")}` as const;
   const approval = {
     ...input.approval,
+    payerParty: identity?.payerParty ?? input.approval.payerParty,
     preparedTransactionHash,
+    signer: {
+      ...input.approval.signer,
+      publicKeyFingerprint:
+        identity?.signerFingerprint ??
+        input.approval.signer.publicKeyFingerprint,
+    },
     tokenFactory: {
       ...input.approval.tokenFactory,
       contractId: sdkFixtureContractId(input.approval.tokenFactory.contractId),
