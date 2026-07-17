@@ -60,10 +60,10 @@ export function validateBoundedPurchaseInput(
   identifier(input.payerParty, "payerParty", 512);
   const observation = readPaymentRequiredObservation(input.paymentObservation);
   const observedAt = canonicalTime(observation.observedAt, "observedAt");
-  const requestUrl = validateBinding(input);
+  const request = validateBinding(input);
   const requirement = selectRequirement(
     input,
-    requestUrl,
+    request.url,
     observation.challengeBytes,
   );
   if (
@@ -128,7 +128,7 @@ export function validateBoundedPurchaseInput(
   if (capability.resourceBindingVersion !== RESOURCE_BINDING_VERSION) {
     throw new Error("capability resource binding version is unsupported");
   }
-  const expectedResourceHash = commitResourceRoute(requestUrl.toString());
+  const expectedResourceHash = commitResourceRoute(request.url.toString());
   if (capability.resourceHash !== expectedResourceHash) {
     throw new Error("capability resource hash does not match request route");
   }

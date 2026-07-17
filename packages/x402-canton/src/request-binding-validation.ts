@@ -29,6 +29,11 @@ const HEADER_TOKEN = /^[!#$%&'*+\-.^_`|~0-9a-z]+$/;
 
 type ValidatedHeader = Readonly<{ name: string; value: string }>;
 
+export type ValidatedRequestBinding = Readonly<{
+  method: string;
+  url: URL;
+}>;
+
 function validateHeaders(value: unknown): ReadonlyArray<ValidatedHeader> {
   if (
     !Array.isArray(value) ||
@@ -70,7 +75,7 @@ export function validateRequestBindingCanonical(
   value: unknown,
   source: string,
   binding: HttpRequestCommitment,
-): URL {
+): ValidatedRequestBinding {
   const request = objectValue(value, "request binding canonical value");
   exactKeys(
     request,
@@ -116,5 +121,5 @@ export function validateRequestBindingCanonical(
   if (source !== canonical) {
     throw new Error("request binding must use the canonical encoding");
   }
-  return url;
+  return Object.freeze({ method: request.method, url });
 }

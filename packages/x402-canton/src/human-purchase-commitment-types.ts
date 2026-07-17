@@ -52,6 +52,12 @@ export type ValidatedHumanPurchaseInput = Readonly<{
   maximumTotalDebitAtomic: string;
   observedAt: string;
   packageSelection: CanonicalHumanPackageSelection;
+  requestDisplay: Readonly<{
+    method: string;
+    queryPresent: boolean;
+    resourceOrigin: string;
+    resourcePath: string;
+  }>;
   requirement: CantonPaymentRequirement;
   tokenFactory: Readonly<{ contractId: string; expectedAdmin: string }>;
 }>;

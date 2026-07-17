@@ -54,6 +54,10 @@ describe("policy-free human Ledger intent", () => {
       purchaseCommitment: commitment.commitment,
       request: {
         bindingVersion: binding.version,
+        method: "GET",
+        queryPresent: true,
+        resourceOrigin: "https://provider.example",
+        resourcePath: "/paid/weather",
         requestCommitment: binding.commitment,
         bodyHash: `sha256:${binding.bodySha256}`,
       },

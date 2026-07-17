@@ -17,6 +17,7 @@ import {
   humanHoldingEntry,
   humanHoldingReader,
 } from "./human-purchase-holding.fixtures.js";
+import type { HumanPurchaseFixtureOptions } from "./human-purchase-commitment.fixtures.js";
 import {
   externalFactoryResponse,
   responseBytes,
@@ -26,10 +27,13 @@ export type HumanPreparedPurchaseFixture = ReturnType<
   typeof PreparedTransaction.create
 >;
 
-export async function humanPreparedPurchaseCommandInputs() {
-  return commandInputsForIntent(await authenticatedHumanPurchaseIntent(), [
-    humanHoldingEntry("00holding-a", "0.3250000000"),
-  ]);
+export async function humanPreparedPurchaseCommandInputs(
+  options: HumanPurchaseFixtureOptions = {},
+) {
+  return commandInputsForIntent(
+    await authenticatedHumanPurchaseIntent(options),
+    [humanHoldingEntry("00holding-a", "0.3250000000")],
+  );
 }
 
 export async function humanPreparedPurchaseCommandInputsFor(

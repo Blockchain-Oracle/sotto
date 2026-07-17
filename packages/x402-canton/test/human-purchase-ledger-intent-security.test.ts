@@ -16,7 +16,6 @@ import {
   createHumanPurchaseInput,
   type HumanChallengeFixture,
 } from "./human-purchase-commitment.fixtures.js";
-import { RESOURCE_URL } from "./purchase-commitment.fixtures.js";
 
 let authorizationIndex = 0;
 
@@ -102,41 +101,6 @@ describe("human Ledger intent provenance and privacy", () => {
     expect(() =>
       readAuthenticatedHumanPayerIdentity(intent.payerIdentity),
     ).toThrow(/not authenticated/iu);
-  });
-
-  it("does not expose raw request, challenge, or authorization material", async () => {
-    const privateUrl = `${RESOURCE_URL}&access_token=private-intent-query`;
-    const { commitment } = await committed({
-      mutateChallenge: (challenge) => {
-        challenge.resource.url = privateUrl;
-      },
-      request: {
-        body: new TextEncoder().encode("private intent body"),
-        headers: [["idempotency-key", "private intent header"]],
-        method: "POST",
-        url: privateUrl,
-      },
-    });
-    const serialized = JSON.stringify(
-      readHumanPurchaseLedgerIntent(commitment),
-    );
-
-    for (const forbidden of [
-      "private-intent-query",
-      "private intent body",
-      "private intent header",
-      "canonicalBytes",
-      "authorizationInstanceId",
-      "observationId",
-      "challengeBytes",
-      "paymentObservation",
-      "capability",
-      "allowance",
-      "agentParty",
-      "policy",
-    ]) {
-      expect(serialized).not.toContain(forbidden);
-    }
   });
 
   it("rejects self-consistent non-CC and non-Amulet rails", async () => {

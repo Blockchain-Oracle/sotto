@@ -21,6 +21,7 @@ export type HumanPurchaseCommandAuthority = {
   readonly packageSelectionAuthority: AuthenticatedHumanPackagePreference;
   readonly payerIdentity: AuthenticatedHumanPayerIdentity;
   readonly payerIdentityAuthority: AuthenticatedHumanPayerIdentity;
+  readonly requestDisplay: ValidatedHumanPurchaseInput["requestDisplay"];
   commandClaimed: boolean;
 };
 
@@ -69,6 +70,7 @@ export function bindHumanPurchaseAuthorities(
     packageSelectionAuthority: authorities.packageSelection,
     payerIdentity: input.identity,
     payerIdentityAuthority: authorities.payerIdentity,
+    requestDisplay: input.requestDisplay,
     commandClaimed: false,
   });
 }

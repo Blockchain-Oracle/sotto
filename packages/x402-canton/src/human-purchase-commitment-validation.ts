@@ -23,41 +23,10 @@ import {
   atomic,
   canonicalTime,
   exactKeys,
-  identifier,
   objectValue,
 } from "./purchase-commitment-primitives.js";
 export const MIN_HUMAN_SIGNING_RESERVE_MS = 120_000;
 const CLOCK_ROLLBACK_TOLERANCE_MS = 5_000;
-export function validateHumanPurchaseConfiguration(
-  candidate: HumanPurchaseTrustedConfiguration,
-): HumanPurchaseTrustedConfiguration {
-  const config = objectValue(candidate, "human purchase trusted configuration");
-  exactKeys(
-    config,
-    [
-      "contractId",
-      "expectedAdmin",
-      "expectedAsset",
-      "expectedInstrumentId",
-      "maximumAllowedFeeAtomic",
-    ],
-    "human purchase trusted configuration",
-  );
-  atomic(config.maximumAllowedFeeAtomic, "maximum allowed human fee");
-  return Object.freeze({
-    contractId: identifier(config.contractId, "human token factory contractId"),
-    expectedAsset: identifier(config.expectedAsset, "human expected asset"),
-    expectedAdmin: identifier(
-      config.expectedAdmin,
-      "human token factory expected admin",
-    ),
-    expectedInstrumentId: identifier(
-      config.expectedInstrumentId,
-      "human expected instrument ID",
-    ),
-    maximumAllowedFeeAtomic: config.maximumAllowedFeeAtomic as string,
-  });
-}
 
 export function validateHumanPurchaseInput(
   input: HumanPurchaseCommitmentInput,
@@ -108,10 +77,10 @@ export function validateHumanPurchaseInput(
     expectedNetwork: identity.network,
     payerParty: identity.party,
   };
-  const requestUrl = validateBinding(envelope);
+  const request = validateBinding(envelope);
   const requirement = selectRequirement(
     envelope,
-    requestUrl,
+    request.url,
     observation.challengeBytes,
   );
   if (requirement.extra.synchronizerId !== identity.synchronizerId) {
@@ -188,6 +157,12 @@ export function validateHumanPurchaseInput(
     maximumTotalDebitAtomic,
     observedAt: observation.observedAt,
     packageSelection,
+    requestDisplay: Object.freeze({
+      method: request.method,
+      queryPresent: request.url.search !== "",
+      resourceOrigin: request.url.origin,
+      resourcePath: request.url.pathname,
+    }),
     requirement,
     tokenFactory: Object.freeze({
       contractId: config.contractId,

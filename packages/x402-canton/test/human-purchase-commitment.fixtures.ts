@@ -55,7 +55,7 @@ export type HumanChallengeFixture = {
   [key: string]: unknown;
 };
 
-type HumanPurchaseFixtureOptions = Readonly<{
+export type HumanPurchaseFixtureOptions = Readonly<{
   maximumFeeAtomic?: string;
   mutateChallenge?: (challenge: HumanChallengeFixture) => void;
   packageAdminParty?: string;

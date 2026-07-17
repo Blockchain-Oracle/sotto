@@ -10,6 +10,7 @@ import {
   humanPreparedPurchaseCommandInputs,
   humanPreparedPurchaseCommandInputsWithWindow,
 } from "./human-prepared-purchase.fixtures.js";
+import type { HumanPurchaseFixtureOptions } from "./human-purchase-commitment.fixtures.js";
 
 function response(
   transaction: Uint8Array,
@@ -43,6 +44,12 @@ export async function humanPreparedHashInputs(
     await humanPreparedPurchaseCommandInputs(),
     participantDigest,
   );
+}
+
+export async function humanPreparedHashInputsForPurchase(
+  options: HumanPurchaseFixtureOptions,
+): ReturnType<typeof humanPreparedHashInputs> {
+  return preparedHashInputs(await humanPreparedPurchaseCommandInputs(options));
 }
 
 export async function humanPreparedHashInputsWithWindow(

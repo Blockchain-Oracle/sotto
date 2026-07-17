@@ -63,6 +63,8 @@ export function projectHumanPurchaseLedgerIntent(
     request.bodyHash,
     "human request body hash",
   );
+  const { method, queryPresent, resourceOrigin, resourcePath } =
+    authority.requestDisplay;
   const contractId = identifier(
     tokenFactory.contractId,
     "human token factory contractId",
@@ -140,6 +142,10 @@ export function projectHumanPurchaseLedgerIntent(
     ),
     request: {
       bindingVersion: REQUEST_BINDING_VERSION,
+      method,
+      queryPresent,
+      resourceOrigin,
+      resourcePath,
       requestCommitment,
       bodyHash,
     },

@@ -34,6 +34,10 @@ export type HumanPurchaseLedgerIntent = Readonly<{
   purchaseCommitment: Sha256;
   request: Readonly<{
     bindingVersion: "sotto-http-request-v1";
+    method: string;
+    queryPresent: boolean;
+    resourceOrigin: string;
+    resourcePath: string;
     requestCommitment: Sha256;
     bodyHash: Sha256;
   }>;

@@ -163,8 +163,11 @@ expiry and never retains canonical purchase bytes or wallet identity.
 The internal Ledger intent is a separate authenticated, deeply frozen projection
 cached once per commitment. It authorizes exactly `actAs: [payer]`, pins the
 CC/Amulet direct-transfer rail, key identity, fee/debit ceiling,
-TransferFactory, and Token-only package selection, and carries no capability,
-agent, policy, allowance, raw request, challenge bytes, or authorization nonce.
+TransferFactory, and Token-only package selection. Its only display projection
+of the request is the uppercase method, canonical HTTPS origin, pathname, and a
+query-present boolean derived from the authenticated binding. It carries no
+query values, headers, request body, capability, agent, policy, allowance,
+challenge bytes, or authorization nonce.
 
 Human holding acquisition uses a separate authenticated, one-use observer rather
 than widening the autonomous capability observer. It reads a new Ledger end for
@@ -268,9 +271,17 @@ network, synchronizer, registered public-key fingerprint, algorithm, and key
 format. The connector and wallet identity must match that projection exactly;
 they cannot create or replace it.
 
-The approval summary shows resource origin and route, method, provider, payer,
-amount, maximum total debit, instrument, network, synchronizer, expiry, and
-transaction hash. Secrets and raw request or response bodies remain hidden.
+The approval summary is the fixed `sotto-human-purchase-approval-v1` allowlist.
+It shows `pay-for-api-call`, `human-wallet`, method, resource origin and path, a
+query-present boolean, provider, payer, amount, asset, maximum fee and total
+debit, instrument, network, synchronizer, expiry,
+attempt/challenge/request/body/ purchase/prepared hashes, the selected Token
+package, factory identity, and the registered signing-key fingerprint and exact
+formats. Query values, headers, raw request or response bodies, prepared bytes,
+signatures, public keys, topology/subject hashes, authorization internals, and
+policy fields remain hidden. Projection reads only the authenticated intent and
+32-byte digest; copying the prepared bytes is reserved for the later one-use
+session claim.
 
 ## Execution And Recovery
 

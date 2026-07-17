@@ -1,9 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { bindHumanPurchaseAuthorities } from "./human-purchase-authority.js";
-import {
-  validateHumanPurchaseConfiguration,
-  validateHumanPurchaseInput,
-} from "./human-purchase-commitment-validation.js";
+import { validateHumanPurchaseConfiguration } from "./human-purchase-configuration.js";
+import { validateHumanPurchaseInput } from "./human-purchase-commitment-validation.js";
 import type {
   HumanPurchaseCommitment,
   HumanPurchaseCommitmentInput,

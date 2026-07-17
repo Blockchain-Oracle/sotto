@@ -14,6 +14,7 @@ import {
 } from "./purchase-commitment-primitives.js";
 import { assertStrictJson } from "./strict-json.js";
 import { validateRequestBindingCanonical } from "./request-binding-validation.js";
+import type { ValidatedRequestBinding } from "./request-binding-validation.js";
 
 export type PurchaseEnvelopeAuthority = Readonly<{
   binding: HttpRequestCommitment;
@@ -21,7 +22,9 @@ export type PurchaseEnvelopeAuthority = Readonly<{
   payerParty: string;
 }>;
 
-export function validateBinding(input: PurchaseEnvelopeAuthority): URL {
+export function validateBinding(
+  input: PurchaseEnvelopeAuthority,
+): ValidatedRequestBinding {
   const binding = objectValue(input.binding, "request binding");
   exactKeys(
     binding,

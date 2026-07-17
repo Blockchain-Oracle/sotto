@@ -13,6 +13,7 @@ import {
   HUMAN_AUTHORIZATION_INSTANCE_ID,
   HUMAN_TOKEN_FACTORY_CONFIGURATION,
   createHumanPurchaseInput,
+  type HumanPurchaseFixtureOptions,
 } from "./human-purchase-commitment.fixtures.js";
 import {
   HUMAN_PAYER,
@@ -33,8 +34,10 @@ export function humanHoldingEntry(contractId: string, amount: string) {
   return entry;
 }
 
-export async function authenticatedHumanPurchaseIntent() {
-  const input = await createHumanPurchaseInput();
+export async function authenticatedHumanPurchaseIntent(
+  options: HumanPurchaseFixtureOptions = {},
+) {
+  const input = await createHumanPurchaseInput(options);
   return commitHumanIntent(input);
 }
 

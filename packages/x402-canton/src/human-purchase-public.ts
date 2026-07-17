@@ -29,6 +29,11 @@ export {
   type HumanPurchaseTrustedConfiguration,
 } from "./human-purchase-commitment.js";
 export {
+  HUMAN_PURCHASE_APPROVAL_VERSION,
+  projectHumanPreparedPurchaseApproval,
+  type HumanPreparedPurchaseApproval,
+} from "./human-purchase-approval.js";
+export {
   createHumanPurchaseEvidence,
   type HumanPurchaseEvidence,
 } from "./human-purchase-evidence.js";

@@ -23,6 +23,13 @@ export type ClaimedHashVerifiedHumanPreparedPurchase = Readonly<{
   shape: PreparedPurchaseShape;
 }>;
 
+export type ReadHashVerifiedHumanPreparedPurchase = Readonly<{
+  capturedAt: number;
+  verifiedAt: number;
+  intent: HumanPurchaseLedgerIntent;
+  preparedTransactionHash: Uint8Array;
+}>;
+
 const states = new WeakMap<object, VerifiedState>();
 
 function readState(candidate: unknown): VerifiedState {
@@ -55,12 +62,9 @@ export function registerHashVerifiedHumanPreparedPurchase(
   });
 }
 
-/** @internal Human wallet-session construction only. */
-export function claimHashVerifiedHumanPreparedPurchase(
-  candidate: unknown,
+function projectState(
+  state: VerifiedState,
 ): ClaimedHashVerifiedHumanPreparedPurchase {
-  const state = readState(candidate);
-  state.claimed = true;
   return Object.freeze({
     capturedAt: state.prepared.capturedAt,
     verifiedAt: state.verifiedAt,
@@ -70,4 +74,26 @@ export function claimHashVerifiedHumanPreparedPurchase(
     preparedTransactionHash: new Uint8Array(state.preparedTransactionHash),
     shape: state.prepared.shape,
   });
+}
+
+/** @internal Human approval projection and wallet-session construction only. */
+export function readHashVerifiedHumanPreparedPurchase(
+  candidate: unknown,
+): ReadHashVerifiedHumanPreparedPurchase {
+  const state = readState(candidate);
+  return Object.freeze({
+    capturedAt: state.prepared.capturedAt,
+    verifiedAt: state.verifiedAt,
+    intent: state.prepared.intent,
+    preparedTransactionHash: new Uint8Array(state.preparedTransactionHash),
+  });
+}
+
+/** @internal Human wallet-session construction only. */
+export function claimHashVerifiedHumanPreparedPurchase(
+  candidate: unknown,
+): ClaimedHashVerifiedHumanPreparedPurchase {
+  const state = readState(candidate);
+  state.claimed = true;
+  return projectState(state);
 }
