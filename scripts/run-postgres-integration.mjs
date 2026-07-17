@@ -1,5 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
+import { readdirSync } from "node:fs";
 import { setTimeout as delay } from "node:timers/promises";
 
 const POSTGRES_IMAGE =
@@ -8,6 +9,16 @@ const database = "sotto_test";
 const username = "sotto_test";
 const password = randomBytes(24).toString("hex");
 const containerName = `sotto-postgres-${process.pid}-${randomBytes(4).toString("hex")}`;
+const postgresTests = readdirSync(
+  new URL("../packages/database/test/", import.meta.url),
+  { withFileTypes: true },
+)
+  .filter((entry) => entry.isFile() && entry.name.endsWith(".postgres.test.ts"))
+  .map((entry) => `packages/database/test/${entry.name}`)
+  .sort();
+if (postgresTests.length === 0) {
+  throw new Error("PostgreSQL integration tests are absent");
+}
 let containerId;
 
 function docker(args, options = {}) {
@@ -50,6 +61,8 @@ async function waitUntilReady() {
         "exec",
         containerId,
         "pg_isready",
+        "--host",
+        "127.0.0.1",
         "--username",
         username,
         "--dbname",
@@ -124,7 +137,7 @@ async function main() {
       "exec",
       "vitest",
       "run",
-      "packages/database/test/migrations.postgres.test.ts",
+      ...postgresTests,
       "--testTimeout=120000",
       "--hookTimeout=120000",
       "--maxWorkers=1",

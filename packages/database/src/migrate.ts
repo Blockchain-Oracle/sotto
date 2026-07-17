@@ -1,3 +1,4 @@
+import { isAbsolute } from "node:path";
 import { fileURLToPath } from "node:url";
 import { runner } from "node-pg-migrate";
 
@@ -8,6 +9,7 @@ export type DatabaseMigrationInput = Readonly<{
 const migrationsDirectory = fileURLToPath(
   new URL("../migrations/", import.meta.url),
 );
+const MIGRATIONS_TABLE_PATTERN = /^[a-z][a-z0-9_]{0,62}$/u;
 
 function validatedDatabaseUrl(value: unknown): string {
   if (
@@ -32,10 +34,23 @@ function validatedDatabaseUrl(value: unknown): string {
   return value;
 }
 
-export async function applyDatabaseMigrations(
-  input: DatabaseMigrationInput,
+export type DatabaseMigrationSetInput = DatabaseMigrationInput &
+  Readonly<{
+    directory: string;
+    migrationsTable: string;
+  }>;
+
+/** @internal Used by the real PostgreSQL migration-contract tests. */
+export async function applyDatabaseMigrationSet(
+  input: DatabaseMigrationSetInput,
 ): Promise<void> {
   const connectionString = validatedDatabaseUrl(input?.databaseUrl);
+  if (!isAbsolute(input.directory)) {
+    throw new Error("database migration directory must be absolute");
+  }
+  if (!MIGRATIONS_TABLE_PATTERN.test(input.migrationsTable)) {
+    throw new Error("database migrations table is invalid");
+  }
   await runner({
     databaseUrl: {
       connectionString,
@@ -45,14 +60,24 @@ export async function applyDatabaseMigrations(
       query_timeout: 30_000,
       statement_timeout: 30_000,
     },
-    dir: migrationsDirectory,
+    dir: input.directory,
     direction: "up",
-    migrationsTable: "sotto_migrations",
+    migrationsTable: input.migrationsTable,
     migrationsSchema: "public",
     schema: "public",
     checkOrder: true,
     singleTransaction: true,
     noLock: false,
     log: () => undefined,
+  });
+}
+
+export async function applyDatabaseMigrations(
+  input: DatabaseMigrationInput,
+): Promise<void> {
+  await applyDatabaseMigrationSet({
+    ...input,
+    directory: migrationsDirectory,
+    migrationsTable: "sotto_migrations",
   });
 }
