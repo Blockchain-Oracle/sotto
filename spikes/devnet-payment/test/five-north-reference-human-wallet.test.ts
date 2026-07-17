@@ -95,7 +95,7 @@ describe("Five North reference human wallet", () => {
 
     await expect(connector.discover({ signal })).resolves.toEqual({
       version: "sotto-human-wallet-capabilities-v1",
-      approvalVersions: ["sotto-human-purchase-approval-v1"],
+      approvalVersions: ["sotto-human-purchase-approval-v2"],
       connectorId: "wallet-sdk-reference",
       connectorKind: "wallet-sdk",
       explicitApproval: true,

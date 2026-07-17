@@ -1,6 +1,8 @@
 import type { HumanWalletApprovalRequest } from "@sotto/x402-canton";
 import type { ReferenceHumanWalletGraph } from "./reference-human-wallet-graph.js";
+import type { ReferenceHumanWalletRoot } from "./reference-human-wallet-root.js";
 import type { ReferenceHumanWalletTransferSummary } from "./reference-human-wallet-summary.js";
+import { validateReferenceHumanWalletTransferMetadata } from "./reference-human-wallet-token-metadata.js";
 import { readReferenceHumanWalletTransferChoice } from "./reference-human-wallet-transfer-choice.js";
 import { readReferenceHumanWalletTransferResults } from "./reference-human-wallet-transfer-result.js";
 import {
@@ -30,7 +32,7 @@ export type ReferenceHumanWalletTransfer = Readonly<{
 export function validateReferenceHumanWalletTransfer(
   graph: ReferenceHumanWalletGraph,
   request: HumanWalletApprovalRequest,
-  rootInputHoldingIds: readonly string[],
+  root: ReferenceHumanWalletRoot,
 ): ReferenceHumanWalletTransfer {
   const matches = [...graph.nodes.values()].flatMap(
     ({ nodeId, versionedNode }) =>
@@ -57,7 +59,7 @@ export function validateReferenceHumanWalletTransfer(
   if (
     exercise.lfVersion !== "2.1" ||
     exercise.interfaceId !== undefined ||
-    exercise.contractId === "" ||
+    exercise.contractId !== root.contextIds.get("transfer-preapproval") ||
     exercise.packageName !== "splice-amulet" ||
     exercise.consuming ||
     exercise.choiceObservers.length !== 0
@@ -102,10 +104,25 @@ export function validateReferenceHumanWalletTransfer(
   const selected = readReferenceHumanWalletTransferChoice(choice, request);
   if (
     JSON.stringify(selected.inputHoldingIds) !==
-    JSON.stringify(rootInputHoldingIds)
+      JSON.stringify(root.inputHoldingIds) ||
+    selected.configContractId !==
+      root.contextIds.get("external-party-config-state") ||
+    selected.featuredContractId !== root.contextIds.get("featured-app-right")
   ) {
-    fail("preapproval inputs");
+    fail("preapproval context");
   }
+  const metadata = choice.get("meta");
+  if (
+    metadata?.sum.oneofKind !== "optional" ||
+    metadata.sum.optional.value === undefined
+  ) {
+    fail("preapproval metadata");
+  }
+  validateReferenceHumanWalletTransferMetadata(
+    metadata.sum.optional.value,
+    request,
+    "preapproval metadata",
+  );
   const result = readReferenceHumanWalletTransferResults(
     graph.root,
     exercise,

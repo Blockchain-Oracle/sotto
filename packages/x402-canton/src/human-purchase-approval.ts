@@ -3,7 +3,7 @@ import { readHashVerifiedHumanPreparedPurchase } from "./human-prepared-purchase
 import type { HumanPurchaseLedgerIntent } from "./human-purchase-ledger-intent.js";
 
 export const HUMAN_PURCHASE_APPROVAL_VERSION =
-  "sotto-human-purchase-approval-v1" as const;
+  "sotto-human-purchase-approval-v2" as const;
 
 export type HumanPreparedPurchaseApproval = Readonly<{
   version: typeof HUMAN_PURCHASE_APPROVAL_VERSION;
@@ -28,6 +28,7 @@ export type HumanPreparedPurchaseApproval = Readonly<{
   requestCommitment: `sha256:${string}`;
   purchaseCommitment: `sha256:${string}`;
   bodyHash: `sha256:${string}`;
+  transferContextHash: `sha256:${string}`;
   preparedTransactionHash: `sha256:${string}`;
   selectedPackage: Readonly<{
     packageId: string;
@@ -72,6 +73,7 @@ export function projectHumanPreparedPurchaseApproval(
     requestCommitment: intent.request.requestCommitment,
     purchaseCommitment: intent.purchaseCommitment,
     bodyHash: intent.request.bodyHash,
+    transferContextHash: state.transferContextHash,
     preparedTransactionHash: `sha256:${Buffer.from(
       state.preparedTransactionHash,
     ).toString("hex")}`,

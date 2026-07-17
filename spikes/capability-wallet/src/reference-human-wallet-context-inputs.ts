@@ -64,8 +64,11 @@ export function validateReferenceHumanWalletContextInputs(
   metadata: ReferenceHumanWalletMetadata,
   request: HumanWalletApprovalRequest,
   transfer: ReferenceHumanWalletTransfer,
-): Readonly<{ config: ReferenceHumanWalletExternalConfig }> {
-  const provider = validateReferenceHumanWalletPreapprovalInput(
+): Readonly<{
+  config: ReferenceHumanWalletExternalConfig;
+  preapprovalParties: readonly string[];
+}> {
+  const preapproval = validateReferenceHumanWalletPreapprovalInput(
     referenceHumanWalletInput(metadata, transfer.contractId),
     request,
   );
@@ -77,7 +80,10 @@ export function validateReferenceHumanWalletContextInputs(
   validateFeatured(
     referenceHumanWalletInput(metadata, transfer.featuredContractId),
     request,
-    provider,
+    preapproval.provider,
   );
-  return Object.freeze({ config });
+  return Object.freeze({
+    config,
+    preapprovalParties: preapproval.parties,
+  });
 }

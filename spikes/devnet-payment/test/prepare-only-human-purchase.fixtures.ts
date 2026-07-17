@@ -54,7 +54,7 @@ async function authenticatedHumanWalletPreflight() {
   const connector = {
     discover: async () => ({
       version: "sotto-human-wallet-capabilities-v1",
-      approvalVersions: ["sotto-human-purchase-approval-v1"],
+      approvalVersions: ["sotto-human-purchase-approval-v2"],
       connectorId: "wallet-sdk-human-reference",
       connectorKind: "wallet-sdk",
       explicitApproval: true,

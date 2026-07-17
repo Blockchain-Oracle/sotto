@@ -58,6 +58,8 @@ describe("wallet-neutral human purchase approval", () => {
       requestCommitment: intent.request.requestCommitment,
       purchaseCommitment: intent.purchaseCommitment,
       bodyHash: intent.request.bodyHash,
+      transferContextHash:
+        "sha256:3dcaef2d24057b5f397ee058cd22da8377a56b836e9e607bb15d88856d90ce38",
       preparedTransactionHash: `sha256:${Buffer.from(digest).toString("hex")}`,
       selectedPackage: {
         packageId: selected.packageId,
@@ -76,6 +78,7 @@ describe("wallet-neutral human purchase approval", () => {
       },
     });
     expectDeepFrozen(approval);
+    expect(approval.version).toBe("sotto-human-purchase-approval-v2");
   });
 
   it("is public, rejects forgeries, and does not consume signing authority", async () => {
@@ -128,6 +131,7 @@ describe("wallet-neutral human purchase approval", () => {
         "signer",
         "synchronizerId",
         "tokenFactory",
+        "transferContextHash",
         "version",
       ].sort(),
     );

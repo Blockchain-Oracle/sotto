@@ -89,5 +89,10 @@ export function validateReferenceHumanWalletInputs(
     request,
     transfer,
   );
-  return Object.freeze({ ...context, holdings });
+  referenceHumanParties(
+    transfer.preapprovalParties,
+    context.preapprovalParties,
+    "preapproval input authority",
+  );
+  return Object.freeze({ config: context.config, holdings });
 }

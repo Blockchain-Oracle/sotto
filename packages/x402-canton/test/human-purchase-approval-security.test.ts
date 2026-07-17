@@ -22,8 +22,15 @@ describe("human purchase approval security", () => {
     const state = readHashVerifiedHumanPreparedPurchase(verified);
 
     expect(Object.keys(state).sort()).toEqual(
-      ["capturedAt", "intent", "preparedTransactionHash", "verifiedAt"].sort(),
+      [
+        "capturedAt",
+        "intent",
+        "preparedTransactionHash",
+        "transferContextHash",
+        "verifiedAt",
+      ].sort(),
     );
+    expect(state.transferContextHash).toMatch(/^sha256:[0-9a-f]{64}$/u);
     expect(state.preparedTransactionHash).toEqual(input.digest);
     expect(state.preparedTransactionHash).not.toBe(input.digest);
   });

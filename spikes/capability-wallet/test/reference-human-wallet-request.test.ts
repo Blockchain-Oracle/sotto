@@ -47,7 +47,11 @@ describe("reference human wallet request codec", () => {
     );
     expect(parsed).toMatchObject({
       version: "sotto-human-wallet-request-v1",
-      approval: { action: "pay-for-api-call" },
+      approval: {
+        action: "pay-for-api-call",
+        transferContextHash: request.approval.transferContextHash,
+        version: "sotto-human-purchase-approval-v2",
+      },
       connectorKind: "wallet-sdk",
       hashingSchemeVersion: "HASHING_SCHEME_VERSION_V2",
       preparedTransactionHash: parsed.approval.preparedTransactionHash,
@@ -55,6 +59,9 @@ describe("reference human wallet request codec", () => {
     expect(Object.isFrozen(parsed)).toBe(true);
     expect(Object.isFrozen(parsed.approval)).toBe(true);
     expect(Object.isFrozen(parsed.approval.signer)).toBe(true);
+    expect(parsed.approval.transferContextHash).toBe(
+      "sha256:3dcaef2d24057b5f397ee058cd22da8377a56b836e9e607bb15d88856d90ce38",
+    );
   });
 
   const invalidCases: ReadonlyArray<readonly [string, HostileMutation]> = [

@@ -34,6 +34,7 @@ const APPROVAL_FIELDS = [
   "signer",
   "synchronizerId",
   "tokenFactory",
+  "transferContextHash",
   "version",
 ] as const;
 
@@ -74,7 +75,7 @@ export function parseReferenceHumanWalletApproval(
   );
   fixed(
     approval.version,
-    "sotto-human-purchase-approval-v1",
+    "sotto-human-purchase-approval-v2",
     "approval version",
   );
   fixed(approval.action, "pay-for-api-call", "approval action");
@@ -135,7 +136,7 @@ export function parseReferenceHumanWalletApproval(
   const hash = (field: keyof typeof approval, label: string) =>
     referenceHumanWalletHash(approval[field], label);
   return Object.freeze({
-    version: "sotto-human-purchase-approval-v1",
+    version: "sotto-human-purchase-approval-v2",
     action: "pay-for-api-call",
     authorizationMode: "human-wallet",
     method,
@@ -178,6 +179,10 @@ export function parseReferenceHumanWalletApproval(
     requestCommitment: hash("requestCommitment", "approval request"),
     purchaseCommitment: hash("purchaseCommitment", "approval purchase"),
     bodyHash: hash("bodyHash", "approval body"),
+    transferContextHash: hash(
+      "transferContextHash",
+      "approval transfer context",
+    ),
     preparedTransactionHash,
     selectedPackage: components.selectedPackage,
     tokenFactory: components.tokenFactory,

@@ -10,6 +10,7 @@ type HostileRequest = {
   approval: {
     payerParty: string;
     resourcePath: string;
+    transferContextHash?: string;
     signer: {
       publicKeyFormat: string;
       signatureFormat: string;
@@ -19,6 +20,8 @@ type HostileRequest = {
   connectorId: string;
   connectorOrigin: string;
 };
+
+type HostileMutation = (request: HostileRequest) => void;
 
 function assign<T extends object, K extends keyof T>(
   target: T,
@@ -43,7 +46,7 @@ describe("reference human wallet request security", () => {
   beforeEach(() => vi.useFakeTimers({ now: new Date(HUMAN_PURCHASE_NOW) }));
   afterEach(() => vi.useRealTimers());
 
-  it.each([
+  const invalidRequests: ReadonlyArray<readonly [string, HostileMutation]> = [
     [
       "arbitrary key format",
       (request: HostileRequest) =>
@@ -102,6 +105,15 @@ describe("reference human wallet request security", () => {
         assign(request.approval, "resourcePath", "//other.example/pay"),
     ],
     [
+      "malformed transfer context hash",
+      (request: HostileRequest) =>
+        (request.approval.transferContextHash = "sha256:bad"),
+    ],
+    [
+      "missing transfer context hash",
+      (request: HostileRequest) => delete request.approval.transferContextHash,
+    ],
+    [
       "resource path query",
       (request: HostileRequest) =>
         assign(request.approval, "resourcePath", "/pay?secret=1"),
@@ -111,7 +123,9 @@ describe("reference human wallet request security", () => {
       (request: HostileRequest) =>
         assign(request.approval, "resourcePath", "/pay#secret"),
     ],
-  ] as const)("rejects an %s", async (_name, mutate) => {
+  ];
+
+  it.each(invalidRequests)("rejects an %s", async (_name, mutate) => {
     const payload = await hostilePayload();
     mutate(payload.request);
     expect(() => parseReferenceHumanWalletRequest(payload)).toThrow(

@@ -5,11 +5,13 @@ import {
   type HumanPreparedPurchaseState,
 } from "./human-prepared-purchase-observation-state.js";
 import type { PreparedPurchaseShape } from "./prepared-purchase-shape.js";
+import { digestHumanTransferContext } from "./human-transfer-context-digest.js";
 
 type VerifiedState = {
   claimed: boolean;
   prepared: HumanPreparedPurchaseState;
   preparedTransactionHash: Uint8Array;
+  transferContextHash: `sha256:${string}`;
   verifiedAt: number;
 };
 
@@ -28,6 +30,7 @@ export type ReadHashVerifiedHumanPreparedPurchase = Readonly<{
   verifiedAt: number;
   intent: HumanPurchaseLedgerIntent;
   preparedTransactionHash: Uint8Array;
+  transferContextHash: `sha256:${string}`;
 }>;
 
 const states = new WeakMap<object, VerifiedState>();
@@ -58,6 +61,10 @@ export function registerHashVerifiedHumanPreparedPurchase(
     claimed: false,
     prepared,
     preparedTransactionHash: new Uint8Array(preparedTransactionHash),
+    transferContextHash: digestHumanTransferContext(
+      prepared.prepareRequest.commands[0].ExerciseCommand.choiceArgument
+        .extraArgs.context,
+    ),
     verifiedAt,
   });
 }
@@ -86,6 +93,7 @@ export function readHashVerifiedHumanPreparedPurchase(
     verifiedAt: state.verifiedAt,
     intent: state.prepared.intent,
     preparedTransactionHash: new Uint8Array(state.preparedTransactionHash),
+    transferContextHash: state.transferContextHash,
   });
 }
 

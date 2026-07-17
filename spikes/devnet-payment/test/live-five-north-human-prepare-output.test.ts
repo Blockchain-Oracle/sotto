@@ -43,7 +43,7 @@ it("emits only the reviewed read-only preparation evidence", () => {
         expectedAdmin: "DSO::trusted",
         privateDisclosure: "must-not-leak",
       },
-      version: "sotto-human-purchase-approval-v1",
+      version: "sotto-human-purchase-approval-v2",
       privatePreparedTransaction: "must-not-leak",
     },
     status: "prepared-hash-verified-not-signed",

@@ -285,17 +285,18 @@ prepare-ticket/commit-last transitions. After the `402`, challenge-scoped
 authenticated package selection remains authoritative and must match the
 preflight; preflight never replaces it.
 
-The approval summary is the fixed `sotto-human-purchase-approval-v1` allowlist.
+The approval summary is the fixed `sotto-human-purchase-approval-v2` allowlist.
 It shows `pay-for-api-call`, `human-wallet`, method, resource origin and path, a
 query-present boolean, provider, payer, amount, asset, maximum fee and total
 debit, instrument, network, synchronizer, expiry,
-attempt/challenge/request/body/ purchase/prepared hashes, the selected Token
+attempt/challenge/request/body/purchase/prepared hashes, a domain-separated hash
+of the complete authenticated TransferFactory choice context, the selected Token
 package, factory identity, and the registered signing-key fingerprint and exact
-formats. Query values, headers, raw request or response bodies, prepared bytes,
-signatures, public keys, topology/subject hashes, authorization internals, and
-policy fields remain hidden. Projection reads only the authenticated intent and
-32-byte digest; copying the prepared bytes is reserved for the later one-use
-session claim.
+formats. Query values, headers, raw registry context, raw request or response
+bodies, prepared bytes, signatures, public keys, topology/subject hashes,
+authorization internals, and policy fields remain hidden. Projection reads only
+the authenticated intent and fixed hashes; copying the prepared bytes is
+reserved for the later one-use session claim.
 
 The connector handoff uses `sotto-human-wallet-request-v1`, requires an exact
 `sotto-human-wallet-response-v1`, and returns only a redacted

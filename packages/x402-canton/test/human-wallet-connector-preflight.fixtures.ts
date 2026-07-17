@@ -3,6 +3,7 @@ import type {
   HumanWalletConnector,
 } from "../src/human-wallet-connector-types.js";
 import { createHumanWalletConnectorPreflight } from "../src/human-wallet-connector-preflight.js";
+import { HUMAN_PURCHASE_APPROVAL_VERSION } from "../src/human-purchase-approval.js";
 import { validClosureInput } from "./package-preference-closure.fixtures.js";
 import {
   HUMAN_PAYER,
@@ -19,7 +20,7 @@ export const HUMAN_PACKAGE_ID = validClosureInput().graphPackages.find(
 
 export const HUMAN_CONNECTOR_CAPABILITIES = Object.freeze({
   version: "sotto-human-wallet-capabilities-v1" as const,
-  approvalVersions: Object.freeze(["sotto-human-purchase-approval-v1"]),
+  approvalVersions: Object.freeze([HUMAN_PURCHASE_APPROVAL_VERSION]),
   connectorId: HUMAN_CONNECTOR_ID,
   connectorKind: "wallet-sdk" as const,
   explicitApproval: true,

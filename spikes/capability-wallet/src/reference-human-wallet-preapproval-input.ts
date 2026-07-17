@@ -18,7 +18,7 @@ function fail(label: string): never {
 export function validateReferenceHumanWalletPreapprovalInput(
   candidate: Create,
   request: HumanWalletApprovalRequest,
-): string {
+): Readonly<{ parties: readonly string[]; provider: string }> {
   const approval = request.approval;
   referenceHumanWalletSelectedTemplate(
     candidate,
@@ -83,5 +83,5 @@ export function validateReferenceHumanWalletPreapprovalInput(
     authority,
     "preapproval stakeholder",
   );
-  return provider;
+  return Object.freeze({ parties: Object.freeze(authority), provider });
 }

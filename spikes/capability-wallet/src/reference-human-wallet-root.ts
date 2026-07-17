@@ -4,6 +4,8 @@ import {
   TOKEN_TRANSFER_FACTORY_INTERFACE_ID,
   type HumanWalletApprovalRequest,
 } from "@sotto/x402-canton";
+import { readReferenceHumanWalletContractContext } from "./reference-human-wallet-extra-args.js";
+import { validateReferenceHumanWalletTransferMetadata } from "./reference-human-wallet-token-metadata.js";
 import {
   referenceHumanDecimal,
   referenceHumanIdentifier,
@@ -37,6 +39,7 @@ function inputHoldingIds(value: Value | undefined): readonly string[] {
 }
 
 export type ReferenceHumanWalletRoot = Readonly<{
+  contextIds: ReadonlyMap<string, string>;
   inputHoldingIds: readonly string[];
   requestedAtMicros: bigint;
 }>;
@@ -150,7 +153,17 @@ export function validateReferenceHumanWalletRoot(
     approval.instrument.id,
     "instrument ID",
   );
+  validateReferenceHumanWalletTransferMetadata(
+    transfer.get("meta"),
+    request,
+    "root transfer metadata",
+  );
   return Object.freeze({
+    contextIds: readReferenceHumanWalletContractContext(
+      choice.get("extraArgs"),
+      approval.transferContextHash,
+      "root extra args",
+    ),
     inputHoldingIds: inputHoldingIds(transfer.get("inputHoldingCids")),
     requestedAtMicros: timestampMicros(transfer.get("requestedAt")),
   });

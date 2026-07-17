@@ -2,6 +2,7 @@ import type { Exercise, Value } from "@canton-network/core-ledger-proto";
 import type { HumanWalletApprovalRequest } from "@sotto/x402-canton";
 import { referenceHumanWalletRound } from "./reference-human-wallet-numbers.js";
 import { readReferenceHumanWalletTransferSummary } from "./reference-human-wallet-summary.js";
+import { validateReferenceHumanWalletResultMetadata } from "./reference-human-wallet-token-metadata.js";
 import {
   referenceHumanIdentifier,
   referenceHumanRecord,
@@ -12,7 +13,9 @@ function fail(label: string): never {
 }
 
 function scalar(value: Value | undefined) {
-  if (value?.sum.oneofKind !== "contractId") fail("contract ID value");
+  if (value?.sum.oneofKind !== "contractId" || value.sum.contractId === "") {
+    fail("contract ID value");
+  }
   return value.sum.contractId;
 }
 
@@ -31,7 +34,7 @@ function optionalContractId(value: Value | undefined, label: string): string[] {
     : [scalar(value.sum.optional.value)];
 }
 
-function rootResults(root: Exercise) {
+function rootResults(root: Exercise, request: HumanWalletApprovalRequest) {
   const interfacePackage = root.interfaceId?.packageId;
   if (interfacePackage === undefined) fail("factory interface");
   const result = referenceHumanRecord(
@@ -57,6 +60,12 @@ function rootResults(root: Exercise) {
     output.sum.variant.value,
     ["receiverHoldingCids"],
     "factory completion",
+    `${interfacePackage}:Splice.Api.Token.TransferInstructionV1:TransferInstructionResult_Output.TransferInstructionResult_Completed`,
+  );
+  validateReferenceHumanWalletResultMetadata(
+    result.get("meta"),
+    request,
+    "factory result metadata",
   );
   return Object.freeze({
     receiver: contractIds(completed.get("receiverHoldingCids"), "receiver IDs"),
@@ -92,6 +101,16 @@ function transferResults(
   ) {
     fail("created Amulet result");
   }
+  referenceHumanIdentifier(
+    created.sum.list.elements[0].sum.variant.variantId,
+    `${packageId}:Splice.AmuletRules:CreatedAmulet`,
+    "created Amulet result",
+  );
+  validateReferenceHumanWalletResultMetadata(
+    outer.get("meta"),
+    request,
+    "preapproval result metadata",
+  );
   return Object.freeze({
     receiver: [scalar(created.sum.list.elements[0].sum.variant.value)],
     change: optionalContractId(
@@ -115,7 +134,7 @@ export function readReferenceHumanWalletTransferResults(
   exercise: Exercise,
   request: HumanWalletApprovalRequest,
 ) {
-  const outer = rootResults(root);
+  const outer = rootResults(root, request);
   const inner = transferResults(exercise, request);
   if (
     outer.receiver.length !== 1 ||

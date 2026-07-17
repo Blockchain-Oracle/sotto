@@ -59,11 +59,7 @@ export function verifyReferenceHumanWalletPreparedApproval(
   }
   const graph = validateReferenceHumanWalletGraph(transaction);
   const root = validateReferenceHumanWalletRoot(graph.root, request);
-  const transfer = validateReferenceHumanWalletTransfer(
-    graph,
-    request,
-    root.inputHoldingIds,
-  );
+  const transfer = validateReferenceHumanWalletTransfer(graph, request, root);
   validateReferenceHumanWalletDescendants(graph, request, transfer);
   const validatedMetadata = validateReferenceHumanWalletMetadata(
     metadata,
