@@ -2,6 +2,7 @@ import { EventEmitter } from "node:events";
 import { PassThrough } from "node:stream";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  CloudflareQuickTunnelRateLimitError,
   parseCloudflareQuickTunnelOrigin,
   startCloudflareQuickTunnel,
   type CloudflareTunnelProcess,
@@ -101,5 +102,63 @@ describe("Cloudflare quick tunnel", () => {
 
     await rejection;
     expect(child.kills).toEqual(["SIGTERM", "SIGKILL"]);
+  });
+
+  it("classifies a bounded startup 429 without exposing process logs", async () => {
+    const child = new FakeProcess();
+    const pending = startCloudflareQuickTunnel(
+      { port: 8_791, signal: new AbortController().signal },
+      { spawnProcess: () => child },
+    );
+    child.exitCode = 1;
+    child.emit("exit", 1, null);
+    child.stderr.write(
+      'ERR failed to request quick Tunnel error="code: 429 private detail"\n',
+    );
+    child.emit("close", 1, null);
+
+    const error = await pending.catch((reason: unknown) => reason);
+    expect(error).toBeInstanceOf(CloudflareQuickTunnelRateLimitError);
+    expect(error).toEqual(new Error("Cloudflare quick tunnel rate limited"));
+    expect(String(error)).not.toContain("private detail");
+  });
+
+  it("does not treat informational limit wording as a startup 429", async () => {
+    const child = new FakeProcess();
+    const pending = startCloudflareQuickTunnel(
+      { port: 8_791, signal: new AbortController().signal },
+      { spawnProcess: () => child },
+    );
+    child.stderr.write(
+      "INF quick tunnels have a concurrent request rate limit\n",
+    );
+    child.exitCode = 1;
+    child.emit("exit", 1, null);
+    child.emit("close", 1, null);
+
+    const error = await pending.catch((reason: unknown) => reason);
+    expect(error).not.toBeInstanceOf(CloudflareQuickTunnelRateLimitError);
+    expect(error).toEqual(
+      new Error("Cloudflare quick tunnel exited before ready"),
+    );
+  });
+
+  it("does not concatenate separate output streams into a false 429", async () => {
+    const child = new FakeProcess();
+    const pending = startCloudflareQuickTunnel(
+      { port: 8_791, signal: new AbortController().signal },
+      { spawnProcess: () => child },
+    );
+    child.stdout.write("ERR code: 4");
+    child.stderr.write("29 unrelated\n");
+    child.exitCode = 1;
+    child.emit("exit", 1, null);
+    child.emit("close", 1, null);
+
+    const error = await pending.catch((reason: unknown) => reason);
+    expect(error).not.toBeInstanceOf(CloudflareQuickTunnelRateLimitError);
+    expect(error).toEqual(
+      new Error("Cloudflare quick tunnel exited before ready"),
+    );
   });
 });

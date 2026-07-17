@@ -1,9 +1,14 @@
 import { Resolver } from "node:dns/promises";
 import { isIP } from "node:net";
-import type { CloudflareQuickTunnel } from "./cloudflare-quick-tunnel.js";
+import {
+  CloudflareQuickTunnelRateLimitError,
+  type CloudflareQuickTunnel,
+} from "./cloudflare-quick-tunnel.js";
 
 const MAXIMUM_TUNNEL_ALLOCATIONS = 3;
+const MAXIMUM_RATE_LIMIT_RETRIES = 1;
 const MAXIMUM_DNS_ADDRESSES = 8;
+const RATE_LIMIT_COOLDOWN_MS = 300_000;
 const RESOLUTION_ATTEMPT_TIMEOUT_MS = 3_000;
 const RESOLUTION_RETRY_MS = 1_000;
 const RESOLUTION_WINDOW_MS = 30_000;
@@ -85,7 +90,7 @@ export async function resolveCloudflareIpv4(
   }
 }
 
-function delay(signal: AbortSignal): Promise<void> {
+function delay(signal: AbortSignal, milliseconds: number): Promise<void> {
   return new Promise((resolve, reject) => {
     const onAbort = () => {
       clearTimeout(timer);
@@ -94,7 +99,7 @@ function delay(signal: AbortSignal): Promise<void> {
     const timer = setTimeout(() => {
       signal.removeEventListener("abort", onAbort);
       resolve();
-    }, RESOLUTION_RETRY_MS);
+    }, milliseconds);
     signal.addEventListener("abort", onAbort, { once: true });
   });
 }
@@ -142,7 +147,7 @@ async function waitForResolution(
     const address = await attemptResolution(resolveOrigin, hostname, signal);
     if (address !== undefined) return address;
     active(signal);
-    await delay(signal);
+    await delay(signal, RESOLUTION_RETRY_MS);
   }
   return undefined;
 }
@@ -152,9 +157,26 @@ export async function acquireResolvableCloudflareQuickTunnel(
   startTunnel: TunnelStarter,
   resolveOrigin: CloudflareTunnelOriginResolver = resolveCloudflareIpv4,
 ): Promise<ResolvedCloudflareQuickTunnel> {
+  let rateLimitRetries = 0;
   for (let attempt = 0; attempt < MAXIMUM_TUNNEL_ALLOCATIONS; attempt += 1) {
     active(input.signal);
-    const tunnel = await startTunnel(input);
+    let tunnel: CloudflareQuickTunnel;
+    while (true) {
+      try {
+        tunnel = await startTunnel(input);
+        break;
+      } catch (error) {
+        active(input.signal);
+        if (
+          !(error instanceof CloudflareQuickTunnelRateLimitError) ||
+          rateLimitRetries >= MAXIMUM_RATE_LIMIT_RETRIES
+        ) {
+          throw error;
+        }
+        rateLimitRetries += 1;
+        await delay(input.signal, RATE_LIMIT_COOLDOWN_MS);
+      }
+    }
     let retained = false;
     try {
       const address = await waitForResolution(

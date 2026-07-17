@@ -5,6 +5,14 @@ const CLOUDFLARED = "/opt/homebrew/bin/cloudflared";
 const MAX_STARTUP_LOG_BYTES = 131_072;
 const STARTUP_TIMEOUT_MS = 30_000;
 const URL_PATTERN = /https:\/\/[A-Za-z0-9.-]+\.trycloudflare\.com/gu;
+const RATE_LIMIT_PATTERN =
+  /(?:\b429\b|too many requests|rate[- ]limited|rate[- ]limit\s+(?:exceeded|reached))/iu;
+
+export class CloudflareQuickTunnelRateLimitError extends Error {
+  constructor() {
+    super("Cloudflare quick tunnel rate limited");
+  }
+}
 
 export interface CloudflareTunnelProcess {
   readonly stdout: Readable;
@@ -13,12 +21,12 @@ export interface CloudflareTunnelProcess {
   kill(signal: NodeJS.Signals): boolean;
   on(event: "error", listener: (error: Error) => void): this;
   once(
-    event: "exit",
+    event: "close" | "exit",
     listener: (code: number | null, signal: NodeJS.Signals | null) => void,
   ): this;
   off(event: "error", listener: (error: Error) => void): this;
   off(
-    event: "exit",
+    event: "close" | "exit",
     listener: (code: number | null, signal: NodeJS.Signals | null) => void,
   ): this;
 }
@@ -104,32 +112,45 @@ export async function startCloudflareQuickTunnel(
     `http://127.0.0.1:${input.port}`,
   ]);
   return await new Promise<CloudflareQuickTunnel>((resolve, reject) => {
-    let source = "";
+    let sourceBytes = 0;
+    let stderrSource = "";
+    let stdoutSource = "";
     let settled = false;
+    const combinedSource = () => `${stdoutSource}\n${stderrSource}`;
     const cleanup = () => {
       clearTimeout(timer);
       input.signal.removeEventListener("abort", onAbort);
-      child.stdout.off("data", onData);
-      child.stderr.off("data", onData);
+      child.stdout.off("data", onStdout);
+      child.stderr.off("data", onStderr);
       child.off("error", onError);
-      child.off("exit", onExit);
+      child.off("close", onClose);
     };
-    const fail = (message: string) => {
+    const fail = (failure: string | Error) => {
       if (settled) return;
       settled = true;
       cleanup();
-      void stopProcess(child).then(() => reject(new Error(message)));
+      const error = typeof failure === "string" ? new Error(failure) : failure;
+      void stopProcess(child).then(() => reject(error));
     };
     const onAbort = () => fail("Cloudflare quick tunnel cancelled");
     const onError = () => fail("Cloudflare quick tunnel failed to start");
-    const onExit = () => fail("Cloudflare quick tunnel exited before ready");
-    const onData = (chunk: Buffer | string) => {
+    const onClose = () =>
+      fail(
+        RATE_LIMIT_PATTERN.test(stderrSource)
+          ? new CloudflareQuickTunnelRateLimitError()
+          : "Cloudflare quick tunnel exited before ready",
+      );
+    const onData = (stream: "stderr" | "stdout", chunk: Buffer | string) => {
       if (settled) return;
-      source += chunk.toString();
-      if (Buffer.byteLength(source, "utf8") > MAX_STARTUP_LOG_BYTES) {
+      const text = chunk.toString();
+      sourceBytes += Buffer.byteLength(text, "utf8");
+      if (sourceBytes > MAX_STARTUP_LOG_BYTES) {
         fail("Cloudflare quick tunnel startup log is oversized");
         return;
       }
+      if (stream === "stderr") stderrSource += text;
+      else stdoutSource += text;
+      const source = combinedSource();
       if (!source.includes(".trycloudflare.com")) return;
       let origin: `https://${string}.trycloudflare.com`;
       try {
@@ -150,14 +171,16 @@ export async function startCloudflareQuickTunnel(
         }),
       );
     };
+    const onStderr = (chunk: Buffer | string) => onData("stderr", chunk);
+    const onStdout = (chunk: Buffer | string) => onData("stdout", chunk);
     const timer = setTimeout(
       () => fail("Cloudflare quick tunnel startup deadline exceeded"),
       STARTUP_TIMEOUT_MS,
     );
     input.signal.addEventListener("abort", onAbort, { once: true });
-    child.stdout.on("data", onData);
-    child.stderr.on("data", onData);
+    child.stdout.on("data", onStdout);
+    child.stderr.on("data", onStderr);
     child.on("error", onError);
-    child.once("exit", onExit);
+    child.once("close", onClose);
   });
 }
