@@ -9,10 +9,8 @@ import { buildReviewedPackagePreferenceClosure } from "../src/package-preference
 import { validClosureInput } from "./package-preference-closure.fixtures.js";
 import { liveReferences } from "./package-preference-observation.fixtures.js";
 import { DSO, PROVIDER } from "./purchase-commitment.fixtures.js";
-import {
-  authenticatedHumanPayerIdentity,
-  HUMAN_SYNCHRONIZER,
-} from "./human-payer-identity.fixtures.js";
+import { HUMAN_SYNCHRONIZER } from "./human-payer-identity.fixtures.js";
+import { authenticatedHumanWalletPreflight } from "./human-wallet-connector-preflight.fixtures.js";
 
 const VETTING = "2026-07-16T15:00:30.000Z";
 const CHALLENGE_ID = `sha256:${"d".repeat(64)}` as const;
@@ -48,9 +46,9 @@ async function scope() {
     challengeObservedAt: "2026-07-16T15:00:00.000Z",
     closure: closure(),
     executeBefore: "2026-07-16T15:10:00.000Z",
-    payerIdentity: await authenticatedHumanPayerIdentity(),
     providerParty: PROVIDER,
     vettingValidAt: VETTING,
+    walletPreflight: await authenticatedHumanWalletPreflight(),
   };
 }
 
@@ -61,7 +59,7 @@ describe("human package preference security", () => {
 
   afterEach(() => vi.useRealTimers());
 
-  it("rejects a stale payer identity before package lookup", async () => {
+  it("rejects a stale wallet preflight before package lookup", async () => {
     const candidateScope = await scope();
     candidateScope.vettingValidAt = "2026-07-16T15:02:00.000Z";
     const source = reader(candidateScope.closure);
@@ -69,7 +67,7 @@ describe("human package preference security", () => {
 
     await expect(
       createHumanPackagePreferenceObserver(source)(candidateScope),
-    ).rejects.toThrow(/payer identity.*stale/iu);
+    ).rejects.toThrow(/wallet connector preflight.*stale/iu);
     expect(source.readPackageReferences).not.toHaveBeenCalled();
   });
 
@@ -177,7 +175,7 @@ describe("human package preference security", () => {
     expect(readAuthenticatedHumanPackagePreference(selection)).toBe(selection);
     const authority = readHumanPackagePreferenceAuthority(selection);
     expect(authority.challengeId).toBe(CHALLENGE_ID);
-    expect(authority.payerIdentity).toBe(candidateScope.payerIdentity);
+    expect(authority.walletPreflight).toBe(candidateScope.walletPreflight);
     expect(authority.executeBefore).toBe(candidateScope.executeBefore);
     expect(selection.synchronizerId).toBe(HUMAN_SYNCHRONIZER);
     expect(Object.isFrozen(selection.references[0]?.artifactIds)).toBe(true);

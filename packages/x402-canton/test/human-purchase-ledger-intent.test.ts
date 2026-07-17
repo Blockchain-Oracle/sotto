@@ -18,6 +18,7 @@ import {
   HUMAN_PURCHASE_NOW,
   HUMAN_TOKEN_FACTORY_CONFIGURATION,
   createHumanPurchaseInput,
+  humanWalletIdentity,
 } from "./human-purchase-commitment.fixtures.js";
 import { HUMAN_PAYER } from "./human-payer-identity.fixtures.js";
 import { PROVIDER } from "./purchase-commitment.fixtures.js";
@@ -43,6 +44,7 @@ describe("policy-free human Ledger intent", () => {
       HUMAN_AUTHORIZATION_INSTANCE_ID,
     );
     const binding = readHumanPaymentAuthority(input.paymentObservation).binding;
+    const identity = humanWalletIdentity(input.walletPreflight);
     const selection = input.packageSelection;
     const intent = readHumanPurchaseLedgerIntent(commitment);
 
@@ -66,7 +68,7 @@ describe("policy-free human Ledger intent", () => {
         challengeId: commitment.challengeId,
         requestedAt: HUMAN_PURCHASE_NOW,
         executeBefore: HUMAN_PURCHASE_EXPIRES_AT,
-        network: input.payerIdentity.network,
+        network: identity.network,
         scheme: "exact",
         transferMethod: "transfer-factory",
         payerParty: HUMAN_PAYER,
@@ -78,9 +80,9 @@ describe("policy-free human Ledger intent", () => {
           admin: HUMAN_TOKEN_FACTORY_CONFIGURATION.expectedAdmin,
           id: "Amulet",
         },
-        synchronizerId: input.payerIdentity.synchronizerId,
+        synchronizerId: identity.synchronizerId,
       },
-      payerIdentity: input.payerIdentity,
+      payerIdentity: identity,
       limits: {
         maximumFeeAtomic: HUMAN_PURCHASE_MAXIMUM_FEE_ATOMIC,
         maximumTotalDebitAtomic: HUMAN_PURCHASE_MAXIMUM_DEBIT_ATOMIC,
@@ -109,7 +111,7 @@ describe("policy-free human Ledger intent", () => {
       },
     });
     expectDeepFrozen(intent);
-    expect(intent.payerIdentity).not.toBe(input.payerIdentity);
+    expect(intent.payerIdentity).not.toBe(identity);
     expect(intent.packageSelection).not.toBe(input.packageSelection);
     expect(JSON.stringify(intent)).not.toMatch(
       /capability|policy|allowance|agentParty|authorizationInstanceId/iu,

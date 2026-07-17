@@ -6,8 +6,9 @@ import type {
 import type { AuthenticatedHumanPayerIdentity } from "./human-payer-identity.js";
 import type { AuthenticatedHumanPackagePreference } from "./human-package-preference-types.js";
 import { createHumanAuthorizationReplayStore } from "./human-authorization-replay.js";
+import { prepareHumanWalletConnectorPreflightBinding } from "./human-wallet-connector-preflight-state.js";
+import type { AuthenticatedHumanWalletConnectorPreflight } from "./human-wallet-connector-types.js";
 
-const identityBindings = new WeakMap<object, string>();
 const packageBindings = new WeakMap<object, string>();
 const paymentBindings = new WeakMap<object, string>();
 const authorizationBindings = createHumanAuthorizationReplayStore();
@@ -20,8 +21,8 @@ export type HumanPurchaseCommandAuthority = {
   readonly packageSelection: CanonicalHumanPackageSelection;
   readonly packageSelectionAuthority: AuthenticatedHumanPackagePreference;
   readonly payerIdentity: AuthenticatedHumanPayerIdentity;
-  readonly payerIdentityAuthority: AuthenticatedHumanPayerIdentity;
   readonly requestDisplay: ValidatedHumanPurchaseInput["requestDisplay"];
+  readonly walletPreflightAuthority: AuthenticatedHumanWalletConnectorPreflight;
   commandClaimed: boolean;
 };
 
@@ -38,9 +39,9 @@ export function bindHumanPurchaseAuthorities(
   result: HumanPurchaseCommitment,
 ): void {
   const { authorities } = input;
-  const identity = requireObject(
-    authorities.payerIdentity,
-    "human payer identity",
+  const walletPreflight = requireObject(
+    authorities.walletPreflight,
+    "human wallet connector preflight",
   );
   const packages = requireObject(
     authorities.packageSelection,
@@ -50,27 +51,27 @@ export function bindHumanPurchaseAuthorities(
     authorities.paymentObservation,
     "human payment observation",
   );
-  if (
-    identityBindings.has(identity) ||
-    packageBindings.has(packages) ||
-    paymentBindings.has(payment)
-  ) {
+  if (packageBindings.has(packages) || paymentBindings.has(payment)) {
     throw new Error("human purchase authority is already bound");
   }
+  const preflight = prepareHumanWalletConnectorPreflightBinding(
+    walletPreflight,
+    result.commitment,
+  );
   authorizationBindings.reserve(
     authorizationInstanceId,
     result.commitment,
     result.expiresAt,
   );
-  identityBindings.set(identity, result.commitment);
+  preflight.commit();
   packageBindings.set(packages, result.commitment);
   paymentBindings.set(payment, result.commitment);
   purchaseAuthorities.set(result, {
     packageSelection: input.packageSelection,
     packageSelectionAuthority: authorities.packageSelection,
     payerIdentity: input.identity,
-    payerIdentityAuthority: authorities.payerIdentity,
     requestDisplay: input.requestDisplay,
+    walletPreflightAuthority: authorities.walletPreflight,
     commandClaimed: false,
   });
 }

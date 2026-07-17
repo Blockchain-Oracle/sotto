@@ -1,7 +1,4 @@
-import {
-  MAX_HUMAN_PAYER_IDENTITY_AGE_MS,
-  readAuthenticatedHumanPayerIdentity,
-} from "./human-payer-identity.js";
+import { readHumanWalletConnectorPreflightAuthority } from "./human-wallet-connector-preflight-state.js";
 import { readHumanPaymentAuthority } from "./human-payment-observation.js";
 import type {
   HumanPurchaseCommitmentInput,
@@ -26,7 +23,6 @@ import {
   objectValue,
 } from "./purchase-commitment-primitives.js";
 export const MIN_HUMAN_SIGNING_RESERVE_MS = 120_000;
-const CLOCK_ROLLBACK_TOLERANCE_MS = 5_000;
 
 export function validateHumanPurchaseInput(
   input: HumanPurchaseCommitmentInput,
@@ -38,29 +34,22 @@ export function validateHumanPurchaseInput(
     [
       "maximumFeeAtomic",
       "packageSelection",
-      "payerIdentity",
       "paymentObservation",
+      "walletPreflight",
     ],
     "human purchase commitment input",
   );
   const snapshot = Object.freeze({
     maximumFeeAtomic: input.maximumFeeAtomic,
     packageSelection: input.packageSelection,
-    payerIdentity: input.payerIdentity,
     paymentObservation: input.paymentObservation,
+    walletPreflight: input.walletPreflight,
   });
-  const identity = readAuthenticatedHumanPayerIdentity(snapshot.payerIdentity);
-  const now = Date.now();
-  const identityAcquiredAt = canonicalTime(
-    identity.acquiredAt,
-    "human payer identity acquiredAt",
+  const walletAuthority = readHumanWalletConnectorPreflightAuthority(
+    snapshot.walletPreflight,
   );
-  if (now - identityAcquiredAt < -CLOCK_ROLLBACK_TOLERANCE_MS) {
-    throw new Error("human payer identity clock moved backwards");
-  }
-  if (now - identityAcquiredAt > MAX_HUMAN_PAYER_IDENTITY_AGE_MS) {
-    throw new Error("human payer identity is stale");
-  }
+  const identity = walletAuthority.identity;
+  const now = Date.now();
   const payment = readHumanPaymentAuthority(snapshot.paymentObservation);
   const observation = readPaymentRequiredObservation(
     payment.paymentObservation,
@@ -141,13 +130,17 @@ export function validateHumanPurchaseInput(
       identity,
       observedAt: observation.observedAt,
       providerParty: requirement.payTo,
+      walletPreflight: snapshot.walletPreflight,
     },
   );
+  if (packageSelection.packageIds[0] !== walletAuthority.expectedPackageId) {
+    throw new Error("human wallet package does not match the live selection");
+  }
   return Object.freeze({
     authorities: Object.freeze({
       packageSelection: snapshot.packageSelection,
-      payerIdentity: snapshot.payerIdentity,
       paymentObservation: snapshot.paymentObservation,
+      walletPreflight: snapshot.walletPreflight,
     }),
     binding: payment.binding,
     challengeId: observation.challengeId,

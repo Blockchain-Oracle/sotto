@@ -1,8 +1,8 @@
 import { utf8Compare } from "./package-preference-artifact-validation.js";
 import {
-  MAX_HUMAN_PAYER_IDENTITY_AGE_MS,
-  readAuthenticatedHumanPayerIdentity,
-} from "./human-payer-identity.js";
+  readAuthenticatedHumanWalletConnectorPreflight,
+  readHumanWalletConnectorPreflightAuthority,
+} from "./human-wallet-connector-preflight-state.js";
 import { requireReviewedPackagePreferenceClosure } from "./package-preference-closure.js";
 import type {
   HumanPackagePreferenceReader,
@@ -64,15 +64,17 @@ export function validateHumanPackagePreferenceScope(
       "challengeObservedAt",
       "closure",
       "executeBefore",
-      "payerIdentity",
       "providerParty",
       "vettingValidAt",
+      "walletPreflight",
     ],
     "human package preference scope",
   );
-  const payerIdentity = readAuthenticatedHumanPayerIdentity(
-    record.payerIdentity,
+  const walletPreflight = readAuthenticatedHumanWalletConnectorPreflight(
+    record.walletPreflight,
   );
+  const payerIdentity =
+    readHumanWalletConnectorPreflightAuthority(walletPreflight).identity;
   if (
     typeof record.challengeId !== "string" ||
     !SHA256_PATTERN.test(record.challengeId)
@@ -80,16 +82,6 @@ export function validateHumanPackagePreferenceScope(
     throw new Error("human package challengeId must be a SHA-256 identifier");
   }
   const now = Date.now();
-  const payerAcquiredAtMs = canonicalTime(
-    payerIdentity.acquiredAt,
-    "human payer identity acquiredAt",
-  );
-  if (now - payerAcquiredAtMs < -CLOCK_ROLLBACK_TOLERANCE_MS) {
-    throw new Error("human payer identity clock moved backwards");
-  }
-  if (now - payerAcquiredAtMs > MAX_HUMAN_PAYER_IDENTITY_AGE_MS) {
-    throw new Error("human payer identity is stale");
-  }
   const adminParty = identifier(record.adminParty, "human package admin Party");
   const providerParty = identifier(
     record.providerParty,
@@ -133,5 +125,6 @@ export function validateHumanPackagePreferenceScope(
     providerParty,
     synchronizerId: payerIdentity.synchronizerId,
     vettingValidAt: record.vettingValidAt as string,
+    walletPreflight,
   });
 }

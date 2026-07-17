@@ -1,4 +1,5 @@
 import type { AuthenticatedHumanPayerIdentity } from "./human-payer-identity.js";
+import type { AuthenticatedHumanWalletConnectorPreflight } from "./human-wallet-connector-types.js";
 import type { ReviewedPackagePreferenceClosure } from "./package-preference-closure.js";
 import type { HumanObservationReadOptions } from "./human-observation-deadline.js";
 import type { PackagePreferenceReadRequest } from "./package-preference-observation-types.js";
@@ -22,9 +23,9 @@ export type HumanPackagePreferenceScope = Readonly<{
   challengeObservedAt: string;
   closure: ReviewedPackagePreferenceClosure;
   executeBefore: string;
-  payerIdentity: AuthenticatedHumanPayerIdentity;
   providerParty: string;
   vettingValidAt: string;
+  walletPreflight: AuthenticatedHumanWalletConnectorPreflight;
 }>;
 
 export type HumanPackagePreferenceObservation = Readonly<{
@@ -63,4 +64,5 @@ export type ValidatedHumanPackagePreferenceScope = Readonly<{
   providerParty: string;
   synchronizerId: string;
   vettingValidAt: string;
+  walletPreflight: AuthenticatedHumanWalletConnectorPreflight;
 }>;

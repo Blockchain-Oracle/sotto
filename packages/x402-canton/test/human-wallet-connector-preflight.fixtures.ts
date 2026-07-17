@@ -1,5 +1,9 @@
-import type { HumanWalletConnector } from "../src/human-wallet-connector-types.js";
-import { humanPackageClosure } from "./human-purchase-commitment.fixtures.js";
+import type {
+  AuthenticatedHumanWalletConnectorPreflight,
+  HumanWalletConnector,
+} from "../src/human-wallet-connector-types.js";
+import { createHumanWalletConnectorPreflight } from "../src/human-wallet-connector-preflight.js";
+import { validClosureInput } from "./package-preference-closure.fixtures.js";
 import {
   HUMAN_PAYER,
   HUMAN_PAYER_FINGERPRINT,
@@ -9,7 +13,7 @@ import {
 
 export const HUMAN_CONNECTOR_ID = "wallet-sdk-human-reference";
 export const HUMAN_CONNECTOR_ORIGIN = "wallet://sotto-human-reference";
-export const HUMAN_PACKAGE_ID = humanPackageClosure().graphPackages.find(
+export const HUMAN_PACKAGE_ID = validClosureInput().graphPackages.find(
   ({ name }) => name === "splice-amulet",
 )!.packageId;
 
@@ -58,13 +62,29 @@ export function humanConnector(
 
 export function humanPreflightInput(
   capabilities: unknown = HUMAN_CONNECTOR_CAPABILITIES,
+  expectedPackageId = HUMAN_PACKAGE_ID,
 ) {
   return {
     connector: humanConnector(capabilities),
     connectorId: HUMAN_CONNECTOR_ID,
     connectorKind: "wallet-sdk" as const,
     connectorOrigin: HUMAN_CONNECTOR_ORIGIN,
-    expectedPackageId: HUMAN_PACKAGE_ID,
+    expectedPackageId,
     observePayerIdentity: humanPayerIdentityObserver(),
   };
+}
+
+export async function authenticatedHumanWalletPreflight(
+  expectedPackageId = HUMAN_PACKAGE_ID,
+): Promise<AuthenticatedHumanWalletConnectorPreflight> {
+  const capabilities = mutateHumanConnectorCapabilities((candidate) => {
+    candidate.packageIds = [expectedPackageId];
+  });
+  const result = await createHumanWalletConnectorPreflight(
+    humanPreflightInput(capabilities, expectedPackageId),
+  );
+  if (result.outcome !== "compatible") {
+    throw new Error("test human wallet preflight is incompatible");
+  }
+  return result;
 }

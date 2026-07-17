@@ -1,5 +1,5 @@
 import { readAuthenticatedHumanPackagePreferenceAt } from "./human-package-preference-observation.js";
-import { readAuthenticatedHumanPayerIdentityAt } from "./human-payer-identity.js";
+import { readHumanWalletConnectorPreflightAuthority } from "./human-wallet-connector-preflight-state.js";
 import {
   assertAuthenticHumanPurchase,
   type HumanPurchaseCommitment,
@@ -101,10 +101,10 @@ function requireFreshCommandAuthority(
   intent: HumanPurchaseLedgerIntent,
   now: number,
 ): void {
-  const identity = readAuthenticatedHumanPayerIdentityAt(
-    authority.payerIdentityAuthority,
+  const identity = readHumanWalletConnectorPreflightAuthority(
+    authority.walletPreflightAuthority,
     now,
-  );
+  ).identity;
   readAuthenticatedHumanPackagePreferenceAt(
     authority.packageSelectionAuthority,
     now,

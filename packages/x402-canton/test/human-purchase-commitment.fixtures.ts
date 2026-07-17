@@ -1,21 +1,23 @@
 import {
-  type AuthenticatedHumanPayerIdentity,
+  type AuthenticatedHumanWalletConnectorPreflight,
   claimHumanPackagePreferenceObservation,
   commitHttpRequest,
   createHumanPaymentObserver,
   createHumanPackagePreferenceObserver,
   type HttpRequestBindingInput,
   type HumanPaymentObservation,
+  type HumanPurchaseCommitmentInput,
 } from "../src/index.js";
+import { readHumanWalletConnectorPreflightAuthority } from "../src/human-wallet-connector-preflight-state.js";
 import { buildReviewedPackagePreferenceClosure } from "../src/package-preference-closure.js";
 import { validClosureInput } from "./package-preference-closure.fixtures.js";
 import { liveReferences } from "./package-preference-observation.fixtures.js";
 import { DSO, PROVIDER, RESOURCE_URL } from "./purchase-commitment.fixtures.js";
 import {
-  authenticatedHumanPayerIdentity,
   HUMAN_PAYER,
   HUMAN_SYNCHRONIZER,
 } from "./human-payer-identity.fixtures.js";
+import { authenticatedHumanWalletPreflight } from "./human-wallet-connector-preflight.fixtures.js";
 
 export const HUMAN_PURCHASE_NOW = "2026-07-16T15:00:00.000Z";
 export const HUMAN_PURCHASE_EXPIRES_AT = "2026-07-16T15:10:00.000Z";
@@ -58,10 +60,11 @@ export type HumanChallengeFixture = {
 export type HumanPurchaseFixtureOptions = Readonly<{
   maximumFeeAtomic?: string;
   mutateChallenge?: (challenge: HumanChallengeFixture) => void;
+  expectedPackageId?: string;
   packageAdminParty?: string;
   packageProviderParty?: string;
-  payerIdentity?: AuthenticatedHumanPayerIdentity;
   request?: HttpRequestBindingInput;
+  walletPreflight?: AuthenticatedHumanWalletConnectorPreflight;
 }>;
 
 export function humanPackageClosure() {
@@ -82,7 +85,7 @@ export function humanPackageClosure() {
 }
 
 export async function createHumanPackageSelection(
-  payerIdentity: AuthenticatedHumanPayerIdentity,
+  walletPreflight: AuthenticatedHumanWalletConnectorPreflight,
   paymentObservation: HumanPaymentObservation,
   adminParty: string,
   providerParty: string,
@@ -95,9 +98,9 @@ export async function createHumanPackageSelection(
     challengeObservedAt: paymentObservation.observedAt,
     closure,
     executeBefore,
-    payerIdentity,
     providerParty,
     vettingValidAt: "2026-07-16T15:00:30.000Z",
+    walletPreflight,
   };
   const observation = await createHumanPackagePreferenceObserver({
     readAuthenticatedSubject: async () => "validator-devnet-m2m",
@@ -108,11 +111,12 @@ export async function createHumanPackageSelection(
 
 export async function createHumanPurchaseInput(
   options: HumanPurchaseFixtureOptions = {},
-) {
+): Promise<HumanPurchaseCommitmentInput> {
   const request = options.request ?? { method: "GET", url: RESOURCE_URL };
   const binding = commitHttpRequest(request);
-  const payerIdentity =
-    options.payerIdentity ?? (await authenticatedHumanPayerIdentity());
+  const walletPreflight =
+    options.walletPreflight ??
+    (await authenticatedHumanWalletPreflight(options.expectedPackageId));
   const challenge: HumanChallengeFixture = {
     x402Version: 2,
     resource: { url: RESOURCE_URL },
@@ -157,7 +161,7 @@ export async function createHumanPurchaseInput(
         1_000,
   ).toISOString();
   const packageSelection = await createHumanPackageSelection(
-    payerIdentity,
+    walletPreflight,
     paymentObservation,
     options.packageAdminParty ?? requirement.extra.instrumentId.admin,
     options.packageProviderParty ?? requirement.payTo,
@@ -167,7 +171,13 @@ export async function createHumanPurchaseInput(
     maximumFeeAtomic:
       options.maximumFeeAtomic ?? HUMAN_PURCHASE_MAXIMUM_FEE_ATOMIC,
     packageSelection,
-    payerIdentity,
     paymentObservation,
+    walletPreflight,
   };
+}
+
+export function humanWalletIdentity(
+  preflight: AuthenticatedHumanWalletConnectorPreflight,
+) {
+  return readHumanWalletConnectorPreflightAuthority(preflight).identity;
 }

@@ -91,7 +91,9 @@ function closureForPackage(packageId: string) {
 export async function authenticatedHumanPurchaseIntentForPackage(
   packageId: string,
 ) {
-  const input = await createHumanPurchaseInput();
+  const input = await createHumanPurchaseInput({
+    expectedPackageId: packageId,
+  });
   const closure = closureForPackage(packageId);
   const scope = {
     adminParty: DSO,
@@ -99,9 +101,9 @@ export async function authenticatedHumanPurchaseIntentForPackage(
     challengeObservedAt: input.paymentObservation.observedAt,
     closure,
     executeBefore: HUMAN_PURCHASE_EXPIRES_AT,
-    payerIdentity: input.payerIdentity,
     providerParty: PROVIDER,
     vettingValidAt: "2026-07-16T15:00:30.000Z",
+    walletPreflight: input.walletPreflight,
   };
   const observation = await createHumanPackagePreferenceObserver({
     readAuthenticatedSubject: async () => "validator-devnet-m2m",

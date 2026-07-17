@@ -87,7 +87,7 @@ describe("policy-free human command authority", () => {
     ).not.toThrow();
   });
 
-  it("rejects stale retained identity authority before command inputs", async () => {
+  it("rejects stale retained wallet preflight before command inputs", async () => {
     const { holdings, intent } = await humanTransferFactoryInputs();
     const registry = await createHumanTransferFactoryObserver(async () =>
       humanTransferFactoryResponseBytes(intent),
@@ -95,7 +95,7 @@ describe("policy-free human command authority", () => {
     vi.advanceTimersByTime(60_001);
     expect(() =>
       buildHumanPurchasePrepareRequest(intent, holdings, registry),
-    ).toThrow(/payer identity.*stale/iu);
+    ).toThrow(/wallet connector preflight.*stale/iu);
   });
 
   it("supports participant-local factory resolution", async () => {
@@ -165,7 +165,7 @@ describe("policy-free human command authority", () => {
     );
   });
 
-  it("rechecks payer and package freshness before transport", async () => {
+  it("rechecks wallet preflight and package freshness before transport", async () => {
     const { holdings, intent } = await humanTransferFactoryInputs();
     const registry = await createHumanTransferFactoryObserver(async () =>
       humanTransferFactoryResponseBytes(intent),
@@ -178,7 +178,7 @@ describe("policy-free human command authority", () => {
     vi.advanceTimersByTime(60_001);
 
     expect(() => readHumanPurchasePrepareRequest(request)).toThrow(
-      /payer identity.*stale|package preference.*stale/iu,
+      /wallet connector preflight.*stale|package preference.*stale/iu,
     );
   });
 });

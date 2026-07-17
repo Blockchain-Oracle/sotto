@@ -95,6 +95,14 @@ export function readAuthenticatedHumanWalletConnectorPreflight(
   return stateFor(candidate).projection;
 }
 
+/** @internal Human package and purchase authority only. */
+export function readHumanWalletConnectorPreflightAuthority(
+  candidate: unknown,
+  now = Date.now(),
+): HumanWalletConnectorPreflightAuthority {
+  return stateFor(candidate, now).authority;
+}
+
 /** @internal Human purchase authority only. */
 export function prepareHumanWalletConnectorPreflightBinding(
   candidate: unknown,

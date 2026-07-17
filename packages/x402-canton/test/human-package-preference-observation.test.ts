@@ -9,10 +9,10 @@ import { validClosureInput } from "./package-preference-closure.fixtures.js";
 import { liveReferences } from "./package-preference-observation.fixtures.js";
 import { DSO, PROVIDER } from "./purchase-commitment.fixtures.js";
 import {
-  authenticatedHumanPayerIdentity,
   HUMAN_PAYER,
   HUMAN_SYNCHRONIZER,
 } from "./human-payer-identity.fixtures.js";
+import { authenticatedHumanWalletPreflight } from "./human-wallet-connector-preflight.fixtures.js";
 
 const VETTING_VALID_AT = "2026-07-16T15:00:30.000Z";
 const CHALLENGE_ID = `sha256:${"d".repeat(64)}` as const;
@@ -48,9 +48,9 @@ async function scope(closure = humanClosure()) {
     challengeObservedAt: "2026-07-16T15:00:00.000Z",
     closure,
     executeBefore: "2026-07-16T15:10:00.000Z",
-    payerIdentity: await authenticatedHumanPayerIdentity(),
     providerParty: PROVIDER,
     vettingValidAt: VETTING_VALID_AT,
+    walletPreflight: await authenticatedHumanWalletPreflight(),
   };
 }
 
@@ -111,7 +111,7 @@ describe("human Token-only package preference", () => {
     ).toThrow(/human package preference.*already claimed/iu);
   });
 
-  it("rejects capability package closures and forged payer identities", async () => {
+  it("rejects capability closures and forged wallet preflights", async () => {
     const capabilityClosure =
       buildReviewedPackagePreferenceClosure(validClosureInput());
     const capabilityScope = await scope(capabilityClosure);
@@ -125,8 +125,8 @@ describe("human Token-only package preference", () => {
     await expect(
       createHumanPackagePreferenceObserver(reader())({
         ...validScope,
-        payerIdentity: structuredClone(validScope.payerIdentity),
+        walletPreflight: structuredClone(validScope.walletPreflight),
       }),
-    ).rejects.toThrow(/payer identity.*not authenticated/iu);
+    ).rejects.toThrow(/wallet connector preflight.*not authenticated/iu);
   });
 });

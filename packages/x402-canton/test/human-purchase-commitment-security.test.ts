@@ -9,7 +9,7 @@ import {
   HUMAN_TOKEN_FACTORY_CONFIGURATION,
   createHumanPurchaseInput,
 } from "./human-purchase-commitment.fixtures.js";
-import { authenticatedHumanPayerIdentity } from "./human-payer-identity.fixtures.js";
+import { authenticatedHumanWalletPreflight } from "./human-wallet-connector-preflight.fixtures.js";
 let nonceIndex = 0;
 function nonce(label: string): string {
   nonceIndex += 1;
@@ -23,7 +23,7 @@ describe("human purchase commitment provenance and replay", () => {
   it("rejects cloned authorities without consuming the genuine artifacts", async () => {
     const input = await createHumanPurchaseInput();
     for (const forged of [
-      { ...input, payerIdentity: structuredClone(input.payerIdentity) },
+      { ...input, walletPreflight: structuredClone(input.walletPreflight) },
       { ...input, packageSelection: structuredClone(input.packageSelection) },
       {
         ...input,
@@ -116,10 +116,10 @@ describe("human purchase commitment provenance and replay", () => {
     ).not.toThrow();
   });
 
-  it("binds an authenticated payer identity to only one purchase", async () => {
-    const payerIdentity = await authenticatedHumanPayerIdentity();
-    const first = await createHumanPurchaseInput({ payerIdentity });
-    const second = await createHumanPurchaseInput({ payerIdentity });
+  it("binds an authenticated wallet preflight to only one purchase", async () => {
+    const walletPreflight = await authenticatedHumanWalletPreflight();
+    const first = await createHumanPurchaseInput({ walletPreflight });
+    const second = await createHumanPurchaseInput({ walletPreflight });
     commitHumanPurchaseForTest(
       first,
       HUMAN_TOKEN_FACTORY_CONFIGURATION,
@@ -132,7 +132,7 @@ describe("human purchase commitment provenance and replay", () => {
         HUMAN_TOKEN_FACTORY_CONFIGURATION,
         nonce("identity-second"),
       ),
-    ).toThrow(/authority.*already bound/iu);
+    ).toThrow(/wallet connector preflight.*already bound/iu);
   });
 
   it("detects forged results and canonical-byte mutation", async () => {
@@ -151,7 +151,7 @@ describe("human purchase commitment provenance and replay", () => {
   it("binds the exact authenticated artifacts from one root snapshot", async () => {
     const input = await createHumanPurchaseInput();
     const fake = Object.freeze({});
-    let identityReads = 0;
+    let preflightReads = 0;
     let packageReads = 0;
     let paymentReads = 0;
     const accessorInput = Object.defineProperties(
@@ -165,9 +165,9 @@ describe("human purchase commitment provenance and replay", () => {
           enumerable: true,
           get: () => (++packageReads === 1 ? input.packageSelection : fake),
         },
-        payerIdentity: {
+        walletPreflight: {
           enumerable: true,
-          get: () => (++identityReads === 1 ? input.payerIdentity : fake),
+          get: () => (++preflightReads === 1 ? input.walletPreflight : fake),
         },
         paymentObservation: {
           enumerable: true,
@@ -183,10 +183,10 @@ describe("human purchase commitment provenance and replay", () => {
     );
 
     expect(result.challengeId).toBe(input.paymentObservation.challengeId);
-    expect({ identityReads, packageReads, paymentReads }).toEqual({
-      identityReads: 1,
+    expect({ packageReads, paymentReads, preflightReads }).toEqual({
       packageReads: 1,
       paymentReads: 1,
+      preflightReads: 1,
     });
     expect(() =>
       commitHumanPurchaseForTest(

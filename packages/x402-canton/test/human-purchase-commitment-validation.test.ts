@@ -7,7 +7,7 @@ import {
   HUMAN_TOKEN_FACTORY_CONFIGURATION,
   createHumanPurchaseInput,
 } from "./human-purchase-commitment.fixtures.js";
-import { authenticatedHumanPayerIdentity } from "./human-payer-identity.fixtures.js";
+import { authenticatedHumanWalletPreflight } from "./human-wallet-connector-preflight.fixtures.js";
 
 let nonceIndex = 0;
 function commit(
@@ -58,6 +58,21 @@ describe("human purchase commitment validation", () => {
         maximumAllowedFeeAtomic: "1",
       }),
     ).toThrow(/debit.*bounded atomic range/iu);
+  });
+
+  it("does not bind preflight when validation fails", async () => {
+    const input = await createHumanPurchaseInput({ maximumFeeAtomic: "1.0" });
+    expect(() => commit(input)).toThrow(/fee.*bounded atomic integer/iu);
+    expect(() =>
+      commit({ ...input, maximumFeeAtomic: "750000000" }),
+    ).not.toThrow();
+  });
+
+  it("requires the live Token package to match preflight", async () => {
+    const input = await createHumanPurchaseInput({
+      expectedPackageId: "e".repeat(64),
+    });
+    expect(() => commit(input)).toThrow(/wallet package.*live selection/iu);
   });
 
   it("requires a positive principal and a two-minute signing reserve", async () => {
@@ -173,10 +188,10 @@ describe("human purchase commitment validation", () => {
     },
   );
 
-  it("rejects same-value identity substitution without consuming originals", async () => {
+  it("rejects same-value preflight substitution without consuming originals", async () => {
     const input = await createHumanPurchaseInput();
-    const substituted = await authenticatedHumanPayerIdentity();
-    expect(() => commit({ ...input, payerIdentity: substituted })).toThrow(
+    const substituted = await authenticatedHumanWalletPreflight();
+    expect(() => commit({ ...input, walletPreflight: substituted })).toThrow(
       /package authority.*does not match/iu,
     );
     expect(() => commit(input)).not.toThrow();

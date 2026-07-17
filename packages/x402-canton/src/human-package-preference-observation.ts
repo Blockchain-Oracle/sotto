@@ -51,7 +51,7 @@ function sameScope(
 ): boolean {
   return (
     left.closure === right.closure &&
-    left.payerIdentity === right.payerIdentity &&
+    left.walletPreflight === right.walletPreflight &&
     left.adminParty === right.adminParty &&
     left.challengeId === right.challengeId &&
     left.providerParty === right.providerParty &&

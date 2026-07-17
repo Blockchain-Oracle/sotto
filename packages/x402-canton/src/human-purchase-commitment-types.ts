@@ -1,14 +1,15 @@
 import type { CantonPaymentRequirement } from "./payment-requirement.js";
 import type { AuthenticatedHumanPackagePreference } from "./human-package-preference-types.js";
 import type { AuthenticatedHumanPayerIdentity } from "./human-payer-identity.js";
+import type { AuthenticatedHumanWalletConnectorPreflight } from "./human-wallet-connector-types.js";
 import type { HumanPaymentObservation } from "./human-payment-observation-types.js";
 import type { HttpRequestCommitment } from "./request-binding.js";
 
 export type HumanPurchaseCommitmentInput = Readonly<{
   maximumFeeAtomic: string;
   packageSelection: AuthenticatedHumanPackagePreference;
-  payerIdentity: AuthenticatedHumanPayerIdentity;
   paymentObservation: HumanPaymentObservation;
+  walletPreflight: AuthenticatedHumanWalletConnectorPreflight;
 }>;
 
 export type HumanPurchaseTrustedConfiguration = Readonly<{
@@ -41,8 +42,8 @@ export type CanonicalHumanPackageSelection = Readonly<{
 export type ValidatedHumanPurchaseInput = Readonly<{
   authorities: Readonly<{
     packageSelection: AuthenticatedHumanPackagePreference;
-    payerIdentity: AuthenticatedHumanPayerIdentity;
     paymentObservation: HumanPaymentObservation;
+    walletPreflight: AuthenticatedHumanWalletConnectorPreflight;
   }>;
   binding: HttpRequestCommitment;
   challengeId: `sha256:${string}`;

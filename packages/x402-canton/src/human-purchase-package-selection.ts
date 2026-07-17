@@ -5,6 +5,7 @@ import {
 } from "./human-package-preference-observation.js";
 import { HUMAN_PACKAGE_SELECTION_VERSION } from "./human-package-preference-types.js";
 import type { AuthenticatedHumanPayerIdentity } from "./human-payer-identity.js";
+import type { AuthenticatedHumanWalletConnectorPreflight } from "./human-wallet-connector-types.js";
 import type { CanonicalHumanPackageSelection } from "./human-purchase-commitment-types.js";
 import {
   canonicalTime,
@@ -22,6 +23,7 @@ type Scope = Readonly<{
   identity: AuthenticatedHumanPayerIdentity;
   observedAt: string;
   providerParty: string;
+  walletPreflight: AuthenticatedHumanWalletConnectorPreflight;
 }>;
 
 function sha256(value: unknown, label: string): `sha256:${string}` {
@@ -45,7 +47,7 @@ export function validateHumanPurchasePackageSelection(
   const selection = readAuthenticatedHumanPackagePreference(candidate);
   const authority = readHumanPackagePreferenceAuthority(candidate);
   if (
-    authority.payerIdentity !== scope.identity ||
+    authority.walletPreflight !== scope.walletPreflight ||
     authority.challengeId !== scope.challengeId ||
     authority.challengeObservedAt !== scope.observedAt ||
     authority.executeBefore !== scope.executeBefore ||

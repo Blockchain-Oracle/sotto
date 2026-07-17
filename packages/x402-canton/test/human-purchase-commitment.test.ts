@@ -19,6 +19,7 @@ import {
   HUMAN_PURCHASE_NOW,
   HUMAN_TOKEN_FACTORY_CONFIGURATION,
   createHumanPurchaseInput,
+  humanWalletIdentity,
 } from "./human-purchase-commitment.fixtures.js";
 
 function hash(value: string | Uint8Array): `sha256:${string}` {
@@ -40,7 +41,7 @@ describe("policy-free human purchase commitment", () => {
       HUMAN_AUTHORIZATION_INSTANCE_ID,
     );
     const binding = readHumanPaymentAuthority(input.paymentObservation).binding;
-    const identity = input.payerIdentity;
+    const identity = humanWalletIdentity(input.walletPreflight);
     const selection = input.packageSelection;
     const purchase = {
       version: HUMAN_PURCHASE_COMMITMENT_VERSION,
