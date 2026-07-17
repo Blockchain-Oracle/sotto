@@ -13,6 +13,7 @@ import {
 } from "./human-prepared-purchase-effect.fixtures.js";
 import {
   authenticatedHumanPurchaseIntent,
+  authenticatedHumanPurchaseIntentWithWindow,
   humanHoldingEntry,
   humanHoldingReader,
 } from "./human-purchase-holding.fixtures.js";
@@ -26,7 +27,7 @@ export type HumanPreparedPurchaseFixture = ReturnType<
 >;
 
 export async function humanPreparedPurchaseCommandInputs() {
-  return humanPreparedPurchaseCommandInputsFor([
+  return commandInputsForIntent(await authenticatedHumanPurchaseIntent(), [
     humanHoldingEntry("00holding-a", "0.3250000000"),
   ]);
 }
@@ -34,7 +35,25 @@ export async function humanPreparedPurchaseCommandInputs() {
 export async function humanPreparedPurchaseCommandInputsFor(
   contracts: unknown[],
 ) {
-  const intent = await authenticatedHumanPurchaseIntent();
+  return commandInputsForIntent(
+    await authenticatedHumanPurchaseIntent(),
+    contracts,
+  );
+}
+
+export async function humanPreparedPurchaseCommandInputsWithWindow(
+  seconds: number,
+) {
+  return commandInputsForIntent(
+    await authenticatedHumanPurchaseIntentWithWindow(seconds),
+    [humanHoldingEntry("00holding-a", "0.3250000000")],
+  );
+}
+
+async function commandInputsForIntent(
+  intent: HumanPurchaseLedgerIntent,
+  contracts: unknown[],
+) {
   const holdings = await createHumanPurchaseHoldingObserver(
     humanHoldingReader(contracts),
   )(intent);
