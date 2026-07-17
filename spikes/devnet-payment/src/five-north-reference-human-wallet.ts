@@ -30,6 +30,7 @@ const CONNECTOR_ORIGIN = "wallet://sotto-reference";
 const FIVE_NORTH_NETWORK = "canton:devnet" as const;
 
 type Input = Readonly<{
+  connector?: HumanWalletConnector;
   keyFile: string;
   network: SpikeConfig["network"];
   signal: AbortSignal;
@@ -155,7 +156,8 @@ export async function createFiveNorthReferenceHumanWalletPreflight(
       });
       active(signal);
       const http = dependencies.createHttp(network, { signal });
-      const connector = createFiveNorthReadOnlyHumanWalletConnector(profile);
+      const connector =
+        input.connector ?? createFiveNorthReadOnlyHumanWalletConnector(profile);
       const result = await createHumanWalletConnectorPreflight(
         {
           connector,

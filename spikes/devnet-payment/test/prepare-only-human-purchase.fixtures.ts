@@ -5,6 +5,7 @@ import {
   createHumanWalletConnectorPreflight,
   FIVE_NORTH_HOLDING_IMPLEMENTATION_PACKAGE_ID,
   recomputeWalletPreparedHashPrecheck,
+  type HumanWalletConnector,
   type HumanPurchaseLedgerIntent,
 } from "@sotto/x402-canton";
 import { humanPreparedPurchaseBytes } from "../../../packages/x402-canton/test/human-prepared-purchase.fixtures.js";
@@ -36,7 +37,9 @@ import type {
 
 export { PROVIDER, RESOURCE_URL };
 
-async function authenticatedHumanWalletPreflight() {
+async function authenticatedHumanWalletPreflight(
+  requestApproval?: HumanWalletConnector["requestApproval"],
+) {
   const observePayerIdentity = createHumanPayerIdentityObserver({
     readAuthenticatedSubject: async () => "validator-devnet-m2m",
     readPayerIdentity: async () => ({
@@ -73,9 +76,11 @@ async function authenticatedHumanWalletPreflight() {
       },
       synchronizerIds: [HUMAN_SYNCHRONIZER],
     }),
-    requestApproval: async () => {
-      throw new Error("prepare-only flow must not request wallet approval");
-    },
+    requestApproval:
+      requestApproval ??
+      (async () => {
+        throw new Error("prepare-only flow must not request wallet approval");
+      }),
   };
   const result = await createHumanWalletConnectorPreflight({
     connector,
@@ -206,8 +211,9 @@ export async function humanPackageSelection(
 
 export async function prepareOnlyHumanInput(
   events: string[],
+  requestApproval?: HumanWalletConnector["requestApproval"],
 ): Promise<PrepareOnlyHumanPurchaseInput> {
-  const preflight = await authenticatedHumanWalletPreflight();
+  const preflight = await authenticatedHumanWalletPreflight(requestApproval);
   return {
     claimPackageSelection: humanPackageSelection,
     createReaders: (_signal, intent) => readersForHumanIntent(intent, events),

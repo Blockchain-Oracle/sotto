@@ -152,6 +152,27 @@ describe("Five North reference human wallet", () => {
     expect(transport.postJson).not.toHaveBeenCalled();
   });
 
+  it("retains an injected signing connector after live identity preflight", async () => {
+    const signal = new AbortController().signal;
+    const baseline = createFiveNorthReadOnlyHumanWalletConnector(PROFILE);
+    const discover = vi.fn(baseline.discover);
+    const requestApproval = vi.fn();
+
+    await createFiveNorthReferenceHumanWalletPreflight(
+      {
+        connector: { discover, requestApproval },
+        keyFile: "/workspace/.capability-wallet/payer.key",
+        network: NETWORK,
+        signal,
+        workspaceRoot: "/workspace",
+      } as never,
+      dependencies(http()),
+    );
+
+    expect(discover).toHaveBeenCalledOnce();
+    expect(requestApproval).not.toHaveBeenCalled();
+  });
+
   it.each([
     ["Party", { party: `sotto-other::${FINGERPRINT}` }],
     ["synchronizer", { synchronizer: `other-domain::1220${"c".repeat(64)}` }],
