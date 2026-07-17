@@ -3,9 +3,10 @@ import type { HumanWalletApprovalRequest } from "@sotto/x402-canton";
 import { validateReferenceHumanWalletDescendants } from "./reference-human-wallet-descendants.js";
 import { referenceHumanWalletHoldingOwner } from "./reference-human-wallet-holdings.js";
 import { validateReferenceHumanWalletGraph } from "./reference-human-wallet-graph.js";
+import { validateReferenceHumanWalletInputs } from "./reference-human-wallet-inputs.js";
+import { validateReferenceHumanWalletMetadata } from "./reference-human-wallet-metadata.js";
 import { validateReferenceHumanWalletRoot } from "./reference-human-wallet-root.js";
 import { validateReferenceHumanWalletTransfer } from "./reference-human-wallet-transfer.js";
-import { referenceHumanParties } from "./reference-human-wallet-values.js";
 
 const MAX_PREPARED_BYTES = 2 * 1024 * 1024;
 
@@ -63,6 +64,13 @@ export function verifyReferenceHumanWalletPreparedApproval(
     root.inputHoldingIds,
   );
   validateReferenceHumanWalletDescendants(graph, request, transfer);
+  const validatedMetadata = validateReferenceHumanWalletMetadata(
+    metadata,
+    request,
+    root,
+    transfer,
+  );
+  validateReferenceHumanWalletInputs(validatedMetadata, request, transfer);
   const owners = transaction.nodes.flatMap(({ versionedNode }) =>
     versionedNode.oneofKind === "v1" &&
     versionedNode.v1.nodeType.oneofKind === "create"
@@ -82,19 +90,5 @@ export function verifyReferenceHumanWalletPreparedApproval(
     )
   ) {
     fail("Holding outputs");
-  }
-  referenceHumanParties(
-    metadata.submitterInfo?.actAs ?? [],
-    [request.approval.payerParty],
-    "submitter",
-  );
-  if (
-    metadata.submitterInfo?.commandId !==
-      `sotto-human-purchase-v1-${request.approval.purchaseCommitment.slice(7)}` ||
-    metadata.synchronizerId !== request.approval.synchronizerId ||
-    metadata.maxRecordTime !==
-      BigInt(Date.parse(request.approval.executeBefore)) * 1_000n
-  ) {
-    fail("metadata");
   }
 }

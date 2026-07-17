@@ -38,7 +38,18 @@ function inputHoldingIds(value: Value | undefined): readonly string[] {
 
 export type ReferenceHumanWalletRoot = Readonly<{
   inputHoldingIds: readonly string[];
+  requestedAtMicros: bigint;
 }>;
+
+function timestampMicros(value: Value | undefined): bigint {
+  if (
+    value?.sum.oneofKind !== "timestamp" ||
+    !/^(?:0|[1-9][0-9]{0,18})$/u.test(value.sum.timestamp)
+  ) {
+    fail();
+  }
+  return BigInt(value.sum.timestamp);
+}
 
 export function validateReferenceHumanWalletRoot(
   exercise: Exercise,
@@ -141,5 +152,6 @@ export function validateReferenceHumanWalletRoot(
   );
   return Object.freeze({
     inputHoldingIds: inputHoldingIds(transfer.get("inputHoldingCids")),
+    requestedAtMicros: timestampMicros(transfer.get("requestedAt")),
   });
 }
