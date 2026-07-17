@@ -61,6 +61,57 @@ const mutations: ReadonlyArray<readonly [string, Mutation]> = [
       prepared.transaction!.nodes.push(extra);
     },
   ],
+  [
+    "reordered root fetch",
+    (prepared) => {
+      const children = humanPreparedExercise(prepared, "0").children;
+      [children[0], children[1]] = [children[1]!, children[0]!];
+    },
+  ],
+  [
+    "connected extra fetch",
+    (prepared) => {
+      const extra = structuredClone(
+        prepared.transaction!.nodes.find(({ nodeId }) => nodeId === "5")!,
+      );
+      extra.nodeId = "999";
+      prepared.transaction!.nodes.push(extra);
+      const children = humanPreparedExercise(prepared, "0").children;
+      children.splice(children.length - 1, 0, extra.nodeId);
+    },
+  ],
+  [
+    "reordered preapproval fetch",
+    (prepared) => {
+      const children = humanPreparedExercise(prepared, "1").children;
+      [children[0], children[1]] = [children[1]!, children[0]!];
+    },
+  ],
+  [
+    "wrong Holding archive",
+    (prepared) => {
+      humanPreparedExercise(prepared, "2").choiceId = "Purchase";
+    },
+  ],
+  [
+    "substituted receiver CID",
+    (prepared) => {
+      humanPreparedCreate(prepared, "3").contractId = "00wrong-receiver";
+    },
+  ],
+  [
+    "wrong EventLog choice",
+    (prepared) => {
+      humanPreparedExercise(prepared, "7").choiceId = "Purchase";
+    },
+  ],
+  [
+    "incomplete preapproval authority",
+    (prepared) => {
+      const exercise = humanPreparedExercise(prepared, "1");
+      exercise.signatories = [exercise.signatories[0]!];
+    },
+  ],
 ];
 
 describe("reference human wallet descendant verification", () => {

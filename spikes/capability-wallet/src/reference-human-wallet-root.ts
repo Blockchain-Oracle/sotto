@@ -1,4 +1,4 @@
-import type { Exercise } from "@canton-network/core-ledger-proto";
+import type { Exercise, Value } from "@canton-network/core-ledger-proto";
 import {
   FIVE_NORTH_TRANSFER_FACTORY_CREATION_TEMPLATE_ID,
   TOKEN_TRANSFER_FACTORY_INTERFACE_ID,
@@ -18,10 +18,32 @@ function fail(): never {
   );
 }
 
+function inputHoldingIds(value: Value | undefined): readonly string[] {
+  if (
+    value?.sum.oneofKind !== "list" ||
+    value.sum.list.elements.length === 0 ||
+    value.sum.list.elements.length > 16
+  ) {
+    fail();
+  }
+  const result = value.sum.list.elements.map((entry) => {
+    if (entry.sum.oneofKind !== "contractId" || entry.sum.contractId === "") {
+      fail();
+    }
+    return entry.sum.contractId;
+  });
+  if (new Set(result).size !== result.length) fail();
+  return Object.freeze(result);
+}
+
+export type ReferenceHumanWalletRoot = Readonly<{
+  inputHoldingIds: readonly string[];
+}>;
+
 export function validateReferenceHumanWalletRoot(
   exercise: Exercise,
   request: HumanWalletApprovalRequest,
-): void {
+): ReferenceHumanWalletRoot {
   const approval = request.approval;
   const [, moduleName, entityName] =
     FIVE_NORTH_TRANSFER_FACTORY_CREATION_TEMPLATE_ID.split(":");
@@ -117,4 +139,7 @@ export function validateReferenceHumanWalletRoot(
     approval.instrument.id,
     "instrument ID",
   );
+  return Object.freeze({
+    inputHoldingIds: inputHoldingIds(transfer.get("inputHoldingCids")),
+  });
 }

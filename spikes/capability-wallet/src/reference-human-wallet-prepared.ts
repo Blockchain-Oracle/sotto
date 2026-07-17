@@ -1,5 +1,6 @@
 import { PreparedTransaction } from "@canton-network/core-ledger-proto";
 import type { HumanWalletApprovalRequest } from "@sotto/x402-canton";
+import { validateReferenceHumanWalletDescendants } from "./reference-human-wallet-descendants.js";
 import { referenceHumanWalletHoldingOwner } from "./reference-human-wallet-holdings.js";
 import { validateReferenceHumanWalletGraph } from "./reference-human-wallet-graph.js";
 import { validateReferenceHumanWalletRoot } from "./reference-human-wallet-root.js";
@@ -55,8 +56,13 @@ export function verifyReferenceHumanWalletPreparedApproval(
     fail("graph");
   }
   const graph = validateReferenceHumanWalletGraph(transaction);
-  validateReferenceHumanWalletRoot(graph.root, request);
-  const transfer = validateReferenceHumanWalletTransfer(graph, request);
+  const root = validateReferenceHumanWalletRoot(graph.root, request);
+  const transfer = validateReferenceHumanWalletTransfer(
+    graph,
+    request,
+    root.inputHoldingIds,
+  );
+  validateReferenceHumanWalletDescendants(graph, request, transfer);
   const owners = transaction.nodes.flatMap(({ versionedNode }) =>
     versionedNode.oneofKind === "v1" &&
     versionedNode.v1.nodeType.oneofKind === "create"
