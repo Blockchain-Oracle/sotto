@@ -1,6 +1,9 @@
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { buildFiveNorthPackagePreferenceManifest } from "../src/five-north-package-preference-manifest.js";
+import {
+  buildFiveNorthHumanPackagePreferenceManifest,
+  buildFiveNorthPackagePreferenceManifest,
+} from "../src/five-north-package-preference-manifest.js";
 import { APPROVED_SOTTO_CONTROL_DAR_PACKAGES } from "../src/sotto-control-dar-inventory.js";
 
 const sottoDarSha256 =
@@ -21,6 +24,33 @@ function graphUnionHash(
 }
 
 describe("Five North package-preference manifest", () => {
+  it("builds the policy-free human closure from official Splice artifacts only", () => {
+    const closure = buildFiveNorthHumanPackagePreferenceManifest();
+
+    expect(closure.selectablePackageNames).toEqual(["splice-amulet"]);
+    expect(closure.sourcePins).toEqual([
+      {
+        id: "splice",
+        repository: "https://github.com/canton-network/splice",
+        commit: "fd93f86ac42ce3a08985dcd0baae530b4f235f60",
+      },
+    ]);
+    expect(
+      closure.artifacts.map(({ name, version }) => [name, version]),
+    ).toEqual([
+      ["splice-amulet", "0.1.20"],
+      ["splice-amulet", "0.1.21"],
+      ["splice-amulet", "0.1.9"],
+    ]);
+    expect(closure.artifacts.some(({ name }) => name === "sotto-control")).toBe(
+      false,
+    );
+    expect(
+      closure.graphPackages.some(({ name }) => name === "sotto-control"),
+    ).toBe(false);
+    expect(closure.graphPackages).toHaveLength(55);
+  });
+
   it("reproduces the reviewed four artifacts and separate two-name closure", () => {
     const closure = buildFiveNorthPackagePreferenceManifest({
       sottoDarSha256,

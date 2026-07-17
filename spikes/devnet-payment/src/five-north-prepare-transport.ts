@@ -7,6 +7,7 @@ import {
   TRANSFER_FACTORY_REGISTRY_PATH,
   type BoundedPurchasePrepareRequest,
   type DirectTransferAuthorityPrepareRequest,
+  type HumanPurchasePrepareRequest,
 } from "@sotto/x402-canton";
 import type { SpikeConfig } from "./config.js";
 import {
@@ -41,14 +42,21 @@ type TransportOptions = Readonly<{
 const JSON_RESPONSE_LIMIT = 2_000_000;
 
 export type FiveNorthPrepareTransport = Readonly<{
-  readAmuletRules: () => Promise<unknown>;
-  readAuthenticatedUserId: () => Promise<string>;
-  readLedgerEnd: () => Promise<unknown>;
+  readAmuletRules: (signal?: AbortSignal) => Promise<unknown>;
+  readAuthenticatedUserId: (signal?: AbortSignal) => Promise<string>;
+  readLedgerEnd: (signal?: AbortSignal) => Promise<unknown>;
   readCapabilityContracts: (activeAtOffset: number) => Promise<unknown>;
-  readHoldingContracts: (activeAtOffset: number) => Promise<unknown>;
-  readRegistry: (body: string) => Promise<Uint8Array>;
+  readHoldingContracts: (
+    activeAtOffset: number,
+    signal?: AbortSignal,
+  ) => Promise<unknown>;
+  readRegistry: (body: string, signal?: AbortSignal) => Promise<Uint8Array>;
   readPrepare: (
-    body: BoundedPurchasePrepareRequest | DirectTransferAuthorityPrepareRequest,
+    body:
+      | BoundedPurchasePrepareRequest
+      | DirectTransferAuthorityPrepareRequest
+      | HumanPurchasePrepareRequest,
+    signal?: AbortSignal,
   ) => Promise<Uint8Array>;
   readPreferredWalletPackage: (
     receiverParty: string,
@@ -77,8 +85,17 @@ export function createFiveNorthPrepareTransport(
     options.tokenProvider ??
     createFiveNorthTokenProvider(network, fetcher, scopeSignal);
 
-  async function authenticatedUserId(): Promise<string> {
+  async function authenticatedUserId(
+    operationSignal?: AbortSignal,
+  ): Promise<string> {
+    requireOperationSignal(operationSignal);
     return readFiveNorthAccessTokenSubject(await tokens.accessToken());
+  }
+
+  function requireOperationSignal(signal?: AbortSignal): void {
+    if (signal !== undefined && !(signal instanceof AbortSignal)) {
+      throw new Error("Five North prepare operation signal is invalid");
+    }
   }
 
   function requireActive(): void {
@@ -93,7 +110,9 @@ export function createFiveNorthPrepareTransport(
       headers?: HeadersInit;
     },
     timeoutMilliseconds: number,
+    operationSignal?: AbortSignal,
   ): Promise<Response> {
+    requireOperationSignal(operationSignal);
     async function send(): Promise<Response> {
       requireActive();
       const token = await tokens.accessToken();
@@ -106,6 +125,7 @@ export function createFiveNorthPrepareTransport(
           headers,
           signal: AbortSignal.any([
             scopeSignal,
+            ...(operationSignal === undefined ? [] : [operationSignal]),
             AbortSignal.timeout(timeoutMilliseconds),
           ]),
         });
@@ -132,9 +152,10 @@ export function createFiveNorthPrepareTransport(
     },
     timeoutMilliseconds: number,
     maximumBytes: number,
+    operationSignal?: AbortSignal,
   ): Promise<Uint8Array> {
     return readFiveNorthResponse(
-      await authorizedResponse(url, init, timeoutMilliseconds),
+      await authorizedResponse(url, init, timeoutMilliseconds, operationSignal),
       maximumBytes,
     );
   }
@@ -143,6 +164,7 @@ export function createFiveNorthPrepareTransport(
     path: string,
     method: "GET" | "POST",
     body?: unknown,
+    operationSignal?: AbortSignal,
   ): Promise<unknown> {
     const bytes = await authorized(
       `${network.ledgerUrl}${path}`,
@@ -158,17 +180,22 @@ export function createFiveNorthPrepareTransport(
       },
       30_000,
       JSON_RESPONSE_LIMIT,
+      operationSignal,
     );
     return parseFiveNorthJson(bytes, "Five North response");
   }
 
-  async function validatorJson(path: string): Promise<unknown> {
+  async function validatorJson(
+    path: string,
+    operationSignal?: AbortSignal,
+  ): Promise<unknown> {
     return parseFiveNorthJson(
       await authorized(
         `${network.validatorUrl}${path}`,
         { method: "GET", redirect: "error" },
         30_000,
         JSON_RESPONSE_LIMIT,
+        operationSignal,
       ),
       "Five North validator response",
     );
@@ -191,22 +218,25 @@ export function createFiveNorthPrepareTransport(
   }
 
   return Object.freeze({
-    readAmuletRules: () => validatorJson("/v0/scan-proxy/amulet-rules"),
+    readAmuletRules: (signal) =>
+      validatorJson("/v0/scan-proxy/amulet-rules", signal),
     readAuthenticatedUserId: authenticatedUserId,
-    readLedgerEnd: () => ledgerJson("/v2/state/ledger-end", "GET"),
+    readLedgerEnd: (signal) =>
+      ledgerJson("/v2/state/ledger-end", "GET", undefined, signal),
     readCapabilityContracts: (activeAtOffset) =>
       ledgerJson(
         "/v2/state/active-contracts",
         "POST",
         capabilityContractsBody(payer, activeAtOffset),
       ),
-    readHoldingContracts: (activeAtOffset) =>
+    readHoldingContracts: (activeAtOffset, signal) =>
       ledgerJson(
         "/v2/state/active-contracts",
         "POST",
         holdingContractsBody(payer, activeAtOffset),
+        signal,
       ),
-    readRegistry: (body) =>
+    readRegistry: (body, signal) =>
       authorized(
         `${network.validatorUrl}/v0/scan-proxy${TRANSFER_FACTORY_REGISTRY_PATH}`,
         {
@@ -217,8 +247,9 @@ export function createFiveNorthPrepareTransport(
         },
         REGISTRY_TIMEOUT_MS,
         MAX_REGISTRY_RESPONSE_BYTES,
+        signal,
       ),
-    readPrepare: (body) =>
+    readPrepare: (body, signal) =>
       authorized(
         `${network.ledgerUrl}${PREPARE_SUBMISSION_PATH}`,
         {
@@ -229,6 +260,7 @@ export function createFiveNorthPrepareTransport(
         },
         PREPARE_SUBMISSION_TIMEOUT_MS,
         MAX_PREPARE_RESPONSE_BYTES,
+        signal,
       ),
     readPreferredWalletPackage: (receiverParty, validatorParty) =>
       ledgerJson(

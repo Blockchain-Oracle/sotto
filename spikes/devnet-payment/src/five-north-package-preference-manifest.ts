@@ -76,6 +76,37 @@ function graphUnion(
   return [...union.values()];
 }
 
+function spliceArtifacts(): PackageArtifactPin[] {
+  return [
+    spliceArtifact(SPLICE_AMULET_0_1_9_METADATA, SPLICE_AMULET_0_1_9_PACKAGES),
+    spliceArtifact(
+      SPLICE_AMULET_0_1_20_METADATA,
+      SPLICE_AMULET_0_1_20_PACKAGES,
+    ),
+    spliceArtifact(
+      SPLICE_AMULET_0_1_21_METADATA,
+      SPLICE_AMULET_0_1_21_PACKAGES,
+    ),
+  ];
+}
+
+export function buildFiveNorthHumanPackagePreferenceManifest(): ReviewedPackagePreferenceClosure {
+  const artifacts = spliceArtifacts();
+  return buildReviewedPackagePreferenceClosure({
+    version: "sotto-package-closure-v1",
+    sourcePins: [
+      {
+        id: "splice",
+        repository: "https://github.com/canton-network/splice",
+        commit: SPLICE_SOURCE_COMMIT,
+      },
+    ],
+    artifacts,
+    selectablePackageNames: ["splice-amulet"],
+    graphPackages: graphUnion(artifacts),
+  });
+}
+
 export function buildFiveNorthPackagePreferenceManifest(
   input: Readonly<{ sottoSourceCommit: string; sottoDarSha256: string }>,
 ): ReviewedPackagePreferenceClosure {
@@ -97,15 +128,7 @@ export function buildFiveNorthPackagePreferenceManifest(
       manifestSha256: SOTTO_MANIFEST_SHA256,
       packages: packageEntries(APPROVED_SOTTO_CONTROL_DAR_PACKAGES),
     },
-    spliceArtifact(SPLICE_AMULET_0_1_9_METADATA, SPLICE_AMULET_0_1_9_PACKAGES),
-    spliceArtifact(
-      SPLICE_AMULET_0_1_20_METADATA,
-      SPLICE_AMULET_0_1_20_PACKAGES,
-    ),
-    spliceArtifact(
-      SPLICE_AMULET_0_1_21_METADATA,
-      SPLICE_AMULET_0_1_21_PACKAGES,
-    ),
+    ...spliceArtifacts(),
   ];
   return buildReviewedPackagePreferenceClosure({
     version: "sotto-package-closure-v1",

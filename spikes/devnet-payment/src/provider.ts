@@ -8,6 +8,9 @@ import {
   type SettlementProof,
 } from "./provider-settlement-proof.js";
 
+const FORCE_CLOSE_AFTER_MS = 1_000;
+const CLOSE_GIVE_UP_AFTER_MS = 3_000;
+
 export { encodeSettlementProof, type SettlementProof };
 
 type ProviderConfig = Readonly<{
@@ -174,9 +177,23 @@ export async function startPaidProvider(input: ProviderServerInput) {
     localUrl: `http://127.0.0.1:${address.port}${publicUrl.pathname}${publicUrl.search}`,
     close: () =>
       new Promise<void>((resolve, reject) => {
-        server.close((error) =>
-          error === undefined ? resolve() : reject(error),
-        );
+        let settled = false;
+        const finish = (error?: Error) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(forceTimer);
+          clearTimeout(giveUpTimer);
+          if (error === undefined) {
+            resolve();
+          } else {
+            reject(error);
+          }
+        };
+        const forceTimer = setTimeout(() => {
+          server.closeAllConnections();
+        }, FORCE_CLOSE_AFTER_MS);
+        const giveUpTimer = setTimeout(finish, CLOSE_GIVE_UP_AFTER_MS);
+        server.close((error) => finish(error));
       }),
   } as const;
 }

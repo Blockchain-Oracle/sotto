@@ -21,9 +21,13 @@ type Options = Readonly<{
 }>;
 
 export type FiveNorthWalletPreflightHttp = Readonly<{
-  getJson: (path: string) => Promise<unknown>;
-  headRoute: (path: string) => Promise<boolean>;
-  postJson: (path: string, body: unknown) => Promise<unknown>;
+  getJson: (path: string, signal?: AbortSignal) => Promise<unknown>;
+  headRoute: (path: string, signal?: AbortSignal) => Promise<boolean>;
+  postJson: (
+    path: string,
+    body: unknown,
+    signal?: AbortSignal,
+  ) => Promise<unknown>;
   tokenProvider: FiveNorthTokenProvider;
 }>;
 
@@ -49,18 +53,38 @@ export function createFiveNorthWalletPreflightHttp(
   async function authorized(
     path: string,
     init: Omit<RequestInit, "headers" | "signal"> & { headers?: HeadersInit },
+    operationSignal?: AbortSignal,
   ): Promise<Response> {
+    if (
+      operationSignal !== undefined &&
+      !(operationSignal instanceof AbortSignal)
+    ) {
+      throw new Error(
+        "Five North wallet preflight operation signal is invalid",
+      );
+    }
+    function operationActive(): void {
+      if (operationSignal?.aborted === true) {
+        throw new Error("Five North wallet preflight operation cancelled");
+      }
+    }
     async function send(): Promise<Response> {
       active();
+      operationActive();
       const token = await tokens.accessToken();
       active();
+      operationActive();
       const headers = new Headers(init.headers);
       headers.set("authorization", `Bearer ${token}`);
       try {
         return await fetcher(`${network.ledgerUrl}${path}`, {
           ...init,
           headers,
-          signal: AbortSignal.any([signal, AbortSignal.timeout(TIMEOUT_MS)]),
+          signal: AbortSignal.any([
+            signal,
+            ...(operationSignal === undefined ? [] : [operationSignal]),
+            AbortSignal.timeout(TIMEOUT_MS),
+          ]),
         });
       } catch (error) {
         active();
@@ -81,17 +105,22 @@ export function createFiveNorthWalletPreflightHttp(
     path: string,
     method: "GET" | "POST",
     body?: unknown,
+    operationSignal?: AbortSignal,
   ): Promise<unknown> {
-    const response = await authorized(path, {
-      ...(body === undefined
-        ? {}
-        : {
-            body: boundedPrepareBody(body, "wallet preflight request"),
-            headers: { "content-type": "application/json" },
-          }),
-      method,
-      redirect: "error",
-    });
+    const response = await authorized(
+      path,
+      {
+        ...(body === undefined
+          ? {}
+          : {
+              body: boundedPrepareBody(body, "wallet preflight request"),
+              headers: { "content-type": "application/json" },
+            }),
+        method,
+        redirect: "error",
+      },
+      operationSignal,
+    );
     return parseFiveNorthJson(
       await readFiveNorthResponse(response, JSON_LIMIT),
       "Five North wallet preflight response",
@@ -99,17 +128,23 @@ export function createFiveNorthWalletPreflightHttp(
   }
 
   return Object.freeze({
-    getJson: (path) => json(path, "GET"),
-    headRoute: async (path) => {
-      const response = await authorized(path, {
-        method: "HEAD",
-        redirect: "error",
-      });
+    getJson: (path, operationSignal) =>
+      json(path, "GET", undefined, operationSignal),
+    headRoute: async (path, operationSignal) => {
+      const response = await authorized(
+        path,
+        {
+          method: "HEAD",
+          redirect: "error",
+        },
+        operationSignal,
+      );
       const reachable = REACHABLE_HEAD_STATUSES.has(response.status);
       await response.body?.cancel().catch(() => undefined);
       return reachable;
     },
-    postJson: (path, body) => json(path, "POST", body),
+    postJson: (path, body, operationSignal) =>
+      json(path, "POST", body, operationSignal),
     tokenProvider: tokens,
   });
 }
