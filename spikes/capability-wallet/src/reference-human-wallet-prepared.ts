@@ -1,7 +1,8 @@
 import { PreparedTransaction } from "@canton-network/core-ledger-proto";
 import type { HumanWalletApprovalRequest } from "@sotto/x402-canton";
+import { validateReferenceHumanWalletAccounting } from "./reference-human-wallet-accounting.js";
 import { validateReferenceHumanWalletDescendants } from "./reference-human-wallet-descendants.js";
-import { referenceHumanWalletHoldingOwner } from "./reference-human-wallet-holdings.js";
+import { readReferenceHumanWalletHoldingEffects } from "./reference-human-wallet-holdings.js";
 import { validateReferenceHumanWalletGraph } from "./reference-human-wallet-graph.js";
 import { validateReferenceHumanWalletInputs } from "./reference-human-wallet-inputs.js";
 import { validateReferenceHumanWalletMetadata } from "./reference-human-wallet-metadata.js";
@@ -70,25 +71,21 @@ export function verifyReferenceHumanWalletPreparedApproval(
     root,
     transfer,
   );
-  validateReferenceHumanWalletInputs(validatedMetadata, request, transfer);
-  const owners = transaction.nodes.flatMap(({ versionedNode }) =>
-    versionedNode.oneofKind === "v1" &&
-    versionedNode.v1.nodeType.oneofKind === "create"
-      ? [
-          referenceHumanWalletHoldingOwner(
-            versionedNode.v1.nodeType.create,
-            request,
-            transfer.changeAmount,
-          ),
-        ]
-      : [],
+  const inputs = validateReferenceHumanWalletInputs(
+    validatedMetadata,
+    request,
+    transfer,
   );
-  if (
-    JSON.stringify(owners.sort()) !==
-    JSON.stringify(
-      [request.approval.payerParty, request.approval.providerParty].sort(),
-    )
-  ) {
-    fail("Holding outputs");
-  }
+  const holdings = readReferenceHumanWalletHoldingEffects(
+    transaction,
+    request,
+    transfer,
+    inputs.holdings,
+  );
+  validateReferenceHumanWalletAccounting(
+    holdings,
+    transfer,
+    inputs.config,
+    request,
+  );
 }

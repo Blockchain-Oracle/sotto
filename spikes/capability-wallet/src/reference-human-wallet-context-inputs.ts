@@ -1,6 +1,10 @@
 import type { Create } from "@canton-network/core-ledger-proto";
 import type { HumanWalletApprovalRequest } from "@sotto/x402-canton";
 import {
+  validateReferenceHumanWalletExternalConfig,
+  type ReferenceHumanWalletExternalConfig,
+} from "./reference-human-wallet-config.js";
+import {
   referenceHumanWalletInput,
   referenceHumanWalletSelectedTemplate,
 } from "./reference-human-wallet-input-primitives.js";
@@ -12,49 +16,6 @@ import {
   referenceHumanRecord,
   referenceHumanScalar,
 } from "./reference-human-wallet-values.js";
-
-function validateConfig(
-  candidate: Create,
-  request: HumanWalletApprovalRequest,
-): void {
-  const approval = request.approval;
-  referenceHumanWalletSelectedTemplate(
-    candidate,
-    request,
-    "Splice.ExternalPartyConfigState",
-    "ExternalPartyConfigState",
-    "external config input",
-  );
-  const argument = referenceHumanRecord(
-    candidate.argument,
-    [
-      "dso",
-      "holdingFeesOpenRoundNumber",
-      "amuletPrice",
-      "transferConfig",
-      "targetArchiveAfter",
-      "rewardCalculationVersion",
-    ],
-    "external config input",
-    `${approval.selectedPackage.packageId}:Splice.ExternalPartyConfigState:ExternalPartyConfigState`,
-  );
-  referenceHumanScalar(
-    argument.get("dso"),
-    "party",
-    approval.tokenFactory.expectedAdmin,
-    "external config DSO",
-  );
-  referenceHumanParties(
-    candidate.signatories,
-    [approval.tokenFactory.expectedAdmin],
-    "external config signatory",
-  );
-  referenceHumanParties(
-    candidate.stakeholders,
-    [approval.tokenFactory.expectedAdmin],
-    "external config stakeholder",
-  );
-}
 
 function validateFeatured(
   candidate: Create,
@@ -103,18 +64,20 @@ export function validateReferenceHumanWalletContextInputs(
   metadata: ReferenceHumanWalletMetadata,
   request: HumanWalletApprovalRequest,
   transfer: ReferenceHumanWalletTransfer,
-): void {
+): Readonly<{ config: ReferenceHumanWalletExternalConfig }> {
   const provider = validateReferenceHumanWalletPreapprovalInput(
     referenceHumanWalletInput(metadata, transfer.contractId),
     request,
   );
-  validateConfig(
+  const config = validateReferenceHumanWalletExternalConfig(
     referenceHumanWalletInput(metadata, transfer.configContractId),
     request,
+    transfer.inputHoldingIds.length,
   );
   validateFeatured(
     referenceHumanWalletInput(metadata, transfer.featuredContractId),
     request,
     provider,
   );
+  return Object.freeze({ config });
 }

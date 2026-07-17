@@ -5,6 +5,11 @@ import {
   type HumanWalletApprovalRequest,
 } from "@sotto/x402-canton";
 import { validateReferenceHumanWalletContextInputs } from "./reference-human-wallet-context-inputs.js";
+import type { ReferenceHumanWalletExternalConfig } from "./reference-human-wallet-config.js";
+import {
+  readReferenceHumanWalletHolding,
+  type ReferenceHumanWalletHolding,
+} from "./reference-human-wallet-holdings.js";
 import { referenceHumanWalletInput } from "./reference-human-wallet-input-primitives.js";
 import type { ReferenceHumanWalletMetadata } from "./reference-human-wallet-metadata.js";
 import type { ReferenceHumanWalletTransfer } from "./reference-human-wallet-transfer.js";
@@ -14,10 +19,6 @@ import {
   referenceHumanRecord,
   referenceHumanScalar,
 } from "./reference-human-wallet-values.js";
-
-function fail(label: string): never {
-  throw new Error(`reference human wallet prepared ${label} does not match`);
-}
 
 function validateFactory(
   candidate: Create,
@@ -53,60 +54,9 @@ function validateFactory(
   );
 }
 
-function validateHolding(
-  candidate: Create,
-  request: HumanWalletApprovalRequest,
-): string {
-  const approval = request.approval;
-  referenceHumanIdentifier(
-    candidate.templateId,
-    `${FIVE_NORTH_HOLDING_TEMPLATE_PACKAGE_ID}:Splice.Amulet:Amulet`,
-    "input Holding",
-  );
-  const argument = referenceHumanRecord(
-    candidate.argument,
-    ["dso", "owner", "amount"],
-    "input Holding",
-    `${approval.selectedPackage.packageId}:Splice.Amulet:Amulet`,
-  );
-  referenceHumanScalar(
-    argument.get("dso"),
-    "party",
-    approval.tokenFactory.expectedAdmin,
-    "input Holding DSO",
-  );
-  referenceHumanScalar(
-    argument.get("owner"),
-    "party",
-    approval.payerParty,
-    "input Holding owner",
-  );
-  const authority = [approval.tokenFactory.expectedAdmin, approval.payerParty];
-  referenceHumanParties(
-    candidate.signatories,
-    authority,
-    "input Holding signatory",
-  );
-  referenceHumanParties(
-    candidate.stakeholders,
-    authority,
-    "input Holding stakeholder",
-  );
-  const amount = referenceHumanRecord(
-    argument.get("amount"),
-    ["initialAmount", "createdAt", "ratePerRound"],
-    "input Holding amount",
-    `${approval.selectedPackage.packageId}:Splice.Fees:ExpiringAmount`,
-  );
-  const initial = amount.get("initialAmount");
-  if (initial?.sum.oneofKind !== "numeric" || initial.sum.numeric === "") {
-    fail("input Holding amount");
-  }
-  return initial.sum.numeric;
-}
-
 export type ReferenceHumanWalletInputs = Readonly<{
-  holdingAmounts: ReadonlyMap<string, string>;
+  config: ReferenceHumanWalletExternalConfig;
+  holdings: ReadonlyMap<string, ReferenceHumanWalletHolding>;
 }>;
 
 export function validateReferenceHumanWalletInputs(
@@ -119,12 +69,25 @@ export function validateReferenceHumanWalletInputs(
     referenceHumanWalletInput(metadata, approval.tokenFactory.contractId),
     request,
   );
-  const holdingAmounts = new Map(
+  const holdings = new Map(
     transfer.inputHoldingIds.map((contractId) => [
       contractId,
-      validateHolding(referenceHumanWalletInput(metadata, contractId), request),
+      readReferenceHumanWalletHolding(
+        referenceHumanWalletInput(metadata, contractId),
+        request,
+        [
+          FIVE_NORTH_HOLDING_TEMPLATE_PACKAGE_ID,
+          approval.selectedPackage.packageId,
+        ],
+        approval.payerParty,
+        "input Holding",
+      ),
     ]),
   );
-  validateReferenceHumanWalletContextInputs(metadata, request, transfer);
-  return Object.freeze({ holdingAmounts });
+  const context = validateReferenceHumanWalletContextInputs(
+    metadata,
+    request,
+    transfer,
+  );
+  return Object.freeze({ ...context, holdings });
 }

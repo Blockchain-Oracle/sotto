@@ -1,5 +1,6 @@
 import type { HumanWalletApprovalRequest } from "@sotto/x402-canton";
 import type { ReferenceHumanWalletGraph } from "./reference-human-wallet-graph.js";
+import type { ReferenceHumanWalletTransferSummary } from "./reference-human-wallet-summary.js";
 import { readReferenceHumanWalletTransferChoice } from "./reference-human-wallet-transfer-choice.js";
 import { readReferenceHumanWalletTransferResults } from "./reference-human-wallet-transfer-result.js";
 import {
@@ -14,7 +15,6 @@ function fail(label: string): never {
 }
 
 export type ReferenceHumanWalletTransfer = Readonly<{
-  changeAmount: string;
   changeIds: readonly string[];
   configContractId: string;
   contractId: string;
@@ -23,6 +23,8 @@ export type ReferenceHumanWalletTransfer = Readonly<{
   nodeId: string;
   preapprovalParties: readonly string[];
   receiverIds: readonly string[];
+  round: bigint;
+  summary: ReferenceHumanWalletTransferSummary;
 }>;
 
 export function validateReferenceHumanWalletTransfer(

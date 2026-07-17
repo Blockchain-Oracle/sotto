@@ -1,5 +1,7 @@
 import type { Exercise, Value } from "@canton-network/core-ledger-proto";
 import type { HumanWalletApprovalRequest } from "@sotto/x402-canton";
+import { referenceHumanWalletRound } from "./reference-human-wallet-numbers.js";
+import { readReferenceHumanWalletTransferSummary } from "./reference-human-wallet-summary.js";
 import {
   referenceHumanIdentifier,
   referenceHumanRecord,
@@ -9,20 +11,14 @@ function fail(label: string): never {
   throw new Error(`reference human wallet prepared ${label} does not match`);
 }
 
-function scalar(value: Value | undefined, kind: "contractId" | "numeric") {
-  if (kind === "numeric") {
-    if (value?.sum.oneofKind !== "numeric") fail("numeric value");
-    return value.sum.numeric;
-  }
+function scalar(value: Value | undefined) {
   if (value?.sum.oneofKind !== "contractId") fail("contract ID value");
   return value.sum.contractId;
 }
 
 function contractIds(value: Value | undefined, label: string): string[] {
   if (value?.sum.oneofKind !== "list") fail(label);
-  const result = value.sum.list.elements.map((entry) =>
-    scalar(entry, "contractId"),
-  );
+  const result = value.sum.list.elements.map((entry) => scalar(entry));
   if (result.length === 0 || new Set(result).size !== result.length)
     fail(label);
   return result;
@@ -32,7 +28,7 @@ function optionalContractId(value: Value | undefined, label: string): string[] {
   if (value?.sum.oneofKind !== "optional") fail(label);
   return value.sum.optional.value === undefined
     ? []
-    : [scalar(value.sum.optional.value, "contractId")];
+    : [scalar(value.sum.optional.value)];
 }
 
 function rootResults(root: Exercise) {
@@ -96,35 +92,21 @@ function transferResults(
   ) {
     fail("created Amulet result");
   }
-  const summary = referenceHumanRecord(
-    transfer.get("summary"),
-    [
-      "inputAppRewardAmount",
-      "inputValidatorRewardAmount",
-      "inputSvRewardAmount",
-      "inputAmuletAmount",
-      "balanceChanges",
-      "holdingFees",
-      "outputFees",
-      "senderChangeFee",
-      "senderChangeAmount",
-      "amuletPrice",
-      "inputValidatorFaucetAmount",
-      "inputUnclaimedActivityRecordAmount",
-      "inputDevelopmentFundAmount",
-    ],
-    "transfer summary",
-    `${packageId}:Splice.AmuletRules:TransferSummary`,
-  );
   return Object.freeze({
-    receiver: [
-      scalar(created.sum.list.elements[0].sum.variant.value, "contractId"),
-    ],
+    receiver: [scalar(created.sum.list.elements[0].sum.variant.value)],
     change: optionalContractId(
       transfer.get("senderChangeAmulet"),
       "sender change result",
     ),
-    changeAmount: scalar(summary.get("senderChangeAmount"), "numeric"),
+    round: referenceHumanWalletRound(
+      transfer.get("round"),
+      packageId,
+      "transfer round",
+    ),
+    summary: readReferenceHumanWalletTransferSummary(
+      transfer.get("summary"),
+      request,
+    ),
   });
 }
 
@@ -144,8 +126,9 @@ export function readReferenceHumanWalletTransferResults(
     fail("transfer results");
   }
   return Object.freeze({
-    changeAmount: inner.changeAmount,
     changeIds: outer.change,
     receiverIds: outer.receiver,
+    round: inner.round,
+    summary: inner.summary,
   });
 }
