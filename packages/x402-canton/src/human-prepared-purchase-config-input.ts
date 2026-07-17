@@ -1,6 +1,7 @@
 import type { Create, Value } from "@canton-network/core-ledger-proto";
 import type { HumanPurchasePrepareRequest } from "./human-purchase-command-types.js";
 import type { HumanPurchaseLedgerIntent } from "./human-purchase-ledger-intent.js";
+import { selectHumanTransferConfigShape } from "./human-prepared-purchase-config-shape.js";
 import { validateHumanDisclosedInputIdentity } from "./human-prepared-purchase-disclosed-input.js";
 import {
   preparedIdentifier,
@@ -10,14 +11,6 @@ import {
   preparedScalar,
 } from "./prepared-purchase-effect-values.js";
 import { damlDecimalToAtomic } from "./purchase-commitment-primitives.js";
-import { FIVE_NORTH_HOLDING_TEMPLATE_PACKAGE_ID } from "./purchase-holding-types.js";
-
-const TRANSFER_CONFIG_FIELDS = [
-  "holdingFee",
-  "maxNumInputs",
-  "maxNumOutputs",
-  "maxNumLockHolders",
-] as const;
 const DAML_REL_TIME_RECORD_ID =
   "b70db8369e1c461d5c70f1c86f526a29e9776c655e6ffc2560f95b05ccb8b946:DA.Time.Types:RelTime";
 const MAX_DAML_INT = 9_223_372_036_854_775_807n;
@@ -90,12 +83,14 @@ function transferConfig(
   sourcePackageId: string,
   inputCount: number,
 ): bigint {
-  const legacy = sourcePackageId === FIVE_NORTH_HOLDING_TEMPLATE_PACKAGE_ID;
+  const shape = selectHumanTransferConfigShape(
+    value,
+    packageId,
+    sourcePackageId,
+  );
   const config = preparedRecord(
     value,
-    legacy
-      ? TRANSFER_CONFIG_FIELDS
-      : [...TRANSFER_CONFIG_FIELDS, "tokenStandardMaxTTL"],
+    shape.fields,
     "human external transfer config",
     `${packageId}:Splice.AmuletConfig:TransferConfigV2`,
   );
@@ -117,7 +112,7 @@ function transferConfig(
     throw new Error("prepared human external transfer limits are insufficient");
   }
   const ttl = config.get("tokenStandardMaxTTL");
-  if (!legacy) requireTokenStandardTtl(ttl);
+  if (shape.hasTokenTtl) requireTokenStandardTtl(ttl);
   return nonnegativeAtomic(rate.get("rate"), "human external holding fee rate");
 }
 

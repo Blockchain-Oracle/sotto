@@ -71,7 +71,7 @@ describe("human prepared external config upgrades", () => {
     ).not.toThrow();
   });
 
-  it("requires tokenStandardMaxTTL for a selected-source config", async () => {
+  it("accepts a selected-source upgraded historical config", async () => {
     const { intent, request } = await humanPreparedPurchaseCommandInputs();
     const selectedRequest = selectedSourceRequest(
       request,
@@ -85,7 +85,17 @@ describe("human prepared external config upgrades", () => {
 
     expect(() =>
       inspectHumanPreparedPurchaseStructure(bytes, intent, selectedRequest),
-    ).toThrow(/external transfer config.*fields/iu);
+    ).not.toThrow();
+  });
+
+  it("rejects an unapproved config source package", async () => {
+    const { intent, request } = await humanPreparedPurchaseCommandInputs();
+    const unapprovedRequest = selectedSourceRequest(request, "f".repeat(64));
+    const bytes = humanPreparedPurchaseBytes(intent, unapprovedRequest);
+
+    expect(() =>
+      inspectHumanPreparedPurchaseStructure(bytes, intent, unapprovedRequest),
+    ).toThrow(/external config.*source package/iu);
   });
 
   it("rejects a selected-source token TTL with a malformed Some value", async () => {
