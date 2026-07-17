@@ -5,7 +5,6 @@ import type {
 import { parseReferenceHumanWalletApproval } from "./reference-human-wallet-approval.js";
 import {
   referenceHumanWalletHash,
-  referenceHumanWalletIdentifier,
   referenceHumanWalletPreparedBase64,
   referenceHumanWalletRecord,
   referenceHumanWalletTime,
@@ -13,6 +12,10 @@ import {
 
 export const REFERENCE_HUMAN_WALLET_REQUEST_VERSION =
   "sotto-reference-human-wallet-request-v1" as const;
+export const REFERENCE_HUMAN_WALLET_CONNECTOR_ID =
+  "wallet-sdk-reference" as const;
+export const REFERENCE_HUMAN_WALLET_CONNECTOR_ORIGIN =
+  "wallet://sotto-reference" as const;
 
 export type SerializedReferenceHumanWalletRequest = Omit<
   HumanWalletApprovalRequest,
@@ -66,7 +69,9 @@ export function parseReferenceHumanWalletRequest(
   );
   if (
     request.version !== "sotto-human-wallet-request-v1" ||
-    request.hashingSchemeVersion !== "HASHING_SCHEME_VERSION_V2"
+    request.hashingSchemeVersion !== "HASHING_SCHEME_VERSION_V2" ||
+    request.connectorId !== REFERENCE_HUMAN_WALLET_CONNECTOR_ID ||
+    request.connectorOrigin !== REFERENCE_HUMAN_WALLET_CONNECTOR_ORIGIN
   ) {
     throw new Error("reference human wallet request protocol is invalid");
   }
@@ -95,15 +100,9 @@ export function parseReferenceHumanWalletRequest(
   return Object.freeze({
     version: "sotto-human-wallet-request-v1",
     approval,
-    connectorId: referenceHumanWalletIdentifier(
-      request.connectorId,
-      "connector ID",
-    ),
+    connectorId: REFERENCE_HUMAN_WALLET_CONNECTOR_ID,
     connectorKind: connectorKind(request.connectorKind),
-    connectorOrigin: referenceHumanWalletIdentifier(
-      request.connectorOrigin,
-      "connector origin",
-    ),
+    connectorOrigin: REFERENCE_HUMAN_WALLET_CONNECTOR_ORIGIN,
     createdAt,
     expiresAt,
     hashingSchemeVersion: "HASHING_SCHEME_VERSION_V2",

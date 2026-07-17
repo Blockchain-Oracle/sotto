@@ -43,6 +43,26 @@ function fixed(value: unknown, expected: string, label: string): void {
   }
 }
 
+function canonicalResourcePath(value: unknown, origin: string): string {
+  const path = referenceHumanWalletIdentifier(value, "approval path", 8_192);
+  let resource: URL;
+  try {
+    resource = new URL(path, origin);
+  } catch {
+    throw new Error("reference human wallet request approval path is invalid");
+  }
+  if (
+    !path.startsWith("/") ||
+    resource.origin !== origin ||
+    resource.pathname !== path ||
+    resource.search !== "" ||
+    resource.hash !== ""
+  ) {
+    throw new Error("reference human wallet request approval path is invalid");
+  }
+  return path;
+}
+
 export function parseReferenceHumanWalletApproval(
   value: unknown,
   preparedTransactionHash: `sha256:${string}`,
@@ -120,11 +140,7 @@ export function parseReferenceHumanWalletApproval(
     authorizationMode: "human-wallet",
     method,
     resourceOrigin,
-    resourcePath: referenceHumanWalletIdentifier(
-      approval.resourcePath,
-      "approval path",
-      8_192,
-    ),
+    resourcePath: canonicalResourcePath(approval.resourcePath, resourceOrigin),
     queryPresent: approval.queryPresent,
     payerParty: referenceHumanWalletIdentifier(
       approval.payerParty,

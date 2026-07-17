@@ -16,14 +16,17 @@ export function referenceHumanWalletRecord(
   keys: readonly string[],
   label: string,
 ): Readonly<Record<string, unknown>> {
-  const ownKeys =
-    typeof value === "object" && value !== null ? Reflect.ownKeys(value) : [];
   if (
     typeof value !== "object" ||
     value === null ||
     types.isProxy(value) ||
     Array.isArray(value) ||
-    Object.getPrototypeOf(value) !== Object.prototype ||
+    Object.getPrototypeOf(value) !== Object.prototype
+  ) {
+    throw new Error(`reference human wallet request ${label} is invalid`);
+  }
+  const ownKeys = Reflect.ownKeys(value);
+  if (
     ownKeys.some((key) => typeof key !== "string") ||
     JSON.stringify((ownKeys as string[]).sort()) !==
       JSON.stringify([...keys].sort())

@@ -65,6 +65,26 @@ export function parseReferenceHumanWalletApprovalComponents(
       "reference human wallet request approval signer is invalid",
     );
   }
+  const payerParty = referenceHumanWalletIdentifier(
+    approval.payerParty,
+    "approval payer",
+  );
+  if (!payerParty.endsWith(`::${fingerprint}`)) {
+    throw new Error(
+      "reference human wallet request approval payer identity is invalid",
+    );
+  }
+  fixed(signer.publicKeyFormat, "PUBLIC_KEY_FORMAT_RAW", "approval key format");
+  fixed(
+    signer.signatureFormat,
+    "SIGNATURE_FORMAT_CONCAT",
+    "approval signature format",
+  );
+  fixed(
+    signer.signingAlgorithm,
+    "SIGNING_ALGORITHM_SPEC_ED25519",
+    "approval signing algorithm",
+  );
   return Object.freeze({
     instrument: Object.freeze({
       admin: referenceHumanWalletIdentifier(
@@ -94,18 +114,9 @@ export function parseReferenceHumanWalletApprovalComponents(
     }),
     signer: Object.freeze({
       publicKeyFingerprint: fingerprint as `1220${string}`,
-      publicKeyFormat: referenceHumanWalletIdentifier(
-        signer.publicKeyFormat,
-        "approval key format",
-      ) as HumanPreparedPurchaseApproval["signer"]["publicKeyFormat"],
-      signatureFormat: referenceHumanWalletIdentifier(
-        signer.signatureFormat,
-        "approval signature format",
-      ) as HumanPreparedPurchaseApproval["signer"]["signatureFormat"],
-      signingAlgorithm: referenceHumanWalletIdentifier(
-        signer.signingAlgorithm,
-        "approval signing algorithm",
-      ) as HumanPreparedPurchaseApproval["signer"]["signingAlgorithm"],
+      publicKeyFormat: "PUBLIC_KEY_FORMAT_RAW",
+      signatureFormat: "SIGNATURE_FORMAT_CONCAT",
+      signingAlgorithm: "SIGNING_ALGORITHM_SPEC_ED25519",
     }),
   });
 }
