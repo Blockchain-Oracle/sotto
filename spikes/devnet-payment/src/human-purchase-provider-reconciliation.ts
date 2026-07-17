@@ -16,6 +16,20 @@ export type HumanPurchaseSettlementProof = Readonly<{
   updateId: string;
 }>;
 
+export const AUTHENTICATED_HUMAN_PROVIDER_SETTLEMENT_VERSION =
+  "sotto-authenticated-human-provider-settlement-v1" as const;
+
+declare const authenticatedHumanProviderSettlementBrand: unique symbol;
+export type AuthenticatedHumanPurchaseProviderSettlement = Readonly<{
+  version: typeof AUTHENTICATED_HUMAN_PROVIDER_SETTLEMENT_VERSION;
+  readonly [authenticatedHumanProviderSettlementBrand]: true;
+}>;
+
+const authenticatedSettlements = new WeakMap<
+  object,
+  HumanPurchaseSettlementProof
+>();
+
 function record(value: unknown): Record<string, unknown> | undefined {
   return typeof value === "object" && value !== null && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -142,4 +156,40 @@ export function reconcileHumanPurchaseProviderTransaction(
     holdingContractId !== undefined &&
     exactHumanSendV2CreatesHolding(exercises, holdingContractId, expected)
   );
+}
+
+export function authenticateHumanPurchaseProviderSettlement(
+  response: unknown,
+  proof: HumanPurchaseSettlementProof,
+  expectation: HumanSettlementExpectation,
+): AuthenticatedHumanPurchaseProviderSettlement {
+  let snapshot: HumanPurchaseSettlementProof;
+  try {
+    snapshot = Object.freeze(structuredClone(proof));
+  } catch {
+    throw new Error("human provider settlement did not reconcile");
+  }
+  if (
+    !reconcileHumanPurchaseProviderTransaction(response, snapshot, expectation)
+  ) {
+    throw new Error("human provider settlement did not reconcile");
+  }
+  const settlement = Object.freeze({
+    version: AUTHENTICATED_HUMAN_PROVIDER_SETTLEMENT_VERSION,
+  }) as AuthenticatedHumanPurchaseProviderSettlement;
+  authenticatedSettlements.set(settlement, snapshot);
+  return settlement;
+}
+
+export function readAuthenticatedHumanPurchaseProviderSettlement(
+  candidate: unknown,
+): HumanPurchaseSettlementProof {
+  if (typeof candidate !== "object" || candidate === null) {
+    throw new Error("human provider settlement is not authenticated");
+  }
+  const proof = authenticatedSettlements.get(candidate);
+  if (proof === undefined) {
+    throw new Error("human provider settlement is not authenticated");
+  }
+  return proof;
 }

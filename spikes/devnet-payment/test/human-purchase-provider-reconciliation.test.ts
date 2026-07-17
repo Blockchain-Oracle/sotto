@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { HUMAN_PURCHASE_NOW } from "../../../packages/x402-canton/test/human-purchase-commitment.fixtures.js";
-import { reconcileHumanPurchaseProviderTransaction } from "../src/human-purchase-provider-reconciliation.js";
+import {
+  authenticateHumanPurchaseProviderSettlement,
+  readAuthenticatedHumanPurchaseProviderSettlement,
+  reconcileHumanPurchaseProviderTransaction,
+} from "../src/human-purchase-provider-reconciliation.js";
 import {
   HUMAN_SETTLEMENT_MUTATIONS,
   humanSettlementFixture,
@@ -60,6 +64,34 @@ describe("human provider settlement reconciliation", () => {
         ...expected,
       } as never),
     ).toBe(false);
+  });
+
+  it("mints opaque settlement provenance only after exact reconciliation", async () => {
+    const { expected, proof, response } = await humanSettlementFixture();
+    const mutableProof = { ...proof };
+
+    const settlement = authenticateHumanPurchaseProviderSettlement(
+      response,
+      mutableProof,
+      expected,
+    );
+    mutableProof.updateId = `1220${"e".repeat(64)}`;
+    const authenticated =
+      readAuthenticatedHumanPurchaseProviderSettlement(settlement);
+
+    expect(authenticated).toEqual(proof);
+    expect(authenticated).not.toBe(mutableProof);
+    expect(Object.isFrozen(authenticated)).toBe(true);
+    expect(Object.isFrozen(settlement)).toBe(true);
+    expect(() =>
+      readAuthenticatedHumanPurchaseProviderSettlement({ ...settlement }),
+    ).toThrow(/not authenticated/iu);
+
+    const changed = clone(response);
+    setValue(changed, ["transaction", "commandId"], "wrong-command");
+    expect(() =>
+      authenticateHumanPurchaseProviderSettlement(changed, proof, expected),
+    ).toThrow(/did not reconcile/iu);
   });
 
   it.each(HUMAN_SETTLEMENT_MUTATIONS)(
