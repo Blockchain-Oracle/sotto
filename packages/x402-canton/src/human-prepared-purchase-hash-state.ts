@@ -33,6 +33,11 @@ export type ReadHashVerifiedHumanPreparedPurchase = Readonly<{
   transferContextHash: `sha256:${string}`;
 }>;
 
+export type ReadHashVerifiedHumanSettlementAuthority = Readonly<{
+  intent: HumanPurchaseLedgerIntent;
+  prepareRequest: HumanPurchasePrepareRequest;
+}>;
+
 const states = new WeakMap<object, VerifiedState>();
 
 function readState(candidate: unknown): VerifiedState {
@@ -94,6 +99,17 @@ export function readHashVerifiedHumanPreparedPurchase(
     intent: state.prepared.intent,
     preparedTransactionHash: new Uint8Array(state.preparedTransactionHash),
     transferContextHash: state.transferContextHash,
+  });
+}
+
+/** @internal Authenticated settlement-expectation projection only. */
+export function readHashVerifiedHumanSettlementAuthority(
+  candidate: unknown,
+): ReadHashVerifiedHumanSettlementAuthority {
+  const state = readState(candidate);
+  return Object.freeze({
+    intent: state.prepared.intent,
+    prepareRequest: state.prepared.prepareRequest,
   });
 }
 

@@ -46,6 +46,12 @@ export {
   type VerifiedHumanWalletSigningSession,
 } from "./human-wallet-signing-types.js";
 export {
+  HUMAN_SETTLEMENT_EXPECTATION_VERSION,
+  projectHumanSettlementExpectation,
+  readAuthenticatedHumanSettlementExpectation,
+  type HumanSettlementExpectation,
+} from "./human-settlement-expectation.js";
+export {
   createHumanPaymentObserver,
   MAX_HUMAN_PAYMENT_FETCH_MS,
   type HumanPaymentFetcher,

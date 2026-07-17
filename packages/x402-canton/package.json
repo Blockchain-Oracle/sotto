@@ -17,6 +17,10 @@
       "types": "./dist/human-wallet-signing-session-claim.d.ts",
       "import": "./dist/human-wallet-signing-session-claim.js"
     },
+    "./internal/human-settlement-expectation-journal": {
+      "types": "./dist/human-settlement-expectation-journal.d.ts",
+      "import": "./dist/human-settlement-expectation-journal.js"
+    },
     "./internal/bounded-capability-bootstrap-prepare": {
       "types": "./dist/bounded-capability-bootstrap-prepare.d.ts",
       "import": "./dist/bounded-capability-bootstrap-prepare.js"
