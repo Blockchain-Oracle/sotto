@@ -17,6 +17,13 @@
 - No ledger-enforced claim ships before live-price, funding, atomicity, and
   bypass proof.
 - Coolify is the eventual application host; Five North is the mandatory ledger.
+- The first production topology is one `web-api` process, one restartable
+  worker, one private PostgreSQL authority, and wallet connectors outside the
+  application/database trust boundary. Redis is deferred until measurements
+  justify it.
+- Enriched private receipts are limited to the authenticated owner/payer and the
+  initiating agent. Providers receive only the minimum settlement/delivery
+  reference; operators and public views receive redacted evidence.
 - Product research, specification, stories/design, planning, implementation, and
   verification remain separate Context Engineering stages.
 - The accepted x402 prototype is design evidence only.
@@ -80,28 +87,28 @@
   purchase succeeded with only external-agent authority; the matched direct
   prepare control failed for missing payer authority while the payer control
   prepared, with zero execute calls.
-- Q-004: the latest live purchase context was visible to payer, agent, and
-  provider. An outsider saw zero contexts and received `404` for direct
-  transaction lookup. This is evidence, not a production receipt-audience
-  decision.
+- Q-004: resolved. The enriched receipt is readable only by the authenticated
+  owner/payer and initiating agent. The provider receives the minimum
+  settlement/delivery reference, public and operator views are redacted, and
+  unauthorized lookup is existence-hiding.
 - Q-005: resolved for the spike through the wallet-neutral reference connector.
   One exact Five North human purchase was approved, signed, executed,
   reconciled, and delivered as `200` without the payer key entering the Sotto
   process. This does not prove Loop compatibility, production wallet custody, or
   a deployed connector service.
-- Q-006: no production web/API/MCP/worker/database/queue topology is selected
-  under `NO_GO`. The spike now has an owner-only append-only recovery journal,
-  including terminal delivered recovery, but its temporary provider and
-  in-memory delivery claims are not PostgreSQL-backed production durability.
+- Q-006: resolved as a design decision. One `web-api` process, one restartable
+  worker, one private PostgreSQL authority, an explicit migration job, and
+  wallet connectors outside the application boundary form the first-release
+  topology. The temporary provider and in-memory claims still do not prove its
+  production implementation.
 
 ## Open Gates
 
-- Private receipt reader set.
 - Production wallet connector deployment and custody boundary.
 - Durable PostgreSQL-backed delivery, unknown-outcome recovery, and replay
   state.
-- Final web/API/MCP/worker/database/queue/Coolify topology and a reviewed
-  production `GO`.
+- Implemented and deployed web/API/MCP/worker/database/Coolify topology plus a
+  reviewed production `GO`.
 
 These questions are resolved only from the DevNet spike and explicit product
 decisions. Code, prototypes, and research cannot approve themselves.

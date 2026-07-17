@@ -40,10 +40,11 @@ The research spike has now produced:
 
 The spike's signer/funding-authority and public-settlement-visibility blockers
 are closed. The production gate is still `NO_GO`: production wallet custody and
-connector deployment, durable PostgreSQL-backed delivery/recovery, the
-production topology, and decisions Q-004 and Q-006 remain open. The
-[redacted spike result](docs/architecture/devnet-spike-result.md) records the
-evidence and remaining blockers.
+connector deployment, durable PostgreSQL-backed delivery/recovery, the approved
+production topology's implementation and release evidence remain open. Receipt
+audience Q-004 and topology Q-006 are selected but not yet proven in production.
+The [redacted spike result](docs/architecture/devnet-spike-result.md) records
+the evidence and remaining blockers.
 
 No mocked payment or fixture transaction can satisfy those gates.
 

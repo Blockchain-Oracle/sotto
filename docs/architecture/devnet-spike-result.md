@@ -17,9 +17,9 @@ gate, and Q-005 human-approval path are closed for the spike.
 The accepted external-agent settlement is now independently visible through the
 public Lighthouse explorer, closing the public-settlement-visibility gate.
 Production remains blocked by a production wallet connector and custody
-boundary, durable PostgreSQL-backed delivery/recovery, the production topology,
-and decisions Q-004 and Q-006. Upstream relay equivalence is also not
-established.
+boundary, durable PostgreSQL-backed delivery/recovery, and implementation and
+release evidence for the approved production topology. Q-004 and Q-006 are now
+selected but unimplemented. Upstream relay equivalence is also not established.
 
 ## Source And Evidence
 
@@ -312,15 +312,18 @@ spike boundary.
 - Q-003 is resolved for the spike. The agent-only bounded purchase succeeded,
   and the matched prepare-only direct-transfer oracle proved missing payer
   authority with zero execute calls.
-- Q-004 remains unresolved. The current audience proof covers payer, agent, and
-  provider with outsider absence, but it does not select the production receipt
-  readers.
+- Q-004 is resolved as a product decision. The authenticated owner/payer and
+  initiating agent may read the enriched receipt; the provider receives only its
+  settlement/delivery reference, public and operator views are redacted, and
+  unauthorized lookup is existence-hiding.
 - Q-005 is resolved for the spike through the wallet-neutral reference
   connector: the exact Five North transfer was approved, signed, executed,
   reconciled, and delivered. Loop compatibility and production wallet custody
   remain separate deployment questions.
-- Q-006 remains unresolved. Durable PostgreSQL delivery/recovery and the final
-  process/database/queue topology are not selected.
+- Q-006 is resolved as a design decision: one `web-api` process, one restartable
+  worker, one private PostgreSQL authority, an explicit migration job, and
+  external wallet connectors. That topology and its durability are not yet
+  implemented or deployed.
 
 ## Gate Consequence
 
@@ -328,4 +331,5 @@ The spike must not yet authorize marketplace, Composer, CLI/MCP, bounded-agent,
 or Coolify production implementation. The signer/funding-authority and
 wallet-neutral human-payment and public-settlement-visibility paths are no
 longer blockers. Next work is durable PostgreSQL-backed delivery/recovery and
-the production wallet/process topology, plus explicit decisions Q-004 and Q-006.
+implementation of the approved production wallet/process topology, followed by
+its final release audit.

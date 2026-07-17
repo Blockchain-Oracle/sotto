@@ -531,8 +531,8 @@
   "blockingGates": [
     "production wallet connector deployment and custody boundary; the wallet-neutral reference connector is proven only for the spike",
     "durable PostgreSQL-backed delivery, unknown-outcome recovery, and idempotency across process restart",
-    "production custody and service topology",
-    "explicit Q-004 and Q-006 decisions"
+    "implementation and deployment evidence for the approved production custody and service topology",
+    "final independent production GO review"
   ],
   "redaction": {
     "rawKeysIncluded": false,
