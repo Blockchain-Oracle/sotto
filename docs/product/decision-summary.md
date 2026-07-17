@@ -67,6 +67,11 @@
   temporary provider, not an upstream FTPtech relay/provider. The later
   external-agent run establishes that signer boundary, but neither run
   establishes upstream interoperability.
+- Lighthouse now returns the accepted external-agent settlement anonymously at
+  its public transaction endpoint. Its public index had advanced beyond that
+  transaction when rechecked on July 17. The later human-wallet settlement was
+  still ahead of the public cursor and remains indexing-pending rather than
+  failed.
 
 ## Spike Decision Inputs
 
@@ -93,7 +98,6 @@
 
 - Private receipt reader set.
 - Production wallet connector deployment and custody boundary.
-- Public explorer evidence for the accepted Canton Coin transfer.
 - Durable PostgreSQL-backed delivery, unknown-outcome recovery, and replay
   state.
 - Final web/API/MCP/worker/database/queue/Coolify topology and a reviewed

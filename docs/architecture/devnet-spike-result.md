@@ -14,10 +14,12 @@ external signing, Five North settlement, provider reconciliation, and authentic
 paid `200`. The signer/funding-authority blocker, human prepare/effect/hash
 gate, and Q-005 human-approval path are closed for the spike.
 
-Production remains blocked by public explorer visibility, a production wallet
-connector and custody boundary, durable PostgreSQL-backed delivery/recovery, the
-production topology, and decisions Q-004 and Q-006. Upstream relay equivalence
-is also not established.
+The accepted external-agent settlement is now independently visible through the
+public Lighthouse explorer, closing the public-settlement-visibility gate.
+Production remains blocked by a production wallet connector and custody
+boundary, durable PostgreSQL-backed delivery/recovery, the production topology,
+and decisions Q-004 and Q-006. Upstream relay equivalence is also not
+established.
 
 ## Source And Evidence
 
@@ -244,9 +246,14 @@ evidence.
 
 For the external-agent purchase, payer, agent, and provider could each read the
 private purchase context. The outsider read found zero matching contexts, and
-the outsider's direct transaction lookup returned `404`. Lighthouse also
-returned `404` while its index was stale, so public explorer visibility is not
-proven.
+the outsider's direct transaction lookup returned `404`. Lighthouse initially
+returned `404` while its public index was stale. On July 17, a fresh anonymous
+query returned HTTP `200` for the exact accepted update at record time
+`2026-07-16T12:55:47.113641Z`; the public cursor had advanced to
+`2026-07-17T02:57:48.73869Z`. Public settlement visibility is therefore proven
+for the accepted external-agent Canton Coin transfer without exposing the
+party-scoped purchase context. The later human-wallet update remains ahead of
+that public cursor and is classified as indexing-pending, not failed.
 
 The atomic context was visible to agent, owner, payer, and provider. The reduced
 policy was visible to agent, owner, and payer, but not provider. A fresh
@@ -282,8 +289,10 @@ spike boundary.
   proves exact human approval, signing, settlement, and delivery on Five North;
   Loop compatibility and production connector custody remain unproven.
 - Outsider private-context absence and outsider direct-transaction `404` are
-  proven for the external-agent update. Public explorer/Scan visibility is not:
-  Lighthouse returned `404` while its index was stale.
+  proven for the external-agent update. Lighthouse now returns that exact
+  settlement publicly with HTTP `200`. Public indexing remains asynchronous; the
+  later human-wallet update was still ahead of the explorer cursor at the July
+  17 recheck.
 - The provider-failure check used a stopped temporary provider after successful
   deliveries. It proves settlement/delivery separation and no automatic
   repayment, but not first-delivery failure handling in a durable runtime.
@@ -317,6 +326,6 @@ spike boundary.
 
 The spike must not yet authorize marketplace, Composer, CLI/MCP, bounded-agent,
 or Coolify production implementation. The signer/funding-authority and
-wallet-neutral human-payment paths are no longer blockers. Next work is public
-settlement observation, durable PostgreSQL-backed delivery/recovery and the
-production wallet/process topology, plus explicit decisions Q-004 and Q-006.
+wallet-neutral human-payment and public-settlement-visibility paths are no
+longer blockers. Next work is durable PostgreSQL-backed delivery/recovery and
+the production wallet/process topology, plus explicit decisions Q-004 and Q-006.

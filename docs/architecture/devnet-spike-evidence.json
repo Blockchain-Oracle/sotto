@@ -312,7 +312,7 @@
     "doesNotProve": [
       "Loop compatibility",
       "production wallet connector custody",
-      "public explorer settlement visibility",
+      "public explorer visibility for this later human update; indexing was still pending at the July 17 recheck",
       "PostgreSQL-backed delivery recovery",
       "upstream relay interoperability",
       "production topology"
@@ -417,12 +417,12 @@
       "one real external-agent-only bounded purchase on Five North",
       "one Canton transaction containing capability consumption, payer transfer, private context, and replacement capability",
       "exact paid delivery and byte-identical in-process replay without a second payment",
-      "prepare-only direct payer-transfer authority separation"
+      "prepare-only direct payer-transfer authority separation",
+      "anonymous public Lighthouse visibility for the accepted settlement"
     ],
     "doesNotProve": [
       "production wallet custody",
       "one-call human wallet approval",
-      "public explorer settlement visibility",
       "durable delivery recovery across process restart",
       "production topology"
     ]
@@ -467,11 +467,13 @@
       "outsider": { "context": 0, "transaction": "ABSENT_HTTP_404" },
       "publicExplorer": {
         "host": "lighthouse.devnet.cantonloop.com",
-        "queriedAt": "2026-07-16T13:28:46Z",
-        "transactionHttpStatus": 404,
-        "latestIndexedRecordTime": "2026-07-15T05:03:54.799667Z",
-        "indexState": "stale-at-query-time",
-        "verdict": "NOT_PUBLICLY_VISIBLE_AT_QUERY_TIME"
+        "queriedAt": "2026-07-17T15:00:36Z",
+        "transactionHttpStatus": 200,
+        "transactionRecordTime": "2026-07-16T12:55:47.113641Z",
+        "latestIndexedUpdateId": "1220bbc15c8fd25b8f2fca1cac34f875b95be4cbd212d4e6424acbac2c59af11206e",
+        "latestIndexedRecordTime": "2026-07-17T02:57:48.73869Z",
+        "indexState": "indexed",
+        "verdict": "PUBLICLY_VISIBLE"
       }
     },
     "provesStakeholderSemantics": true,
@@ -481,7 +483,7 @@
     "historicalPublicExplorerSettlement": "not-proven",
     "outsiderEventLookup": "external-agent update returned HTTP 404 to the outsider",
     "outsiderDirectLookup": "external-agent private context count was zero for the outsider",
-    "publicExplorerSettlement": "not-proven; Lighthouse returned HTTP 404 while its latest indexed record time was stale"
+    "publicExplorerSettlement": "proven for the accepted external-agent update; anonymous Lighthouse lookup returned HTTP 200 after its index advanced"
   },
   "deliveryFailure": {
     "providerUnavailableAfterPriorSuccessfulDeliveries": true,
@@ -528,7 +530,6 @@
   ],
   "blockingGates": [
     "production wallet connector deployment and custody boundary; the wallet-neutral reference connector is proven only for the spike",
-    "public settlement visibility; outsider-private-context absence is proven but Lighthouse settlement visibility is not",
     "durable PostgreSQL-backed delivery, unknown-outcome recovery, and idempotency across process restart",
     "production custody and service topology",
     "explicit Q-004 and Q-006 decisions"

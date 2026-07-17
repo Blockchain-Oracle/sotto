@@ -26,7 +26,9 @@ The research spike has now produced:
    missing payer authority, the payer control prepared, and execution remained
    disabled; and
 5. party-scoped private-context visibility for payer, agent, and provider, with
-   an outsider seeing no context and receiving `404` for the transaction; and
+   an outsider seeing no context and receiving `404`, while the accepted
+   settlement is independently visible through the public Lighthouse explorer;
+   and
 6. a real policy-free Five North human prepare-only path whose complete Token
    effects and participant-provided hash passed independent verification, with
    no wallet approval, signature, execution, settlement, or Canton Coin debit;
@@ -36,8 +38,8 @@ The research spike has now produced:
    process, settled on Five North, reconciled from the provider view, and
    unlocked the authentic JSON `200`.
 
-The spike's signer/funding-authority blocker is closed. The production gate is
-still `NO_GO`: public explorer visibility, production wallet custody and
+The spike's signer/funding-authority and public-settlement-visibility blockers
+are closed. The production gate is still `NO_GO`: production wallet custody and
 connector deployment, durable PostgreSQL-backed delivery/recovery, the
 production topology, and decisions Q-004 and Q-006 remain open. The
 [redacted spike result](docs/architecture/devnet-spike-result.md) records the
