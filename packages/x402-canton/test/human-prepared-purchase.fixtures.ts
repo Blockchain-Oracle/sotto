@@ -41,6 +41,33 @@ export async function humanPreparedPurchaseCommandInputs(
   ]);
 }
 
+export async function humanPreparedPurchaseCommandInputsWithUnusedDisclosures() {
+  const intent = await authenticatedHumanPurchaseIntent();
+  const response = externalFactoryResponse(intent as never);
+  const packageId = intent.packageSelection.packageIds[0];
+  const unused = (contractId: string, templateId: string) => ({
+    contractId,
+    createdEventBlob: Buffer.from(`unused:${contractId}`).toString("base64"),
+    synchronizerId: intent.challenge.synchronizerId,
+    templateId: `${packageId}:${templateId}`,
+  });
+  return commandInputsForIntent(
+    intent,
+    [humanHoldingEntry("00holding-a", "0.3250000000")],
+    {
+      ...response,
+      choiceContext: {
+        ...response.choiceContext,
+        disclosedContracts: [
+          ...response.choiceContext.disclosedContracts,
+          unused("00round", "Splice.Round:OpenMiningRound"),
+          unused("00rules", "Splice.AmuletRules:AmuletRules"),
+        ],
+      },
+    },
+  );
+}
+
 export async function humanPreparedPurchaseCommandInputsFor(
   contracts: unknown[],
 ) {
@@ -62,12 +89,13 @@ export async function humanPreparedPurchaseCommandInputsWithWindow(
 async function commandInputsForIntent(
   intent: HumanPurchaseLedgerIntent,
   contracts: unknown[],
+  registryResponse: unknown = externalFactoryResponse(intent as never),
 ) {
   const holdings = await createHumanPurchaseHoldingObserver(
     humanHoldingReader(contracts),
   )(intent);
   const registry = await createHumanTransferFactoryObserver(async () =>
-    responseBytes(externalFactoryResponse(intent as never)),
+    responseBytes(registryResponse),
   )(intent, holdings);
   const request = buildHumanPurchasePrepareRequest(intent, holdings, registry);
   return { intent, request };

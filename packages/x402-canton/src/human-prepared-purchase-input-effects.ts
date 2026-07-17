@@ -43,9 +43,9 @@ function validateDisclosures(
   }
   for (const [contractId, disclosure] of disclosures) {
     const input = metadata.inputContracts.get(contractId);
+    if (input === undefined) continue;
     const eventBlob = metadata.inputEventBlobs.get(contractId);
     if (
-      input === undefined ||
       eventBlob === undefined ||
       !Buffer.from(eventBlob).equals(
         Buffer.from(disclosure.createdEventBlob, "base64"),

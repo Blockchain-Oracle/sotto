@@ -4,6 +4,7 @@ import { HUMAN_PURCHASE_NOW } from "./human-purchase-commitment.fixtures.js";
 import {
   humanPreparedPurchaseBytes,
   humanPreparedPurchaseCommandInputs,
+  humanPreparedPurchaseCommandInputsWithUnusedDisclosures,
   rootOnlyHumanPreparedPurchaseBytes,
 } from "./human-prepared-purchase.fixtures.js";
 
@@ -34,5 +35,38 @@ describe("human prepared transfer effects", () => {
         request,
       ),
     ).toThrow(/prepared.*effect/iu);
+  });
+
+  it("accepts authenticated registry disclosures omitted when unused", async () => {
+    const { intent, request } =
+      await humanPreparedPurchaseCommandInputsWithUnusedDisclosures();
+
+    expect(() =>
+      inspectHumanPreparedPurchaseStructure(
+        humanPreparedPurchaseBytes(intent, request),
+        intent,
+        request,
+      ),
+    ).not.toThrow();
+  });
+
+  it("rejects a changed blob for a disclosure used by the transaction", async () => {
+    const { intent, request } = await humanPreparedPurchaseCommandInputs();
+    const holdingId =
+      request.commands[0].ExerciseCommand.choiceArgument.transfer
+        .inputHoldingCids[0];
+    const bytes = humanPreparedPurchaseBytes(intent, request, (prepared) => {
+      const input = prepared.metadata?.inputContracts.find(
+        (candidate) =>
+          candidate.contract.oneofKind === "v1" &&
+          candidate.contract.v1.contractId === holdingId,
+      );
+      if (input === undefined) throw new Error("test holding input is absent");
+      input.eventBlob = new TextEncoder().encode("changed-used-disclosure");
+    });
+
+    expect(() =>
+      inspectHumanPreparedPurchaseStructure(bytes, intent, request),
+    ).toThrow(/prepared human disclosed metadata input does not match/u);
   });
 });
