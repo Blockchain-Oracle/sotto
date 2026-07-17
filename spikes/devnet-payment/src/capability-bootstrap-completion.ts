@@ -1,4 +1,3 @@
-import type { BoundedCapabilityBootstrapRequest } from "@sotto/x402-canton";
 import { isGoogleRpcStatusCode } from "./canton-status-code.js";
 import {
   completionExactKeys as exactKeys,
@@ -10,6 +9,12 @@ export type CapabilityBootstrapCompletionQuery = Readonly<{
   beginExclusive: number;
   limit: 1_000;
   parties: readonly [string];
+  userId: string;
+}>;
+
+export type CommandCompletionIdentity = Readonly<{
+  actAs: readonly [string];
+  commandId: string;
   userId: string;
 }>;
 
@@ -33,7 +38,7 @@ type CompletionReaderInput = Readonly<{
   beginExclusive: number;
   readLedgerEndOffset: () => Promise<number>;
   readPage: (query: CapabilityBootstrapCompletionQuery) => Promise<unknown>;
-  request: BoundedCapabilityBootstrapRequest;
+  request: CommandCompletionIdentity;
 }>;
 
 function completionValue(value: unknown): Record<string, unknown> {
