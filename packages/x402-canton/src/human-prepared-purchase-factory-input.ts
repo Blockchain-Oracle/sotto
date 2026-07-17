@@ -7,6 +7,31 @@ import {
   preparedScalar,
 } from "./prepared-purchase-effect-values.js";
 
+function validateArgumentIdentifier(
+  input: Create,
+  intent: HumanPurchaseLedgerIntent,
+): void {
+  const recordId =
+    input.argument?.sum.oneofKind === "record"
+      ? input.argument.sum.record.recordId
+      : undefined;
+  const [, moduleName, entityName] =
+    intent.tokenFactory.creationTemplateId.split(":");
+  const selectedPackageId = intent.packageSelection.packageIds[0];
+  if (
+    recordId === undefined ||
+    !moduleName ||
+    !entityName ||
+    recordId.packageId !== selectedPackageId ||
+    recordId.moduleName !== moduleName ||
+    recordId.entityName !== entityName
+  ) {
+    throw new Error(
+      "prepared human metadata TransferFactory effect identifier does not match",
+    );
+  }
+}
+
 export function validateHumanPreparedFactoryInput(
   input: Create,
   intent: HumanPurchaseLedgerIntent,
@@ -21,11 +46,11 @@ export function validateHumanPreparedFactoryInput(
       "prepared human metadata TransferFactory identity does not match",
     );
   }
+  validateArgumentIdentifier(input, intent);
   const argument = preparedRecord(
     input.argument,
     ["dso"],
     "human metadata TransferFactory",
-    intent.tokenFactory.creationTemplateId,
   );
   preparedScalar(
     argument.get("dso"),

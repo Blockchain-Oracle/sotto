@@ -141,9 +141,10 @@ export function humanPreparedPurchaseInputs(
       intent.tokenFactory.contractId,
       "splice-amulet",
       intent.tokenFactory.creationTemplateId,
-      fixtureRecord(intent.tokenFactory.creationTemplateId, [
-        ["dso", fixtureScalar("party", admin)],
-      ]),
+      fixtureRecord(
+        `${packageId}:Splice.ExternalPartyAmuletRules:ExternalPartyAmuletRules`,
+        [["dso", fixtureScalar("party", admin)]],
+      ),
       [admin],
       [admin],
       1,
