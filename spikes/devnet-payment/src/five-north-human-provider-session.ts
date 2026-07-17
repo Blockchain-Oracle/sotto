@@ -2,17 +2,18 @@ import type {
   HumanPaymentFetcher,
   HumanPaymentFetchRequest,
 } from "@sotto/x402-canton";
+import { startCloudflareQuickTunnel } from "./cloudflare-quick-tunnel.js";
 import {
-  startCloudflareQuickTunnel,
-  type CloudflareQuickTunnel,
-} from "./cloudflare-quick-tunnel.js";
+  acquireResolvableCloudflareQuickTunnel,
+  type CloudflareTunnelOriginResolver,
+} from "./cloudflare-quick-tunnel-resolution.js";
 import { readinessParty } from "./five-north-capability-readiness-validation.js";
+import { closeFiveNorthHumanProviderResources } from "./five-north-human-provider-cleanup.js";
 import { createPaidResourceHandler, startPaidProvider } from "./provider.js";
 
 const AMOUNT_ATOMIC = "2500000000";
 const HUMAN_WINDOW_SECONDS = 600;
 const PAID_PATH = "/paid/weather";
-const PROVIDER_CLOSE_TIMEOUT_MS = 5_000;
 const READINESS_TIMEOUT_MS = 20_000;
 type Fetcher = (url: string, init?: RequestInit) => Promise<Response>;
 type ProviderHandle = Readonly<{
@@ -28,6 +29,7 @@ type StartProvider = (
 ) => Promise<ProviderHandle>;
 type Dependencies = Readonly<{
   fetcher: Fetcher;
+  resolveOrigin?: CloudflareTunnelOriginResolver;
   startProvider: StartProvider;
   startTunnel: typeof startCloudflareQuickTunnel;
 }>;
@@ -113,42 +115,6 @@ function createUnsignedFetcher(
   };
 }
 
-async function closeSession(
-  provider: ProviderHandle | undefined,
-  tunnel: CloudflareQuickTunnel,
-): Promise<void> {
-  let tunnelError: unknown;
-  try {
-    await tunnel.close();
-  } catch (error) {
-    tunnelError = error;
-  }
-  try {
-    if (provider !== undefined) {
-      await new Promise<void>((resolve, reject) => {
-        let settled = false;
-        const finish = (complete: () => void) => {
-          if (settled) return;
-          settled = true;
-          clearTimeout(timer);
-          complete();
-        };
-        const timer = setTimeout(
-          () => finish(resolve),
-          PROVIDER_CLOSE_TIMEOUT_MS,
-        );
-        void provider.close().then(
-          () => finish(resolve),
-          (error: unknown) => finish(() => reject(error)),
-        );
-      });
-    }
-  } catch (error) {
-    if (tunnelError === undefined) throw error;
-  }
-  if (tunnelError !== undefined) throw tunnelError;
-}
-
 export async function startFiveNorthHumanProviderSession(
   input: Readonly<{
     dsoParty: string;
@@ -182,10 +148,11 @@ export async function startFiveNorthHumanProviderSession(
   if (new Set([payerParty, providerParty, dsoParty]).size !== 3) {
     throw new Error("human provider Parties must be distinct");
   }
-  const tunnel = await dependencies.startTunnel({
-    port: input.port,
-    signal: input.signal,
-  });
+  const tunnel = await acquireResolvableCloudflareQuickTunnel(
+    { port: input.port, signal: input.signal },
+    dependencies.startTunnel,
+    dependencies.resolveOrigin,
+  );
   let provider: ProviderHandle | undefined;
   try {
     const resourceUrl = `${tunnel.origin}${PAID_PATH}`;
@@ -213,10 +180,11 @@ export async function startFiveNorthHumanProviderSession(
     return Object.freeze({
       resourceUrl,
       fetchAuthorized: createUnsignedFetcher(dependencies.fetcher, resourceUrl),
-      close: () => (closed ??= closeSession(provider, tunnel)),
+      close: () =>
+        (closed ??= closeFiveNorthHumanProviderResources(provider, tunnel)),
     });
   } catch (error) {
-    await closeSession(provider, tunnel);
+    await closeFiveNorthHumanProviderResources(provider, tunnel);
     throw error;
   }
 }

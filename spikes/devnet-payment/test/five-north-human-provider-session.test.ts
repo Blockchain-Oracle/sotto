@@ -68,6 +68,7 @@ describe("Five North read-only human provider session", () => {
       },
       {
         fetcher,
+        resolveOrigin: async () => undefined,
         startProvider,
         startTunnel: async () => {
           events.push("tunnel-start");
@@ -113,6 +114,7 @@ describe("Five North read-only human provider session", () => {
         },
         {
           fetcher: vi.fn(),
+          resolveOrigin: async () => undefined,
           startProvider: async () => {
             throw new Error("private bind detail");
           },
@@ -124,6 +126,71 @@ describe("Five North read-only human provider session", () => {
       ),
     ).rejects.toThrow();
     expect(closeTunnel).toHaveBeenCalledOnce();
+  });
+
+  it("recycles a quick tunnel whose assigned hostname does not resolve", async () => {
+    vi.useFakeTimers();
+    const events: string[] = [];
+    const firstClose = vi.fn(async () => {
+      events.push("first-tunnel-close");
+    });
+    const liveClose = vi.fn(async () => {
+      events.push("live-tunnel-close");
+    });
+    const startTunnel = vi
+      .fn()
+      .mockResolvedValueOnce({
+        close: firstClose,
+        origin: "https://missing-name.trycloudflare.com" as const,
+      })
+      .mockResolvedValueOnce({
+        close: liveClose,
+        origin: "https://live-name.trycloudflare.com" as const,
+      });
+    let handler!: (request: Request) => Promise<Response>;
+    const pending = startFiveNorthHumanProviderSession(
+      {
+        dsoParty: DSO,
+        payerParty: PAYER,
+        port: 8_791,
+        providerParty: PROVIDER,
+        signal: new AbortController().signal,
+        synchronizerId: SYNCHRONIZER,
+      },
+      {
+        fetcher: async (url, init) =>
+          handler(
+            new Request(url, {
+              ...(init?.method === undefined ? {} : { method: init.method }),
+            }),
+          ),
+        resolveOrigin: async (hostname) => {
+          events.push(`resolve:${hostname}`);
+          if (hostname.startsWith("missing-")) throw new Error("ENOTFOUND");
+        },
+        startProvider: async (input) => {
+          handler = input.handler;
+          return {
+            close: async () => undefined,
+            localUrl: "http://127.0.0.1:8791/paid/weather",
+          };
+        },
+        startTunnel,
+      },
+    );
+
+    await vi.advanceTimersByTimeAsync(30_001);
+    const session = await pending;
+
+    expect(session.resourceUrl).toBe(
+      "https://live-name.trycloudflare.com/paid/weather",
+    );
+    expect(events).toContain("resolve:missing-name.trycloudflare.com");
+    expect(events).toContain("first-tunnel-close");
+    expect(events.at(-1)).toBe("resolve:live-name.trycloudflare.com");
+    expect(startTunnel).toHaveBeenCalledTimes(2);
+    await session.close();
+    expect(liveClose).toHaveBeenCalledOnce();
   });
 
   it("stops the public tunnel before bounding a hung provider close", async () => {
@@ -151,6 +218,7 @@ describe("Five North read-only human provider session", () => {
             headers: { "PAYMENT-REQUIRED": "challenge" },
             status: 402,
           }),
+        resolveOrigin: async () => undefined,
         startProvider: async () => ({
           close: closeProvider,
           localUrl: "http://127.0.0.1:8791/paid/weather",
