@@ -8,14 +8,16 @@ Date: 2026-07-17 (original payment run: 2026-07-13)
 external-agent-only bounded purchase, private Daml state, atomic settlement and
 capability reduction, exact paid delivery, cached replay without a second
 submission, a matched prepare-only direct-transfer authority control, and a
-fully verified policy-free human preparation on Five North. The signer/funding-
-authority blocker and the human prepare/effect/hash gate are closed for the
-spike.
+fully verified policy-free human preparation on Five North. It now also proves
+one wallet-neutral policy-free human purchase with exact isolated approval,
+external signing, Five North settlement, provider reconciliation, and authentic
+paid `200`. The signer/funding-authority blocker, human prepare/effect/hash
+gate, and Q-005 human-approval path are closed for the spike.
 
-Production remains blocked by exact human approval, signing, execution,
-settlement and paid delivery, public explorer visibility, durable
-PostgreSQL-backed delivery/recovery, the production topology, and decisions
-Q-004 through Q-006. Upstream relay equivalence is also not established.
+Production remains blocked by public explorer visibility, a production wallet
+connector and custody boundary, durable PostgreSQL-backed delivery/recovery, the
+production topology, and decisions Q-004 and Q-006. Upstream relay equivalence
+is also not established.
 
 ## Source And Evidence
 
@@ -25,6 +27,14 @@ Q-004 through Q-006. Upstream relay equivalence is also not established.
   `ac2c60907ee020757f0daf8c2512322630d73227`.
 - External-agent purchase implementation checkpoints: `d0d2d40` and `3780b22`.
 - Human prepare-only verification commit: `d5a0cf3`.
+- The first human-wallet settlement ran from exact clean source `85cb16e`. It
+  settled but did not deliver after the provider-scoped transaction redacted its
+  command ID and the over-strict verifier closed the temporary tunnel.
+- The successful human-wallet run used exact clean source
+  `711a0dec066c3d9a78f0f8366d0570ce0073bfda`, which contains the reviewed
+  provider-private reconciliation fix. That exact source passed 2,252 TypeScript
+  tests across 292 files, every repository guard, and all 23 Daml Script suites
+  before the live run.
 - The live external-agent purchase recorded `d12363f` as its tracked source
   commit. Prepared-transaction verifier and provider changes were still dirty
   and uncommitted during that run, so neither later implementation checkpoint is
@@ -120,9 +130,48 @@ transaction, request body, or paid response body.
   requested no wallet approval, performed no signing operation, made zero
   execute calls, submitted no settlement, performed no paid retry, and caused no
   Canton Coin debit.
-- This closes the human preparation/effect/hash gate only. It does not prove
-  approval UX, a wallet-held signature, execution, settlement, authentic paid
-  delivery, Loop compatibility, or production custody.
+- That prepare-only operation closes the human preparation/effect/hash gate
+  only. By itself it does not prove approval UX, a wallet-held signature,
+  execution, settlement, authentic paid delivery, Loop compatibility, or
+  production custody. The subsequent live purchase below closes the first four
+  of those gaps for the wallet-neutral reference connector.
+
+## Proven Live Human-Wallet Purchase
+
+- On July 17, exact clean source `711a0de` observed a fresh x402 `402` and
+  prepared the same verified Five North Token transfer through the
+  wallet-neutral reference connector. The isolated wallet displayed the exact
+  GET route, recipient, network, synchronizer, package, expiry, 0.25 CC
+  principal, 0.075 CC fee ceiling, and 0.325 CC total-debit ceiling before
+  approval.
+- The wallet signed with the external payer key outside the Sotto application.
+  The application received only the verified signature and submitted the
+  prepared transaction; it never received the raw key or payer `actAs`
+  authority.
+- Operation
+  `sha256:8495604bb388be8265b9563195dec07f12ee6ca75dacfc38324a691e9b298f0d`
+  completed at offset `4424017` with accepted update
+  `1220a2a5b72959666535582010566f00153f8b60a0a72f75c2f65579aeb0950aca37`. The
+  provider-scoped view independently matched the update, synchronizer, exact
+  SendV2 choice, payer authority, input holding, x402 commitments, and exact
+  0.25 CC provider holding.
+- The identical paid HTTP retry returned authentic JSON `200`. Its 251-byte body
+  was retained only as hash
+  `sha256:5bd8cc6d4fe24ca9b674b9bd778394184da1c79ea2c12e212ff50c793decbcca`; the
+  response body itself is not tracked.
+- The owner-only journal durably contains intent, approval-requested,
+  signature-verified, execution-started, successful completion,
+  settlement-reconciled, and delivery records. A later recovery returned
+  terminal `delivered` without resubmitting or re-signing.
+- The preceding operation
+  `sha256:1fe4760aa7c66acebda2bf898c3deace878a229cf9dd34e904cf4467099ed41a` also
+  settled at offset `4423778`, but its paid retry never ran because an
+  over-strict provider-view command-ID check failed and closed the ephemeral
+  tunnel. Recovery proved that exact update and recorded it honestly as
+  `settled-undelivered`; no replay was attempted.
+- This proves the wallet-neutral reference path, not Loop compatibility, a
+  production wallet service, production custody operations, public explorer
+  visibility, or PostgreSQL-grade delivery recovery.
 
 ## Network And Adapter Boundary
 
@@ -134,8 +183,10 @@ transaction, request body, or paid response body.
 - The original July 13 settlement used a narrow Ledger API v2
   `AmuletRules_Transfer` adapter. The external-agent remediation exercised the
   Sotto `Purchase` capability and nested standard token transfer through the
-  direct Five North adapter and temporary Sotto provider. No upstream FTPtech
-  relay or provider was used, so upstream interoperability is not established.
+  direct Five North adapter and temporary Sotto provider. The human-wallet flow
+  exercised the deployed standard `TransferPreapproval_SendV2` path through the
+  external payer and another temporary Sotto provider. No upstream FTPtech relay
+  or provider was used, so upstream interoperability is not established.
 
 ## Earlier July 13 Live Evidence
 
@@ -178,6 +229,10 @@ transaction, request body, or paid response body.
 | Wallet capability create update      | `12203c28c0e7986e52e2198b1b3401deccbdb5897f7b4a27ade589d2b2d396494496`                                                                       |
 | Wallet-created capability            | `0025b865a38a3a1cea1c730549e2c281f9b8073cdc3b1bf3b1199f7aa48057f877ca121220380798b67236d566550aed355fd3688d0df4f1f5369215726d92753f121b8e4e` |
 | External-agent purchase update       | `1220a389588fc2b677ce956c03af93f65ce537b29aea244e815022cde54b492811e3`                                                                       |
+| Human settled-undelivered update     | `1220bd602df1ef8b5e817988aabf2713800577f5b2a31ded8054dd39e845cf3a6b21`                                                                       |
+| Human delivered purchase operation   | `sha256:8495604bb388be8265b9563195dec07f12ee6ca75dacfc38324a691e9b298f0d`                                                                    |
+| Human delivered purchase update      | `1220a2a5b72959666535582010566f00153f8b60a0a72f75c2f65579aeb0950aca37`                                                                       |
+| Human paid response hash             | `sha256:5bd8cc6d4fe24ca9b674b9bd778394184da1c79ea2c12e212ff50c793decbcca`                                                                    |
 
 The payment amount was 0.2500000000 test Canton Coin. The baseline settlement
 was recorded at `2026-07-13T06:37:38.471765Z`; the atomic settlement was
@@ -223,22 +278,25 @@ spike boundary.
 - Loop and Seaport are authenticated and Seaport exposes custom DAR upload, but
   the Personal workspace has no validator configuration. The Loop party belongs
   to a different participant topology and was rejected as an unknown informee by
-  the Five North transfer path. The reference-wallet human preparation now
-  passes complete effect and hash verification, but exact human approval,
-  signing, settlement, and delivery are not proven.
+  the Five North transfer path. The wallet-neutral reference connector now
+  proves exact human approval, signing, settlement, and delivery on Five North;
+  Loop compatibility and production connector custody remain unproven.
 - Outsider private-context absence and outsider direct-transaction `404` are
   proven for the external-agent update. Public explorer/Scan visibility is not:
   Lighthouse returned `404` while its index was stale.
 - The provider-failure check used a stopped temporary provider after successful
   deliveries. It proves settlement/delivery separation and no automatic
   repayment, but not first-delivery failure handling in a durable runtime.
-- The latest provider retry and unknown-delivery state is explicitly
-  process-memory spike state. A process restart loses that coordination;
-  PostgreSQL-backed delivery, replay, and recovery state is required before
-  production.
-- Pre/post authoritative balance snapshots, the exact raw challenge hash, and
-  the paid-response hash were not preserved. Same-command submission replay and
-  a genuinely ambiguous submission outcome were not exercised live.
+- The human path now persists an owner-only append-only journal through terminal
+  delivery and can recover completion and settlement after restart. The
+  provider's delivery claim/cache and temporary tunnel remain process-local; the
+  first human settlement demonstrated that a closed ephemeral origin cannot be
+  resumed. PostgreSQL-backed delivery, replay, and recovery state is still
+  required before production.
+- Pre/post authoritative balance snapshots and the exact raw challenge bytes
+  were not preserved. The human paid-response hash is preserved, while the
+  earlier July 13 response hash is not. Same-command submission replay and a
+  genuinely ambiguous submission outcome were not exercised live.
 
 ## Decision Inputs
 
@@ -248,19 +306,17 @@ spike boundary.
 - Q-004 remains unresolved. The current audience proof covers payer, agent, and
   provider with outsider absence, but it does not select the production receipt
   readers.
-- Q-005 remains unresolved. The reference-wallet path now prepares and verifies
-  the exact Five North transfer, but it has not approved, signed, executed, or
-  delivered that payment. Loop is authenticated on a different participant
-  topology and did not authorize the same Five North payment.
+- Q-005 is resolved for the spike through the wallet-neutral reference
+  connector: the exact Five North transfer was approved, signed, executed,
+  reconciled, and delivered. Loop compatibility and production wallet custody
+  remain separate deployment questions.
 - Q-006 remains unresolved. Durable PostgreSQL delivery/recovery and the final
   process/database/queue topology are not selected.
 
 ## Gate Consequence
 
 The spike must not yet authorize marketplace, Composer, CLI/MCP, bounded-agent,
-or Coolify production implementation. The signer/funding-authority proof is no
-longer the blocker, and the human preparation/effect/hash gate is complete. Next
-work is exact wallet-neutral human approval, signing, execution, settlement and
-paid delivery, followed by public settlement observation, durable PostgreSQL-
-backed delivery/recovery and production topology, and explicit decisions Q-004
-through Q-006.
+or Coolify production implementation. The signer/funding-authority and
+wallet-neutral human-payment paths are no longer blockers. Next work is public
+settlement observation, durable PostgreSQL-backed delivery/recovery and the
+production wallet/process topology, plus explicit decisions Q-004 and Q-006.

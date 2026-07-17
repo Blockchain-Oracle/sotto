@@ -29,13 +29,17 @@ The research spike has now produced:
    an outsider seeing no context and receiving `404` for the transaction; and
 6. a real policy-free Five North human prepare-only path whose complete Token
    effects and participant-provided hash passed independent verification, with
-   no wallet approval, signature, execution, settlement, or Canton Coin debit.
+   no wallet approval, signature, execution, settlement, or Canton Coin debit;
+   and
+7. a real policy-free human-wallet purchase in which an isolated reference
+   wallet approved the exact request and debit bounds, signed outside the Sotto
+   process, settled on Five North, reconciled from the provider view, and
+   unlocked the authentic JSON `200`.
 
 The spike's signer/funding-authority blocker is closed. The production gate is
-still `NO_GO`: exact human wallet approval, signing, execution, settlement and
-delivery, public explorer visibility, durable PostgreSQL-backed
-delivery/recovery, the production topology, and decisions Q-004 through Q-006
-remain open. The
+still `NO_GO`: public explorer visibility, production wallet custody and
+connector deployment, durable PostgreSQL-backed delivery/recovery, the
+production topology, and decisions Q-004 and Q-006 remain open. The
 [redacted spike result](docs/architecture/devnet-spike-result.md) records the
 evidence and remaining blockers.
 

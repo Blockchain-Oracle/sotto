@@ -1,13 +1,14 @@
 {
   "schemaVersion": 2,
-  "recordedAt": "2026-07-17T09:19:48Z",
+  "recordedAt": "2026-07-17T14:33:16Z",
   "verdict": "NO_GO",
   "source": {
-    "implementationCommit": "d5a0cf30c01af05b349dc0910f3bd46d6a16aa93",
+    "implementationCommit": "711a0dec066c3d9a78f0f8366d0570ce0073bfda",
     "implementationCommits": {
       "externalAgentPurchaseHardening": "d0d2d40d24b07784355ae2557a972b63a1d73130",
       "pinnedFiveNorthHoldingAcceptance": "3780b220de9b44b20c2cdcab92314c706721236c",
-      "humanPrepareOnlyVerification": "d5a0cf30c01af05b349dc0910f3bd46d6a16aa93"
+      "humanPrepareOnlyVerification": "d5a0cf30c01af05b349dc0910f3bd46d6a16aa93",
+      "humanWalletPurchase": "711a0dec066c3d9a78f0f8366d0570ce0073bfda"
     },
     "historicalImplementationCommit": "ba1173c92f6bca30abd2692365671e00344c845b",
     "initialPostRunCommit": "01d2d2acad4596fdae9c55601399902fb95543e7",
@@ -39,6 +40,15 @@
       "repositoryGuards": "passed",
       "verdict": "passed"
     },
+    "humanWalletVerification": {
+      "appliesToCommit": "711a0dec066c3d9a78f0f8366d0570ce0073bfda",
+      "testFilesPassed": 292,
+      "testsPassed": 2252,
+      "damlScriptSuitesPassed": 23,
+      "repositoryGuards": "passed",
+      "independentReview": "READY",
+      "verdict": "passed"
+    },
     "toolchain": {
       "damlSdk": "3.5.2",
       "dpm": "1.0.21",
@@ -64,6 +74,11 @@
       "payer": "external-party wallet key outside the Sotto application",
       "agent": "external-party wallet key with agent authority and no payer actAs",
       "provider": "participant-hosted Sotto provider"
+    },
+    "humanWalletPurchaseBoundary": {
+      "payer": "external-party key held by the isolated wallet process",
+      "application": "no payer key and no payer actAs authority",
+      "provider": "participant-hosted Sotto provider"
     }
   },
   "compatibility": {
@@ -72,13 +87,14 @@
     "preparedTransactionVerification": {
       "historicalBaseline": "not-used; the original spike submitted a typed direct Ledger API command",
       "externalAgentPurchase": "used; the dirty live verifier decoded and checked the actual prepared transaction before the external agent signed it, while stricter post-run false-acceptance coverage is preserved in d0d2d40d24b07784355ae2557a972b63a1d73130",
-      "humanPrepareOnly": "used at d5a0cf30c01af05b349dc0910f3bd46d6a16aa93; complete real Five North Token effects and the independently recomputed Canton V2 hash matched before any wallet approval or signing"
+      "humanPrepareOnly": "used at d5a0cf30c01af05b349dc0910f3bd46d6a16aa93; complete real Five North Token effects and the independently recomputed Canton V2 hash matched before any wallet approval or signing",
+      "humanWalletPurchase": "used at 711a0dec066c3d9a78f0f8366d0570ce0073bfda; the same complete effects and independently recomputed Canton V2 hash matched before the isolated wallet approved and signed"
     },
-    "liveBridgeRoutePreservation": "not-proven at execution; fixed and unit-tested in the post-run implementation commit",
+    "liveBridgeRoutePreservation": "not-proven during the July 13 execution; fixed and unit-tested in the post-run implementation commit",
     "relayUsed": false,
     "upstreamRelayEquivalence": "not-proven",
-    "externalPartySigner": "proven for one payer-wallet-signed capability create and one external-agent-only bounded purchase; production connector custody remains unproven",
-    "nonCustody": "the payer key remained outside the Sotto application for the external-agent purchase; the reference-wallet process still held the payer key during capability creation, and production wallet custody is not proven"
+    "externalPartySigner": "proven for one payer-wallet-signed capability create, one external-agent-only bounded purchase, and one policy-free human-wallet purchase; production connector custody remains unproven",
+    "nonCustody": "the payer key remained outside the Sotto application for the external-agent and human-wallet purchases; the isolated reference-wallet process held the payer key, and production wallet custody is not proven"
   },
   "request": {
     "method": "GET",
@@ -87,7 +103,7 @@
     "resourceHash": "sha256:378ffac76ed18ec41008ada186fc638c2d97d1340281a17b13ae1f9c2fd00046",
     "canonicalUrl": "redacted",
     "challengeHash": "not-captured",
-    "paidResponseHash": "not-captured"
+    "paidResponseHash": "not-captured for the July 13 payment; the July 17 human-wallet response is recorded separately"
   },
   "baselinePayment": {
     "attemptId": "sha256:0b12cd116a897ad29b99d8f1ef9a70fc0c8aa0e721c33f13e84dfde74e4a1204",
@@ -212,6 +228,94 @@
       "authentic paid delivery",
       "Loop compatibility",
       "production wallet custody"
+    ]
+  },
+  "humanWalletPurchase": {
+    "schema": "sotto-live-human-wallet-purchase-evidence-v1",
+    "recordedDate": "2026-07-17",
+    "sourceCommit": "711a0dec066c3d9a78f0f8366d0570ce0073bfda",
+    "connector": "wallet-sdk-reference",
+    "authorizationMode": "human-wallet",
+    "status": "paid-resource-delivered",
+    "operationId": "sha256:8495604bb388be8265b9563195dec07f12ee6ca75dacfc38324a691e9b298f0d",
+    "commandId": "sotto-human-purchase-v1-951e210f7825a35b5ea0eed25e68fe82968efb24a90d4441c1f68333228b04d6",
+    "attemptId": "sha256:ca80ac1736ddff1a92f5ed9ebc71c67c2e3f7b2c3f2223dc15c41c6645006c2e",
+    "challengeId": "sha256:f0da40ea656d78974e4df72e306a7ec70949ece1c4be116f53e47928de838c21",
+    "requestCommitment": "sha256:d30769aff14fdf9404b34e29eb8e130a722b071ca847512516224159869650fc",
+    "purchaseCommitment": "sha256:951e210f7825a35b5ea0eed25e68fe82968efb24a90d4441c1f68333228b04d6",
+    "transferContextHash": "sha256:b50eb375514525bd46eae76acd13db93dcfd516fae4c06c4820a541ecfb984ea",
+    "preparedTransactionHash": "sha256:db63af228d25cc190829052b647bf3ee2d1daf1418e69e7035fed54b8f50a552",
+    "amountAtomic": "2500000000",
+    "maximumFeeAtomic": "750000000",
+    "maximumTotalDebitAtomic": "3250000000",
+    "selectedPackage": {
+      "packageId": "73e9ffdb6b0bc19a5f67372b118103926da11547ab9109eccae47e4e4cc35d6f",
+      "packageName": "splice-amulet",
+      "packageVersion": "0.1.21"
+    },
+    "wallet": {
+      "approvalRequests": 1,
+      "signingOperations": 1,
+      "rawPayerKeyEnteredApplication": false,
+      "exactSummaryApproved": true,
+      "oneTimeHandoffIdIncluded": false
+    },
+    "completion": {
+      "classification": "SUCCEEDED",
+      "offset": 4424017,
+      "updateId": "1220a2a5b72959666535582010566f00153f8b60a0a72f75c2f65579aeb0950aca37"
+    },
+    "providerSettlement": {
+      "reconciled": true,
+      "providerCommandIdVisibility": "redacted-empty",
+      "exactUpdateAndSynchronizer": true,
+      "exactSendV2AuthorityAndMetadata": true,
+      "exactLinkedProviderHolding": true
+    },
+    "delivery": {
+      "status": 200,
+      "bodyByteCount": 251,
+      "bodySha256": "sha256:5bd8cc6d4fe24ca9b674b9bd778394184da1c79ea2c12e212ff50c793decbcca",
+      "bodyIncluded": false,
+      "secondSubmissionForThisOperation": false
+    },
+    "journal": {
+      "stages": [
+        "intent",
+        "approval-requested",
+        "signature-verified",
+        "execution-started",
+        "completion",
+        "settlement-reconciled",
+        "delivery"
+      ],
+      "directoryMode": "0700",
+      "recordMode": "0600",
+      "terminalRecovery": "delivered"
+    },
+    "precedingSettledUndeliveredOperation": {
+      "sourceCommit": "85cb16e54c4253c7b68c9767c17d6cfbc342d930",
+      "operationId": "sha256:1fe4760aa7c66acebda2bf898c3deace878a229cf9dd34e904cf4467099ed41a",
+      "completionOffset": 4423778,
+      "updateId": "1220bd602df1ef8b5e817988aabf2713800577f5b2a31ded8054dd39e845cf3a6b21",
+      "recoveredStatus": "settled-undelivered",
+      "paidRetryAttempted": false,
+      "cause": "provider-scoped command ID was privacy-redacted and the over-strict verifier closed the ephemeral provider before delivery",
+      "replayed": false
+    },
+    "proves": [
+      "one policy-free wallet-neutral human purchase on Five North",
+      "exact wallet approval and external signing without the payer key entering Sotto",
+      "provider-scoped settlement reconciliation and authentic paid JSON delivery",
+      "durable honest separation between successful settlement and delivery"
+    ],
+    "doesNotProve": [
+      "Loop compatibility",
+      "production wallet connector custody",
+      "public explorer settlement visibility",
+      "PostgreSQL-backed delivery recovery",
+      "upstream relay interoperability",
+      "production topology"
     ]
   },
   "externalAgentPurchase": {
@@ -384,7 +488,14 @@
     "settlementStillReconciled": true,
     "allowanceRestored": false,
     "secondPaymentSubmitted": false,
-    "firstDeliveryFailure": "not-proven",
+    "firstDeliveryFailure": "one human settlement was durably classified settled-undelivered before any paid retry; a provider 5xx or timeout after retry dispatch remains unproven",
+    "humanWalletRecovery": {
+      "settledUndeliveredRecoveredAcrossProcess": true,
+      "deliveredTerminalRecoveredAcrossProcess": true,
+      "ledgerResubmittedByRecovery": false,
+      "walletResignedByRecovery": false,
+      "productionDurability": "owner-only filesystem journal only; production requires PostgreSQL"
+    },
     "externalAgentReplay": {
       "exactProofHttpStatus": 200,
       "cachedResponseIdentical": true,
@@ -416,11 +527,11 @@
     "explicit Q-003 through Q-006 decisions"
   ],
   "blockingGates": [
-    "wallet-neutral human approval, signing, execution, settlement, and paid delivery on Five North",
+    "production wallet connector deployment and custody boundary; the wallet-neutral reference connector is proven only for the spike",
     "public settlement visibility; outsider-private-context absence is proven but Lighthouse settlement visibility is not",
     "durable PostgreSQL-backed delivery, unknown-outcome recovery, and idempotency across process restart",
     "production custody and service topology",
-    "explicit Q-004 through Q-006 decisions"
+    "explicit Q-004 and Q-006 decisions"
   ],
   "redaction": {
     "rawKeysIncluded": false,

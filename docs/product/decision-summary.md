@@ -50,6 +50,17 @@
   preparation. Its complete effects and official Canton V2 hash verified, with
   no wallet approval, signature, execution, settlement, delivery, or Canton Coin
   debit.
+- A subsequent policy-free human-wallet run used the wallet-neutral reference
+  connector. The isolated payer wallet displayed and approved the exact GET,
+  recipient, 0.25 CC principal, 0.075 CC fee ceiling, 0.325 CC debit ceiling,
+  network, synchronizer, package, and expiry; it then signed outside the Sotto
+  process. Five North accepted the transaction, the provider independently
+  reconciled its exact SendV2 and holding, and the identical paid retry returned
+  the authentic JSON `200`.
+- The immediately preceding human attempt also settled but lost delivery after
+  an over-strict provider-view `commandId` check closed its ephemeral tunnel.
+  Its owner-only journal recovered the exact successful update as
+  `settled-undelivered`; it was not replayed or mislabeled as delivered.
 - Seaport Personal supports custom DAR upload but currently has no configured
   validator; its Loop party is not hosted by the Five North spike participant.
 - The original July 13 paid path used Sotto's direct Five North adapter and
@@ -68,19 +79,20 @@
   provider. An outsider saw zero contexts and received `404` for direct
   transaction lookup. This is evidence, not a production receipt-audience
   decision.
-- Q-005: the reference-wallet path now prepares and fully verifies the exact
-  Five North transfer, but approval, signing, execution, settlement, and paid
-  delivery remain open. The current Loop party is on a different participant
-  topology and did not complete the same Five North payment.
+- Q-005: resolved for the spike through the wallet-neutral reference connector.
+  One exact Five North human purchase was approved, signed, executed,
+  reconciled, and delivered as `200` without the payer key entering the Sotto
+  process. This does not prove Loop compatibility, production wallet custody, or
+  a deployed connector service.
 - Q-006: no production web/API/MCP/worker/database/queue topology is selected
-  under `NO_GO`. The spike retry/unknown-delivery state is process memory only;
-  durable PostgreSQL-backed delivery and recovery remain unproven.
+  under `NO_GO`. The spike now has an owner-only append-only recovery journal,
+  including terminal delivered recovery, but its temporary provider and
+  in-memory delivery claims are not PostgreSQL-backed production durability.
 
 ## Open Gates
 
 - Private receipt reader set.
-- Compatible human approval, signing, execution, settlement, and paid-delivery
-  path.
+- Production wallet connector deployment and custody boundary.
 - Public explorer evidence for the accepted Canton Coin transfer.
 - Durable PostgreSQL-backed delivery, unknown-outcome recovery, and replay
   state.
