@@ -26,11 +26,20 @@ describe("human prepared transfer authority effects", () => {
     ).rejects.toThrow(/prepared/iu);
   });
 
-  it("rejects a stakeholder substituted for the DSO fetch actor", async () => {
+  it("rejects the Featured App fetch without the DSO", async () => {
     await expect(
       inspectHumanPreparedMutation((prepared) => {
         const fetch = humanPreparedFetch(prepared, "6");
         fetch.actingParties = [fetch.stakeholders[1]!];
+      }),
+    ).rejects.toThrow(/prepared/iu);
+  });
+
+  it("rejects the Featured App fetch without its provider", async () => {
+    await expect(
+      inspectHumanPreparedMutation((prepared) => {
+        const fetch = humanPreparedFetch(prepared, "6");
+        fetch.actingParties = [fetch.actingParties[0]!];
       }),
     ).rejects.toThrow(/prepared/iu);
   });

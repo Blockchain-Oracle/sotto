@@ -239,7 +239,7 @@ export function humanPreparedPurchaseNodes(
       ),
       signatories: [admin],
       stakeholders: [admin, EXTERNAL_PREAPPROVAL_THIRD_PARTY],
-      actingParties: [admin],
+      actingParties: [admin, EXTERNAL_PREAPPROVAL_THIRD_PARTY],
     }),
     ...eventEntries.map(([nodeId, owner]) =>
       node(nodeId!, {

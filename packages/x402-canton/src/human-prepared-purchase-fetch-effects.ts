@@ -16,6 +16,7 @@ function validateFetch(
     ? T
     : never,
   intent: HumanPurchaseLedgerIntent,
+  preapprovalProvider: string,
   holding: boolean,
 ): void {
   const actual = fetch.templateId;
@@ -44,19 +45,19 @@ function validateFetch(
     input.stakeholders,
     "human fetch stakeholder",
   );
-  if (holding) {
-    preparedParties(
-      fetch.actingParties,
-      [intent.tokenFactory.expectedAdmin, intent.challenge.payerParty],
-      "human Holding fetch acting",
-    );
-  } else {
-    preparedParties(
-      fetch.actingParties,
-      [intent.tokenFactory.expectedAdmin],
-      "human fetch acting",
-    );
-  }
+  const featuredAppRight =
+    source.moduleName === "Splice.Amulet" &&
+    source.entityName === "FeaturedAppRight";
+  const expectedActingParties = holding
+    ? [intent.tokenFactory.expectedAdmin, intent.challenge.payerParty]
+    : featuredAppRight
+      ? [...new Set([intent.tokenFactory.expectedAdmin, preapprovalProvider])]
+      : [intent.tokenFactory.expectedAdmin];
+  preparedParties(
+    fetch.actingParties,
+    expectedActingParties,
+    holding ? "human Holding fetch acting" : "human fetch acting",
+  );
 }
 
 export function validateHumanPreparedFetchEffects(
@@ -66,6 +67,7 @@ export function validateHumanPreparedFetchEffects(
   intent: HumanPurchaseLedgerIntent,
   contextIds: ReadonlyMap<string, string>,
   inputHoldingCids: readonly string[],
+  preapprovalProvider: string,
 ): ReadonlySet<string> {
   const expected = [
     contextIds.get("external-party-config-state"),
@@ -105,6 +107,7 @@ export function validateHumanPreparedFetchEffects(
       fetch,
       input,
       intent,
+      preapprovalProvider,
       inputHoldingCids.includes(fetch.contractId),
     );
   }

@@ -171,6 +171,7 @@ export function validateHumanPreparedTransferEffects(
     intent,
     contextIds,
     command.transfer.inputHoldingCids,
+    preapprovalProvider,
   );
   return Object.freeze({
     preapproval,
