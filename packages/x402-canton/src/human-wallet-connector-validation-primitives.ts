@@ -1,13 +1,13 @@
+import { types } from "node:util";
 import type {
   HumanWalletConnectorKind,
   HumanWalletSigningKey,
 } from "./human-wallet-connector-types.js";
 import {
-  exactKeys,
   identifier,
-  objectValue,
   RAW_SHA256_PATTERN,
 } from "./purchase-commitment-primitives.js";
+import { exactWalletDataRecord } from "./wallet-data-record.js";
 
 const MAXIMUM_CAPABILITY_VALUES = 16;
 const FINGERPRINT = /^1220[0-9a-f]{64}$/u;
@@ -27,13 +27,30 @@ export function exactHumanWalletStrings(
     identifier(entry, label, 512),
 ): string[] {
   if (
+    types.isProxy(value) ||
     !Array.isArray(value) ||
-    value.length > MAXIMUM_CAPABILITY_VALUES ||
-    Object.keys(value).length !== value.length
+    value.length > MAXIMUM_CAPABILITY_VALUES
   ) {
     throw new Error(`${label} must be a bounded array`);
   }
-  const result = value.map(validate);
+  const expectedKeys = [
+    ...Array.from({ length: value.length }, (_, index) => String(index)),
+    "length",
+  ].sort();
+  const ownKeys = Reflect.ownKeys(value);
+  if (
+    ownKeys.some((key) => typeof key !== "string") ||
+    JSON.stringify([...ownKeys].sort()) !== JSON.stringify(expectedKeys)
+  ) {
+    throw new Error(`${label} must be an exact array`);
+  }
+  const result = Array.from({ length: value.length }, (_, index) => {
+    const descriptor = Object.getOwnPropertyDescriptor(value, String(index));
+    if (descriptor === undefined || !("value" in descriptor)) {
+      throw new Error(`${label} must use own data properties`);
+    }
+    return validate(descriptor.value);
+  });
   if (new Set(result).size !== result.length) {
     throw new Error(`${label} must be unique`);
   }
@@ -95,9 +112,8 @@ export function humanWalletNetwork(value: unknown): `canton:${string}` {
 export function parseHumanWalletSigningKey(
   value: unknown,
 ): ParsedHumanWalletSigningKey {
-  const key = objectValue(value, "human wallet signing key");
-  exactKeys(
-    key,
+  const key = exactWalletDataRecord(
+    value,
     [
       "fingerprint",
       "publicKeyFormat",

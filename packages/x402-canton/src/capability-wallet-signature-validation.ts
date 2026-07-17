@@ -3,7 +3,7 @@ import type {
   CapabilityWalletPublicKeyFormat,
   CapabilityWalletRegisteredPublicKeyQuery,
 } from "./capability-wallet-signature-types.js";
-import { exactKeys, objectValue } from "./purchase-commitment-primitives.js";
+import { exactWalletDataRecord } from "./wallet-data-record.js";
 
 const CANONICAL_BASE64 =
   /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/u;
@@ -65,9 +65,8 @@ export function parseCapabilityWalletRegisteredPublicKey(
   publicKey: Buffer;
   publicKeyFormat: CapabilityWalletPublicKeyFormat;
 }> {
-  const record = objectValue(value, "registered capability wallet public key");
-  exactKeys(
-    record,
+  const record = exactWalletDataRecord(
+    value,
     ["fingerprint", "publicKey", "publicKeyFormat"],
     "registered capability wallet public key",
   );

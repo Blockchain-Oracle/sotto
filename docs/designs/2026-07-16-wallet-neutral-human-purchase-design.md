@@ -297,6 +297,33 @@ policy fields remain hidden. Projection reads only the authenticated intent and
 32-byte digest; copying the prepared bytes is reserved for the later one-use
 session claim.
 
+The connector handoff uses `sotto-human-wallet-request-v1`, requires an exact
+`sotto-human-wallet-response-v1`, and returns only a redacted
+`sotto-human-wallet-signing-session-v1` handle. Its deadline is the earliest of
+the challenge expiry, the caller's bounded timeout, and ten minutes. Connector
+capabilities are rediscovered before authority is consumed and must remain
+set-equivalent to preflight; reordered advertised sets are allowed, while any
+identity, package, network, synchronizer, key, signing, hashing, or approval
+change fails before the wallet prompt.
+
+The preflight and hash-verified prepared purchase are committed together through
+synchronous one-use tickets before the approval journal or connector is called.
+The 60-second preflight lifetime therefore bounds entry into the signing
+session, not the human review itself. Rejection, timeout after prompting,
+journal failure, malformed response, invalid key, or invalid signature consumes
+that session and cannot silently prompt again. A rediscovery failure before the
+commit leaves the still-valid authorities reusable.
+
+The request gives the connector an isolated copy of the exact prepared bytes and
+echoes the random session ID plus prepared hash. Sotto retains a separate
+private copy, verifies the returned Ed25519 or P-256 signature locally over the
+exact 32-byte V2 prepared digest, resolves the registered payer key through the
+trusted topology boundary, and recomputes its Canton fingerprint. The public
+verified handle contains no signature, public key, topology data, prepared
+bytes, or purchase details. Only a private execution adapter can claim the
+original bytes and exact verified signature once, before the same
+challenge/session deadline.
+
 ## Execution And Recovery
 
 The wallet response is bound to one random, expiring, one-use session containing

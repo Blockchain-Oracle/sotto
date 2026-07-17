@@ -93,7 +93,23 @@ export function readHashVerifiedHumanPreparedPurchase(
 export function claimHashVerifiedHumanPreparedPurchase(
   candidate: unknown,
 ): ClaimedHashVerifiedHumanPreparedPurchase {
+  return prepareHashVerifiedHumanPreparedPurchaseClaim(candidate).commit();
+}
+
+/** @internal Human wallet-session construction only. */
+export function prepareHashVerifiedHumanPreparedPurchaseClaim(
+  candidate: unknown,
+) {
   const state = readState(candidate);
-  state.claimed = true;
-  return projectState(state);
+  const snapshot = projectState(state);
+  return Object.freeze({
+    snapshot,
+    commit: () => {
+      if (state.claimed) {
+        throw new Error("hash-verified human Purchase is already claimed");
+      }
+      state.claimed = true;
+      return snapshot;
+    },
+  });
 }

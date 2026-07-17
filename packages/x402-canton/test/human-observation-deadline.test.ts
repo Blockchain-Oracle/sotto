@@ -44,3 +44,19 @@ it("rejects malformed runtime options asynchronously", async () => {
     "human payer identity options are invalid",
   );
 });
+
+it("rejects accessor-backed runtime options without invocation", async () => {
+  const readTimeout = vi.fn(() => 10_000);
+  const options = {};
+  Object.defineProperty(options, "timeoutMilliseconds", {
+    enumerable: true,
+    get: readTimeout,
+  });
+  const work = vi.fn(async () => "unreachable");
+
+  await expect(
+    withHumanObservationDeadline("human payer identity", 10_000, options, work),
+  ).rejects.toThrow("human payer identity options are invalid");
+  expect(readTimeout).not.toHaveBeenCalled();
+  expect(work).not.toHaveBeenCalled();
+});

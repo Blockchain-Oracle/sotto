@@ -63,6 +63,7 @@ export function humanConnector(
 export function humanPreflightInput(
   capabilities: unknown = HUMAN_CONNECTOR_CAPABILITIES,
   expectedPackageId = HUMAN_PACKAGE_ID,
+  observePayerIdentity = humanPayerIdentityObserver(),
 ) {
   return {
     connector: humanConnector(capabilities),
@@ -70,7 +71,7 @@ export function humanPreflightInput(
     connectorKind: "wallet-sdk" as const,
     connectorOrigin: HUMAN_CONNECTOR_ORIGIN,
     expectedPackageId,
-    observePayerIdentity: humanPayerIdentityObserver(),
+    observePayerIdentity,
   };
 }
 

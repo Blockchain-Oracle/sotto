@@ -28,6 +28,23 @@ export type {
   HumanWalletUnsupportedReason,
   HumanWalletUnsupportedResult,
 } from "./human-wallet-connector-types.js";
+export { createHumanWalletSigningSession } from "./human-wallet-signing-session.js";
+export {
+  HUMAN_WALLET_SIGNING_REQUEST_VERSION,
+  HUMAN_WALLET_SIGNING_RESPONSE_VERSION,
+  HUMAN_WALLET_SIGNING_SESSION_VERSION,
+  MAX_HUMAN_WALLET_SIGNING_SESSION_MS,
+  type HumanWalletApprovalRequest,
+  type HumanWalletApprovalStarted,
+  type HumanWalletRegisteredPublicKeyQuery,
+  type HumanWalletRejectedSigningSession,
+  type HumanWalletSignatureEnvelope,
+  type HumanWalletSigningDependencies,
+  type HumanWalletSigningResult,
+  type HumanWalletSigningSessionInput,
+  type HumanWalletSigningSessionOptions,
+  type VerifiedHumanWalletSigningSession,
+} from "./human-wallet-signing-types.js";
 export {
   createHumanPaymentObserver,
   MAX_HUMAN_PAYMENT_FETCH_MS,

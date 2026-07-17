@@ -30,10 +30,15 @@ export type HumanPreparedPurchaseFixture = ReturnType<
 export async function humanPreparedPurchaseCommandInputs(
   options: HumanPurchaseFixtureOptions = {},
 ) {
-  return commandInputsForIntent(
-    await authenticatedHumanPurchaseIntent(options),
-    [humanHoldingEntry("00holding-a", "0.3250000000")],
-  );
+  const intent = await authenticatedHumanPurchaseIntent(options);
+  return commandInputsForIntent(intent, [
+    humanHoldingEntry(
+      "00holding-a",
+      "0.3250000000",
+      intent.challenge.payerParty,
+      intent.challenge.synchronizerId,
+    ),
+  ]);
 }
 
 export async function humanPreparedPurchaseCommandInputsFor(

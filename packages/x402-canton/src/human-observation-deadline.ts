@@ -1,3 +1,5 @@
+import { optionalWalletDataRecord } from "./wallet-data-record.js";
+
 export type HumanObservationOptions = Readonly<{
   signal?: AbortSignal;
   timeoutMilliseconds?: number;
@@ -24,16 +26,20 @@ export async function withHumanObservationDeadline<T>(
   options: HumanObservationOptions,
   work: (signal: AbortSignal) => Promise<T>,
 ): Promise<T> {
-  if (
-    typeof options !== "object" ||
-    options === null ||
-    Array.isArray(options)
-  ) {
+  let validated: Readonly<Record<string, unknown>>;
+  try {
+    validated = optionalWalletDataRecord(
+      options,
+      ["signal", "timeoutMilliseconds"],
+      `${label} options`,
+    );
+  } catch {
     throw new Error(`${label} options are invalid`);
   }
-  const callerSignal = options.signal;
-  const timeout = options.timeoutMilliseconds ?? maximumMilliseconds;
+  const callerSignal = validated.signal;
+  const timeout = validated.timeoutMilliseconds ?? maximumMilliseconds;
   if (
+    typeof timeout !== "number" ||
     !Number.isInteger(timeout) ||
     timeout < 1 ||
     timeout > maximumMilliseconds

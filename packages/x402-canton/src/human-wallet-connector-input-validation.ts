@@ -9,6 +9,7 @@ import {
   humanWalletPackageId,
 } from "./human-wallet-connector-validation-primitives.js";
 import { identifier } from "./purchase-commitment-primitives.js";
+import { exactWalletDataRecord } from "./wallet-data-record.js";
 
 export type ValidatedHumanWalletConnectorPreflightInput = Readonly<{
   connector: HumanWalletConnector;
@@ -19,41 +20,10 @@ export type ValidatedHumanWalletConnectorPreflightInput = Readonly<{
   observePayerIdentity: HumanWalletConnectorPreflightInput["observePayerIdentity"];
 }>;
 
-function exactDataRecord(
-  value: unknown,
-  keys: readonly string[],
-  label: string,
-): Readonly<Record<string, unknown>> {
-  if (
-    typeof value !== "object" ||
-    value === null ||
-    Array.isArray(value) ||
-    Object.getPrototypeOf(value) !== Object.prototype
-  ) {
-    throw new Error(`${label} must be a plain object`);
-  }
-  const ownKeys = Reflect.ownKeys(value);
-  if (
-    ownKeys.some((key) => typeof key !== "string") ||
-    JSON.stringify([...ownKeys].sort()) !== JSON.stringify([...keys].sort())
-  ) {
-    throw new Error(`${label} keys must match the approved contract`);
-  }
-  const result: Record<string, unknown> = {};
-  for (const key of keys) {
-    const descriptor = Object.getOwnPropertyDescriptor(value, key);
-    if (descriptor === undefined || !("value" in descriptor)) {
-      throw new Error(`${label} must use own data properties`);
-    }
-    result[key] = descriptor.value;
-  }
-  return Object.freeze(result);
-}
-
 export function validateHumanWalletConnectorPreflightInput(
   value: HumanWalletConnectorPreflightInput,
 ): ValidatedHumanWalletConnectorPreflightInput {
-  const input = exactDataRecord(
+  const input = exactWalletDataRecord(
     value,
     [
       "connector",
@@ -66,7 +36,7 @@ export function validateHumanWalletConnectorPreflightInput(
     "human wallet connector preflight input",
   );
   const source = input.connector;
-  const connector = exactDataRecord(
+  const connector = exactWalletDataRecord(
     source,
     ["discover", "requestApproval"],
     "human wallet connector",

@@ -1,8 +1,4 @@
-import {
-  exactKeys,
-  identifier,
-  objectValue,
-} from "./purchase-commitment-primitives.js";
+import { identifier } from "./purchase-commitment-primitives.js";
 import {
   capabilityWalletSignatureFormat,
   capabilityWalletSigningAlgorithm,
@@ -13,25 +9,35 @@ import {
   type AuthenticatedHumanPayerIdentity,
   type HumanPayerIdentityReader,
 } from "./human-payer-identity.js";
+import { exactWalletDataRecord } from "./wallet-data-record.js";
 
 const FINGERPRINT = /^1220[0-9a-f]{64}$/u;
 
 export function validateHumanPayerIdentityReader(
   value: HumanPayerIdentityReader,
 ): HumanPayerIdentityReader {
-  const record = objectValue(value, "human payer identity reader");
-  exactKeys(
-    record,
+  const record = exactWalletDataRecord(
+    value,
     ["readAuthenticatedSubject", "readPayerIdentity"],
     "human payer identity reader",
   );
+  const readAuthenticatedSubject = record.readAuthenticatedSubject;
+  const readPayerIdentity = record.readPayerIdentity;
   if (
-    typeof record.readAuthenticatedSubject !== "function" ||
-    typeof record.readPayerIdentity !== "function"
+    typeof readAuthenticatedSubject !== "function" ||
+    typeof readPayerIdentity !== "function"
   ) {
     throw new Error("human payer identity reader functions are required");
   }
-  return value;
+  const target = value as object;
+  return Object.freeze({
+    readAuthenticatedSubject: (options) =>
+      Reflect.apply(readAuthenticatedSubject, target, [
+        options,
+      ]) as Promise<unknown>,
+    readPayerIdentity: (options) =>
+      Reflect.apply(readPayerIdentity, target, [options]) as Promise<unknown>,
+  });
 }
 
 function cantonNetwork(value: unknown): `canton:${string}` {
@@ -47,9 +53,8 @@ export function parseHumanPayerIdentity(
   subjectHash: `sha256:${string}`,
   acquiredAt: string,
 ): AuthenticatedHumanPayerIdentity {
-  const record = objectValue(value, "human payer identity");
-  exactKeys(
-    record,
+  const record = exactWalletDataRecord(
+    value,
     [
       "keyPurpose",
       "network",

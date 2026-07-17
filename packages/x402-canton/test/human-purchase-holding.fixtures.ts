@@ -25,12 +25,17 @@ import { holdingEntry } from "./purchase-holding-observation.fixtures.js";
 
 let authorizationSequence = 0;
 
-export function humanHoldingEntry(contractId: string, amount: string) {
+export function humanHoldingEntry(
+  contractId: string,
+  amount: string,
+  owner = HUMAN_PAYER,
+  synchronizerId = HUMAN_SYNCHRONIZER,
+) {
   const entry = holdingEntry(contractId, amount);
   const active = entry.contractEntry.JsActiveContract;
-  active.synchronizerId = HUMAN_SYNCHRONIZER;
-  active.createdEvent.witnessParties = [HUMAN_PAYER];
-  active.createdEvent.interfaceViews[0]!.viewValue.owner = HUMAN_PAYER;
+  active.synchronizerId = synchronizerId;
+  active.createdEvent.witnessParties = [owner];
+  active.createdEvent.interfaceViews[0]!.viewValue.owner = owner;
   return entry;
 }
 

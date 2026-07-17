@@ -16,11 +16,8 @@ import {
   parseHumanWalletSigningKey,
   type ParsedHumanWalletSigningKey,
 } from "./human-wallet-connector-validation-primitives.js";
-import {
-  exactKeys,
-  identifier,
-  objectValue,
-} from "./purchase-commitment-primitives.js";
+import { identifier } from "./purchase-commitment-primitives.js";
+import { exactWalletDataRecord } from "./wallet-data-record.js";
 
 type ParsedCapabilities = Readonly<{
   approvalVersions: readonly string[];
@@ -54,9 +51,8 @@ function unsupported(
 }
 
 function parseCapabilities(value: unknown): ParsedCapabilities {
-  const record = objectValue(value, "human wallet capabilities");
-  exactKeys(
-    record,
+  const record = exactWalletDataRecord(
+    value,
     [
       "approvalVersions",
       "connectorId",
