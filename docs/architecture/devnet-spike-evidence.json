@@ -1,12 +1,13 @@
 {
   "schemaVersion": 2,
-  "recordedAt": "2026-07-16T14:23:28Z",
+  "recordedAt": "2026-07-17T09:19:48Z",
   "verdict": "NO_GO",
   "source": {
-    "implementationCommit": "3780b220de9b44b20c2cdcab92314c706721236c",
+    "implementationCommit": "d5a0cf30c01af05b349dc0910f3bd46d6a16aa93",
     "implementationCommits": {
       "externalAgentPurchaseHardening": "d0d2d40d24b07784355ae2557a972b63a1d73130",
-      "pinnedFiveNorthHoldingAcceptance": "3780b220de9b44b20c2cdcab92314c706721236c"
+      "pinnedFiveNorthHoldingAcceptance": "3780b220de9b44b20c2cdcab92314c706721236c",
+      "humanPrepareOnlyVerification": "d5a0cf30c01af05b349dc0910f3bd46d6a16aa93"
     },
     "historicalImplementationCommit": "ba1173c92f6bca30abd2692365671e00344c845b",
     "initialPostRunCommit": "01d2d2acad4596fdae9c55601399902fb95543e7",
@@ -70,7 +71,8 @@
     "settlementAdapter": "direct Ledger API v2 AmuletRules_Transfer",
     "preparedTransactionVerification": {
       "historicalBaseline": "not-used; the original spike submitted a typed direct Ledger API command",
-      "externalAgentPurchase": "used; the dirty live verifier decoded and checked the actual prepared transaction before the external agent signed it, while stricter post-run false-acceptance coverage is preserved in d0d2d40d24b07784355ae2557a972b63a1d73130"
+      "externalAgentPurchase": "used; the dirty live verifier decoded and checked the actual prepared transaction before the external agent signed it, while stricter post-run false-acceptance coverage is preserved in d0d2d40d24b07784355ae2557a972b63a1d73130",
+      "humanPrepareOnly": "used at d5a0cf30c01af05b349dc0910f3bd46d6a16aa93; complete real Five North Token effects and the independently recomputed Canton V2 hash matched before any wallet approval or signing"
     },
     "liveBridgeRoutePreservation": "not-proven at execution; fixed and unit-tested in the post-run implementation commit",
     "relayUsed": false,
@@ -168,6 +170,48 @@
       "production wallet custody",
       "funding",
       "settlement"
+    ]
+  },
+  "humanPrepareOnly": {
+    "schema": "sotto-live-human-prepare-only-evidence-v1",
+    "recordedDate": "2026-07-17",
+    "sourceCommit": "d5a0cf30c01af05b349dc0910f3bd46d6a16aa93",
+    "network": "Five North Canton DevNet",
+    "connectorPreflight": "wallet-sdk-reference payer identity and topology matched; approval was not requested",
+    "status": "prepared-hash-verified-not-signed",
+    "liveInputs": [
+      "fresh provider 402",
+      "payer-scoped active holdings",
+      "current authenticated package preference",
+      "current TransferFactory choice context",
+      "participant interactive preparation"
+    ],
+    "verification": [
+      "complete prepared transaction roots and descendant effects",
+      "exact package, party, contract, instrument, recipient, and amount identity",
+      "bounded fee and total-debit accounting",
+      "authoritative x402 metadata and time bounds",
+      "independent official Canton V2 prepared-transaction hash recomputation"
+    ],
+    "officialHashVerified": true,
+    "walletApprovalRequests": 0,
+    "signingOperations": 0,
+    "executeCalls": 0,
+    "settlementSubmitted": false,
+    "paidRetryAttempted": false,
+    "cantonCoinDebitOccurred": false,
+    "proves": [
+      "one real policy-free human transfer preparation on Five North",
+      "complete effect and accounting verification before wallet approval or signing",
+      "participant hash agreement with independent official recomputation"
+    ],
+    "doesNotProve": [
+      "human wallet approval",
+      "wallet-held signature",
+      "execution or settlement",
+      "authentic paid delivery",
+      "Loop compatibility",
+      "production wallet custody"
     ]
   },
   "externalAgentPurchase": {
@@ -372,7 +416,7 @@
     "explicit Q-003 through Q-006 decisions"
   ],
   "blockingGates": [
-    "wallet-neutral one-call human approval on Five North",
+    "wallet-neutral human approval, signing, execution, settlement, and paid delivery on Five North",
     "public settlement visibility; outsider-private-context absence is proven but Lighthouse settlement visibility is not",
     "durable PostgreSQL-backed delivery, unknown-outcome recovery, and idempotency across process restart",
     "production custody and service topology",

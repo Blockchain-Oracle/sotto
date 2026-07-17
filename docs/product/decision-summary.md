@@ -45,6 +45,11 @@
   agent with the exact missing-payer-authority oracle, while the payer control
   prepared. Execution was disabled for both controls, so this is not claimed as
   an executed rejection.
+- A later policy-free human prepare-only run used a real Five North `402`, payer
+  holdings, package preference, TransferFactory context, and interactive
+  preparation. Its complete effects and official Canton V2 hash verified, with
+  no wallet approval, signature, execution, settlement, delivery, or Canton Coin
+  debit.
 - Seaport Personal supports custom DAR upload but currently has no configured
   validator; its Loop party is not hosted by the Five North spike participant.
 - The original July 13 paid path used Sotto's direct Five North adapter and
@@ -63,9 +68,10 @@
   provider. An outsider saw zero contexts and received `404` for direct
   transaction lookup. This is evidence, not a production receipt-audience
   decision.
-- Q-005: the current Loop party is on a different participant topology and did
-  not complete the same Five North payment. Human one-call approval remains
-  unselected.
+- Q-005: the reference-wallet path now prepares and fully verifies the exact
+  Five North transfer, but approval, signing, execution, settlement, and paid
+  delivery remain open. The current Loop party is on a different participant
+  topology and did not complete the same Five North payment.
 - Q-006: no production web/API/MCP/worker/database/queue topology is selected
   under `NO_GO`. The spike retry/unknown-delivery state is process memory only;
   durable PostgreSQL-backed delivery and recovery remain unproven.
@@ -73,7 +79,8 @@
 ## Open Gates
 
 - Private receipt reader set.
-- Compatible human one-call approval path.
+- Compatible human approval, signing, execution, settlement, and paid-delivery
+  path.
 - Public explorer evidence for the accepted Canton Coin transfer.
 - Durable PostgreSQL-backed delivery, unknown-outcome recovery, and replay
   state.

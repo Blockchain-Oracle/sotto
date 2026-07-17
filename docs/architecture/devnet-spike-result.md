@@ -1,19 +1,21 @@
 # Five North DevNet Spike Result
 
-Date: 2026-07-16 (original payment run: 2026-07-13)
+Date: 2026-07-17 (original payment run: 2026-07-13)
 
 ## Verdict
 
 `NO_GO` for production planning. The research path now proves a real
 external-agent-only bounded purchase, private Daml state, atomic settlement and
 capability reduction, exact paid delivery, cached replay without a second
-submission, and a matched prepare-only direct-transfer authority control on Five
-North. The signer/funding-authority blocker is closed for the spike.
+submission, a matched prepare-only direct-transfer authority control, and a
+fully verified policy-free human preparation on Five North. The signer/funding-
+authority blocker and the human prepare/effect/hash gate are closed for the
+spike.
 
-Production remains blocked by the exact human one-call wallet path, public
-explorer visibility, durable PostgreSQL-backed delivery/recovery, the production
-topology, and decisions Q-004 through Q-006. Upstream relay equivalence is also
-not established.
+Production remains blocked by exact human approval, signing, execution,
+settlement and paid delivery, public explorer visibility, durable
+PostgreSQL-backed delivery/recovery, the production topology, and decisions
+Q-004 through Q-006. Upstream relay equivalence is also not established.
 
 ## Source And Evidence
 
@@ -22,6 +24,7 @@ not established.
 - Wallet-capability remediation commit:
   `ac2c60907ee020757f0daf8c2512322630d73227`.
 - External-agent purchase implementation checkpoints: `d0d2d40` and `3780b22`.
+- Human prepare-only verification commit: `d5a0cf3`.
 - The live external-agent purchase recorded `d12363f` as its tracked source
   commit. Prepared-transaction verifier and provider changes were still dirty
   and uncommitted during that run, so neither later implementation checkpoint is
@@ -101,6 +104,25 @@ transaction, request body, or paid response body.
   verifier, signer authorization, provider retry boundary, terminal recovery,
   and direct authority control. They are post-run snapshots rather than a
   retroactive exact source claim for the live purchase.
+
+## Proven Live Human Prepare-Only Gate
+
+- On July 17, the clean tracked source at `d5a0cf3` observed a fresh provider
+  `402`, authenticated the reference-wallet payer profile, selected live payer
+  holdings, acquired current package preference and TransferFactory context, and
+  requested one real Five North interactive preparation.
+- The verifier decoded the complete prepared Token transfer graph and checked
+  its roots, descendants, packages, parties, input contracts, result shapes,
+  recipient, instrument, amount, fee/debit accounting, metadata, and time
+  bounds. It then independently recomputed the official Canton V2 prepared-
+  transaction hash and matched the participant response.
+- The safe terminal status was `prepared-hash-verified-not-signed`. The path
+  requested no wallet approval, performed no signing operation, made zero
+  execute calls, submitted no settlement, performed no paid retry, and caused no
+  Canton Coin debit.
+- This closes the human preparation/effect/hash gate only. It does not prove
+  approval UX, a wallet-held signature, execution, settlement, authentic paid
+  delivery, Loop compatibility, or production custody.
 
 ## Network And Adapter Boundary
 
@@ -201,7 +223,9 @@ spike boundary.
 - Loop and Seaport are authenticated and Seaport exposes custom DAR upload, but
   the Personal workspace has no validator configuration. The Loop party belongs
   to a different participant topology and was rejected as an unknown informee by
-  the Five North transfer path. Exact human one-call payment is not proven.
+  the Five North transfer path. The reference-wallet human preparation now
+  passes complete effect and hash verification, but exact human approval,
+  signing, settlement, and delivery are not proven.
 - Outsider private-context absence and outsider direct-transaction `404` are
   proven for the external-agent update. Public explorer/Scan visibility is not:
   Lighthouse returned `404` while its index was stale.
@@ -224,7 +248,9 @@ spike boundary.
 - Q-004 remains unresolved. The current audience proof covers payer, agent, and
   provider with outsider absence, but it does not select the production receipt
   readers.
-- Q-005 remains unresolved. Loop is authenticated on a different participant
+- Q-005 remains unresolved. The reference-wallet path now prepares and verifies
+  the exact Five North transfer, but it has not approved, signed, executed, or
+  delivered that payment. Loop is authenticated on a different participant
   topology and did not authorize the same Five North payment.
 - Q-006 remains unresolved. Durable PostgreSQL delivery/recovery and the final
   process/database/queue topology are not selected.
@@ -233,7 +259,8 @@ spike boundary.
 
 The spike must not yet authorize marketplace, Composer, CLI/MCP, bounded-agent,
 or Coolify production implementation. The signer/funding-authority proof is no
-longer the blocker. Next work is the exact Five North-compatible human one-call
-approval route, public settlement observation, durable PostgreSQL-backed
-delivery/recovery and production topology, and explicit decisions Q-004 through
-Q-006.
+longer the blocker, and the human preparation/effect/hash gate is complete. Next
+work is exact wallet-neutral human approval, signing, execution, settlement and
+paid delivery, followed by public settlement observation, durable PostgreSQL-
+backed delivery/recovery and production topology, and explicit decisions Q-004
+through Q-006.
