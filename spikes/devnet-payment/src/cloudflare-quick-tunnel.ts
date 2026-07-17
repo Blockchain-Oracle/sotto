@@ -7,11 +7,23 @@ const STARTUP_TIMEOUT_MS = 30_000;
 const URL_PATTERN = /https:\/\/[A-Za-z0-9.-]+\.trycloudflare\.com/gu;
 const RATE_LIMIT_PATTERN =
   /(?:\b429\b|too many requests|rate[- ]limited|rate[- ]limit\s+(?:exceeded|reached))/iu;
+const authenticRateLimitErrors = new WeakSet<object>();
 
 export class CloudflareQuickTunnelRateLimitError extends Error {
   constructor() {
     super("Cloudflare quick tunnel rate limited");
+    authenticRateLimitErrors.add(this);
   }
+}
+
+export function isCloudflareQuickTunnelRateLimitError(
+  value: unknown,
+): value is CloudflareQuickTunnelRateLimitError {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    authenticRateLimitErrors.has(value)
+  );
 }
 
 export interface CloudflareTunnelProcess {

@@ -4,6 +4,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { readCleanSourceCheckpoint } from "./clean-source-checkpoint.js";
 import { readFiveNorthNetworkConfig } from "./config.js";
 import { readinessParty } from "./five-north-capability-readiness-validation.js";
+import { projectLiveFiveNorthHumanPrepareFailure } from "./live-five-north-human-prepare-failure.js";
 import { projectLiveFiveNorthHumanPrepareOutput } from "./live-five-north-human-prepare-output.js";
 import { runLiveFiveNorthHumanPrepare } from "./live-five-north-human-prepare.js";
 
@@ -55,8 +56,8 @@ if (
   process.argv[1] !== undefined &&
   import.meta.url === pathToFileURL(resolve(process.argv[1])).href
 ) {
-  void main().catch(() => {
-    console.error("Five North human read-only preparation failed");
+  void main().catch((error: unknown) => {
+    console.error(projectLiveFiveNorthHumanPrepareFailure(error));
     process.exitCode = 1;
   });
 }

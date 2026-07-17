@@ -1,7 +1,7 @@
 import { Resolver } from "node:dns/promises";
 import { isIP } from "node:net";
 import {
-  CloudflareQuickTunnelRateLimitError,
+  isCloudflareQuickTunnelRateLimitError,
   type CloudflareQuickTunnel,
 } from "./cloudflare-quick-tunnel.js";
 
@@ -168,7 +168,7 @@ export async function acquireResolvableCloudflareQuickTunnel(
       } catch (error) {
         active(input.signal);
         if (
-          !(error instanceof CloudflareQuickTunnelRateLimitError) ||
+          !isCloudflareQuickTunnelRateLimitError(error) ||
           rateLimitRetries >= MAXIMUM_RATE_LIMIT_RETRIES
         ) {
           throw error;
