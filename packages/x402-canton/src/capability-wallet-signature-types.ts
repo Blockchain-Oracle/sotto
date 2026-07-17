@@ -3,9 +3,9 @@ import type {
   CapabilityWalletSignatureFormat,
   CapabilityWalletSigningAlgorithm,
 } from "./capability-wallet-connector-types.js";
+import type { WalletPublicKeyFormat } from "./wallet-connector-types.js";
 
-export type CapabilityWalletPublicKeyFormat =
-  "PUBLIC_KEY_FORMAT_DER_SPKI" | "PUBLIC_KEY_FORMAT_RAW";
+export type CapabilityWalletPublicKeyFormat = WalletPublicKeyFormat;
 
 export type CapabilityWalletRegisteredPublicKeyQuery = Readonly<{
   party: string;

@@ -10,6 +10,25 @@ export {
   type HumanPayerIdentityReader,
 } from "./human-payer-identity.js";
 export {
+  createHumanWalletConnectorPreflight,
+  HUMAN_WALLET_CAPABILITIES_VERSION,
+  HUMAN_WALLET_PREFLIGHT_VERSION,
+  MAX_HUMAN_WALLET_PREFLIGHT_ACQUISITION_MS,
+  MAX_HUMAN_WALLET_PREFLIGHT_AGE_MS,
+} from "./human-wallet-connector-preflight.js";
+export type {
+  AuthenticatedHumanWalletConnectorPreflight,
+  HumanWalletCapabilities,
+  HumanWalletConnector,
+  HumanWalletConnectorKind,
+  HumanWalletConnectorPreflightInput,
+  HumanWalletConnectorPreflightResult,
+  HumanWalletPreflightOptions,
+  HumanWalletSigningKey,
+  HumanWalletUnsupportedReason,
+  HumanWalletUnsupportedResult,
+} from "./human-wallet-connector-types.js";
+export {
   createHumanPaymentObserver,
   MAX_HUMAN_PAYMENT_FETCH_MS,
   type HumanPaymentFetcher,

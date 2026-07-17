@@ -271,6 +271,20 @@ network, synchronizer, registered public-key fingerprint, algorithm, and key
 format. The connector and wallet identity must match that projection exactly;
 they cannot create or replace it.
 
+Pre-`402` negotiation uses `sotto-human-wallet-capabilities-v1` and returns an
+opaque `sotto-human-wallet-preflight-v1` handle. Discovery proves only that the
+registered connector advertises explicit human approval, prepared-transaction
+signing, V2 hashing, the reviewed expected Token package, and one exact
+registered signing-key tuple for the trusted payer identity. The public handle
+contains only a random ID, timestamp, connector ID/kind, and a credential-free
+canonical `https://`, `openrpc://`, or `wallet://` connector identity. Party,
+fingerprint, package, network, synchronizer, topology, subject, connector
+methods, and claim state remain process-private. The handle is bound to one
+purchase and later claimed for one signing session through synchronous
+prepare-ticket/commit-last transitions. After the `402`, challenge-scoped
+authenticated package selection remains authoritative and must match the
+preflight; preflight never replaces it.
+
 The approval summary is the fixed `sotto-human-purchase-approval-v1` allowlist.
 It shows `pay-for-api-call`, `human-wallet`, method, resource origin and path, a
 query-present boolean, provider, payer, amount, asset, maximum fee and total

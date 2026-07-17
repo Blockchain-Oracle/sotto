@@ -1,5 +1,11 @@
 import type { PreparedCapabilityBootstrapApproval } from "./prepared-capability-bootstrap-approval.js";
 import type { HashVerifiedPreparedCapabilityBootstrap } from "./prepared-capability-bootstrap-hash.js";
+import type {
+  PreparedWalletConnector,
+  WalletConnectorKind,
+  WalletSignatureFormat,
+  WalletSigningAlgorithm,
+} from "./wallet-connector-types.js";
 
 export const CAPABILITY_WALLET_CAPABILITIES_VERSION =
   "sotto-capability-wallet-capabilities-v1" as const;
@@ -17,13 +23,9 @@ export const CAPABILITY_WALLET_ECDSA_SIGNING_ALGORITHM =
   "SIGNING_ALGORITHM_SPEC_EC_DSA_SHA_256" as const;
 export const MAX_CAPABILITY_WALLET_SESSION_MS = 10 * 60 * 1_000;
 
-export type CapabilityWalletConnectorKind = "openrpc" | "wallet-sdk";
-export type CapabilityWalletSignatureFormat =
-  | typeof CAPABILITY_WALLET_ECDSA_SIGNATURE_FORMAT
-  | typeof CAPABILITY_WALLET_ED25519_SIGNATURE_FORMAT;
-export type CapabilityWalletSigningAlgorithm =
-  | typeof CAPABILITY_WALLET_ECDSA_SIGNING_ALGORITHM
-  | typeof CAPABILITY_WALLET_ED25519_SIGNING_ALGORITHM;
+export type CapabilityWalletConnectorKind = WalletConnectorKind;
+export type CapabilityWalletSignatureFormat = WalletSignatureFormat;
+export type CapabilityWalletSigningAlgorithm = WalletSigningAlgorithm;
 
 export type CapabilityWalletCapabilities = Readonly<{
   connectorId: string;
@@ -79,13 +81,8 @@ export type CapabilityWalletApprovedSessionState = {
   synchronizerId: string;
 };
 
-export type CapabilityWalletConnector = Readonly<{
-  discover: (options: Readonly<{ signal: AbortSignal }>) => Promise<unknown>;
-  requestApproval: (
-    request: CapabilityWalletApprovalRequest,
-    options: Readonly<{ signal: AbortSignal }>,
-  ) => Promise<unknown>;
-}>;
+export type CapabilityWalletConnector =
+  PreparedWalletConnector<CapabilityWalletApprovalRequest>;
 
 export type CapabilityWalletApprovalStarted = Readonly<{
   connectorId: string;
