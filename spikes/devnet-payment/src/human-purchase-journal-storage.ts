@@ -158,6 +158,7 @@ export async function loadHumanPurchaseJournalState(input: {
     operationId: input.operationId,
     settlementReconciled,
     signatureVerified,
+    sourceCommit: restored.sourceCommit,
     stage,
   }) as HumanPurchaseJournalState;
 }

@@ -15,9 +15,13 @@ import {
 export type LiveFiveNorthHumanPurchaseInput = Readonly<{
   keyFile: string;
   network: SpikeConfig["network"];
+  onJournalInitialized: (
+    journal: Readonly<{ operationId: string }>,
+  ) => void | Promise<void>;
   port: number;
   providerParty: string;
   signal: AbortSignal;
+  sourceCommit: string;
   workspaceRoot: string;
 }>;
 
@@ -29,6 +33,12 @@ function validate(input: LiveFiveNorthHumanPurchaseInput): void {
     input.port > 65_535
   ) {
     throw new Error("live Five North human provider port is invalid");
+  }
+  if (!/^[0-9a-f]{40}$/u.test(input.sourceCommit)) {
+    throw new Error("live Five North human source commit is invalid");
+  }
+  if (typeof input.onJournalInitialized !== "function") {
+    throw new Error("live Five North human journal callback is invalid");
   }
 }
 
@@ -134,8 +144,11 @@ async function runWithinDeadline(
     const journal = await dependencies.initializeJournal({
       beginExclusive,
       expectation: dependencies.exportSettlementExpectation(expectation),
+      sourceCommit: input.sourceCommit,
       workspaceRoot: input.workspaceRoot,
     });
+    await input.onJournalInitialized({ operationId: journal.operationId });
+    requireLiveHumanPurchaseActive(signal);
     return await executeLiveFiveNorthHumanPurchase({
       beginExclusive,
       completion,

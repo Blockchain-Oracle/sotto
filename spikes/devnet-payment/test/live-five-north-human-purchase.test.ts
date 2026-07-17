@@ -4,6 +4,7 @@ import {
   liveHumanPurchaseDependencies as dependencies,
   liveHumanPurchaseInput as input,
   OPERATION,
+  SOURCE_COMMIT,
   UPDATE,
 } from "./live-five-north-human-purchase.fixtures.js";
 
@@ -17,7 +18,10 @@ describe("live Five North human purchase", () => {
   it("settles one exact wallet-approved purchase and unlocks the authentic 200", async () => {
     const events: string[] = [];
     const ports = dependencies(events);
-    const result = await runLiveFiveNorthHumanPurchase(input(), ports as never);
+    const result = await runLiveFiveNorthHumanPurchase(
+      input(events),
+      ports as never,
+    );
 
     expect(result).toMatchObject({
       status: "paid-resource-delivered",
@@ -33,6 +37,7 @@ describe("live Five North human purchase", () => {
       "prepare",
       "completion-cursor",
       "journal-intent",
+      "journal-announced",
       "lease-start",
       "lease-owned",
       "approval",
@@ -56,6 +61,9 @@ describe("live Five North human purchase", () => {
       settlement: { authenticated: true },
       workspaceRoot: "/workspace",
     });
+    expect(ports.initializeJournal).toHaveBeenCalledWith(
+      expect.objectContaining({ sourceCommit: SOURCE_COMMIT }),
+    );
   });
 
   it.each([
@@ -97,6 +105,28 @@ describe("live Five North human purchase", () => {
     expect(events.filter((event) => event === "execute")).toHaveLength(1);
     expect(events).not.toContain("provider-transaction");
     expect(events).not.toContain("paid-retry");
+    expect(events.at(-1)).toBe("provider-close");
+  });
+
+  it("stops before wallet approval when the recoverable operation cannot be announced", async () => {
+    const events: string[] = [];
+    const candidate = input();
+
+    await expect(
+      runLiveFiveNorthHumanPurchase(
+        {
+          ...candidate,
+          onJournalInitialized: async () => {
+            throw new Error("stdout unavailable");
+          },
+        },
+        dependencies(events) as never,
+      ),
+    ).rejects.toThrow(/stdout unavailable/iu);
+
+    expect(events).toContain("journal-intent");
+    expect(events).not.toContain("approval");
+    expect(events).not.toContain("execute");
     expect(events.at(-1)).toBe("provider-close");
   });
 });

@@ -33,6 +33,7 @@ import {
 } from "./human-purchase-journal.fixtures.js";
 
 const now = "2026-07-17T08:00:00.000Z";
+const sourceCommit = "d".repeat(40);
 
 describe("owner-only human purchase journal", () => {
   let workspaceRoot: string;
@@ -51,6 +52,7 @@ describe("owner-only human purchase journal", () => {
     return initializeHumanPurchaseJournal({
       beginExclusive: 41,
       expectation: persistedExpectation(),
+      sourceCommit,
       workspaceRoot,
     });
   }
@@ -77,11 +79,26 @@ describe("owner-only human purchase journal", () => {
     });
     expect(state.stage).toBe("intent");
     expect(state.beginExclusive).toBe(41);
+    expect(state.sourceCommit).toBe(sourceCommit);
     expect(readAuthenticatedHumanSettlementExpectation(state.expectation)).toBe(
       state.expectation,
     );
     await expect(initialize()).rejects.toThrow();
   });
+
+  it.each(["", "main", "A".repeat(40), "a".repeat(39), "a".repeat(41)])(
+    "rejects invalid source commit %j",
+    async (candidate) => {
+      await expect(
+        initializeHumanPurchaseJournal({
+          beginExclusive: 41,
+          expectation: persistedExpectation(),
+          sourceCommit: candidate,
+          workspaceRoot,
+        }),
+      ).rejects.toThrow(/source commit/iu);
+    },
+  );
 
   it("persists and restores the exact complete hash-chained lifecycle", async () => {
     const { operationId } = await initialize();

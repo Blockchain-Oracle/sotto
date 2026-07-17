@@ -33,11 +33,13 @@ function operationId(value: unknown): HumanPurchaseOperationId {
 export async function initializeHumanPurchaseJournal(input: {
   beginExclusive: number;
   expectation: PersistedHumanSettlementExpectation;
+  sourceCommit: string;
   workspaceRoot: string;
 }) {
   const payload = canonicalHumanIntentPayload({
     beginExclusive: input.beginExclusive,
     expectation: input.expectation,
+    sourceCommit: input.sourceCommit,
   });
   const purchaseOperationId = humanPurchaseOperationId(
     payload.expectation.expectation.purchaseCommitment,

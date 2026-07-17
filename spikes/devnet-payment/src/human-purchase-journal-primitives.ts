@@ -10,6 +10,7 @@ const HASH = /^sha256:[0-9a-f]{64}$/u;
 const UPDATE_ID = /^1220[0-9a-f]{64}$/u;
 const UUID_V4 =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u;
+const SOURCE_COMMIT = /^[0-9a-f]{40}$/u;
 
 export function isMissingHumanJournalRecord(error: unknown): boolean {
   return (
@@ -103,6 +104,13 @@ export function humanJournalTimestamp(value: unknown): string {
     new Date(parsed).toISOString() !== value
   ) {
     throw new Error("human purchase journal timestamp is invalid");
+  }
+  return value;
+}
+
+export function humanJournalSourceCommit(value: unknown): string {
+  if (typeof value !== "string" || !SOURCE_COMMIT.test(value)) {
+    throw new Error("human purchase journal source commit is invalid");
   }
   return value;
 }

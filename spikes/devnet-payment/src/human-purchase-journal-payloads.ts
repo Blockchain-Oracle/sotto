@@ -8,6 +8,7 @@ import {
   humanJournalHash as hash,
   humanJournalIdentifier as identifier,
   humanJournalOffset as offset,
+  humanJournalSourceCommit as sourceCommit,
   humanJournalUuid as uuid,
 } from "./human-purchase-journal-primitives.js";
 import {
@@ -22,7 +23,7 @@ export function untrustedHumanIntentPayload(
 ): HumanPurchaseIntentPayload {
   const payload = exactObject(
     value,
-    ["beginExclusive", "expectation"],
+    ["beginExclusive", "expectation", "sourceCommit"],
     "human purchase intent payload",
   );
   const expectation = exactObject(
@@ -33,6 +34,7 @@ export function untrustedHumanIntentPayload(
   return Object.freeze({
     beginExclusive: offset(payload.beginExclusive, "human completion begin"),
     expectation: expectation as PersistedHumanSettlementExpectation,
+    sourceCommit: sourceCommit(payload.sourceCommit),
   });
 }
 
@@ -42,6 +44,7 @@ export function restoreHumanIntentPayload(value: HumanPurchaseIntentPayload) {
     beginExclusive: value.beginExclusive,
     expectation,
     persistedExpectation: exportHumanSettlementExpectation(expectation),
+    sourceCommit: value.sourceCommit,
   });
 }
 
@@ -51,6 +54,7 @@ export function canonicalHumanIntentPayload(value: unknown) {
   return Object.freeze({
     beginExclusive: restored.beginExclusive,
     expectation: restored.persistedExpectation,
+    sourceCommit: restored.sourceCommit,
   });
 }
 

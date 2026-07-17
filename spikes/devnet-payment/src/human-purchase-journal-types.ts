@@ -24,6 +24,7 @@ export type HumanPurchaseJournalHash = `sha256:${string}`;
 export type HumanPurchaseIntentPayload = Readonly<{
   beginExclusive: number;
   expectation: PersistedHumanSettlementExpectation;
+  sourceCommit: string;
 }>;
 export type HumanPurchaseApprovalPayload = Readonly<{
   sessionId: `sha256:${string}`;
@@ -89,5 +90,6 @@ export type HumanPurchaseJournalState = Readonly<{
   operationId: HumanPurchaseOperationId;
   settlementReconciled: HumanPurchaseSettlementPayload | null;
   signatureVerified: HumanPurchaseSignaturePayload | null;
+  sourceCommit: string;
   stage: HumanPurchaseJournalStage;
 }>;

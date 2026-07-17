@@ -12,6 +12,7 @@ const PURCHASE = `sha256:${"4".repeat(64)}` as const;
 const SESSION = `sha256:${"5".repeat(64)}` as const;
 const PREPARED = `sha256:${"6".repeat(64)}` as const;
 export const OPERATION = `sha256:${"7".repeat(64)}` as const;
+export const SOURCE_COMMIT = "8".repeat(40);
 
 const network = Object.freeze({
   audience: "ledger",
@@ -24,13 +25,17 @@ const network = Object.freeze({
   validatorUrl: "https://validator.example",
 });
 
-export function liveHumanPurchaseInput() {
+export function liveHumanPurchaseInput(events?: string[]) {
   return {
     keyFile: "/workspace/.capability-wallet/payer.key",
     network,
+    onJournalInitialized: async () => {
+      events?.push("journal-announced");
+    },
     port: 8_791,
     providerParty: PROVIDER,
     signal: new AbortController().signal,
+    sourceCommit: SOURCE_COMMIT,
     workspaceRoot: "/workspace",
   };
 }

@@ -34,6 +34,7 @@ describe("human purchase terminal rejection journal", () => {
     const initialized = await initializeHumanPurchaseJournal({
       beginExclusive: 41,
       expectation: persistedHumanJournalExpectation(),
+      sourceCommit: "d".repeat(40),
       workspaceRoot,
     });
     const common = { operationId: initialized.operationId, workspaceRoot };
