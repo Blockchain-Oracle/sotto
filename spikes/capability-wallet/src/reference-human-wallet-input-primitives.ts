@@ -24,6 +24,7 @@ export function referenceHumanWalletSelectedTemplate(
   moduleName: string,
   entityName: string,
   label: string,
+  additionalPackageIds: readonly string[] = [],
 ): void {
   const source = candidate.templateId;
   if (
@@ -31,6 +32,7 @@ export function referenceHumanWalletSelectedTemplate(
     ![
       request.approval.selectedPackage.packageId,
       FIVE_NORTH_HOLDING_TEMPLATE_PACKAGE_ID,
+      ...additionalPackageIds,
     ].includes(source.packageId) ||
     source.moduleName !== moduleName ||
     source.entityName !== entityName

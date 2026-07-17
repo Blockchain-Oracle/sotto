@@ -17,6 +17,9 @@ import {
   referenceHumanScalar,
 } from "./reference-human-wallet-values.js";
 
+const FIVE_NORTH_FEATURED_APP_RIGHT_SOURCE_PACKAGE_ID =
+  "3ca1343ab26b453d38c8adb70dca5f1ead8440c42b59b68f070786955cbf9ec1";
+
 function validateFeatured(
   candidate: Create,
   request: HumanWalletApprovalRequest,
@@ -29,6 +32,7 @@ function validateFeatured(
     "Splice.Amulet",
     "FeaturedAppRight",
     "Featured App input",
+    [FIVE_NORTH_FEATURED_APP_RIGHT_SOURCE_PACKAGE_ID],
   );
   const argument = referenceHumanRecord(
     candidate.argument,

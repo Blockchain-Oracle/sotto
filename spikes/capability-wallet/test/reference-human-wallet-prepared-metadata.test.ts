@@ -20,6 +20,16 @@ type Mutation = (prepared: HumanPreparedPurchaseFixture) => void;
 
 const mutations: ReadonlyArray<readonly [string, Mutation]> = [
   [
+    "unapproved Featured App source package",
+    (prepared) => {
+      const input = humanPreparedInput(
+        prepared,
+        EXTERNAL_PURCHASE_CONTEXT.featuredAppRight,
+      );
+      input.templateId!.packageId = "f".repeat(64);
+    },
+  ],
+  [
     "different physical synchronizer",
     (prepared) => {
       prepared.metadata!.synchronizerId = "other-domain::1220other::35-3";
@@ -118,6 +128,27 @@ describe("reference human wallet prepared metadata", () => {
       input.request,
       (prepared) => {
         prepared.metadata!.synchronizerId = `${input.approval.synchronizerId}::35-3`;
+      },
+    );
+    const request = referenceHumanWalletApprovalRequest(bytes, input.approval);
+
+    expect(() =>
+      verifyReferenceHumanWalletPreparedApproval(request),
+    ).not.toThrow();
+  });
+
+  it("accepts the exact historical Five North Featured App source package", async () => {
+    const input = await referenceHumanWalletInputs();
+    const bytes = humanPreparedPurchaseBytes(
+      input.intent,
+      input.request,
+      (prepared) => {
+        const featured = humanPreparedInput(
+          prepared,
+          EXTERNAL_PURCHASE_CONTEXT.featuredAppRight,
+        );
+        featured.templateId!.packageId =
+          "3ca1343ab26b453d38c8adb70dca5f1ead8440c42b59b68f070786955cbf9ec1";
       },
     );
     const request = referenceHumanWalletApprovalRequest(bytes, input.approval);
