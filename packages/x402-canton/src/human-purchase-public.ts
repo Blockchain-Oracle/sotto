@@ -52,6 +52,13 @@ export {
   type HumanSettlementExpectation,
 } from "./human-settlement-expectation.js";
 export {
+  authenticateHumanPurchaseProviderSettlement,
+  readAuthenticatedHumanPurchaseProviderSettlement,
+  type AuthenticatedHumanPurchaseProviderSettlement,
+  type HumanPurchaseProviderSettlementEvidence,
+  type HumanPurchaseSettlementProof,
+} from "./human-provider-settlement.js";
+export {
   createHumanPaymentObserver,
   MAX_HUMAN_PAYMENT_FETCH_MS,
   type HumanPaymentFetcher,

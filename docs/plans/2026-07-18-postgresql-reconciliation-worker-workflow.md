@@ -29,7 +29,7 @@ loop: until terminal checkpoint tests pass
 max_iterations: 3
 verify: corepack pnpm test:postgres
 
-- [ ] **Step 4: Promote the exact provider settlement verifier**
+- [x] **Step 4: Promote the exact provider settlement verifier**
 action: Write RED mutation tests under `packages/x402-canton/test/human-provider-settlement*.test.ts` for the existing exact provider holding and SendV2 proof. Move the pure verifier from spike-only modules into bounded production modules under `packages/x402-canton/src`, export only the verifier and authenticated proof reader needed by reconciliation, and leave compatibility re-exports in the spike so existing live evidence tests remain green.
 loop: until the focused verifier and existing spike suites pass
 max_iterations: 3
@@ -37,7 +37,7 @@ verify: corepack pnpm exec vitest run packages/x402-canton/test/human-provider-s
 gate: human
 
 - [ ] **Step 5: Implement the read-only one-shot reconciliation worker**
-action: Add RED unit and security tests in `packages/purchase-worker/test/human-reconciliation-worker*.test.ts` for idle, pending, rejection, verified settlement, malformed or forged success, cancellation, expired lease, adapter failure, and terminal restart. Implement a separate `createHumanReconciliationWorker` whose public dependencies contain only the repository and bounded read-only completion/transaction adapter; its types must make wallet, key, signing, preparation, dispatch, and execute capabilities absent.
+action: Add RED unit and security tests in `packages/purchase-worker/test/human-reconciliation-worker*.test.ts` for idle, pending, rejection, verified settlement, authenticated transaction-offset equality with the successful completion offset, malformed or forged success, cancellation, expired lease, adapter failure, and terminal restart. Implement a separate `createHumanReconciliationWorker` whose public dependencies contain only the repository and bounded read-only completion/transaction adapter; its types must make wallet, key, signing, preparation, dispatch, and execute capabilities absent.
 loop: until focused worker unit and security tests pass
 max_iterations: 3
 verify: corepack pnpm exec vitest run packages/purchase-worker/test/human-reconciliation-worker*.test.ts --exclude '**/*.postgres.test.ts'
