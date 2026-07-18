@@ -36,7 +36,7 @@ max_iterations: 3
 verify: corepack pnpm exec vitest run packages/x402-canton/test/human-provider-settlement*.test.ts spikes/devnet-payment/test/human-purchase-provider-reconciliation.test.ts --testTimeout=120000
 gate: human
 
-- [ ] **Step 5: Implement the read-only one-shot reconciliation worker**
+- [x] **Step 5: Implement the read-only one-shot reconciliation worker**
 action: Add RED unit and security tests in `packages/purchase-worker/test/human-reconciliation-worker*.test.ts` for idle, pending, rejection, verified settlement, authenticated transaction-offset equality with the successful completion offset, malformed or forged success, cancellation, expired lease, adapter failure, and terminal restart. Implement a separate `createHumanReconciliationWorker` whose public dependencies contain only the repository and bounded read-only completion/transaction adapter; its types must make wallet, key, signing, preparation, dispatch, and execute capabilities absent.
 loop: until focused worker unit and security tests pass
 max_iterations: 3
