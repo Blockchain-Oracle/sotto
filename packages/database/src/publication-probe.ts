@@ -26,9 +26,12 @@ async function existingObservation(
   return result.rows[0]?.requestHash;
 }
 
-async function ensureResource(
+export async function ensurePublicationResource(
   client: PoolClient,
-  probe: ValidatedProbeObservation,
+  probe: Pick<
+    ValidatedProbeObservation,
+    "originId" | "resourceId" | "method" | "routeTemplate"
+  >,
 ): Promise<void> {
   const origin = await client.query(
     "SELECT 1 FROM sotto.origins WHERE id = $1",
@@ -59,6 +62,21 @@ async function ensureResource(
   ) {
     throw new CatalogConflictError();
   }
+}
+
+export async function persistValidatedProbeObservation(
+  client: PoolClient,
+  probe: ValidatedProbeObservation,
+): Promise<"created" | "replayed"> {
+  const existing = await existingObservation(client, probe.observationId);
+  if (existing !== undefined) {
+    if (existing !== probe.requestHash) throw new CatalogConflictError();
+    return "replayed";
+  }
+  await ensurePublicationResource(client, probe);
+  await insertObservation(client, probe);
+  await insertRevision(client, probe);
+  return "created";
 }
 
 async function insertObservation(
@@ -137,14 +155,7 @@ export async function recordProbeObservation(
   const probe = validateProbeObservation(candidate);
   return publicationTransaction(pool, async (client) => {
     await lockPublicationIdentity(client, "resource", probe.resourceId);
-    const existing = await existingObservation(client, probe.observationId);
-    if (existing !== undefined) {
-      if (existing !== probe.requestHash) throw new CatalogConflictError();
-      return Object.freeze({ id: probe.observationId, outcome: "replayed" });
-    }
-    await ensureResource(client, probe);
-    await insertObservation(client, probe);
-    await insertRevision(client, probe);
-    return Object.freeze({ id: probe.observationId, outcome: "created" });
+    const outcome = await persistValidatedProbeObservation(client, probe);
+    return Object.freeze({ id: probe.observationId, outcome });
   });
 }

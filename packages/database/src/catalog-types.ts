@@ -6,6 +6,13 @@ import type {
   PublicPublishedResource,
   PublishVerifiedResourceInput,
 } from "./publication-types.js";
+import type {
+  PersistedProbeHealth,
+  ProbeHealthInput,
+  ResourceHealthInput,
+  ResourceHealthObservation,
+  ResourceHealthRecordResult,
+} from "./resource-health-types.js";
 
 export type ProviderOriginRegistration = Readonly<{
   registrationId: string;
@@ -46,10 +53,25 @@ export type CatalogRepository = Readonly<{
     input: ProviderOriginRegistration,
   ): Promise<ProviderOriginRegistrationResult>;
   findProviderOrigin(originUrl: string): Promise<ProviderOriginRecord | null>;
+  findProviderOriginById(
+    originId: string,
+  ): Promise<ProviderOriginRecord | null>;
   recordOriginProof(input: OriginProofInput): Promise<PublicationRecordResult>;
   recordProbeObservation(
     input: ProbeObservationInput,
   ): Promise<PublicationRecordResult>;
+  recordProbeHealth(
+    input: ProbeHealthInput,
+  ): Promise<ResourceHealthRecordResult>;
+  recordHealthObservation(
+    input: ResourceHealthInput,
+  ): Promise<ResourceHealthRecordResult>;
+  findLatestResourceHealth(
+    resourceId: string,
+  ): Promise<ResourceHealthObservation | null>;
+  findProbeHealthById(
+    healthObservationId: string,
+  ): Promise<PersistedProbeHealth | null>;
   publishVerifiedResource(
     input: PublishVerifiedResourceInput,
   ): Promise<PublicationOperationResult>;

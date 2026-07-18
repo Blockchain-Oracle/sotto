@@ -64,6 +64,7 @@ export {
   type PersistedBootstrapIntentV2,
 } from "./bounded-capability-bootstrap-intent.js";
 export { buildBoundedPurchasePrepareRequest } from "./bounded-purchase-command.js";
+export * from "./catalog-payment-observation.js";
 export type {
   BoundedPurchaseChoiceArgument,
   BoundedPurchasePrepareRequest,
@@ -178,10 +179,7 @@ export {
   type PurchaseHoldingSelectionCriteria,
 } from "./purchase-holding-parser.js";
 export * from "./request-binding.js";
-export {
-  commitResourceRoute,
-  RESOURCE_BINDING_VERSION,
-} from "./resource-route.js";
+export * from "./resource-route.js";
 export * from "./signer-boundary.js";
 export {
   createTransferFactoryObserver,

@@ -46,12 +46,17 @@ audience Q-004 and topology Q-006 are selected but not yet proven in production.
 The [redacted spike result](docs/architecture/devnet-spike-result.md) records
 the evidence and remaining blockers.
 
-The first production-foundation checkpoint is now implemented: the private
-`@sotto/database` package applies bounded, advisory-locked migrations from its
-compiled artifact, and the deterministic gate proves the initial owner catalog
-and repeat application against a disposable digest-pinned PostgreSQL 18.4
-server. Web, worker, purchase persistence, restart recovery, and deployment are
-not implemented yet.
+The production foundation now applies bounded, advisory-locked migrations from
+its compiled artifact and durably records provider/origin registration, origin
+proof, immutable resource revisions, publication, and latest resource health.
+Its server-side catalog probe is currently `GET`-only: it loads the trusted
+origin from PostgreSQL, rejects non-public DNS answers, pins the selected
+address through HTTPS/TLS, parses a bounded server-observed Canton x402
+challenge, and atomically records the probe plus health result. Disposable
+digest-pinned PostgreSQL tests prove migration replay, conflict rollback, and
+restart persistence. This is a library/integration checkpoint, not a deployed
+marketplace: web, worker, purchase/delivery recovery, production wallet
+connectors, external HTTPS smoke evidence, and deployment remain open.
 
 No mocked payment or fixture transaction can satisfy those gates.
 

@@ -92,6 +92,7 @@ describe("PostgreSQL migrations", () => {
         { name: "0001_catalog" },
         { name: "0002_provider_origins" },
         { name: "0003_resource_publication" },
+        { name: "0004_resource_health" },
       ]);
     } finally {
       await client.end();

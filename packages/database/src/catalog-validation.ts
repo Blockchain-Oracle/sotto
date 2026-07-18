@@ -19,7 +19,7 @@ export type ValidatedProviderOrigin = Readonly<{
   normalizedOrigin: string;
 }>;
 
-function uuid(value: unknown, label: string): string {
+export function validateCatalogId(value: unknown, label: string): string {
   if (typeof value !== "string" || !UUID.test(value)) {
     throw new Error(`${label} must be a lowercase UUID`);
   }
@@ -87,24 +87,27 @@ export function validateProviderOriginRegistration(
 ): ValidatedProviderOrigin {
   const origin = normalizeCatalogOrigin(input?.originUrl);
   const canonical = Object.freeze({
-    ownerId: uuid(input?.ownerId, "catalog owner ID"),
+    ownerId: validateCatalogId(input?.ownerId, "catalog owner ID"),
     ownerPartyId: boundedText(
       input?.ownerPartyId,
       "catalog owner Party",
       255,
       false,
     ),
-    providerId: uuid(input?.providerId, "catalog provider ID"),
+    providerId: validateCatalogId(input?.providerId, "catalog provider ID"),
     providerDisplayName: boundedText(
       input?.providerDisplayName,
       "catalog provider display name",
       120,
       true,
     ),
-    originId: uuid(input?.originId, "catalog origin ID"),
+    originId: validateCatalogId(input?.originId, "catalog origin ID"),
     ...origin,
   });
-  const registrationId = uuid(input?.registrationId, "catalog registration ID");
+  const registrationId = validateCatalogId(
+    input?.registrationId,
+    "catalog registration ID",
+  );
   return Object.freeze({
     registrationId,
     requestHash: createHash("sha256")

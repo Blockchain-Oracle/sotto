@@ -26,3 +26,14 @@ export {
   type Sha256Identifier,
   type VerifiedX402ProbeResult,
 } from "./publication-types.js";
+export {
+  type PersistedProbeHealth,
+  type ProbeHealthInput,
+  type ResourceHealthFailureCode,
+  type ResourceHealthFailureDomain,
+  type ResourceHealthInput,
+  type ResourceHealthObservation,
+  type ResourceHealthRecordResult,
+  type ResourceHealthResult,
+  type ResourceHealthStatus,
+} from "./resource-health-types.js";

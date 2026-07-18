@@ -10,16 +10,20 @@ import {
 } from "./catalog-types.js";
 import {
   CATALOG_SELECT,
-  recordFromRow,
   registrationResult,
   type CatalogRow,
 } from "./catalog-rows.js";
 import {
   normalizeCatalogOrigin,
+  validateCatalogId,
   validateProviderOriginRegistration,
   type ValidatedProviderOrigin,
 } from "./catalog-validation.js";
 import { createCatalogPoolRuntime } from "./catalog-pool.js";
+import {
+  findProviderOriginRecord,
+  findProviderOriginRecordById,
+} from "./catalog-query.js";
 import { createPublicationMethods } from "./publication.js";
 
 async function rowByRegistration(
@@ -116,24 +120,6 @@ async function persistRegistration(
   }
 }
 
-async function findRecord(
-  pool: Pool,
-  normalizedOrigin: string,
-): Promise<ProviderOriginRecord | null> {
-  try {
-    const result = await pool.query<CatalogRow>(
-      `${CATALOG_SELECT}
-       WHERE origin.normalized_origin = $1
-       ORDER BY registration.created_at, registration.registration_id
-       LIMIT 1`,
-      [normalizedOrigin],
-    );
-    return result.rows[0] === undefined ? null : recordFromRow(result.rows[0]);
-  } catch {
-    throw new CatalogPersistenceError();
-  }
-}
-
 export function createCatalogRepository(
   input: CatalogRepositoryInput,
 ): CatalogRepository {
@@ -158,7 +144,21 @@ export function createCatalogRepository(
     const release = runtime.admit();
     try {
       const { normalizedOrigin } = normalizeCatalogOrigin(originUrl);
-      return await findRecord(runtime.pool, normalizedOrigin);
+      return await findProviderOriginRecord(runtime.pool, normalizedOrigin);
+    } finally {
+      release();
+    }
+  };
+
+  const findProviderOriginById = async (
+    originId: string,
+  ): Promise<ProviderOriginRecord | null> => {
+    const release = runtime.admit();
+    try {
+      return await findProviderOriginRecordById(
+        runtime.pool,
+        validateCatalogId(originId, "catalog origin ID"),
+      );
     } finally {
       release();
     }
@@ -167,6 +167,7 @@ export function createCatalogRepository(
   return Object.freeze({
     registerProviderOrigin,
     findProviderOrigin,
+    findProviderOriginById,
     ...publication,
     close: runtime.close,
   });
