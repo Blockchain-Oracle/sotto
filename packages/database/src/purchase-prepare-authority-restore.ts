@@ -170,11 +170,7 @@ export async function restorePurchasePrepareAuthority(
       },
       loaded.row.sourceCommit,
     );
-    purchaseAggregateResult(
-      { ...loaded.row, jobState: expected.jobState },
-      expected,
-      "replayed",
-    );
+    purchaseAggregateResult(loaded.row, expected, "replayed");
     return intent;
   } catch {
     throw new PurchasePersistenceError();

@@ -149,19 +149,23 @@ export async function initializePurchaseAttempt(
 ): Promise<HumanPurchaseAttemptResult> {
   return purchaseTransaction(pool, async (client) => {
     await lockPurchaseOperation(client, attempt.operationId);
-    await requirePrepareSigningReserve(client, attempt.executeBefore);
     await requireResource(client, attempt);
     const existing = await findPurchaseAggregate(client, attempt.operationId);
     if (existing !== undefined) {
-      await assertPurchasePrepareAuthority(
-        client,
-        authoritySource(existing),
-        plaintext,
-        keyring,
-      );
-      await requirePrepareSigningReserve(client, attempt.executeBefore);
-      return purchaseAggregateResult(existing, attempt, "replayed");
+      const replay = purchaseAggregateResult(existing, attempt, "replayed");
+      if (replay.state === "intent-created") {
+        await requirePrepareSigningReserve(client, attempt.executeBefore);
+        await assertPurchasePrepareAuthority(
+          client,
+          authoritySource(existing),
+          plaintext,
+          keyring,
+        );
+        await requirePrepareSigningReserve(client, attempt.executeBefore);
+      }
+      return replay;
     }
+    await requirePrepareSigningReserve(client, attempt.executeBefore);
     const sealed = sealPurchasePrepareAuthority(attempt, plaintext, keyring);
     await insertAttempt(client, attempt);
     await insertPurchasePrepareAuthority(client, attempt.attemptId, sealed);

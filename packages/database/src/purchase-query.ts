@@ -18,11 +18,22 @@ export type PurchaseAggregateRow = Readonly<{
   sourceCommit: string;
   state: string;
   createdAt: Date;
+  preparedTransactionHash: string | null;
+  transferContextHash: string | null;
+  preparedVerifiedAt: Date | null;
   eventSequence: string | null;
   eventType: string | null;
   eventHash: string | null;
   previousEventHash: string | null;
   eventRecordedAt: Date | null;
+  resultEventSequence: string | null;
+  resultEventType: string | null;
+  resultEventHash: string | null;
+  resultPreviousEventHash: string | null;
+  resultPreparedTransactionHash: string | null;
+  resultTransferContextHash: string | null;
+  resultPreparedVerifiedAt: Date | null;
+  resultEventRecordedAt: Date | null;
   jobId: string | null;
   jobDedupeKey: string | null;
   jobKind: string | null;
@@ -33,6 +44,10 @@ export type PurchaseAggregateRow = Readonly<{
   jobLeaseOwner: string | null;
   jobLeaseExpiresAt: Date | null;
   jobClaimedAt: Date | null;
+  jobResultEventSequence: string | null;
+  jobCompletedAt: Date | null;
+  authorityAttemptId: string | null;
+  authorityRetiredAt: Date | null;
 }>;
 
 const AGGREGATE_SELECT = `SELECT
@@ -52,11 +67,22 @@ const AGGREGATE_SELECT = `SELECT
   attempt.source_commit AS "sourceCommit",
   attempt.state,
   attempt.created_at AS "createdAt",
+  attempt.prepared_transaction_hash AS "preparedTransactionHash",
+  attempt.transfer_context_hash AS "transferContextHash",
+  attempt.prepared_verified_at AS "preparedVerifiedAt",
   event.sequence::text AS "eventSequence",
   event.event_type AS "eventType",
   event.event_hash AS "eventHash",
   event.previous_event_hash AS "previousEventHash",
   event.recorded_at AS "eventRecordedAt",
+  result_event.sequence::text AS "resultEventSequence",
+  result_event.event_type AS "resultEventType",
+  result_event.event_hash AS "resultEventHash",
+  result_event.previous_event_hash AS "resultPreviousEventHash",
+  result_event.prepared_transaction_hash AS "resultPreparedTransactionHash",
+  result_event.transfer_context_hash AS "resultTransferContextHash",
+  result_event.prepared_verified_at AS "resultPreparedVerifiedAt",
+  result_event.recorded_at AS "resultEventRecordedAt",
   job.job_id::text AS "jobId",
   job.dedupe_key AS "jobDedupeKey",
   job.kind AS "jobKind",
@@ -66,14 +92,23 @@ const AGGREGATE_SELECT = `SELECT
   job.lease_generation::text AS "jobLeaseGeneration",
   job.lease_owner AS "jobLeaseOwner",
   job.lease_expires_at AS "jobLeaseExpiresAt",
-  job.claimed_at AS "jobClaimedAt"
+  job.claimed_at AS "jobClaimedAt",
+  job.result_event_sequence::text AS "jobResultEventSequence",
+  job.completed_at AS "jobCompletedAt",
+  authority.attempt_id AS "authorityAttemptId",
+  authority.retired_at AS "authorityRetiredAt"
 FROM sotto.purchase_attempts attempt
 LEFT JOIN sotto.attempt_events event
   ON event.attempt_id = attempt.attempt_id AND event.sequence = 1
+LEFT JOIN sotto.attempt_events result_event
+  ON result_event.attempt_id = attempt.attempt_id
+ AND result_event.sequence = 2
 LEFT JOIN sotto.outbox_jobs job
   ON job.attempt_id = event.attempt_id
  AND job.event_sequence = event.sequence
- AND job.kind = 'purchase-prepare'`;
+ AND job.kind = 'purchase-prepare'
+LEFT JOIN sotto.private_prepare_authorities authority
+  ON authority.attempt_id = attempt.attempt_id`;
 
 export async function findPurchaseAggregate(
   client: PoolClient,

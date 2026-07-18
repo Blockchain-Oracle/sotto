@@ -9,6 +9,9 @@ import type {
   HumanPrepareAuthorityRestoreScope,
 } from "@sotto/x402-canton/internal/human-prepare-authority-persistence";
 import type { PrepareAuthorityKeyring } from "./private-prepare-authority-types.js";
+import type { HumanPurchaseAttemptResult } from "./purchase-result-types.js";
+
+export type { HumanPurchaseAttemptResult };
 
 export type HumanPurchasePersistenceBinding = Readonly<{
   ownerId: string;
@@ -76,40 +79,6 @@ export type HumanPrepareCheckpointResult = Readonly<{
     jobId: string;
     state: "completed";
     completedAt: string;
-  }>;
-}>;
-
-export type HumanPurchaseAttemptResult = Readonly<{
-  outcome: "created" | "replayed";
-  operationId: Sha256Identifier;
-  attemptId: Sha256Identifier;
-  ownerId: string;
-  resourceRevisionId: string;
-  authorizationMode: "human-wallet";
-  commitmentVersion: "sotto-human-purchase-v1";
-  requestCommitment: Sha256Identifier;
-  challengeId: Sha256Identifier;
-  purchaseCommitment: Sha256Identifier;
-  commandId: string;
-  beginExclusive: number;
-  executeBefore: string;
-  sourceCommit: string;
-  state: "intent-created";
-  createdAt: string;
-  event: Readonly<{
-    sequence: 1;
-    type: "intent-created";
-    eventHash: Sha256Identifier;
-    previousEventHash: null;
-    recordedAt: string;
-  }>;
-  job: Readonly<{
-    jobId: string;
-    dedupeKey: Sha256Identifier;
-    kind: "purchase-prepare";
-    state: "ready";
-    availableAt: string;
-    createdAt: string;
   }>;
 }>;
 
