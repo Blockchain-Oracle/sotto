@@ -15,9 +15,9 @@ import {
 } from "./purchase-query.js";
 import { purchaseAggregateResult } from "./purchase-query-result.js";
 import { openPurchasePrepareAuthority } from "./purchase-prepare-authority-store.js";
-import type { HumanPrepareAuthorityLease } from "./purchase-prepare-authority-lease.js";
 import {
   PurchasePersistenceError,
+  type HumanPrepareAuthorityLease,
   type HumanPrepareAuthorityResolution,
   type HumanPrepareAuthorityResolver,
 } from "./purchase-types.js";

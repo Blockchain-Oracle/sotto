@@ -1,5 +1,6 @@
 import type { Sha256Identifier } from "./publication-types.js";
 import type {
+  HashVerifiedHumanPreparedPurchase,
   HumanPurchaseJournalIntent,
   HumanPurchaseLedgerIntent,
 } from "@sotto/x402-canton";
@@ -38,16 +39,44 @@ export type HumanPrepareAuthorityClaimInput = Readonly<{
   resolve: HumanPrepareAuthorityResolver;
 }>;
 
+export type HumanPrepareAuthorityLease = Readonly<{
+  jobId: string;
+  attemptId: Sha256Identifier;
+  leaseGeneration: number;
+  leaseOwner: string;
+  leaseExpiresAt: string;
+  claimedAt: string;
+}>;
+
 export type HumanPrepareAuthorityClaimResult = Readonly<{
-  lease: Readonly<{
-    jobId: string;
-    attemptId: Sha256Identifier;
-    leaseGeneration: number;
-    leaseOwner: string;
-    leaseExpiresAt: string;
-    claimedAt: string;
-  }>;
+  lease: HumanPrepareAuthorityLease;
   intent: HumanPurchaseLedgerIntent;
+}>;
+
+export type HumanPrepareCheckpointInput = Readonly<{
+  lease: HumanPrepareAuthorityLease;
+  prepared: HashVerifiedHumanPreparedPurchase;
+}>;
+
+export type HumanPrepareCheckpointResult = Readonly<{
+  outcome: "prepared-hash-verified";
+  attemptId: Sha256Identifier;
+  state: "prepared-hash-verified";
+  preparedTransactionHash: Sha256Identifier;
+  transferContextHash: Sha256Identifier;
+  verifiedAt: string;
+  event: Readonly<{
+    sequence: 2;
+    type: "prepared-hash-verified";
+    eventHash: Sha256Identifier;
+    previousEventHash: Sha256Identifier;
+    recordedAt: string;
+  }>;
+  job: Readonly<{
+    jobId: string;
+    state: "completed";
+    completedAt: string;
+  }>;
 }>;
 
 export type HumanPurchaseAttemptResult = Readonly<{
@@ -107,6 +136,9 @@ export type PurchaseRepository = Readonly<{
   claimHumanPrepareAuthority(
     input: HumanPrepareAuthorityClaimInput,
   ): Promise<HumanPrepareAuthorityClaimResult | null>;
+  completeHumanPrepare(
+    input: HumanPrepareCheckpointInput,
+  ): Promise<HumanPrepareCheckpointResult>;
   close(): Promise<void>;
 }>;
 

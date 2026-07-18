@@ -70,7 +70,9 @@ export async function humanPreparedPurchaseCommandInputsWithUnusedDisclosures() 
   );
 }
 
-function historicalContextFactoryResponse(intent: HumanPurchaseLedgerIntent) {
+export function historicalContextFactoryResponse(
+  intent: HumanPurchaseLedgerIntent,
+) {
   const response = externalFactoryResponse(intent as never);
   const historicalPackageId = HISTORICAL_HOLDING_TEMPLATE_ID.split(":")[0]!;
   const contextIds = new Set<string>([

@@ -70,6 +70,7 @@ it("upgrades a populated production 0001 database through purchase journaling", 
       { name: "0005_purchase_journal" },
       { name: "0006_private_prepare_authorities" },
       { name: "0007_prepare_job_leases" },
+      { name: "0008_prepared_hash_checkpoint" },
     ]);
   } finally {
     await verified.end();

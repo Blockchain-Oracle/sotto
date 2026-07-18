@@ -108,7 +108,7 @@ async function authorityRow(
       authentication_tag AS "authenticationTag",
       ciphertext
      FROM sotto.private_prepare_authorities
-     WHERE attempt_id = $1`,
+     WHERE attempt_id = $1 AND retired_at IS NULL`,
     [attemptId],
   );
   const row = result.rows[0];

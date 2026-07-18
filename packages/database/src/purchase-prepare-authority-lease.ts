@@ -1,20 +1,14 @@
 import { MIN_HUMAN_SIGNING_RESERVE_MS } from "@sotto/x402-canton/internal/human-prepare-authority-persistence";
 import type { Pool } from "pg";
 import { purchaseTransaction } from "./purchase-transaction.js";
-import { PurchasePersistenceError } from "./purchase-types.js";
+import {
+  PurchasePersistenceError,
+  type HumanPrepareAuthorityLease,
+} from "./purchase-types.js";
 
 const OWNER_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/u;
 const MIN_LEASE_MS = 1_000;
 const MAX_LEASE_MS = 60_000;
-
-export type HumanPrepareAuthorityLease = Readonly<{
-  jobId: string;
-  attemptId: `sha256:${string}`;
-  leaseGeneration: number;
-  leaseOwner: string;
-  leaseExpiresAt: string;
-  claimedAt: string;
-}>;
 
 function leaseOwner(value: unknown): string {
   if (typeof value !== "string" || !OWNER_PATTERN.test(value)) {
@@ -61,6 +55,7 @@ export async function claimPurchasePrepareAuthorityLease(
         JOIN sotto.purchase_attempts attempt
           ON attempt.attempt_id = job.attempt_id
         WHERE job.kind = 'purchase-prepare'
+          AND attempt.state = 'intent-created'
           AND job.available_at <= transaction_timestamp()
           AND ($4::text IS NULL OR job.attempt_id = $4)
           AND (

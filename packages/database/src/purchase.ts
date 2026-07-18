@@ -5,6 +5,7 @@ import {
 import { exportHumanPrepareAuthorityPlaintext } from "@sotto/x402-canton/internal/human-prepare-authority-persistence";
 import { readPrivatePrepareAuthorityActiveKeyId } from "./private-prepare-authority-keyring.js";
 import { initializePurchaseAttempt } from "./purchase-initialize.js";
+import { checkpointHumanPreparedPurchase } from "./purchase-prepare-checkpoint.js";
 import { claimPurchasePrepareAuthorityLease } from "./purchase-prepare-authority-lease.js";
 import { restorePurchasePrepareAuthority } from "./purchase-prepare-authority-restore.js";
 import { createPurchasePoolRuntime } from "./purchase-pool.js";
@@ -102,9 +103,25 @@ export function createPurchaseRepository(
         release();
       }
     };
+  const completeHumanPrepare: PurchaseRepository["completeHumanPrepare"] =
+    async (checkpoint) => {
+      const release = runtime.admit();
+      try {
+        return await checkpointHumanPreparedPurchase(
+          runtime.pool,
+          checkpoint?.lease,
+          checkpoint?.prepared,
+        );
+      } catch {
+        throw new PurchasePersistenceError();
+      } finally {
+        release();
+      }
+    };
   return Object.freeze({
     initializeHumanPurchaseAttempt,
     claimHumanPrepareAuthority,
+    completeHumanPrepare,
     close: runtime.close,
   });
 }

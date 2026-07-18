@@ -95,6 +95,7 @@ describe("private prepare authority schema", () => {
         "authentication_tag",
         "ciphertext",
         "created_at",
+        "retired_at",
       ]);
     } finally {
       await client.end();
