@@ -102,3 +102,21 @@ export type HumanReconciliationRepository = Readonly<{
     input: HumanReconciliationCheckpointInput,
   ): Promise<HumanReconciliationCheckpointResult>;
 }>;
+
+export type HumanReconciliationOperationalEvent = Readonly<{
+  code: "HUMAN_RECONCILIATION_POOL_ERROR";
+}>;
+
+export type HumanReconciliationRepositoryRuntimeInput = Readonly<{
+  databaseUrl: string;
+  maxConnections?: number;
+  applicationName?: string;
+  onOperationalError?: (
+    event: HumanReconciliationOperationalEvent,
+  ) => void | Promise<void>;
+}>;
+
+export type HumanReconciliationRepositoryRuntime = Readonly<{
+  repository: HumanReconciliationRepository;
+  close(): Promise<void>;
+}>;

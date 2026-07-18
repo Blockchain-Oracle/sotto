@@ -43,7 +43,7 @@ max_iterations: 3
 verify: corepack pnpm exec vitest run packages/purchase-worker/test/human-reconciliation-worker*.test.ts --exclude '**/*.postgres.test.ts'
 gate: human
 
-- [ ] **Step 6: Prove real PostgreSQL process replacement**
+- [x] **Step 6: Prove real PostgreSQL process replacement**
 action: Add `packages/purchase-worker/test/human-reconciliation-worker.postgres.test.ts` using disposable real PostgreSQL and a bounded local read-only HTTP reconciliation endpoint. Prove one lease winner, no held database connection during the external read, absent requeue, old-generation rejection, exact terminal persistence after repository/worker replacement, and compile-time/runtime absence of wallet, key, sign, prepare, dispatch, or execute calls.
 loop: until the complete PostgreSQL integration gate passes
 max_iterations: 3

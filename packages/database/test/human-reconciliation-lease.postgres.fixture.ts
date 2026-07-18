@@ -1,5 +1,53 @@
 import { Client } from "pg";
+import type { HumanReconciliationLease } from "../src/index.js";
 import type { ReconciliationTestContext } from "./human-reconciliation.postgres.fixture.js";
+
+export async function reconciliationLeaseSnapshot(
+  context: ReconciliationTestContext,
+  attemptId: string,
+): Promise<HumanReconciliationLease> {
+  const client = new Client({ connectionString: context.database.databaseUrl });
+  await client.connect();
+  try {
+    const result = await client.query<{
+      attemptId: `sha256:${string}`;
+      claimedAt: Date;
+      jobId: string;
+      leaseExpiresAt: Date;
+      leaseGeneration: string;
+      leaseOwner: string;
+    }>(
+      `SELECT attempt_id AS "attemptId", claimed_at AS "claimedAt",
+        job_id::text AS "jobId", lease_expires_at AS "leaseExpiresAt",
+        lease_generation::text AS "leaseGeneration",
+        lease_owner AS "leaseOwner"
+       FROM sotto.outbox_jobs
+       WHERE attempt_id = $1 AND kind = 'purchase-reconcile'
+         AND state = 'leased'`,
+      [attemptId],
+    );
+    const row = result.rows[0];
+    if (
+      result.rows.length !== 1 ||
+      row === undefined ||
+      row.claimedAt === null ||
+      row.leaseExpiresAt === null ||
+      row.leaseOwner === null
+    ) {
+      throw new Error("test reconciliation lease is absent");
+    }
+    return Object.freeze({
+      attemptId: row.attemptId,
+      claimedAt: row.claimedAt.toISOString(),
+      jobId: row.jobId,
+      leaseExpiresAt: row.leaseExpiresAt.toISOString(),
+      leaseGeneration: Number(row.leaseGeneration),
+      leaseOwner: row.leaseOwner,
+    });
+  } finally {
+    await client.end();
+  }
+}
 
 export async function expireReconciliationLease(
   context: ReconciliationTestContext,

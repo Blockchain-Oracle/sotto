@@ -4,6 +4,7 @@ export {
 } from "./migrate.js";
 export { createCatalogRepository } from "./catalog.js";
 export { createPurchaseRepository } from "./purchase.js";
+export { createHumanReconciliationRepositoryRuntime } from "./human-reconciliation-postgres.js";
 export { createPrepareAuthorityKeyring } from "./private-prepare-authority-keyring.js";
 export {
   type PrepareAuthorityKeyring,
@@ -76,6 +77,9 @@ export {
   type HumanReconciliationDeferInput,
   type HumanReconciliationDeferResult,
   type HumanReconciliationLease,
+  type HumanReconciliationOperationalEvent,
   type HumanReconciliationRepository,
+  type HumanReconciliationRepositoryRuntime,
+  type HumanReconciliationRepositoryRuntimeInput,
   type HumanReconciliationScope,
 } from "./purchase-reconciliation-types.js";
