@@ -129,12 +129,61 @@ scheme, or compatibility is not.
 - `private_attempt_payloads` stores only the encrypted, bounded request material
   needed for identical delivery. It excludes authorization headers, keys, raw
   signatures, and prepared transactions.
+- `private_prepare_authorities` is a separate short-lived encrypted authority
+  envelope for restarting the prepare stage. It contains the original bounded
+  purchase commitment bytes, canonical request-binding bytes, decoded 402
+  challenge bytes, owner-bound connector locator, and trusted-configuration
+  identity needed to reauthenticate the same purchase. It contains no wallet
+  key, signature, prepared transaction, provider response, or delivery body.
 - `outbox_jobs` supplies durable work, deduplication, leases, retries, and
   terminal results.
 - `worker_heartbeats` distinguishes worker health from web and database health.
 
 All public evidence is an allowlisted projection. Private payloads and exact
 provider bodies never enter logs or public evidence.
+
+### Restartable Prepare Authority
+
+A prepare job is not restartable merely because its hashes and queue row are
+durable. The human purchase commitment, wallet preflight, package observation,
+holdings, registry context, and command authority use process-local provenance.
+Re-fetching the provider or rebuilding the commitment after a crash creates a
+new purchase identity.
+
+The first-release restart boundary therefore seals a dedicated prepare-authority
+envelope with authenticated encryption before the attempt, first event, and
+prepare job commit. Its additional authenticated data binds the envelope schema,
+attempt, operation, request hash, owner, resource revision, purchase commitment,
+and recorded source commit. The encryption key remains outside PostgreSQL;
+PostgreSQL stores only the key identifier, unique nonce, authentication tag, and
+bounded ciphertext. A newer compatible worker uses the recorded source commit as
+authenticated history, not as an equality check that would strand existing jobs
+after deployment.
+
+Restoration must:
+
+1. open the envelope and verify its row-bound authenticated data;
+2. strictly parse the three original bounded byte sequences and recompute the
+   request, challenge, attempt, and purchase identities;
+3. confirm the exact catalog revision, connector binding, trusted configuration,
+   route, payer, provider, amount, instrument, network, synchronizer, limits,
+   package closure, and signing-key identity;
+4. reacquire the owner-bound wallet/payer and package authority, allowing only
+   observation identifiers/times and acquisition times to refresh; and
+5. issue a new process-local one-shot command authority while the durable
+   attempt is still prepare-retryable and at least two signing minutes remain.
+
+Holdings, disclosures, TransferFactory context, prepared responses, and official
+hash verification are always reacquired. Opening the envelope is non-consuming;
+the durable job lease and attempt transition own cross-process replay. Once
+`prepared-hash-verified` commits, the prepare authority can no longer be
+claimed. Wrong keys, changed rows or authenticated data, connector revocation,
+stable key/topology/package/configuration drift, stale attempts, and structural
+clones fail closed without a Ledger command.
+
+Production key storage, rotation, backup, and recovery remain release gates.
+Real ephemeral-key cryptographic and PostgreSQL tests prove the code boundary;
+they do not by themselves prove production custody.
 
 ## Transaction And Idempotency Boundary
 
