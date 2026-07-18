@@ -38,6 +38,7 @@ export type DatabaseMigrationSetInput = DatabaseMigrationInput &
   Readonly<{
     directory: string;
     migrationsTable: string;
+    migrationCount?: number;
   }>;
 
 /** @internal Used by the real PostgreSQL migration-contract tests. */
@@ -51,6 +52,12 @@ export async function applyDatabaseMigrationSet(
   if (!MIGRATIONS_TABLE_PATTERN.test(input.migrationsTable)) {
     throw new Error("database migrations table is invalid");
   }
+  if (
+    input.migrationCount !== undefined &&
+    (!Number.isInteger(input.migrationCount) || input.migrationCount < 1)
+  ) {
+    throw new Error("database migration count is invalid");
+  }
   await runner({
     databaseUrl: {
       connectionString,
@@ -62,6 +69,9 @@ export async function applyDatabaseMigrationSet(
     },
     dir: input.directory,
     direction: "up",
+    ...(input.migrationCount === undefined
+      ? {}
+      : { count: input.migrationCount }),
     migrationsTable: input.migrationsTable,
     migrationsSchema: "public",
     schema: "public",

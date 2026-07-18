@@ -105,6 +105,8 @@ Sotto-managed payer key.
 
 - `owners`, `owner_sessions`
 - `providers`, `origins`, `origin_proofs`
+- `catalog_registrations` supplies replay-safe atomic provider/origin setup
+  identities; it derives owner and provider through the origin relationship.
 - `resources`, immutable `resource_revisions`
 - `probe_observations`, `health_observations`
 - `listings`

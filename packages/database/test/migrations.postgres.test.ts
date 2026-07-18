@@ -68,10 +68,30 @@ describe("PostgreSQL migrations", () => {
         "SELECT to_regclass('sotto.owners')::text AS owners",
       );
       expect(owners.rows).toEqual([{ owners: "sotto.owners" }]);
+      const catalog = await client.query<{
+        origins: string | null;
+        providers: string | null;
+        registrations: string | null;
+      }>(`
+        SELECT
+          to_regclass('sotto.providers')::text AS providers,
+          to_regclass('sotto.origins')::text AS origins,
+          to_regclass('sotto.catalog_registrations')::text AS registrations
+      `);
+      expect(catalog.rows).toEqual([
+        {
+          origins: "sotto.origins",
+          providers: "sotto.providers",
+          registrations: "sotto.catalog_registrations",
+        },
+      ]);
       const migrations = await client.query<{ name: string }>(
         "SELECT name FROM public.sotto_migrations ORDER BY id",
       );
-      expect(migrations.rows).toEqual([{ name: "0001_catalog" }]);
+      expect(migrations.rows).toEqual([
+        { name: "0001_catalog" },
+        { name: "0002_provider_origins" },
+      ]);
     } finally {
       await client.end();
     }
