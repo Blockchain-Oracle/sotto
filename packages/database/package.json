@@ -10,6 +10,7 @@
     "build": "tsc -p tsconfig.build.json"
   },
   "dependencies": {
+    "@sotto/x402-canton": "workspace:*",
     "node-pg-migrate": "8.0.4",
     "pg": "8.22.0"
   },

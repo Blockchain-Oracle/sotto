@@ -53,6 +53,9 @@ importers:
 
   packages/database:
     dependencies:
+      '@sotto/x402-canton':
+        specifier: workspace:*
+        version: link:../x402-canton
       node-pg-migrate:
         specifier: 8.0.4
         version: 8.0.4(@types/pg@8.20.0)(pg@8.22.0)

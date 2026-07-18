@@ -54,9 +54,14 @@ origin from PostgreSQL, rejects non-public DNS answers, pins the selected
 address through HTTPS/TLS, parses a bounded server-observed Canton x402
 challenge, and atomically records the probe plus health result. Disposable
 digest-pinned PostgreSQL tests prove migration replay, conflict rollback, and
-restart persistence. This is a library/integration checkpoint, not a deployed
-marketplace: web, worker, purchase/delivery recovery, production wallet
-connectors, external HTTPS smoke evidence, and deployment remain open.
+restart persistence. The same private database can now atomically initialize an
+authenticated human-wallet purchase attempt, its first append-only event, and
+one prepare-only outbox job, with exact replay, concurrency, corruption, and
+rollback coverage. It cannot yet approve, sign, execute, settle, or deliver that
+purchase. This is a library/integration checkpoint, not a deployed marketplace:
+web, the prepare worker and later purchase lifecycle, delivery recovery,
+production wallet connectors, external HTTPS smoke evidence, and deployment
+remain open.
 
 No mocked payment or fixture transaction can satisfy those gates.
 

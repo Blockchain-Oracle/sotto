@@ -84,6 +84,11 @@ export {
   type HumanPurchaseLedgerIntent,
 } from "./human-purchase-ledger-intent.js";
 export {
+  HUMAN_PURCHASE_JOURNAL_INTENT_VERSION,
+  projectHumanPurchaseJournalIntent,
+  type HumanPurchaseJournalIntent,
+} from "./human-purchase-journal-intent.js";
+export {
   buildHumanPurchasePrepareRequest,
   type HumanPurchasePrepareRequest,
   type HumanPurchaseTransferChoiceArgument,

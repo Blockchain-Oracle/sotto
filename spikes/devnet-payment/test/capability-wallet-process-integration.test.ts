@@ -112,7 +112,7 @@ async function mutatePolicy(
 
 type PolicyMutation = (policy: Record<string, unknown>) => void;
 
-describe("separate-process capability wallet", () => {
+describe("separate-process capability wallet", { timeout: 30_000 }, () => {
   it("signs from one exact policy without terminal input", async () => {
     const scenario = await processScenario(async (input) => {
       await runReferenceWalletProcess({

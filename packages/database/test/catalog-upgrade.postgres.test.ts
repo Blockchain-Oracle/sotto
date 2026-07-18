@@ -26,7 +26,7 @@ beforeAll(async () => {
 
 afterAll(async () => database?.drop());
 
-it("upgrades a populated production 0001 database through publication", async () => {
+it("upgrades a populated production 0001 database through purchase journaling", async () => {
   await migrations.applyDatabaseMigrationSet({
     databaseUrl: database.databaseUrl,
     directory: fileURLToPath(new URL("../migrations/", import.meta.url)),
@@ -67,6 +67,7 @@ it("upgrades a populated production 0001 database through publication", async ()
       { name: "0002_provider_origins" },
       { name: "0003_resource_publication" },
       { name: "0004_resource_health" },
+      { name: "0005_purchase_journal" },
     ]);
   } finally {
     await verified.end();

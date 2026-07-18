@@ -1,0 +1,89 @@
+import type { Sha256Identifier } from "./publication-types.js";
+import type {
+  HumanPurchaseJournalIntent,
+  HumanPurchaseLedgerIntent,
+} from "@sotto/x402-canton";
+
+export type HumanPurchasePersistenceBinding = Readonly<{
+  ownerId: string;
+  resourceRevisionId: string;
+  beginExclusive: number;
+}>;
+
+export type HumanPurchaseBindingResolver = (
+  intent: HumanPurchaseJournalIntent,
+) => Promise<HumanPurchasePersistenceBinding>;
+
+export type HumanPurchaseAttemptResult = Readonly<{
+  outcome: "created" | "replayed";
+  operationId: Sha256Identifier;
+  attemptId: Sha256Identifier;
+  ownerId: string;
+  resourceRevisionId: string;
+  authorizationMode: "human-wallet";
+  commitmentVersion: "sotto-human-purchase-v1";
+  requestCommitment: Sha256Identifier;
+  challengeId: Sha256Identifier;
+  purchaseCommitment: Sha256Identifier;
+  commandId: string;
+  beginExclusive: number;
+  executeBefore: string;
+  sourceCommit: string;
+  state: "intent-created";
+  createdAt: string;
+  event: Readonly<{
+    sequence: 1;
+    type: "intent-created";
+    eventHash: Sha256Identifier;
+    previousEventHash: null;
+    recordedAt: string;
+  }>;
+  job: Readonly<{
+    jobId: string;
+    dedupeKey: Sha256Identifier;
+    kind: "purchase-prepare";
+    state: "ready";
+    availableAt: string;
+    createdAt: string;
+  }>;
+}>;
+
+export type PurchaseOperationalEvent = Readonly<{
+  code: "PURCHASE_POOL_ERROR";
+}>;
+
+export type PurchaseRepositoryInput = Readonly<{
+  databaseUrl: string;
+  sourceCommit: string;
+  resolveHumanPurchaseBinding: HumanPurchaseBindingResolver;
+  maxConnections?: number;
+  applicationName?: string;
+  onOperationalError?: (
+    event: PurchaseOperationalEvent,
+  ) => void | Promise<void>;
+}>;
+
+export type PurchaseRepository = Readonly<{
+  initializeHumanPurchaseAttempt(
+    intent: HumanPurchaseLedgerIntent,
+  ): Promise<HumanPurchaseAttemptResult>;
+  close(): Promise<void>;
+}>;
+
+export class PurchaseConflictError extends Error {
+  readonly code = "PURCHASE_CONFLICT";
+
+  constructor() {
+    super("purchase identity conflict");
+    this.name = "PurchaseConflictError";
+  }
+}
+
+export class PurchasePersistenceError extends Error {
+  readonly code = "PURCHASE_PERSISTENCE";
+
+  constructor() {
+    super("purchase persistence failed");
+    this.name = "PurchasePersistenceError";
+  }
+}

@@ -3,6 +3,7 @@ export {
   type DatabaseMigrationInput,
 } from "./migrate.js";
 export { createCatalogRepository } from "./catalog.js";
+export { createPurchaseRepository } from "./purchase.js";
 export {
   CatalogConflictError,
   CatalogPersistenceError,
@@ -37,3 +38,13 @@ export {
   type ResourceHealthResult,
   type ResourceHealthStatus,
 } from "./resource-health-types.js";
+export {
+  PurchaseConflictError,
+  PurchasePersistenceError,
+  type HumanPurchaseAttemptResult,
+  type HumanPurchaseBindingResolver,
+  type HumanPurchasePersistenceBinding,
+  type PurchaseOperationalEvent,
+  type PurchaseRepository,
+  type PurchaseRepositoryInput,
+} from "./purchase-types.js";
