@@ -106,7 +106,7 @@ export function rollbackLatestReconciliationMigration(
     databaseUrl: context.database.databaseUrl,
     dir: fileURLToPath(new URL("../migrations/", import.meta.url)),
     direction: "down",
-    count: 1,
+    count: 2,
     migrationsTable: "sotto_migrations",
     migrationsSchema: "public",
     schema: "public",

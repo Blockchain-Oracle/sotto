@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import {
   reconciledEventHash,
@@ -157,6 +158,22 @@ export function completeHumanReconciliationLease(
         now,
       ],
     );
+    if (successful) {
+      await client.query(
+        `INSERT INTO sotto.delivery_claims
+          (delivery_id, attempt_id, update_id, request_commitment)
+         SELECT $1::uuid, payload.attempt_id, $2, payload.request_commitment
+         FROM sotto.private_attempt_payloads payload
+         WHERE payload.attempt_id = $3
+           AND payload.request_commitment = $4`,
+        [
+          randomUUID(),
+          input.completion.updateId,
+          input.lease.attemptId,
+          authority.expectation.requestCommitment,
+        ],
+      );
+    }
     if (
       event.rowCount !== 1 ||
       attempt.rowCount !== 1 ||

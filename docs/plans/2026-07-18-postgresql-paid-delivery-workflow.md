@@ -40,7 +40,7 @@ worktree: false
 
 ## Steps
 
-- [ ] **Step 1: Freeze the PostgreSQL delivery schema and encrypted payload boundary**
+- [x] **Step 1: Freeze the PostgreSQL delivery schema and encrypted payload boundary**
 action: Add RED PostgreSQL tests for `private_attempt_payloads`, unique composite `delivery_claims`, encrypted `delivery_responses`, exact state/check constraints, rejected-settlement exclusion, successful-settlement scheduling, upgrade, and rollback. Add pure RED tests for canonical private request/response envelopes and AEAD tamper/key/AAD rejection. Implement migration `0011_paid_delivery.sql` and the minimum encryption/validation modules.
 loop: until focused crypto and real-PostgreSQL schema tests pass
 max_iterations: 3

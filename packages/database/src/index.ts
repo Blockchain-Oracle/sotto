@@ -6,6 +6,11 @@ export { createCatalogRepository } from "./catalog.js";
 export { createPurchaseRepository } from "./purchase.js";
 export { createHumanReconciliationRepositoryRuntime } from "./human-reconciliation-postgres.js";
 export { createPrepareAuthorityKeyring } from "./private-prepare-authority-keyring.js";
+export { createPrivateDeliveryKeyring } from "./private-delivery-keyring.js";
+export {
+  type PrivateDeliveryKeyring,
+  type PrivateDeliveryKeyringInput,
+} from "./private-delivery-types.js";
 export {
   type PrepareAuthorityKeyring,
   type PrepareAuthorityKeyringInput,

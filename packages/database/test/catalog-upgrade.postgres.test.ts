@@ -73,6 +73,7 @@ it("upgrades a populated production 0001 database through purchase journaling", 
       { name: "0008_prepared_hash_checkpoint" },
       { name: "0009_human_execution_boundary" },
       { name: "0010_human_reconciliation" },
+      { name: "0011_paid_delivery" },
     ]);
   } finally {
     await verified.end();
