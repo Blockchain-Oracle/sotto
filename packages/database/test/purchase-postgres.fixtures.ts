@@ -79,6 +79,27 @@ export async function purchaseJournalCounts(databaseUrl: string) {
   }
 }
 
+export async function humanExecutionFenceCounts(
+  databaseUrl: string,
+  attemptId: string,
+): Promise<Readonly<{ events: string; jobs: string }>> {
+  const client = new Client({ connectionString: databaseUrl });
+  await client.connect();
+  try {
+    const result = await client.query<{ events: string; jobs: string }>(
+      `SELECT
+        (SELECT count(*)::text FROM sotto.attempt_events event
+          WHERE event.attempt_id = $1 AND event.sequence = 5) AS events,
+        (SELECT count(*)::text FROM sotto.outbox_jobs job
+          WHERE job.attempt_id = $1 AND job.kind = 'purchase-reconcile') AS jobs`,
+      [attemptId],
+    );
+    return result.rows[0]!;
+  } finally {
+    await client.end();
+  }
+}
+
 type RestoreModule = Readonly<{
   claimPurchasePrepareAuthorityLease(
     pool: Pool,

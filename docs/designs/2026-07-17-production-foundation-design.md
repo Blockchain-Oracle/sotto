@@ -241,6 +241,45 @@ persistence and x402 inspection pipeline with bounded local transport fixtures;
 they are not a deployed Five North worker, wallet approval, or production
 performance claim.
 
+### Durable Human-Wallet Execution Checkpoint
+
+Migration `0009_human_execution_boundary` and the execution worker now extend
+the durable journal from `prepared-hash-verified` through `approval-requested`,
+terminal wallet rejection or incompatibility, `signature-verified`, and
+`execution-started`. The prepared settlement expectation is stored atomically
+with event 2, included in the event-v2 hash, and protected from update or
+deletion. Each later transition revalidates the complete append-only event chain
+under a PostgreSQL row lock. Exact replays are idempotent; changed connector,
+session, signature time, command, submission, or execution-user identity fails
+closed.
+
+The worker preserves the following ordering:
+
+1. persist the wallet approval-session identity before the connector proceeds;
+2. verify the Wallet SDK or OpenRPC signature outside PostgreSQL;
+3. persist `signature-verified` without storing the signature or prepared
+   transaction;
+4. create a one-use execution dispatch, then atomically persist the exact
+   submission fence and one `purchase-reconcile` job; and
+5. only after that commit, send the bounded Ledger execute request.
+
+A failure after the execution fence is `execution-uncertain`, never an automatic
+resubmission. Reopening the repository in the same worker process reads the
+exact durable `execution-started` identity and returns `reconciliation-only`
+without another wallet call, key lookup, dispatch, or HTTP request. The safe
+approval projection used for that handoff is process-local and authenticated by
+object identity; clones and serialized look-alikes are rejected.
+
+The real integration gate uses disposable PostgreSQL, the compiled reference
+Wallet SDK companion in a child process with a generated Ed25519 test key, and a
+bounded local HTTP execute endpoint. It proves one approval, cryptographic
+signature verification, fence-before-HTTP ordering, one execute request, one
+reconcile job/event, repository reopen, and redacted child output. It does not
+prove a new OS process can restore the one-use wallet handoff, that the
+reconciliation job is processed, that delivery is durable, or that this
+database-backed path has executed on Five North. Those remain release gates.
+Redis is not used by this authority path.
+
 ## Transaction And Idempotency Boundary
 
 - Attempt creation, its first event, and its first outbox job commit atomically.
@@ -275,6 +314,14 @@ delivery.
   delivery responses, and pending jobs.
 - Web liveness, web readiness, database readiness, and worker heartbeat are
   separate signals.
+
+The current checkpoint implements these rules through the durable
+`execution-started` fence and same-process repository reopen. A future DB-leased
+reconciliation worker must recover a true OS-process loss from the trusted
+`purchase-reconcile` outbox row and settlement journal without signing or
+executing again. Process loss before that fence still requires a fresh attempt
+unless a production connector supplies a separately proven durable, idempotent
+approval handoff.
 
 ## Performance Contract
 

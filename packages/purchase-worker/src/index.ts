@@ -1,4 +1,5 @@
 export { createHumanPrepareWorker } from "./human-prepare-worker.js";
+export { createHumanWalletExecutionWorker } from "./human-wallet-execution-worker.js";
 export {
   HUMAN_PREPARE_CHECKPOINT_RESERVE_MS,
   HUMAN_PREPARE_WORKER_LEASE_MS,
@@ -13,3 +14,15 @@ export {
   type HumanPrepareWorkerReaders,
   type HumanPrepareWorkerResult,
 } from "./human-prepare-worker-types.js";
+export {
+  HumanWalletExecutionWorkerError,
+  type HumanWalletExecutionPrepared,
+  type HumanWalletExecutionStarted,
+  type HumanWalletExecutionWorker,
+  type HumanWalletExecutionWorkerDependencies,
+  type HumanWalletExecutionWorkerErrorCode,
+  type HumanWalletExecutionWorkerInput,
+  type HumanWalletExecutionWorkerResult,
+  type HumanWalletExecuteResult,
+  type HumanWalletExecuteTransport,
+} from "./human-wallet-execution-worker-types.js";

@@ -1,5 +1,6 @@
-import { createHash } from "node:crypto";
 import type { PurchaseAggregateRow } from "./purchase-query.js";
+import { legacyPreparedEventHash } from "./purchase-prepare-event.js";
+import type { StoredSettlementAuthority } from "./purchase-settlement-row.js";
 import { PurchasePersistenceError } from "./purchase-types.js";
 
 const SHA256 = /^sha256:[0-9a-f]{64}$/u;
@@ -57,7 +58,11 @@ function requireNoCheckpoint(row: PurchaseAggregateRow): void {
   }
 }
 
-function preparedLifecycle(row: PurchaseAggregateRow, initialHash: string) {
+function preparedLifecycle(
+  row: PurchaseAggregateRow,
+  initialHash: string,
+  settlement: StoredSettlementAuthority | null,
+) {
   const preparedHash = row.preparedTransactionHash;
   const contextHash = row.transferContextHash;
   const verifiedAt = timestamp(row.preparedVerifiedAt);
@@ -66,8 +71,10 @@ function preparedLifecycle(row: PurchaseAggregateRow, initialHash: string) {
   const authorityRetiredAt = timestamp(row.authorityRetiredAt);
   const leaseState = lease(row);
   if (
-    !SHA256.test(preparedHash ?? "") ||
-    !SHA256.test(contextHash ?? "") ||
+    preparedHash === null ||
+    contextHash === null ||
+    !SHA256.test(preparedHash) ||
+    !SHA256.test(contextHash) ||
     row.resultEventSequence !== "2" ||
     row.resultEventType !== "prepared-hash-verified" ||
     row.resultPreviousEventHash !== initialHash ||
@@ -83,8 +90,15 @@ function preparedLifecycle(row: PurchaseAggregateRow, initialHash: string) {
   ) {
     throw new PurchasePersistenceError();
   }
-  const eventBody = `sotto-prepared-hash-verified-event-v1\0${row.attemptId}\0${preparedHash}\0${contextHash}\0${verifiedAt}\0${initialHash}`;
-  const eventHash = `sha256:${createHash("sha256").update(eventBody, "utf8").digest("hex")}`;
+  const eventHash =
+    settlement?.eventHash ??
+    legacyPreparedEventHash({
+      attemptId: row.attemptId,
+      preparedTransactionHash: preparedHash,
+      transferContextHash: contextHash,
+      verifiedAt,
+      previousEventHash: initialHash,
+    });
   if (row.resultEventHash !== eventHash) throw new PurchasePersistenceError();
   return Object.freeze({
     state: "prepared-hash-verified" as const,
@@ -113,6 +127,7 @@ export function purchaseLifecycle(
   row: PurchaseAggregateRow,
   initialHash: string,
   outcome: "created" | "replayed",
+  settlement: StoredSettlementAuthority | null = null,
 ) {
   if (row.state === "intent-created") {
     requireNoCheckpoint(row);
@@ -139,7 +154,7 @@ export function purchaseLifecycle(
     row.jobState === "completed" &&
     outcome === "replayed"
   ) {
-    return preparedLifecycle(row, initialHash);
+    return preparedLifecycle(row, initialHash, settlement);
   }
   throw new PurchasePersistenceError();
 }

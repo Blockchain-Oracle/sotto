@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import {
   projectHumanPreparedPurchaseApproval,
   type HashVerifiedHumanPreparedPurchase,
@@ -15,6 +14,8 @@ import {
   PurchasePersistenceError,
   type HumanPrepareAuthorityLease,
 } from "./purchase-types.js";
+import { settlementExpectationPersistence } from "./purchase-settlement-expectation.js";
+import { settlementPreparedEventHash } from "./purchase-prepare-event.js";
 
 export type PrepareCheckpointRow = Readonly<{
   attemptId: string;
@@ -81,6 +82,7 @@ function canonicalLease(candidate: unknown): HumanPrepareAuthorityLease {
 function checkpointAuthority(candidate: unknown) {
   const prepared = candidate as HashVerifiedHumanPreparedPurchase;
   const approval = projectHumanPreparedPurchaseApproval(prepared);
+  const settlement = settlementExpectationPersistence(prepared);
   const verifiedAt = time(
     prepared.verifiedAt,
     "human prepared verification time",
@@ -98,6 +100,7 @@ function checkpointAuthority(candidate: unknown) {
       approval.transferContextHash,
       "human prepared transfer context hash",
     ),
+    settlement,
     verifiedAt,
   });
 }
@@ -146,6 +149,13 @@ export function prepareCheckpointEventHash(
   lease: HumanPrepareAuthorityLease,
   authority: PrepareCheckpointAuthority,
 ): `sha256:${string}` {
-  const body = `sotto-prepared-hash-verified-event-v1\0${lease.attemptId}\0${authority.preparedTransactionHash}\0${authority.transferContextHash}\0${authority.verifiedAt}\0${row.previousEventHash}`;
-  return `sha256:${createHash("sha256").update(body, "utf8").digest("hex")}`;
+  return settlementPreparedEventHash({
+    attemptId: lease.attemptId,
+    preparedTransactionHash: authority.preparedTransactionHash,
+    transferContextHash: authority.transferContextHash,
+    verifiedAt: authority.verifiedAt,
+    expectationSchema: authority.settlement.schema,
+    expectationDigest: authority.settlement.digest,
+    previousEventHash: row.previousEventHash,
+  });
 }

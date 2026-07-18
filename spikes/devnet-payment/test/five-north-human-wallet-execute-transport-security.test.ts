@@ -49,7 +49,7 @@ describe("Five North human wallet execute transport security", () => {
 
     let failure: unknown;
     try {
-      await execute.execute(verified, async () => undefined);
+      await execute.createDispatch(verified, {});
     } catch (error) {
       failure = error;
     }
@@ -62,32 +62,31 @@ describe("Five North human wallet execute transport security", () => {
   it("rejects clones before network or durable effects", async () => {
     const { verified } = await verifiedHumanExecuteSession();
     const fetcher = vi.fn<typeof fetch>();
-    const persist = vi.fn(async () => undefined);
     const execute = transport(fetcher);
 
-    await expect(execute.execute({ ...verified }, persist)).rejects.toThrow(
+    await expect(execute.createDispatch({ ...verified }, {})).rejects.toThrow(
       /authenticated/iu,
     );
     expect(fetcher).not.toHaveBeenCalled();
-    expect(persist).not.toHaveBeenCalled();
   });
 
-  it("does not POST when durable execution-start persistence fails", async () => {
-    const { verified } = await verifiedHumanExecuteSession();
+  it("does not POST to execute while creating the dispatch", async () => {
+    const { approved, verified } = await verifiedHumanExecuteSession();
+    let executeRequests = 0;
     const fetcher = vi.fn<typeof fetch>(async (url) => {
       if (url === network.tokenUrl) return tokenResponse();
+      executeRequests += 1;
       return Response.json({});
     });
     const execute = transport(fetcher);
 
-    await expect(
-      execute.execute(verified, async () => {
-        throw new Error("private journal detail");
-      }),
-    ).rejects.toEqual(
-      new Error("human wallet execute start persistence failed"),
-    );
+    const dispatch = await execute.createDispatch(verified, {});
+
     expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(executeRequests).toBe(0);
+    expect(JSON.stringify(dispatch)).not.toContain(
+      approved.signature.signature,
+    );
   });
 
   it("returns status-only HTTP failures and never retries", async () => {
@@ -101,10 +100,11 @@ describe("Five North human wallet execute transport security", () => {
           ),
     );
     const execute = transport(fetcher);
+    const dispatch = await execute.createDispatch(verified, {});
 
     let failure: unknown;
     try {
-      await execute.execute(verified, async () => undefined);
+      await dispatch.execute({});
     } catch (error) {
       failure = error;
     }
@@ -128,13 +128,52 @@ describe("Five North human wallet execute transport security", () => {
       ),
     );
 
-    await expect(
-      execute.execute(verified, async () => undefined),
-    ).rejects.toEqual(
+    const dispatch = await execute.createDispatch(verified, {});
+    await expect(dispatch.execute({})).rejects.toEqual(
       new Error("Five North human wallet execute response is invalid"),
     );
-    await expect(
-      execute.execute(verified, async () => undefined),
-    ).rejects.toThrow(/claimed/iu);
+    await expect(dispatch.execute({})).rejects.toThrow(/claimed/iu);
+  });
+
+  it("bounds a hung execute request and propagates an abort signal", async () => {
+    vi.useRealTimers();
+    const { verified } = await verifiedHumanExecuteSession();
+    let executeSignal: AbortSignal | undefined;
+    const fetcher = vi.fn<typeof fetch>(async (url, init) => {
+      if (url === network.tokenUrl) return tokenResponse();
+      executeSignal = init?.signal ?? undefined;
+      return await new Promise<Response>(() => undefined);
+    });
+    const execute = transport(fetcher);
+    const dispatch = await execute.createDispatch(verified, {});
+    const controller = new AbortController();
+    const pending = dispatch.execute({ signal: controller.signal });
+    controller.abort("private abort reason");
+
+    await expect(pending).rejects.toEqual(
+      new Error("Five North human wallet execute transport failed"),
+    );
+    expect(executeSignal).toBeInstanceOf(AbortSignal);
+    expect(executeSignal?.aborted).toBe(true);
+  });
+
+  it("enforces the ten-second deadline for a hung execute endpoint", async () => {
+    const { verified } = await verifiedHumanExecuteSession();
+    let executeSignal: AbortSignal | undefined;
+    const fetcher = vi.fn<typeof fetch>(async (url, init) => {
+      if (url === network.tokenUrl) return tokenResponse();
+      executeSignal = init?.signal ?? undefined;
+      return await new Promise<Response>(() => undefined);
+    });
+    const dispatch = await transport(fetcher).createDispatch(verified, {});
+    const pending = dispatch.execute({});
+    const rejected = expect(pending).rejects.toEqual(
+      new Error("Five North human wallet execute transport failed"),
+    );
+
+    await vi.advanceTimersByTimeAsync(10_000);
+
+    await rejected;
+    expect(executeSignal?.aborted).toBe(true);
   });
 });

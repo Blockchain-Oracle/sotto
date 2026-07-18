@@ -74,19 +74,21 @@ export function executeLiveFiveNorthHumanPurchase(input: {
         workspaceRoot: liveInput.workspaceRoot,
       });
       await assertOwned();
-      const submitted = await dependencies
+      const dispatch = await dependencies
         .createExecuteTransport(liveInput.network, { signal: input.signal })
-        .execute(signing, (started) =>
-          dependencies.markExecutionStarted({
-            operationId: journal.operationId,
-            ...started,
-            workspaceRoot: liveInput.workspaceRoot,
-          }),
-        );
+        .createDispatch(signing, { signal: input.signal });
+      await dependencies.markExecutionStarted({
+        operationId: journal.operationId,
+        sessionId: dispatch.sessionId,
+        submissionId: dispatch.submissionId,
+        userId: dispatch.userId,
+        workspaceRoot: liveInput.workspaceRoot,
+      });
+      await dispatch.execute({ signal: input.signal });
       const terminal = await input.completion.awaitCompletion({
         beginExclusive: input.beginExclusive,
         commandId: expectation.commandId,
-        userId: submitted.userId,
+        userId: dispatch.userId,
       });
       await dependencies.markCompletion({
         ...terminal,

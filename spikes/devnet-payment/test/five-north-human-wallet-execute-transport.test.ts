@@ -43,7 +43,7 @@ describe("Five North human wallet execute transport", () => {
   beforeEach(() => vi.useFakeTimers({ now: new Date(HUMAN_PURCHASE_NOW) }));
   afterEach(() => vi.useRealTimers());
 
-  it("executes the exact human-approved prepared transaction once", async () => {
+  it("creates a safe dispatch without executing, then submits exactly once", async () => {
     const { createFiveNorthHumanWalletExecuteTransport } =
       await moduleUnderTest();
     const { approved, verified } = await verifiedHumanExecuteSession();
@@ -93,28 +93,42 @@ describe("Five North human wallet execute transport", () => {
       fetcher,
       signal: new AbortController().signal,
     });
-    const persistStarted = vi.fn(async (started) => {
-      events.push("persisted");
-      expect(started).toEqual({
-        sessionId: approved.sessionId,
-        submissionId: expect.any(String),
-        userId: USER_ID,
-      });
+    const dispatch = await execute.createDispatch(verified, {
+      signal: new AbortController().signal,
     });
 
-    const result = await execute.execute(verified, persistStarted);
-
-    expect(result).toEqual({
-      outcome: "submitted",
+    expect(events).toEqual(["token"]);
+    expect(dispatch).toMatchObject({
       preparedTransactionHash: approved.preparedTransactionHash,
       sessionId: approved.sessionId,
       submissionId: expect.any(String),
       userId: USER_ID,
     });
+    expect(Object.keys(dispatch).sort()).toEqual([
+      "execute",
+      "preparedTransactionHash",
+      "sessionId",
+      "submissionId",
+      "userId",
+    ]);
+    const publicDispatch = JSON.stringify(dispatch);
+    expect(publicDispatch).not.toContain(approved.signature.signature);
+    expect(publicDispatch).not.toContain(
+      Buffer.from(approved.preparedTransaction).toString("base64"),
+    );
+
+    const result = await dispatch.execute({
+      signal: new AbortController().signal,
+    });
+
+    expect(result).toEqual({
+      outcome: "submitted",
+      preparedTransactionHash: approved.preparedTransactionHash,
+    });
     expect(JSON.stringify(result)).not.toContain(approved.signature.signature);
-    expect(events).toEqual(["token", "persisted", "execute"]);
-    expect(persistStarted).toHaveBeenCalledOnce();
-    await expect(execute.execute(verified, persistStarted)).rejects.toThrow(
+    expect(events).toEqual(["token", "execute"]);
+    await expect(dispatch.execute({})).rejects.toThrow(/claimed/iu);
+    await expect(execute.createDispatch(verified, {})).rejects.toThrow(
       /claimed/iu,
     );
   });

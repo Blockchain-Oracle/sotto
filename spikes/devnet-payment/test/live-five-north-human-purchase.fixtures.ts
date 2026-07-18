@@ -85,24 +85,19 @@ export function liveHumanPurchaseDependencies(
       },
     })),
     createExecuteTransport: vi.fn(() => ({
-      execute: async (
-        _session: unknown,
-        persist: (value: unknown) => Promise<void>,
-      ) => {
-        events.push("execute");
-        await persist({
-          sessionId: SESSION,
-          submissionId: "123e4567-e89b-42d3-a456-426614174000",
-          userId: "five-north-submitter",
-        });
-        return {
-          outcome: "submitted",
-          preparedTransactionHash: PREPARED,
-          sessionId: SESSION,
-          submissionId: "123e4567-e89b-42d3-a456-426614174000",
-          userId: "five-north-submitter",
-        };
-      },
+      createDispatch: async () => ({
+        preparedTransactionHash: PREPARED,
+        sessionId: SESSION,
+        submissionId: "123e4567-e89b-42d3-a456-426614174000",
+        userId: "five-north-submitter",
+        execute: async () => {
+          events.push("execute");
+          return {
+            outcome: "submitted" as const,
+            preparedTransactionHash: PREPARED,
+          };
+        },
+      }),
     })),
     createInteractiveWallet: vi.fn(async () => {
       events.push("wallet");

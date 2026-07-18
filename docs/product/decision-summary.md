@@ -103,15 +103,21 @@
   prepare-authority checkpoint with generation-bound worker leases now implement
   part of this topology. A one-shot worker library now runs the authenticated
   prepare pipeline outside database transactions and commits the exact fenced
-  checkpoint before wallet handoff. External key custody, deployed connectors
-  and processes, post-checkpoint approval recovery, durable delivery recovery,
-  and release evidence remain unproven.
+  checkpoint before wallet handoff. The journal and one-shot execution worker
+  now also persist approval, wallet decision, verified-signature, and
+  execution-started transitions, with the exact execution fence and one
+  reconciliation job committed before the execute request. Disposable PostgreSQL
+  plus a compiled Wallet SDK child proves this local process path and
+  same-process repository reopen. External key custody, deployed connectors and
+  processes, true process-loss approval/reconciliation recovery, durable
+  settlement/delivery recovery, and release evidence remain unproven.
 
 ## Open Gates
 
 - Production wallet connector deployment and custody boundary.
 - Production prepare-authority key storage, rotation, backup, and recovery.
-- Durable delivery, unknown-outcome recovery, and replay state.
+- A restartable reconciliation worker plus durable delivery, unknown-outcome
+  recovery, and replay state.
 - Implemented and deployed web/API/MCP/worker/database/Coolify topology plus a
   reviewed production `GO`.
 

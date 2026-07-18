@@ -70,6 +70,19 @@ export async function checkpointHumanPreparedPurchase(
         authority.verifiedAt,
       ],
     );
+    const settlement = await client.query(
+      `INSERT INTO sotto.settlements
+        (attempt_id, command_id, expectation_schema, expectation,
+         expectation_digest)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [
+        lease.attemptId,
+        authority.settlement.commandId,
+        authority.settlement.schema,
+        authority.settlement.json,
+        authority.settlement.digest,
+      ],
+    );
     const attempt = await client.query(
       `UPDATE sotto.purchase_attempts
        SET state = 'prepared-hash-verified', prepared_transaction_hash = $2,
@@ -100,6 +113,7 @@ export async function checkpointHumanPreparedPurchase(
     );
     if (
       event.rows.length !== 1 ||
+      settlement.rowCount !== 1 ||
       attempt.rowCount !== 1 ||
       job.rows.length !== 1 ||
       retired.rowCount !== 1

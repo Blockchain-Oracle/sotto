@@ -1,5 +1,8 @@
+import { createHash } from "node:crypto";
 import { Client } from "pg";
 import { afterAll, beforeAll, expect, it } from "vitest";
+import { projectHumanSettlementExpectation } from "@sotto/x402-canton";
+import { exportHumanSettlementExpectation } from "@sotto/x402-canton/internal/human-settlement-expectation-journal";
 import {
   catalogHumanPurchaseIntent,
   PURCHASE_SOURCE_COMMIT,
@@ -58,6 +61,29 @@ async function storedCheckpoint(attemptId: string) {
   }
 }
 
+async function storedSettlement(attemptId: string) {
+  const client = new Client({ connectionString: context.database.databaseUrl });
+  await client.connect();
+  try {
+    const result = await client.query<{
+      commandId: string;
+      expectation: string;
+      expectationDigest: string;
+      expectationSchema: string;
+      state: string;
+    }>(
+      `SELECT command_id AS "commandId", state, expectation,
+        expectation_digest AS "expectationDigest",
+        expectation_schema AS "expectationSchema"
+       FROM sotto.settlements WHERE attempt_id = $1`,
+      [attemptId],
+    );
+    return result.rows[0];
+  } finally {
+    await client.end();
+  }
+}
+
 it("atomically checkpoints one authentically verified prepared purchase", async () => {
   const intent = await catalogHumanPurchaseIntent((challenge) => {
     challenge.accepts[0]!.maxTimeoutSeconds = 599;
@@ -73,11 +99,28 @@ it("atomically checkpoints one authentically verified prepared purchase", async 
     });
     expect(claimed).not.toBeNull();
     const verified = await verifiedHumanPrepare(claimed!.intent);
+    const expectedSettlement = exportHumanSettlementExpectation(
+      projectHumanSettlementExpectation(verified),
+    );
 
     const checkpoint = await purchase.completeHumanPrepare({
       lease: claimed!.lease,
       prepared: verified,
-    });
+      settlementExpectation: structuredClone(expectedSettlement),
+    } as never);
+    const eventBody = [
+      "sotto-prepared-hash-verified-event-v2",
+      initialized.attemptId,
+      verified.preparedTransactionHash,
+      checkpoint.transferContextHash,
+      verified.verifiedAt,
+      expectedSettlement.schema,
+      expectedSettlement.authorityDigest,
+      initialized.event.eventHash,
+    ].join("\0");
+    const expectedEventHash = `sha256:${createHash("sha256")
+      .update(eventBody, "utf8")
+      .digest("hex")}`;
 
     expect(checkpoint).toMatchObject({
       attemptId: initialized.attemptId,
@@ -87,6 +130,7 @@ it("atomically checkpoints one authentically verified prepared purchase", async 
       event: { sequence: 2, type: "prepared-hash-verified" },
       job: { jobId: claimed!.lease.jobId, state: "completed" },
     });
+    expect(checkpoint.event.eventHash).toBe(expectedEventHash);
     expect(await storedCheckpoint(initialized.attemptId)).toMatchObject({
       authorityRetiredAt: expect.any(Date),
       eventSequence: "2",
@@ -96,6 +140,20 @@ it("atomically checkpoints one authentically verified prepared purchase", async 
       resultEventSequence: "2",
       state: "prepared-hash-verified",
     });
+    expect(await storedSettlement(initialized.attemptId)).toEqual({
+      commandId: expectedSettlement.expectation.commandId,
+      expectation: JSON.stringify(expectedSettlement),
+      expectationDigest: expectedSettlement.authorityDigest,
+      expectationSchema: expectedSettlement.schema,
+      state: "prepared",
+    });
+    const restored = await purchase.readHumanSettlementExpectation(
+      initialized.attemptId,
+    );
+    expect(restored).not.toBeNull();
+    expect(exportHumanSettlementExpectation(restored!)).toEqual(
+      expectedSettlement,
+    );
     await expect(
       purchase.claimHumanPrepareAuthority({
         leaseOwner: "prepare-worker-b",

@@ -67,12 +67,23 @@ runs the real holding, TransferFactory, participant-prepare, full-effect, and
 official-hash pipeline outside database transactions, and atomically records the
 verified checkpoint before returning process-local wallet material. Real
 PostgreSQL tests also prove that blocked external work does not block unrelated
-database work. Production key storage, rotation, backup, recovery, and deployed
-worker evidence remain release gates. It cannot yet approve, sign, execute,
-settle, or deliver that purchase. This is a library/integration checkpoint, not
-a deployed marketplace: web, the deployed worker process, restart-safe wallet
-handoff, later purchase lifecycle, delivery recovery, production wallet
-connectors, external HTTPS smoke evidence, and deployment remain open.
+database work. The human-wallet execution worker now durably records approval,
+rejection or incompatibility, verified-signature, and `execution-started`
+events; commits the exact submission fence and one reconciliation job before the
+execute call; and never stores prepared bytes or raw signatures. A real local
+integration test runs disposable PostgreSQL, the compiled Wallet SDK reference
+companion with a generated test key, and a bounded HTTP execute endpoint. It
+proves one explicit approval, one verified signature, one execute request after
+the fence, redacted process output, and repository reopen without a second
+wallet or HTTP call. Redis is not used.
+
+This is still a library/integration checkpoint, not a deployed marketplace or a
+new live Five North execution. A true OS-process restart cannot yet restore the
+process-local wallet handoff; the durable reconciliation job has not yet been
+processed by a restartable worker; and settlement completion, paid delivery,
+delivery recovery, production connector/key custody, web/MCP/worker deployment,
+external HTTPS smoke evidence, backup/restore, and release rollback remain open.
+Production therefore remains `NO_GO`.
 
 No mocked payment or fixture transaction can satisfy those gates.
 

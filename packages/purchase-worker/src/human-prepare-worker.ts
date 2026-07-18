@@ -18,6 +18,7 @@ import {
   type HumanPrepareWorker,
   type HumanPrepareWorkerDependencies,
 } from "./human-prepare-worker-types.js";
+import { registerHumanPrepareWorkerResult } from "./human-prepare-worker-result-state.js";
 
 function validateDependencies(input: HumanPrepareWorkerDependencies) {
   if (
@@ -128,20 +129,21 @@ export function createHumanPrepareWorker(
         { recomputeOfficialHash: dependencies.recomputeOfficialHash },
         { signal: deadline.signal },
       );
-      projectHumanPreparedPurchaseApproval(prepared);
+      const handoffApproval = projectHumanPreparedPurchaseApproval(prepared);
       deadline.requireActive();
       completionStarted = true;
       const checkpoint = await dependencies.repository.completeHumanPrepare({
         lease: claim.lease,
         prepared,
       });
-      const handoffApproval = projectHumanPreparedPurchaseApproval(prepared);
-      return Object.freeze({
+      const result = Object.freeze({
         outcome: "prepared-hash-verified" as const,
         checkpoint,
         approval: handoffApproval,
         handoff: Object.freeze({ preflight, prepared }),
       });
+      registerHumanPrepareWorkerResult(result);
+      return result;
     } catch (error) {
       if (completionStarted) {
         throw new HumanPrepareWorkerError("HUMAN_PREPARE_FAILED");

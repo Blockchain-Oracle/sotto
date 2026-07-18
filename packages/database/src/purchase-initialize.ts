@@ -21,6 +21,7 @@ import {
   type HumanPurchaseAttemptResult,
 } from "./purchase-types.js";
 import type { ValidatedHumanPurchaseAttempt } from "./purchase-validation.js";
+import { readStoredSettlementAuthority } from "./purchase-settlement-row.js";
 
 const PURCHASE_COMMIT_HEADROOM_MS = 15_000;
 
@@ -152,7 +153,16 @@ export async function initializePurchaseAttempt(
     await requireResource(client, attempt);
     const existing = await findPurchaseAggregate(client, attempt.operationId);
     if (existing !== undefined) {
-      const replay = purchaseAggregateResult(existing, attempt, "replayed");
+      const settlement =
+        existing.state === "prepared-hash-verified"
+          ? await readStoredSettlementAuthority(client, existing.attemptId)
+          : null;
+      const replay = purchaseAggregateResult(
+        existing,
+        attempt,
+        "replayed",
+        settlement,
+      );
       if (replay.state === "intent-created") {
         await requirePrepareSigningReserve(client, attempt.executeBefore);
         await assertPurchasePrepareAuthority(

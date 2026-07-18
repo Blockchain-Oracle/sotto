@@ -3,6 +3,7 @@ import type {
   HashVerifiedHumanPreparedPurchase,
   HumanPurchaseJournalIntent,
   HumanPurchaseLedgerIntent,
+  HumanSettlementExpectation,
 } from "@sotto/x402-canton";
 import type {
   HumanPrepareAuthorityRestoreInput,
@@ -83,6 +84,70 @@ export type HumanPrepareCheckpointResult = Readonly<{
   }>;
 }>;
 
+export type HumanWalletConnectorKind = "openrpc" | "wallet-sdk";
+
+export type HumanApprovalRequestedInput = Readonly<{
+  attemptId: Sha256Identifier;
+  preparedTransactionHash: Sha256Identifier;
+  connectorId: string;
+  connectorKind: HumanWalletConnectorKind;
+  sessionId: Sha256Identifier;
+}>;
+
+export type HumanWalletDecisionInput = Readonly<{
+  attemptId: Sha256Identifier;
+  preparedTransactionHash: Sha256Identifier;
+  connectorId: string;
+  connectorKind: HumanWalletConnectorKind;
+  outcome: "rejected" | "unsupported";
+  reason: string;
+  sessionId?: Sha256Identifier;
+}>;
+
+export type HumanSignatureVerifiedInput = HumanApprovalRequestedInput &
+  Readonly<{ verifiedAt: string }>;
+
+export type HumanExecutionStartInput = Readonly<{
+  attemptId: Sha256Identifier;
+  commandId: string;
+  preparedTransactionHash: Sha256Identifier;
+  sessionId: Sha256Identifier;
+  submissionId: string;
+  userId: string;
+}>;
+
+export type HumanPurchaseTransitionResult = Readonly<{
+  outcome: "created" | "replayed";
+  attemptId: Sha256Identifier;
+  state:
+    | "approval-requested"
+    | "wallet-rejected"
+    | "wallet-unsupported"
+    | "signature-verified"
+    | "execution-started";
+  event: Readonly<{
+    sequence: 3 | 4 | 5;
+    type: string;
+    eventHash: Sha256Identifier;
+    previousEventHash: Sha256Identifier;
+    recordedAt: string;
+  }>;
+}>;
+
+export type HumanPurchaseLifecycle = Readonly<{
+  attemptId: Sha256Identifier;
+  commandId: string;
+  state: string;
+  preparedTransactionHash: Sha256Identifier | null;
+  connectorId: string | null;
+  connectorKind: HumanWalletConnectorKind | null;
+  sessionId: Sha256Identifier | null;
+  submissionId: string | null;
+  userId: string | null;
+  latestEventSequence: number;
+  latestEventType: string;
+}>;
+
 export type PurchaseOperationalEvent = Readonly<{
   code: "PURCHASE_POOL_ERROR";
 }>;
@@ -109,6 +174,24 @@ export type PurchaseRepository = Readonly<{
   completeHumanPrepare(
     input: HumanPrepareCheckpointInput,
   ): Promise<HumanPrepareCheckpointResult>;
+  readHumanSettlementExpectation(
+    attemptId: Sha256Identifier,
+  ): Promise<HumanSettlementExpectation | null>;
+  recordHumanApprovalRequested(
+    input: HumanApprovalRequestedInput,
+  ): Promise<HumanPurchaseTransitionResult>;
+  recordHumanWalletDecision(
+    input: HumanWalletDecisionInput,
+  ): Promise<HumanPurchaseTransitionResult>;
+  recordHumanSignatureVerified(
+    input: HumanSignatureVerifiedInput,
+  ): Promise<HumanPurchaseTransitionResult>;
+  beginHumanExecution(
+    input: HumanExecutionStartInput,
+  ): Promise<HumanPurchaseTransitionResult>;
+  readHumanPurchaseLifecycle(
+    attemptId: Sha256Identifier,
+  ): Promise<HumanPurchaseLifecycle>;
   close(): Promise<void>;
 }>;
 

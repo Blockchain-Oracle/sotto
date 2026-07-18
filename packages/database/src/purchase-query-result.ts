@@ -8,6 +8,7 @@ import {
 } from "./purchase-types.js";
 import { uuid } from "./publication-validation-primitives.js";
 import type { ValidatedHumanPurchaseAttempt } from "./purchase-validation.js";
+import type { StoredSettlementAuthority } from "./purchase-settlement-row.js";
 
 function timestamp(value: unknown): string {
   if (!(value instanceof Date) || !Number.isFinite(value.getTime())) {
@@ -72,6 +73,7 @@ export function purchaseAggregateResult(
   row: PurchaseAggregateRow,
   expected: ValidatedHumanPurchaseAttempt,
   outcome: "created" | "replayed",
+  settlement: StoredSettlementAuthority | null = null,
 ): HumanPurchaseAttemptResult {
   const initialEventHash = validateIdentity(row, expected, outcome);
   if (
@@ -83,7 +85,12 @@ export function purchaseAggregateResult(
   ) {
     throw new PurchasePersistenceError();
   }
-  const lifecycle = purchaseLifecycle(row, initialEventHash, outcome);
+  const lifecycle = purchaseLifecycle(
+    row,
+    initialEventHash,
+    outcome,
+    settlement,
+  );
   const base = {
     outcome,
     operationId: expected.operationId,

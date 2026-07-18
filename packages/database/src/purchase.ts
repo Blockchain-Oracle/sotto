@@ -6,10 +6,21 @@ import { exportHumanPrepareAuthorityPlaintext } from "@sotto/x402-canton/interna
 import { readPrivatePrepareAuthorityActiveKeyId } from "./private-prepare-authority-keyring.js";
 import { initializePurchaseAttempt } from "./purchase-initialize.js";
 import { checkpointHumanPreparedPurchase } from "./purchase-prepare-checkpoint.js";
+import { readSettlementExpectation } from "./purchase-settlement-expectation.js";
+import {
+  recordApprovalRequested,
+  recordWalletDecision,
+} from "./purchase-human-approval.js";
+import {
+  beginExecution,
+  recordSignatureVerified,
+} from "./purchase-human-execution.js";
+import { readHumanLifecycle } from "./purchase-human-lifecycle.js";
 import { claimPurchasePrepareAuthorityLease } from "./purchase-prepare-authority-lease.js";
 import { restorePurchasePrepareAuthority } from "./purchase-prepare-authority-restore.js";
 import { createPurchasePoolRuntime } from "./purchase-pool.js";
 import {
+  PurchaseConflictError,
   PurchasePersistenceError,
   type PurchaseRepository,
   type PurchaseRepositoryInput,
@@ -118,10 +129,51 @@ export function createPurchaseRepository(
         release();
       }
     };
+  const readHumanSettlementExpectation: PurchaseRepository["readHumanSettlementExpectation"] =
+    async (attemptId) => {
+      const release = runtime.admit();
+      try {
+        return await readSettlementExpectation(runtime.pool, attemptId);
+      } catch {
+        throw new PurchasePersistenceError();
+      } finally {
+        release();
+      }
+    };
+  const transition = <Result>(operation: () => Promise<Result>) => {
+    const release = runtime.admit();
+    return operation()
+      .catch((error: unknown) => {
+        if (error instanceof PurchaseConflictError) throw error;
+        throw new PurchasePersistenceError();
+      })
+      .finally(release);
+  };
+  const recordHumanApprovalRequested: PurchaseRepository["recordHumanApprovalRequested"] =
+    async (value) =>
+      transition(() => recordApprovalRequested(runtime.pool, value));
+  const recordHumanWalletDecision: PurchaseRepository["recordHumanWalletDecision"] =
+    async (value) =>
+      transition(() => recordWalletDecision(runtime.pool, value));
+  const recordHumanSignatureVerified: PurchaseRepository["recordHumanSignatureVerified"] =
+    async (value) =>
+      transition(() => recordSignatureVerified(runtime.pool, value));
+  const beginHumanExecution: PurchaseRepository["beginHumanExecution"] = async (
+    value,
+  ) => transition(() => beginExecution(runtime.pool, value));
+  const readHumanPurchaseLifecycle: PurchaseRepository["readHumanPurchaseLifecycle"] =
+    async (attemptId) =>
+      transition(() => readHumanLifecycle(runtime.pool, attemptId));
   return Object.freeze({
     initializeHumanPurchaseAttempt,
     claimHumanPrepareAuthority,
     completeHumanPrepare,
+    recordHumanApprovalRequested,
+    recordHumanWalletDecision,
+    recordHumanSignatureVerified,
+    beginHumanExecution,
+    readHumanPurchaseLifecycle,
+    readHumanSettlementExpectation,
     close: runtime.close,
   });
 }
