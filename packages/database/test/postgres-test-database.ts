@@ -1,6 +1,7 @@
 import { Client } from "pg";
 
 const DATABASE_NAME = /^[a-z][a-z0-9_]{0,62}$/u;
+const ADMIN_TIMEOUT_MS = 30_000;
 
 function databaseUrl(baseUrl: string, database: string): string {
   const url = new URL(baseUrl);
@@ -13,8 +14,8 @@ function databaseUrl(baseUrl: string, database: string): string {
 async function runAdmin(baseUrl: string, sql: string): Promise<void> {
   const client = new Client({
     connectionString: databaseUrl(baseUrl, "postgres"),
-    connectionTimeoutMillis: 10_000,
-    query_timeout: 10_000,
+    connectionTimeoutMillis: ADMIN_TIMEOUT_MS,
+    query_timeout: ADMIN_TIMEOUT_MS,
   });
   await client.connect();
   try {
