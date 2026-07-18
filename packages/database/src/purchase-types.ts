@@ -32,6 +32,24 @@ export type HumanPrepareAuthorityResolver = (
   scope: HumanPrepareAuthorityRestoreScope,
 ) => Promise<HumanPrepareAuthorityRestoreInput>;
 
+export type HumanPrepareAuthorityClaimInput = Readonly<{
+  leaseOwner: string;
+  leaseMilliseconds?: number;
+  resolve: HumanPrepareAuthorityResolver;
+}>;
+
+export type HumanPrepareAuthorityClaimResult = Readonly<{
+  lease: Readonly<{
+    jobId: string;
+    attemptId: Sha256Identifier;
+    leaseGeneration: number;
+    leaseOwner: string;
+    leaseExpiresAt: string;
+    claimedAt: string;
+  }>;
+  intent: HumanPurchaseLedgerIntent;
+}>;
+
 export type HumanPurchaseAttemptResult = Readonly<{
   outcome: "created" | "replayed";
   operationId: Sha256Identifier;
@@ -86,6 +104,9 @@ export type PurchaseRepository = Readonly<{
   initializeHumanPurchaseAttempt(
     intent: HumanPurchaseLedgerIntent,
   ): Promise<HumanPurchaseAttemptResult>;
+  claimHumanPrepareAuthority(
+    input: HumanPrepareAuthorityClaimInput,
+  ): Promise<HumanPrepareAuthorityClaimResult | null>;
   close(): Promise<void>;
 }>;
 

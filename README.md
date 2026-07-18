@@ -41,10 +41,10 @@ The research spike has now produced:
 
 The spike's signer/funding-authority and public-settlement-visibility blockers
 are closed. The production gate is still `NO_GO`: production wallet and
-prepare-authority key custody, connector deployment, generation-bound worker
-leases, durable delivery and unknown-outcome recovery, and deployed release
-evidence for the approved production topology remain open. Receipt audience
-Q-004 and topology Q-006 are selected but not yet proven in production. The
+prepare-authority key custody, connector deployment, deployed worker execution,
+durable delivery and unknown-outcome recovery, and release evidence for the
+approved production topology remain open. Receipt audience Q-004 and topology
+Q-006 are selected but not yet proven in production. The
 [redacted spike result](docs/architecture/devnet-spike-result.md) records the
 evidence and remaining blockers.
 
@@ -61,14 +61,13 @@ authenticated human-wallet purchase attempt, its first append-only event, a
 short-lived encrypted prepare-authority envelope, and one prepare-only outbox
 job. Real PostgreSQL and ephemeral-key tests prove exact replay, concurrency,
 tamper and corruption rejection, signing-reserve rollback, migration failure for
-legacy ready jobs, and internal restart reauthentication. Authority restoration
-intentionally remains internal until a generation-bound live worker lease
-guarantees one executor. Production key storage, rotation, backup, and recovery
-remain release gates. It cannot yet approve, sign, execute, settle, or deliver
-that purchase. This is a library/integration checkpoint, not a deployed
-marketplace: web, the prepare worker and later purchase lifecycle, delivery
-recovery, production wallet connectors, external HTTPS smoke evidence, and
-deployment remain open.
+legacy ready jobs, generation-bound worker leasing, and lease-gated restart
+reauthentication. Production key storage, rotation, backup, recovery, and
+deployed worker evidence remain release gates. It cannot yet approve, sign,
+execute, settle, or deliver that purchase. This is a library/integration
+checkpoint, not a deployed marketplace: web, the prepare worker and later
+purchase lifecycle, delivery recovery, production wallet connectors, external
+HTTPS smoke evidence, and deployment remain open.
 
 No mocked payment or fixture transaction can satisfy those gates.
 

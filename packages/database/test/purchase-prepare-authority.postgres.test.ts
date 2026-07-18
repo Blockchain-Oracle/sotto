@@ -33,7 +33,7 @@ function repository(marker = 7, sourceCommit = PURCHASE_SOURCE_COMMIT) {
   });
 }
 
-async function storedEnvelope() {
+async function storedEnvelope(attemptId: string) {
   const client = new Client({ connectionString: context.database.databaseUrl });
   await client.connect();
   try {
@@ -46,7 +46,8 @@ async function storedEnvelope() {
       nonceBytes: number;
       schema: string;
       tagBytes: number;
-    }>(`SELECT
+    }>(
+      `SELECT
       count(*) OVER ()::text AS authorities,
       authority_schema AS schema,
       aead_algorithm AS algorithm,
@@ -55,7 +56,10 @@ async function storedEnvelope() {
       octet_length(nonce) AS "nonceBytes",
       octet_length(authentication_tag) AS "tagBytes",
       octet_length(ciphertext) AS "ciphertextBytes"
-      FROM sotto.private_prepare_authorities`);
+      FROM sotto.private_prepare_authorities
+      WHERE attempt_id = $1`,
+      [attemptId],
+    );
     return result.rows[0];
   } finally {
     await client.end();
@@ -82,23 +86,12 @@ async function storedEnvelopeFingerprint(attemptId: string) {
 }
 
 describe("durable human prepare authority", () => {
-  it("keeps restoration unavailable until a durable job lease exists", async () => {
-    const purchase = repository();
-    try {
-      expect(purchase).not.toHaveProperty(
-        "restoreHumanPurchasePrepareAuthority",
-      );
-    } finally {
-      await purchase.close();
-    }
-  });
-
   it("atomically seals one bounded private authority with the journal", async () => {
     const intent = await catalogHumanPurchaseIntent();
     const purchase = repository();
     try {
-      await purchase.initializeHumanPurchaseAttempt(intent);
-      const envelope = await storedEnvelope();
+      const created = await purchase.initializeHumanPurchaseAttempt(intent);
+      const envelope = await storedEnvelope(created.attemptId);
       expect(envelope).toEqual({
         algorithm: "aes-256-gcm",
         authorities: "1",
@@ -118,8 +111,8 @@ describe("durable human prepare authority", () => {
 
   it("restores an authenticated intent after a repository restart", async () => {
     const intent = await catalogHumanPurchaseIntent((challenge) => {
-      challenge.accepts[0]!.maxTimeoutSeconds = 599;
-      challenge.accepts[0]!.extra.executeBeforeSeconds = 599;
+      challenge.accepts[0]!.maxTimeoutSeconds = 597;
+      challenge.accepts[0]!.extra.executeBeforeSeconds = 597;
     });
     const first = repository();
     const created = await first.initializeHumanPurchaseAttempt(intent);

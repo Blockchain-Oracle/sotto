@@ -47,6 +47,8 @@ export {
   PurchaseConflictError,
   PurchasePersistenceError,
   type HumanPurchaseAttemptResult,
+  type HumanPrepareAuthorityClaimInput,
+  type HumanPrepareAuthorityClaimResult,
   type HumanPurchaseBindingResolver,
   type HumanPurchasePersistenceBinding,
   type PurchaseOperationalEvent,

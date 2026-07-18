@@ -100,14 +100,13 @@
   worker, one private PostgreSQL authority, an explicit migration job, and
   wallet connectors outside the application boundary form the first-release
   topology. The PostgreSQL catalog, purchase journal, and encrypted internal
-  prepare-authority checkpoint now implement part of this topology.
-  Generation-bound worker leases, external key custody, deployed connectors and
-  processes, and release evidence remain unproven.
+  prepare-authority checkpoint with generation-bound worker leases now implement
+  part of this topology. External key custody, deployed connectors and
+  processes, durable recovery, and release evidence remain unproven.
 
 ## Open Gates
 
 - Production wallet connector deployment and custody boundary.
-- Generation-bound worker leases and lease-gated prepare-authority restoration.
 - Production prepare-authority key storage, rotation, backup, and recovery.
 - Durable delivery, unknown-outcome recovery, and replay state.
 - Implemented and deployed web/API/MCP/worker/database/Coolify topology plus a

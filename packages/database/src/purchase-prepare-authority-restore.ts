@@ -15,6 +15,7 @@ import {
 } from "./purchase-query.js";
 import { purchaseAggregateResult } from "./purchase-query-result.js";
 import { openPurchasePrepareAuthority } from "./purchase-prepare-authority-store.js";
+import type { HumanPrepareAuthorityLease } from "./purchase-prepare-authority-lease.js";
 import {
   PurchasePersistenceError,
   type HumanPrepareAuthorityResolution,
@@ -27,6 +28,7 @@ const MINIMUM_SIGNING_RESERVE_MS = 120_000;
 
 function requireReadyAggregate(
   row: PurchaseAggregateRow | undefined,
+  lease: HumanPrepareAuthorityLease,
 ): PurchaseAggregateRow {
   if (
     row === undefined ||
@@ -35,11 +37,16 @@ function requireReadyAggregate(
     row.eventType !== "intent-created" ||
     row.previousEventHash !== null ||
     row.jobKind !== "purchase-prepare" ||
-    row.jobState !== "ready" ||
-    row.jobId === null ||
+    row.jobState !== "leased" ||
+    row.jobId !== lease.jobId ||
+    row.jobLeaseGeneration !== String(lease.leaseGeneration) ||
+    row.jobLeaseOwner !== lease.leaseOwner ||
+    row.jobLeaseExpiresAt?.toISOString() !== lease.leaseExpiresAt ||
+    row.jobClaimedAt?.toISOString() !== lease.claimedAt ||
     row.eventRecordedAt === null ||
     row.jobAvailableAt === null ||
     row.jobCreatedAt === null ||
+    row.jobLeaseExpiresAt.getTime() <= Date.now() ||
     !(row.executeBefore instanceof Date) ||
     row.executeBefore.getTime() - Date.now() < MINIMUM_SIGNING_RESERVE_MS
   ) {
@@ -89,11 +96,13 @@ async function withClient<T>(
 async function loadAuthority(
   pool: Pool,
   attemptId: string,
+  lease: HumanPrepareAuthorityLease,
   keyring: PrepareAuthorityKeyring,
 ) {
   return withClient(pool, async (client) => {
     const row = requireReadyAggregate(
       await findPurchaseAggregateByAttemptId(client, attemptId),
+      lease,
     );
     const plaintext = await openPurchasePrepareAuthority(
       client,
@@ -116,15 +125,16 @@ function sameAggregate(
 export async function restorePurchasePrepareAuthority(
   pool: Pool,
   keyring: PrepareAuthorityKeyring,
-  attemptId: string,
+  lease: HumanPrepareAuthorityLease,
   resolve: HumanPrepareAuthorityResolver,
 ): Promise<HumanPurchaseLedgerIntent> {
+  const attemptId = lease.attemptId;
   if (!SHA256.test(attemptId) || typeof resolve !== "function") {
     throw new PurchasePersistenceError();
   }
   let plaintext: Uint8Array | undefined;
   try {
-    const loaded = await loadAuthority(pool, attemptId, keyring);
+    const loaded = await loadAuthority(pool, attemptId, lease, keyring);
     plaintext = loaded.plaintext;
     const authority = parseHumanPrepareAuthorityPlaintext(plaintext);
     const fresh = await resolve(
@@ -134,6 +144,7 @@ export async function restorePurchasePrepareAuthority(
     await withClient(pool, async (client) => {
       const current = requireReadyAggregate(
         await findPurchaseAggregateByAttemptId(client, attemptId),
+        lease,
       );
       sameAggregate(loaded.row, current);
       const reopened = await openPurchasePrepareAuthority(
@@ -159,7 +170,11 @@ export async function restorePurchasePrepareAuthority(
       },
       loaded.row.sourceCommit,
     );
-    purchaseAggregateResult(loaded.row, expected, "replayed");
+    purchaseAggregateResult(
+      { ...loaded.row, jobState: expected.jobState },
+      expected,
+      "replayed",
+    );
     return intent;
   } catch {
     throw new PurchasePersistenceError();

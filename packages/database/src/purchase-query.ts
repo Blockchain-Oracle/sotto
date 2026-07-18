@@ -29,6 +29,10 @@ export type PurchaseAggregateRow = Readonly<{
   jobState: string | null;
   jobAvailableAt: Date | null;
   jobCreatedAt: Date | null;
+  jobLeaseGeneration: string | null;
+  jobLeaseOwner: string | null;
+  jobLeaseExpiresAt: Date | null;
+  jobClaimedAt: Date | null;
 }>;
 
 const AGGREGATE_SELECT = `SELECT
@@ -58,7 +62,11 @@ const AGGREGATE_SELECT = `SELECT
   job.kind AS "jobKind",
   job.state AS "jobState",
   job.available_at AS "jobAvailableAt",
-  job.created_at AS "jobCreatedAt"
+  job.created_at AS "jobCreatedAt",
+  job.lease_generation::text AS "jobLeaseGeneration",
+  job.lease_owner AS "jobLeaseOwner",
+  job.lease_expires_at AS "jobLeaseExpiresAt",
+  job.claimed_at AS "jobClaimedAt"
 FROM sotto.purchase_attempts attempt
 LEFT JOIN sotto.attempt_events event
   ON event.attempt_id = attempt.attempt_id AND event.sequence = 1

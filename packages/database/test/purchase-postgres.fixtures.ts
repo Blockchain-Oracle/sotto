@@ -9,6 +9,7 @@ import type {
   PurchaseRepository,
   PurchaseRepositoryInput,
 } from "../src/index.js";
+import { PurchasePersistenceError } from "../src/index.js";
 import type { HumanPrepareAuthorityResolver } from "../src/purchase-types.js";
 import { createPostgresTestDatabase } from "./postgres-test-database.js";
 import { originRegistration, verifiedProbe } from "./publication.fixtures.js";
@@ -79,10 +80,18 @@ export async function purchaseJournalCounts(databaseUrl: string) {
 }
 
 type RestoreModule = Readonly<{
+  claimPurchasePrepareAuthorityLease(
+    pool: Pool,
+    input: {
+      leaseOwner: string;
+      leaseMilliseconds?: number;
+      attemptId?: `sha256:${string}`;
+    },
+  ): Promise<unknown>;
   restorePurchasePrepareAuthority(
     pool: Pool,
     keyring: PrepareAuthorityKeyring,
-    attemptId: string,
+    lease: unknown,
     resolve: HumanPrepareAuthorityResolver,
   ): Promise<HumanPurchaseLedgerIntent>;
 }>;
@@ -93,9 +102,15 @@ export async function restorePurchasePrepareAuthorityForTest(
   attemptId: string,
   resolve: HumanPrepareAuthorityResolver,
 ): Promise<HumanPurchaseLedgerIntent> {
-  const module = (await import(
+  const restoreModule = (await import(
     /* @vite-ignore */ new URL(
       "../dist/purchase-prepare-authority-restore.js",
+      import.meta.url,
+    ).href
+  )) as RestoreModule;
+  const leaseModule = (await import(
+    /* @vite-ignore */ new URL(
+      "../dist/purchase-prepare-authority-lease.js",
       import.meta.url,
     ).href
   )) as RestoreModule;
@@ -107,10 +122,23 @@ export async function restorePurchasePrepareAuthorityForTest(
     statement_timeout: 10_000,
   });
   try {
-    return await module.restorePurchasePrepareAuthority(
+    await pool.query(
+      `UPDATE sotto.outbox_jobs
+       SET claimed_at = transaction_timestamp() - interval '31 seconds',
+        lease_expires_at = transaction_timestamp() - interval '1 second'
+       WHERE attempt_id = $1 AND state = 'leased'`,
+      [attemptId],
+    );
+    const lease = await leaseModule.claimPurchasePrepareAuthorityLease(pool, {
+      leaseOwner: "test-prepare-worker",
+      leaseMilliseconds: 30_000,
+      attemptId: attemptId as `sha256:${string}`,
+    });
+    if (lease === null) throw new PurchasePersistenceError();
+    return await restoreModule.restorePurchasePrepareAuthority(
       pool,
       keyring,
-      attemptId,
+      lease,
       resolve,
     );
   } finally {

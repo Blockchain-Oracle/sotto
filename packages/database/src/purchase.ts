@@ -5,6 +5,8 @@ import {
 import { exportHumanPrepareAuthorityPlaintext } from "@sotto/x402-canton/internal/human-prepare-authority-persistence";
 import { readPrivatePrepareAuthorityActiveKeyId } from "./private-prepare-authority-keyring.js";
 import { initializePurchaseAttempt } from "./purchase-initialize.js";
+import { claimPurchasePrepareAuthorityLease } from "./purchase-prepare-authority-lease.js";
+import { restorePurchasePrepareAuthority } from "./purchase-prepare-authority-restore.js";
 import { createPurchasePoolRuntime } from "./purchase-pool.js";
 import {
   PurchasePersistenceError,
@@ -75,8 +77,34 @@ export function createPurchaseRepository(
       release();
     }
   };
+  const claimHumanPrepareAuthority: PurchaseRepository["claimHumanPrepareAuthority"] =
+    async (claim) => {
+      if (typeof claim?.resolve !== "function") {
+        throw new PurchasePersistenceError();
+      }
+      const release = runtime.admit();
+      try {
+        const lease = await claimPurchasePrepareAuthorityLease(runtime.pool, {
+          leaseOwner: claim.leaseOwner,
+          ...(claim.leaseMilliseconds === undefined
+            ? {}
+            : { leaseMilliseconds: claim.leaseMilliseconds }),
+        });
+        if (lease === null) return null;
+        const intent = await restorePurchasePrepareAuthority(
+          runtime.pool,
+          input.prepareAuthorityKeyring,
+          lease,
+          claim.resolve,
+        );
+        return Object.freeze({ lease, intent });
+      } finally {
+        release();
+      }
+    };
   return Object.freeze({
     initializeHumanPurchaseAttempt,
+    claimHumanPrepareAuthority,
     close: runtime.close,
   });
 }
