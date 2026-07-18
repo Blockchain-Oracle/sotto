@@ -44,8 +44,8 @@
     "spike:wallet:tap": "tsx spikes/capability-wallet/src/five-north-external-payer-tap-cli.ts",
     "spike:wallet:revoke": "tsx spikes/capability-wallet/src/five-north-capability-revoke-cli.ts",
     "spike:package": "tsx spikes/devnet-payment/src/live-sotto-control-package.ts",
-    "test": "node scripts/build-workspaces.mjs && pnpm test:unit",
-    "test:postgres": "pnpm --filter @sotto/catalog-probe... --filter @sotto/purchase-worker... build && node scripts/run-postgres-integration.mjs",
+    "test": "node scripts/build-workspaces.mjs && corepack pnpm test:unit",
+    "test:postgres": "corepack pnpm --filter @sotto/catalog-probe... --filter @sotto/purchase-worker... build && node scripts/run-postgres-integration.mjs",
     "test:unit": "vitest run --exclude '**/*.postgres.test.ts'",
     "typecheck": "tsc --noEmit --pretty false",
     "verify": "node scripts/verify.mjs"
