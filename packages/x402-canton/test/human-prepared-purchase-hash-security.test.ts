@@ -4,6 +4,7 @@ import {
   verifyHumanPreparedPurchaseHash,
   type HumanPreparedPurchaseHashDependencies,
 } from "../src/human-prepared-purchase-hash.js";
+import { projectHumanPreparedPurchaseApproval } from "../src/human-purchase-approval.js";
 import { claimHashVerifiedHumanPreparedPurchase } from "../src/human-prepared-purchase-hash-state.js";
 import { HUMAN_PURCHASE_NOW } from "./human-purchase-commitment.fixtures.js";
 import {
@@ -106,6 +107,24 @@ describe("policy-free human prepared hash security", () => {
     const claimed = claimHashVerifiedHumanPreparedPurchase(verified);
     expect(claimed.preparedTransaction).toEqual(input.transaction);
     expect(claimed.preparedTransactionHash).toEqual(input.digest);
+  });
+
+  it("uses the committed execution window after fresh hash verification", async () => {
+    const input = await humanPreparedHashInputs();
+    const verified = await verifyHumanPreparedPurchaseHash(input.observation, {
+      recomputeOfficialHash: async () => input.digest,
+    });
+
+    vi.advanceTimersByTime(10_001);
+    expect(() => projectHumanPreparedPurchaseApproval(verified)).not.toThrow();
+
+    vi.setSystemTime(Date.parse(input.intent.challenge.executeBefore) - 1);
+    expect(() => projectHumanPreparedPurchaseApproval(verified)).not.toThrow();
+
+    vi.setSystemTime(Date.parse(input.intent.challenge.executeBefore));
+    expect(() => projectHumanPreparedPurchaseApproval(verified)).toThrow(
+      /expired/iu,
+    );
   });
 
   it("rejects forged and stale observations before the official oracle", async () => {

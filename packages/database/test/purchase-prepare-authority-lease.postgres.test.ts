@@ -63,11 +63,15 @@ it("allows exactly one worker to claim a ready prepare authority", async () => {
     let releaseResolver!: () => void;
     const started = new Promise<void>((resolve) => (resolverStarted = resolve));
     const blocked = new Promise<void>((resolve) => (releaseResolver = resolve));
-    const resolver = vi.fn(async () => {
-      resolverStarted();
-      await blocked;
-      return freshHumanPrepareAuthority(intent);
-    });
+    let resolverLease: unknown;
+    const resolver = vi.fn(
+      async (_purchase: unknown, _scope: unknown, lease: unknown) => {
+        resolverLease = lease;
+        resolverStarted();
+        await blocked;
+        return freshHumanPrepareAuthority(intent);
+      },
+    );
 
     const firstClaim = first.claimHumanPrepareAuthority({
       leaseOwner: "worker-a",
@@ -88,6 +92,7 @@ it("allows exactly one worker to claim a ready prepare authority", async () => {
       attemptId: created.attemptId,
       leaseGeneration: 1,
     });
+    expect(resolverLease).toEqual(winners[0]!.lease);
     expect(await jobState(created.attemptId)).toMatchObject({
       generation: "1",
       state: "leased",

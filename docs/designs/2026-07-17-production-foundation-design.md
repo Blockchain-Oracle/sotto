@@ -203,6 +203,14 @@ append `prepared-hash-verified`, advance the attempt, terminalize the prepare
 job, and retire its encrypted prepare authority. A stale worker cannot commit
 after another worker reclaims the lease.
 
+The exact lease deadline also bounds authority reauthentication, even when a
+connector ignores cancellation, and preserves fifteen seconds for the final
+checkpoint and immediate wallet handoff. The ten-second prepared-observation
+window still applies through official hash verification. After that transition,
+the immutable hash-verified transaction is governed by its committed
+`executeBefore` instead of database latency. The 120-second signing reserve is
+required before verification begins; it is not restarted after PostgreSQL.
+
 PostgreSQL stores the verified prepared-transaction hash, event chain, and
 terminal job result, but not prepared transaction bytes. The authenticated
 verified object remains process-local and may proceed immediately to the wallet
@@ -215,6 +223,23 @@ handoff, a process loss after this checkpoint leaves the attempt explicitly at
 approval, or claim restart-safe wallet handoff. The user may start a fresh
 attempt. Closing that handoff gap remains a production `GO` criterion and does
 not justify Redis or prepared-byte persistence for the hackathon path.
+
+The first worker implementation is a one-shot `runOne` orchestration library,
+not a polling daemon. It restores one leased authority, performs the dependent
+holding, registry, preparation, effect-inspection, and official-hash stages in
+order, commits the generation-fenced checkpoint, and only then returns the
+process-local prepared object and authenticated wallet preflight. Caller
+cancellation can stop external acquisition, but cancellation racing a committed
+checkpoint cannot hide that durable success. Failed external work is left for
+lease expiry and generation-fenced reclaim rather than immediately reset while
+late I/O may still exist.
+
+Real disposable-PostgreSQL tests prove the built worker package can perform this
+checkpoint, becomes idle afterward, and leaves its single-connection PostgreSQL
+pool available while an external reader is blocked. Those tests use the real
+persistence and x402 inspection pipeline with bounded local transport fixtures;
+they are not a deployed Five North worker, wallet approval, or production
+performance claim.
 
 ## Transaction And Idempotency Boundary
 
@@ -257,7 +282,9 @@ The database path uses bounded queries, explicit indexes, connection-pool
 limits, and short transactions. Network I/O never occurs while a row lock is
 held. Queue lag, query plans, pool saturation, end-to-end latency, and response
 storage are measured in the deployed environment before Redis or additional
-services are considered.
+services are considered. The one-shot worker uses one short claim transaction
+and one short checkpoint transaction; the intervening network stages are
+sequential because each authenticates input for the next.
 
 ## Implementation Sequence
 

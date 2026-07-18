@@ -69,6 +69,15 @@ importers:
 
   packages/evidence: {}
 
+  packages/purchase-worker:
+    dependencies:
+      '@sotto/database':
+        specifier: workspace:*
+        version: link:../database
+      '@sotto/x402-canton':
+        specifier: workspace:*
+        version: link:../x402-canton
+
   packages/x402-canton:
     dependencies:
       '@canton-network/core-ledger-proto':

@@ -9,12 +9,17 @@ const database = "sotto_test";
 const username = "sotto_test";
 const password = randomBytes(24).toString("hex");
 const containerName = `sotto-postgres-${process.pid}-${randomBytes(4).toString("hex")}`;
-const postgresTests = readdirSync(
-  new URL("../packages/database/test/", import.meta.url),
-  { withFileTypes: true },
-)
-  .filter((entry) => entry.isFile() && entry.name.endsWith(".postgres.test.ts"))
-  .map((entry) => `packages/database/test/${entry.name}`)
+const postgresTests = [
+  ["packages/database/test", "../packages/database/test/"],
+  ["packages/purchase-worker/test", "../packages/purchase-worker/test/"],
+]
+  .flatMap(([prefix, path]) =>
+    readdirSync(new URL(path, import.meta.url), { withFileTypes: true })
+      .filter(
+        (entry) => entry.isFile() && entry.name.endsWith(".postgres.test.ts"),
+      )
+      .map((entry) => `${prefix}/${entry.name}`),
+  )
   .sort();
 if (postgresTests.length === 0) {
   throw new Error("PostgreSQL integration tests are absent");

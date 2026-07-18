@@ -39,6 +39,24 @@ export type ReadHashVerifiedHumanSettlementAuthority = Readonly<{
 }>;
 
 const states = new WeakMap<object, VerifiedState>();
+const CLOCK_ROLLBACK_TOLERANCE_MS = 5_000;
+
+function assertHashVerifiedAuthorityActive(state: VerifiedState): void {
+  const now = Date.now();
+  if (
+    !Number.isSafeInteger(state.verifiedAt) ||
+    state.verifiedAt < state.prepared.capturedAt ||
+    now < state.verifiedAt - CLOCK_ROLLBACK_TOLERANCE_MS
+  ) {
+    throw new Error("hash-verified human Purchase clock moved backwards");
+  }
+  const executeBefore = Date.parse(
+    state.prepared.intent.challenge.executeBefore,
+  );
+  if (!Number.isSafeInteger(executeBefore) || executeBefore <= now) {
+    throw new Error("hash-verified human Purchase has expired");
+  }
+}
 
 function readState(candidate: unknown): VerifiedState {
   if (typeof candidate !== "object" || candidate === null) {
@@ -51,7 +69,7 @@ function readState(candidate: unknown): VerifiedState {
   if (state.claimed) {
     throw new Error("hash-verified human Purchase is already claimed");
   }
-  assertHumanPreparedPurchaseStateFresh(state.prepared);
+  assertHashVerifiedAuthorityActive(state);
   return state;
 }
 
@@ -62,7 +80,7 @@ export function registerHashVerifiedHumanPreparedPurchase(
   verifiedAt: number,
 ): void {
   assertHumanPreparedPurchaseStateFresh(prepared);
-  states.set(authority, {
+  const state: VerifiedState = {
     claimed: false,
     prepared,
     preparedTransactionHash: new Uint8Array(preparedTransactionHash),
@@ -71,7 +89,9 @@ export function registerHashVerifiedHumanPreparedPurchase(
         .extraArgs.context,
     ),
     verifiedAt,
-  });
+  };
+  assertHashVerifiedAuthorityActive(state);
+  states.set(authority, state);
 }
 
 function projectState(

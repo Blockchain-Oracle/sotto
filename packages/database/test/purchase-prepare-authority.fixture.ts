@@ -20,6 +20,7 @@ export const HUMAN_PURCHASE_TRUSTED_CONFIGURATION = Object.freeze({
 
 export async function freshHumanPrepareAuthority(
   intent: HumanPurchaseLedgerIntent,
+  requestApproval?: Parameters<typeof walletPreflight>[1],
 ): Promise<HumanPrepareAuthorityRestoreInput> {
   const closure = spliceClosure();
   const reference = closure.graphPackages.find(
@@ -28,7 +29,7 @@ export async function freshHumanPrepareAuthority(
   if (reference === undefined) {
     throw new Error("test Splice package is absent");
   }
-  const wallet = await walletPreflight(reference.packageId);
+  const wallet = await walletPreflight(reference.packageId, requestApproval);
   const scope = {
     adminParty: intent.challenge.instrument.admin,
     challengeId: intent.challenge.challengeId,

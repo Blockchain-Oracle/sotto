@@ -50,6 +50,8 @@ export {
   type HumanPrepareAuthorityClaimInput,
   type HumanPrepareAuthorityClaimResult,
   type HumanPrepareAuthorityLease,
+  type HumanPrepareAuthorityResolution,
+  type HumanPrepareAuthorityResolver,
   type HumanPrepareCheckpointInput,
   type HumanPrepareCheckpointResult,
   type HumanPurchaseBindingResolver,

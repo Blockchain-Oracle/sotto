@@ -170,4 +170,16 @@ describe("policy-free human wallet signing session", () => {
       signingAlgorithm: "SIGNING_ALGORITHM_SPEC_EC_DSA_SHA_256",
     });
   });
+
+  it("starts from verified preparation after its acquisition window", async () => {
+    const input = await signedHumanWalletInputs();
+    vi.advanceTimersByTime(10_001);
+
+    await expect(
+      createHumanWalletSigningSession(
+        { preflight: input.preflight, prepared: input.prepared },
+        { resolveRegisteredPublicKey: async () => input.registeredKey },
+      ),
+    ).resolves.toMatchObject({ outcome: "verified" });
+  });
 });

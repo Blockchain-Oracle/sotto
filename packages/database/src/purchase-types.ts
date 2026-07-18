@@ -34,6 +34,7 @@ export type HumanPrepareAuthorityResolution = Readonly<{
 export type HumanPrepareAuthorityResolver = (
   purchase: HumanPrepareAuthorityResolution,
   scope: HumanPrepareAuthorityRestoreScope,
+  lease: HumanPrepareAuthorityLease,
 ) => Promise<HumanPrepareAuthorityRestoreInput>;
 
 export type HumanPrepareAuthorityClaimInput = Readonly<{

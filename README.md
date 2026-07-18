@@ -62,12 +62,17 @@ short-lived encrypted prepare-authority envelope, and one prepare-only outbox
 job. Real PostgreSQL and ephemeral-key tests prove exact replay, concurrency,
 tamper and corruption rejection, signing-reserve rollback, migration failure for
 legacy ready jobs, generation-bound worker leasing, and lease-gated restart
-reauthentication. Production key storage, rotation, backup, recovery, and
-deployed worker evidence remain release gates. It cannot yet approve, sign,
-execute, settle, or deliver that purchase. This is a library/integration
-checkpoint, not a deployed marketplace: web, the prepare worker and later
-purchase lifecycle, delivery recovery, production wallet connectors, external
-HTTPS smoke evidence, and deployment remain open.
+reauthentication. The one-shot prepare worker now claims one PostgreSQL job,
+runs the real holding, TransferFactory, participant-prepare, full-effect, and
+official-hash pipeline outside database transactions, and atomically records the
+verified checkpoint before returning process-local wallet material. Real
+PostgreSQL tests also prove that blocked external work does not block unrelated
+database work. Production key storage, rotation, backup, recovery, and deployed
+worker evidence remain release gates. It cannot yet approve, sign, execute,
+settle, or deliver that purchase. This is a library/integration checkpoint, not
+a deployed marketplace: web, the deployed worker process, restart-safe wallet
+handoff, later purchase lifecycle, delivery recovery, production wallet
+connectors, external HTTPS smoke evidence, and deployment remain open.
 
 No mocked payment or fixture transaction can satisfy those gates.
 

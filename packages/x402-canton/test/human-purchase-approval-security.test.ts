@@ -35,18 +35,21 @@ describe("human purchase approval security", () => {
     expect(state.preparedTransactionHash).not.toBe(input.digest);
   });
 
-  it("rejects stale and clock-rollback projections", async () => {
-    const stale = await verifiedPurchase();
+  it("expires at execution time and rejects clock rollback", async () => {
+    const active = await verifiedPurchase();
     vi.advanceTimersByTime(10_001);
-    expect(() => projectHumanPreparedPurchaseApproval(stale.verified)).toThrow(
-      /stale/iu,
+    expect(() =>
+      projectHumanPreparedPurchaseApproval(active.verified),
+    ).not.toThrow();
+
+    vi.setSystemTime(Date.parse(active.input.intent.challenge.executeBefore));
+    expect(() => projectHumanPreparedPurchaseApproval(active.verified)).toThrow(
+      /expired/iu,
     );
 
-    vi.setSystemTime(new Date(HUMAN_PURCHASE_NOW));
-    const rollback = await verifiedPurchase();
-    vi.setSystemTime(Date.now() - 5_001);
-    expect(() =>
-      projectHumanPreparedPurchaseApproval(rollback.verified),
-    ).toThrow(/clock moved backwards/iu);
+    vi.setSystemTime(Date.parse(HUMAN_PURCHASE_NOW) - 5_001);
+    expect(() => projectHumanPreparedPurchaseApproval(active.verified)).toThrow(
+      /clock moved backwards/iu,
+    );
   });
 });

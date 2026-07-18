@@ -63,6 +63,9 @@ function payerObserver() {
 }
 export async function walletPreflight(
   packageId: string,
+  requestApproval: HumanWalletConnector["requestApproval"] = async () => {
+    throw new Error("journal fixture cannot request wallet approval");
+  },
 ): Promise<AuthenticatedHumanWalletConnectorPreflight> {
   const capabilities = Object.freeze({
     version: "sotto-human-wallet-capabilities-v1" as const,
@@ -87,9 +90,7 @@ export async function walletPreflight(
   });
   const connector: HumanWalletConnector = {
     discover: async () => capabilities,
-    requestApproval: async () => {
-      throw new Error("journal fixture cannot request wallet approval");
-    },
+    requestApproval,
   };
   const result = await createHumanWalletConnectorPreflight({
     connector,
@@ -99,9 +100,8 @@ export async function walletPreflight(
     expectedPackageId: packageId,
     observePayerIdentity: payerObserver(),
   });
-  if (result.outcome !== "compatible") {
+  if (result.outcome !== "compatible")
     throw new Error("journal fixture wallet is incompatible");
-  }
   return result;
 }
 export async function authenticatedCatalogHumanPurchaseIntent(

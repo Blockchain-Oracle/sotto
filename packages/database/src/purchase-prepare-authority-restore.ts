@@ -140,6 +140,7 @@ export async function restorePurchasePrepareAuthority(
     const fresh = await resolve(
       resolution(loaded.row),
       readHumanPrepareAuthorityRestoreScope(authority),
+      lease,
     );
     await withClient(pool, async (client) => {
       const current = requireReadyAggregate(

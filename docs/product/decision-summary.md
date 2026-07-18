@@ -101,8 +101,11 @@
   wallet connectors outside the application boundary form the first-release
   topology. The PostgreSQL catalog, purchase journal, and encrypted internal
   prepare-authority checkpoint with generation-bound worker leases now implement
-  part of this topology. External key custody, deployed connectors and
-  processes, durable recovery, and release evidence remain unproven.
+  part of this topology. A one-shot worker library now runs the authenticated
+  prepare pipeline outside database transactions and commits the exact fenced
+  checkpoint before wallet handoff. External key custody, deployed connectors
+  and processes, post-checkpoint approval recovery, durable delivery recovery,
+  and release evidence remain unproven.
 
 ## Open Gates
 
