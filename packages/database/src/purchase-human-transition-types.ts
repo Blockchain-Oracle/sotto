@@ -6,6 +6,7 @@ export type HumanAttemptTransitionRow = Readonly<{
   transferContextHash: string | null;
   preparedVerifiedAt: Date | null;
   commandId: string;
+  beginExclusive: string;
   executeBefore: Date;
   connectorId: string | null;
   connectorKind: string | null;
@@ -37,6 +38,10 @@ export type HumanEventTransitionRow = Readonly<{
   submissionId: string | null;
   executionUserId: string | null;
   executionStartedAt: Date | null;
+  completionOffset: string | null;
+  updateId: string | null;
+  rejectionStatusCode: number | null;
+  reconciledAt: Date | null;
 }>;
 
 export type HumanSettlementTransitionRow = Readonly<{
@@ -46,6 +51,11 @@ export type HumanSettlementTransitionRow = Readonly<{
   submissionId: string | null;
   executionUserId: string | null;
   executionStartedAt: Date | null;
+  reconciliationOffset: string;
+  completionOffset: string | null;
+  updateId: string | null;
+  rejectionStatusCode: number | null;
+  reconciledAt: Date | null;
 }>;
 
 export type HumanReconcileJobRow = Readonly<{

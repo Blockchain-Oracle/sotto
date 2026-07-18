@@ -1,14 +1,13 @@
-import { reconcileJobDedupe } from "./purchase-human-event.js";
 import {
   validateHumanJournal,
   type HumanJournalOracle,
 } from "./purchase-human-journal-oracle.js";
+import { validateReconcileJob } from "./purchase-human-reconcile-job-oracle.js";
 import type {
   HumanEventTransitionRow,
   HumanTransitionState,
 } from "./purchase-human-transition-types.js";
 import { PurchasePersistenceError } from "./purchase-types.js";
-import { uuid } from "./publication-validation-primitives.js";
 import type { PoolClient } from "pg";
 
 function iso(value: Date | null): string | null {
@@ -21,6 +20,30 @@ function iso(value: Date | null): string | null {
 
 function same(value: unknown, expected: unknown): void {
   if (value !== expected) throw new PurchasePersistenceError();
+}
+
+function offset(value: string): number {
+  if (!/^(?:0|[1-9][0-9]*)$/u.test(value)) {
+    throw new PurchasePersistenceError();
+  }
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed < 0) {
+    throw new PurchasePersistenceError();
+  }
+  return parsed;
+}
+
+function requireNoSettlementResult(
+  settlement: NonNullable<HumanTransitionState["settlement"]>,
+): void {
+  if (
+    settlement.completionOffset !== null ||
+    settlement.updateId !== null ||
+    settlement.rejectionStatusCode !== null ||
+    settlement.reconciledAt !== null
+  ) {
+    throw new PurchasePersistenceError();
+  }
 }
 
 function eventRequired(
@@ -39,12 +62,15 @@ function validatePreparedSettlement(state: HumanTransitionState): void {
     settlement.attemptId !== state.attempt.attemptId ||
     settlement.commandId !== state.attempt.commandId ||
     settlement.state !== "prepared" ||
+    offset(settlement.reconciliationOffset) !==
+      offset(state.attempt.beginExclusive) ||
     settlement.submissionId !== null ||
     settlement.executionUserId !== null ||
     settlement.executionStartedAt !== null
   ) {
     throw new PurchasePersistenceError();
   }
+  requireNoSettlementResult(settlement);
 }
 
 function validateApprovalState(
@@ -55,35 +81,6 @@ function validateApprovalState(
   same(state.attempt.connectorKind, approval.connectorKind);
   same(state.attempt.sessionId, approval.sessionId);
   same(iso(state.attempt.approvalRequestedAt), iso(approval.recordedAt));
-}
-
-function validateReconcileJob(
-  state: HumanTransitionState,
-  execution: HumanEventTransitionRow,
-): void {
-  if (state.jobs.length !== 1) throw new PurchasePersistenceError();
-  const job = state.jobs[0]!;
-  try {
-    uuid(job.jobId, "reconcile job ID");
-  } catch {
-    throw new PurchasePersistenceError();
-  }
-  if (
-    job.dedupeKey !==
-      reconcileJobDedupe(state.attempt.attemptId, execution.eventHash) ||
-    job.eventSequence !== "5" ||
-    job.kind !== "purchase-reconcile" ||
-    job.state !== "ready" ||
-    job.leaseGeneration !== "0" ||
-    job.leaseOwner !== null ||
-    job.leaseExpiresAt !== null ||
-    job.claimedAt !== null ||
-    job.resultEventSequence !== null ||
-    job.completedAt !== null ||
-    iso(job.availableAt) !== iso(job.createdAt)
-  ) {
-    throw new PurchasePersistenceError();
-  }
 }
 
 function validateExecutionState(
@@ -108,12 +105,15 @@ function validateExecutionState(
   if (
     settlement === null ||
     settlement.state !== "execution-started" ||
+    offset(settlement.reconciliationOffset) <
+      offset(state.attempt.beginExclusive) ||
     settlement.submissionId !== execution.submissionId ||
     settlement.executionUserId !== execution.executionUserId ||
     iso(settlement.executionStartedAt) !== iso(execution.executionStartedAt)
   ) {
     throw new PurchasePersistenceError();
   }
+  requireNoSettlementResult(settlement);
   validateReconcileJob(state, execution);
 }
 

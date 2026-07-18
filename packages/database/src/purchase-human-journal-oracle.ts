@@ -42,7 +42,11 @@ function requireBase(
   if (
     event.attemptId !== state.attempt.attemptId ||
     event.sequence !== String(sequence) ||
-    event.previousEventHash !== (previous?.eventHash ?? null)
+    event.previousEventHash !== (previous?.eventHash ?? null) ||
+    event.completionOffset !== null ||
+    event.updateId !== null ||
+    event.rejectionStatusCode !== null ||
+    event.reconciledAt !== null
   ) {
     throw new PurchasePersistenceError();
   }

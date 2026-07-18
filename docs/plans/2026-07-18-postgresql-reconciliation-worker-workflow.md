@@ -9,7 +9,7 @@ worktree: false
 
 ## Steps
 
-- [ ] **Step 1: Extend the reconciliation schema and integrity oracle**
+- [x] **Step 1: Extend the reconciliation schema and integrity oracle**
 action: Add RED PostgreSQL tests in `packages/database/test/human-reconciliation-schema.postgres.test.ts` for kind-aware completed jobs, event 6, terminal attempt/settlement coherence, reconciliation cursor constraints, and exact migration upgrade/rollback guards. Confirm the old schema fails for the intended constraint. Implement `packages/database/migrations/0010_human_reconciliation.sql` and the minimum row/oracle/type changes so the new tests pass without relaxing legacy prepare-job validation.
 loop: until the schema and integrity tests pass
 max_iterations: 3

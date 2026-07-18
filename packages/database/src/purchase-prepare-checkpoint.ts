@@ -26,6 +26,7 @@ export async function checkpointHumanPreparedPurchase(
         attempt.request_commitment AS "requestCommitment",
         attempt.challenge_id AS "challengeId",
         attempt.purchase_commitment AS "purchaseCommitment",
+        attempt.begin_exclusive::text AS "beginExclusive",
         attempt.execute_before AS "executeBefore",
         event.event_hash AS "previousEventHash",
         event.sequence::text AS "eventSequence", event.event_type AS "eventType",
@@ -73,14 +74,15 @@ export async function checkpointHumanPreparedPurchase(
     const settlement = await client.query(
       `INSERT INTO sotto.settlements
         (attempt_id, command_id, expectation_schema, expectation,
-         expectation_digest)
-       VALUES ($1, $2, $3, $4, $5)`,
+         expectation_digest, reconciliation_offset)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
       [
         lease.attemptId,
         authority.settlement.commandId,
         authority.settlement.schema,
         authority.settlement.json,
         authority.settlement.digest,
+        row.beginExclusive,
       ],
     );
     const attempt = await client.query(

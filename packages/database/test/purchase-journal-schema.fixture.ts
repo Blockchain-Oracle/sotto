@@ -1,12 +1,15 @@
 export const PURCHASE_JOURNAL_COLUMNS = `
-  attempt_events.attempt_id attempt_events.event_hash attempt_events.event_type
+  attempt_events.attempt_id attempt_events.completion_offset
+  attempt_events.event_hash attempt_events.event_type
   attempt_events.execution_started_at attempt_events.execution_user_id
   attempt_events.prepared_transaction_hash attempt_events.prepared_verified_at
   attempt_events.previous_event_hash attempt_events.recorded_at attempt_events.sequence
+  attempt_events.reconciled_at attempt_events.rejection_status_code
   attempt_events.signature_verified_at attempt_events.submission_id
   attempt_events.transfer_context_hash
   attempt_events.wallet_connector_id attempt_events.wallet_connector_kind
   attempt_events.wallet_decision_reason attempt_events.wallet_session_id
+  attempt_events.update_id
   outbox_jobs.attempt_id outbox_jobs.available_at outbox_jobs.claimed_at
   outbox_jobs.completed_at outbox_jobs.created_at outbox_jobs.dedupe_key outbox_jobs.event_sequence
   outbox_jobs.job_id outbox_jobs.kind outbox_jobs.lease_expires_at

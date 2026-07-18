@@ -24,6 +24,7 @@ async function lockAttempt(
       prepared_transaction_hash AS "preparedTransactionHash",
       transfer_context_hash AS "transferContextHash",
       prepared_verified_at AS "preparedVerifiedAt", command_id AS "commandId",
+      begin_exclusive::text AS "beginExclusive",
       execute_before AS "executeBefore", wallet_connector_id AS "connectorId",
       wallet_connector_kind AS "connectorKind", wallet_session_id AS "sessionId",
       wallet_decision_reason AS "decisionReason",
@@ -50,7 +51,11 @@ async function lockSettlement(
     `SELECT attempt_id AS "attemptId", command_id AS "commandId", state,
       submission_id::text AS "submissionId",
       execution_user_id AS "executionUserId",
-      execution_started_at AS "executionStartedAt"
+      execution_started_at AS "executionStartedAt",
+      reconciliation_offset::text AS "reconciliationOffset",
+      completion_offset::text AS "completionOffset", update_id AS "updateId",
+      rejection_status_code AS "rejectionStatusCode",
+      reconciled_at AS "reconciledAt"
      FROM sotto.settlements WHERE attempt_id = $1 FOR UPDATE`,
     [attemptId],
   );
@@ -76,7 +81,10 @@ async function readEvents(
       signature_verified_at AS "signatureVerifiedAt",
       submission_id::text AS "submissionId",
       execution_user_id AS "executionUserId",
-      execution_started_at AS "executionStartedAt"
+      execution_started_at AS "executionStartedAt",
+      completion_offset::text AS "completionOffset", update_id AS "updateId",
+      rejection_status_code AS "rejectionStatusCode",
+      reconciled_at AS "reconciledAt"
      FROM sotto.attempt_events WHERE attempt_id = $1 ORDER BY sequence`,
     [attemptId],
   );

@@ -23,6 +23,7 @@ export type PrepareCheckpointRow = Readonly<{
   requestCommitment: string;
   challengeId: string;
   purchaseCommitment: string;
+  beginExclusive: string;
   executeBefore: Date;
   previousEventHash: string;
   eventSequence: string;
@@ -123,12 +124,15 @@ export function matchesPrepareCheckpoint(
   authority: PrepareCheckpointAuthority,
 ): boolean {
   const approval = authority.approval;
+  const beginExclusive = Number(row.beginExclusive);
   return (
     row.attemptId === lease.attemptId &&
     row.state === "intent-created" &&
     row.requestCommitment === approval.requestCommitment &&
     row.challengeId === approval.challengeId &&
     row.purchaseCommitment === approval.purchaseCommitment &&
+    Number.isSafeInteger(beginExclusive) &&
+    beginExclusive >= 0 &&
     row.executeBefore.toISOString() === approval.executeBefore &&
     row.eventSequence === "1" &&
     row.eventType === "intent-created" &&

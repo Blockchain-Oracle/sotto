@@ -98,6 +98,7 @@ describe("PostgreSQL migrations", () => {
         { name: "0007_prepare_job_leases" },
         { name: "0008_prepared_hash_checkpoint" },
         { name: "0009_human_execution_boundary" },
+        { name: "0010_human_reconciliation" },
       ]);
     } finally {
       await client.end();
