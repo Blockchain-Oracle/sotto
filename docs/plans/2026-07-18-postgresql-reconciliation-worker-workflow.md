@@ -55,7 +55,7 @@ loop: until documentation checks and independent review have no BLOCK findings
 max_iterations: 3
 verify: corepack pnpm format:check && corepack pnpm lint && corepack pnpm typecheck
 
-- [ ] **Step 8: Close deterministic and clean-clone verification**
+- [x] **Step 8: Close deterministic and clean-clone verification**
 action: Run the full pinned `pnpm verify`, commit the reviewed implementation in conventional commits, then clone the exact final commit with `--no-hardlinks`, frozen-install dependencies, and rerun `pnpm verify` without local credentials, ignored context, build output, caches, or dependency trees. Record exact counts and preserve production `NO_GO` for delivery, deployment, connector custody, and live Five North execution through this worker.
 loop: until both workspace and clean-clone gates pass
 max_iterations: 3
