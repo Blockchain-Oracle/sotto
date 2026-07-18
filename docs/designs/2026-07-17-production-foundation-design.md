@@ -181,6 +181,13 @@ claimed. Wrong keys, changed rows or authenticated data, connector revocation,
 stable key/topology/package/configuration drift, stale attempts, and structural
 clones fail closed without a Ledger command.
 
+The repository does not expose authority restoration before the lease boundary
+exists. The internal restore path is deterministic and integration-tested, but
+only a generation-bound live worker lease may make it reachable in production.
+Migration from a database containing legacy ready prepare jobs fails closed
+until those jobs are explicitly quarantined; they cannot be silently promoted
+without their missing encrypted authority envelopes.
+
 Production key storage, rotation, backup, and recovery remain release gates.
 Real ephemeral-key cryptographic and PostgreSQL tests prove the code boundary;
 they do not by themselves prove production custody.

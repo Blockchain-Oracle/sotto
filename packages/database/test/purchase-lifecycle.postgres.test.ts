@@ -5,7 +5,10 @@ import {
   humanPurchaseBinding,
   PURCHASE_SOURCE_COMMIT,
 } from "./purchase-journal.fixtures.js";
-import { createPurchaseTestRuntime } from "./purchase-postgres.fixtures.js";
+import {
+  createPurchaseTestRuntime,
+  testPrepareAuthorityKeyring,
+} from "./purchase-postgres.fixtures.js";
 
 let context: Awaited<ReturnType<typeof createPurchaseTestRuntime>>;
 
@@ -25,6 +28,7 @@ it("drains admitted initialization and rejects work after close begins", async (
   );
   const purchase = context.runtime.createPurchaseRepository({
     databaseUrl: context.database.databaseUrl,
+    prepareAuthorityKeyring: testPrepareAuthorityKeyring(context.runtime),
     sourceCommit: PURCHASE_SOURCE_COMMIT,
     resolveHumanPurchaseBinding: async () => {
       resolverStarted();

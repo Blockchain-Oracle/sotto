@@ -99,14 +99,17 @@
 - Q-006: resolved as a design decision. One `web-api` process, one restartable
   worker, one private PostgreSQL authority, an explicit migration job, and
   wallet connectors outside the application boundary form the first-release
-  topology. The temporary provider and in-memory claims still do not prove its
-  production implementation.
+  topology. The PostgreSQL catalog, purchase journal, and encrypted internal
+  prepare-authority checkpoint now implement part of this topology.
+  Generation-bound worker leases, external key custody, deployed connectors and
+  processes, and release evidence remain unproven.
 
 ## Open Gates
 
 - Production wallet connector deployment and custody boundary.
-- Durable PostgreSQL-backed delivery, unknown-outcome recovery, and replay
-  state.
+- Generation-bound worker leases and lease-gated prepare-authority restoration.
+- Production prepare-authority key storage, rotation, backup, and recovery.
+- Durable delivery, unknown-outcome recovery, and replay state.
 - Implemented and deployed web/API/MCP/worker/database/Coolify topology plus a
   reviewed production `GO`.
 

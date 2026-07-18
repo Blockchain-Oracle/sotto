@@ -7,6 +7,7 @@ import {
 import {
   createPurchaseTestRuntime,
   purchaseJournalCounts,
+  testPrepareAuthorityKeyring,
 } from "./purchase-postgres.fixtures.js";
 
 let context: Awaited<ReturnType<typeof createPurchaseTestRuntime>>;
@@ -20,6 +21,7 @@ afterAll(async () => context?.database.drop());
 function repository(resolveHumanPurchaseBinding = purchaseBindingResolver()) {
   return context.runtime.createPurchaseRepository({
     databaseUrl: context.database.databaseUrl,
+    prepareAuthorityKeyring: testPrepareAuthorityKeyring(context.runtime),
     sourceCommit: PURCHASE_SOURCE_COMMIT,
     resolveHumanPurchaseBinding,
   });
@@ -41,6 +43,7 @@ it("serializes identical initialization across independent pools", async () => {
     expect(results[0]).toEqual({ ...results[1], outcome: results[0]!.outcome });
     expect(await purchaseJournalCounts(context.database.databaseUrl)).toEqual({
       attempts: "1",
+      authorities: "1",
       events: "1",
       jobs: "1",
     });
@@ -63,6 +66,7 @@ it("rejects a structural clone before resolving tenancy or writing", async () =>
     expect(resolver).not.toHaveBeenCalled();
     expect(await purchaseJournalCounts(context.database.databaseUrl)).toEqual({
       attempts: "1",
+      authorities: "1",
       events: "1",
       jobs: "1",
     });

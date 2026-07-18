@@ -3,6 +3,11 @@ import type {
   HumanPurchaseJournalIntent,
   HumanPurchaseLedgerIntent,
 } from "@sotto/x402-canton";
+import type {
+  HumanPrepareAuthorityRestoreInput,
+  HumanPrepareAuthorityRestoreScope,
+} from "@sotto/x402-canton/internal/human-prepare-authority-persistence";
+import type { PrepareAuthorityKeyring } from "./private-prepare-authority-types.js";
 
 export type HumanPurchasePersistenceBinding = Readonly<{
   ownerId: string;
@@ -13,6 +18,19 @@ export type HumanPurchasePersistenceBinding = Readonly<{
 export type HumanPurchaseBindingResolver = (
   intent: HumanPurchaseJournalIntent,
 ) => Promise<HumanPurchasePersistenceBinding>;
+
+export type HumanPrepareAuthorityResolution = Readonly<{
+  attemptId: Sha256Identifier;
+  operationId: Sha256Identifier;
+  ownerId: string;
+  resourceRevisionId: string;
+  purchaseCommitment: Sha256Identifier;
+}>;
+
+export type HumanPrepareAuthorityResolver = (
+  purchase: HumanPrepareAuthorityResolution,
+  scope: HumanPrepareAuthorityRestoreScope,
+) => Promise<HumanPrepareAuthorityRestoreInput>;
 
 export type HumanPurchaseAttemptResult = Readonly<{
   outcome: "created" | "replayed";
@@ -54,6 +72,7 @@ export type PurchaseOperationalEvent = Readonly<{
 
 export type PurchaseRepositoryInput = Readonly<{
   databaseUrl: string;
+  prepareAuthorityKeyring: PrepareAuthorityKeyring;
   sourceCommit: string;
   resolveHumanPurchaseBinding: HumanPurchaseBindingResolver;
   maxConnections?: number;

@@ -6,14 +6,15 @@ for x402-paid APIs.
 Developers publish APIs that already return a valid Canton x402 payment
 challenge. Buyers and agents discover those resources, execute paid calls, and
 inspect settlement and delivery as separate facts. Sotto's Canton-specific goal
-is private, bounded agent-purchase authority, but that claim remains gated by a
-real Five North DevNet authority spike.
+is private, bounded agent-purchase authority. The Five North DevNet spike proved
+that research boundary; production remains gated by the implementation and
+release evidence below.
 
 ## Current Status
 
-This repository has fresh history and is currently the spike workspace. It does
-not yet contain a shipping marketplace, facilitator, wallet, MCP server, CLI, or
-production deployment.
+This repository has fresh history and is implementing the production foundation
+after the completed Five North spike. It does not yet contain a shipping
+marketplace, facilitator, wallet, MCP server, CLI, or production deployment.
 
 The research spike has now produced:
 
@@ -39,12 +40,13 @@ The research spike has now produced:
    unlocked the authentic JSON `200`.
 
 The spike's signer/funding-authority and public-settlement-visibility blockers
-are closed. The production gate is still `NO_GO`: production wallet custody and
-connector deployment, durable PostgreSQL-backed delivery/recovery, the approved
-production topology's implementation and release evidence remain open. Receipt
-audience Q-004 and topology Q-006 are selected but not yet proven in production.
-The [redacted spike result](docs/architecture/devnet-spike-result.md) records
-the evidence and remaining blockers.
+are closed. The production gate is still `NO_GO`: production wallet and
+prepare-authority key custody, connector deployment, generation-bound worker
+leases, durable delivery and unknown-outcome recovery, and deployed release
+evidence for the approved production topology remain open. Receipt audience
+Q-004 and topology Q-006 are selected but not yet proven in production. The
+[redacted spike result](docs/architecture/devnet-spike-result.md) records the
+evidence and remaining blockers.
 
 The production foundation now applies bounded, advisory-locked migrations from
 its compiled artifact and durably records provider/origin registration, origin
@@ -55,13 +57,18 @@ address through HTTPS/TLS, parses a bounded server-observed Canton x402
 challenge, and atomically records the probe plus health result. Disposable
 digest-pinned PostgreSQL tests prove migration replay, conflict rollback, and
 restart persistence. The same private database can now atomically initialize an
-authenticated human-wallet purchase attempt, its first append-only event, and
-one prepare-only outbox job, with exact replay, concurrency, corruption, and
-rollback coverage. It cannot yet approve, sign, execute, settle, or deliver that
-purchase. This is a library/integration checkpoint, not a deployed marketplace:
-web, the prepare worker and later purchase lifecycle, delivery recovery,
-production wallet connectors, external HTTPS smoke evidence, and deployment
-remain open.
+authenticated human-wallet purchase attempt, its first append-only event, a
+short-lived encrypted prepare-authority envelope, and one prepare-only outbox
+job. Real PostgreSQL and ephemeral-key tests prove exact replay, concurrency,
+tamper and corruption rejection, signing-reserve rollback, migration failure for
+legacy ready jobs, and internal restart reauthentication. Authority restoration
+intentionally remains internal until a generation-bound live worker lease
+guarantees one executor. Production key storage, rotation, backup, and recovery
+remain release gates. It cannot yet approve, sign, execute, settle, or deliver
+that purchase. This is a library/integration checkpoint, not a deployed
+marketplace: web, the prepare worker and later purchase lifecycle, delivery
+recovery, production wallet connectors, external HTTPS smoke evidence, and
+deployment remain open.
 
 No mocked payment or fixture transaction can satisfy those gates.
 

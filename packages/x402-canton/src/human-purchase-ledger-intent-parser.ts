@@ -1,7 +1,4 @@
-import {
-  assertAuthenticHumanPurchase,
-  type HumanPurchaseCommitment,
-} from "./human-purchase-commitment.js";
+import type { HumanPurchaseCommitment } from "./human-purchase-commitment.js";
 import { exactKeys, objectValue } from "./purchase-commitment-primitives.js";
 import { assertStrictJson } from "./strict-json.js";
 
@@ -48,7 +45,6 @@ export function exactHumanArray(
 function decodeCanonical(
   commitment: HumanPurchaseCommitment,
 ): Record<string, unknown> {
-  assertAuthenticHumanPurchase(commitment);
   if (
     commitment.canonicalBytes[0] === 0xef &&
     commitment.canonicalBytes[1] === 0xbb &&

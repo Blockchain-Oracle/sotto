@@ -14,22 +14,12 @@ import {
 } from "./purchase-commitment-validation.js";
 import { identifier, sha256Hex } from "./purchase-commitment-primitives.js";
 import { encodeBoundedHumanPurchaseCanonical } from "./human-purchase-canonical.js";
+import { registerAuthenticHumanPurchaseCommitment } from "./human-purchase-commitment-authenticity.js";
 
 export const HUMAN_PURCHASE_COMMITMENT_VERSION =
   "sotto-human-purchase-v1" as const;
 export const HUMAN_PURCHASE_ATTEMPT_VERSION =
   "sotto-human-purchase-attempt-v1" as const;
-
-type AuthenticState = Readonly<{
-  attemptId: string;
-  challengeId: string;
-  commitment: string;
-  expiresAt: string;
-  requestCommitment: string;
-  version: string;
-}>;
-
-const authenticCommitments = new WeakMap<object, AuthenticState>();
 
 function hash(value: string | Uint8Array): `sha256:${string}` {
   return `sha256:${sha256Hex(value)}`;
@@ -112,15 +102,13 @@ function commitWithAuthorization(
     requestCommitment: validated.binding.commitment,
     version: HUMAN_PURCHASE_COMMITMENT_VERSION,
   });
-  bindHumanPurchaseAuthorities(validated, authorizationInstanceId, result);
-  authenticCommitments.set(result, {
-    attemptId,
-    challengeId: result.challengeId,
-    commitment: result.commitment,
-    expiresAt: result.expiresAt,
-    requestCommitment: result.requestCommitment,
-    version: result.version,
-  });
+  bindHumanPurchaseAuthorities(
+    validated,
+    authorizationInstanceId,
+    result,
+    config,
+  );
+  registerAuthenticHumanPurchaseCommitment(result);
   return result;
 }
 
@@ -157,29 +145,10 @@ export function commitHumanPurchaseForTest(
   );
 }
 
-export function assertAuthenticHumanPurchase(
-  candidate: unknown,
-): asserts candidate is HumanPurchaseCommitment {
-  if (typeof candidate !== "object" || candidate === null) {
-    throw new Error("human purchase commitment is not authenticated");
-  }
-  const state = authenticCommitments.get(candidate);
-  if (state === undefined) {
-    throw new Error("human purchase commitment is not authenticated");
-  }
-  const value = candidate as HumanPurchaseCommitment;
-  if (
-    hash(value.canonicalBytes) !== state.commitment ||
-    value.attemptId !== state.attemptId ||
-    value.challengeId !== state.challengeId ||
-    value.commitment !== state.commitment ||
-    value.expiresAt !== state.expiresAt ||
-    value.requestCommitment !== state.requestCommitment ||
-    value.version !== state.version
-  ) {
-    throw new Error("human purchase commitment was mutated");
-  }
-}
+export {
+  assertAuthenticHumanPurchase,
+  registerRestoredHumanPurchaseCommitment,
+} from "./human-purchase-commitment-authenticity.js";
 
 export type {
   HumanPurchaseCommitment,

@@ -21,6 +21,10 @@
       "types": "./dist/human-settlement-expectation-journal.d.ts",
       "import": "./dist/human-settlement-expectation-journal.js"
     },
+    "./internal/human-prepare-authority-persistence": {
+      "types": "./dist/human-prepare-authority-persistence.d.ts",
+      "import": "./dist/human-prepare-authority-persistence.js"
+    },
     "./internal/bounded-capability-bootstrap-prepare": {
       "types": "./dist/bounded-capability-bootstrap-prepare.d.ts",
       "import": "./dist/bounded-capability-bootstrap-prepare.js"

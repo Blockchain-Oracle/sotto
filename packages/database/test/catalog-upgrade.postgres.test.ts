@@ -68,6 +68,7 @@ it("upgrades a populated production 0001 database through purchase journaling", 
       { name: "0003_resource_publication" },
       { name: "0004_resource_health" },
       { name: "0005_purchase_journal" },
+      { name: "0006_private_prepare_authorities" },
     ]);
   } finally {
     await verified.end();

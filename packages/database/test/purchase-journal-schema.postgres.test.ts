@@ -8,6 +8,11 @@ import {
   verifiedProbe,
 } from "./publication.fixtures.js";
 import { PURCHASE_JOURNAL_COLUMNS } from "./purchase-journal-schema.fixture.js";
+import {
+  insertSchemaAuthority,
+  insertSchemaEvent,
+  insertSchemaJob,
+} from "./purchase-journal-schema-inserts.fixture.js";
 type RuntimeModule = Readonly<{
   applyDatabaseMigrations(input: { databaseUrl: string }): Promise<void>;
   createCatalogRepository(input: CatalogRepositoryInput): PublicationCatalog;
@@ -61,22 +66,6 @@ async function insertAttempt(value: Attempt): Promise<string> {
   );
   return result.rows[0]!.commandId;
 }
-async function insertEvent(value: Attempt): Promise<void> {
-  await client.query(
-    `INSERT INTO sotto.attempt_events
-      (attempt_id, sequence, event_type, event_hash)
-     VALUES ($1, 1, 'intent-created', $2)`,
-    [value.attemptId, sha(value.attemptId[7]!)],
-  );
-}
-async function insertJob(value: Attempt, jobId: string): Promise<void> {
-  await client.query(
-    `INSERT INTO sotto.outbox_jobs
-      (job_id, dedupe_key, attempt_id, event_sequence, kind, state)
-     VALUES ($1, $2, $3, 1, 'purchase-prepare', 'ready')`,
-    [jobId, sha(jobId.at(-1)!), value.attemptId],
-  );
-}
 beforeAll(async () => {
   database = await createPostgresTestDatabase("sotto_purchase_journal_test");
   const runtime = (await import(
@@ -92,18 +81,16 @@ beforeAll(async () => {
   client = new Client({ connectionString: database.databaseUrl });
   await client.connect();
 });
-
 afterAll(async () => {
   await client?.end();
   await database?.drop();
 });
-
 it("creates the exact privacy-safe purchase aggregate", async () => {
   const value = attempt("a");
   const commandId = await insertAttempt(value);
-  await insertEvent(value);
-  await insertJob(value, "018f3f24-7d4a-7e2c-a421-0f3473b98001");
-
+  await insertSchemaEvent(client, value);
+  await insertSchemaAuthority(client, value);
+  await insertSchemaJob(client, value, "018f3f24-7d4a-7e2c-a421-0f3473b98001");
   expect(commandId).toBe(`sotto-human-purchase-v1-${"3".repeat(64)}`);
   const columns = await client.query<{
     columnName: string;
@@ -159,8 +146,9 @@ it("enforces event and outbox identity and append-only behavior", async () => {
       [value.attemptId, sha("e")],
     ),
   ).rejects.toThrow();
-  await insertEvent(value);
-  await insertJob(value, "018f3f24-7d4a-7e2c-a421-0f3473b98002");
+  await insertSchemaEvent(client, value);
+  await insertSchemaAuthority(client, value);
+  await insertSchemaJob(client, value, "018f3f24-7d4a-7e2c-a421-0f3473b98002");
   await expect(
     client.query(
       "UPDATE sotto.attempt_events SET event_type = 'changed' WHERE attempt_id = $1",
@@ -173,7 +161,7 @@ it("enforces event and outbox identity and append-only behavior", async () => {
     ]),
   ).rejects.toThrow(/append-only/iu);
   await expect(
-    insertJob(value, "018f3f24-7d4a-7e2c-a421-0f3473b98003"),
+    insertSchemaJob(client, value, "018f3f24-7d4a-7e2c-a421-0f3473b98003"),
   ).rejects.toThrow();
 });
 
@@ -182,18 +170,29 @@ it("rolls back the attempt and event when the final job fails", async () => {
   await client.query("BEGIN");
   try {
     await insertAttempt(value);
-    await insertEvent(value);
-    await expect(insertJob(value, "not-a-uuid")).rejects.toThrow();
+    await insertSchemaEvent(client, value);
+    await insertSchemaAuthority(client, value);
+    await expect(
+      insertSchemaJob(client, value, "not-a-uuid"),
+    ).rejects.toThrow();
   } finally {
     await client.query("ROLLBACK");
   }
-  const counts = await client.query<{ attempts: string; events: string }>(
+  const counts = await client.query<{
+    attempts: string;
+    authorities: string;
+    events: string;
+  }>(
     `SELECT
        (SELECT count(*)::text FROM sotto.purchase_attempts
         WHERE attempt_id = $1) AS attempts,
+       (SELECT count(*)::text FROM sotto.private_prepare_authorities
+        WHERE attempt_id = $1) AS authorities,
        (SELECT count(*)::text FROM sotto.attempt_events
         WHERE attempt_id = $1) AS events`,
     [value.attemptId],
   );
-  expect(counts.rows).toEqual([{ attempts: "0", events: "0" }]);
+  expect(counts.rows).toEqual([
+    { attempts: "0", authorities: "0", events: "0" },
+  ]);
 });

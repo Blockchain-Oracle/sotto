@@ -9,6 +9,7 @@ import {
 import {
   createPurchaseTestRuntime,
   purchaseJournalCounts,
+  testPrepareAuthorityKeyring,
 } from "./purchase-postgres.fixtures.js";
 
 let context: Awaited<ReturnType<typeof createPurchaseTestRuntime>>;
@@ -25,6 +26,7 @@ function repository(
 ) {
   return context.runtime.createPurchaseRepository({
     databaseUrl: context.database.databaseUrl,
+    prepareAuthorityKeyring: testPrepareAuthorityKeyring(context.runtime),
     sourceCommit,
     resolveHumanPurchaseBinding: purchaseBindingResolver(binding),
   });
@@ -56,7 +58,10 @@ it("rejects trusted-binding drift for the same authenticated purchase", async ()
   try {
     await expect(
       changedSource.initializeHumanPurchaseAttempt(intent),
-    ).rejects.toMatchObject({ code: "PURCHASE_CONFLICT" });
+    ).resolves.toMatchObject({
+      outcome: "replayed",
+      sourceCommit: PURCHASE_SOURCE_COMMIT,
+    });
   } finally {
     await changedSource.close();
   }
@@ -85,6 +90,7 @@ it("allows a request commitment to be reused by a fresh challenge", async () => 
     ).resolves.toMatchObject({ outcome: "created" });
     expect(await purchaseJournalCounts(context.database.databaseUrl)).toEqual({
       attempts: "3",
+      authorities: "3",
       events: "3",
       jobs: "3",
     });
@@ -99,6 +105,7 @@ it("rejects a revision that does not match the authenticated route", async () =>
   );
   const purchase = context.runtime.createPurchaseRepository({
     databaseUrl: context.database.databaseUrl,
+    prepareAuthorityKeyring: testPrepareAuthorityKeyring(context.runtime),
     sourceCommit: PURCHASE_SOURCE_COMMIT,
     resolveHumanPurchaseBinding: async () => humanPurchaseBinding,
   });

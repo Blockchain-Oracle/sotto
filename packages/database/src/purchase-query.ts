@@ -1,11 +1,5 @@
 import type { PoolClient } from "pg";
-import {
-  PurchaseConflictError,
-  PurchasePersistenceError,
-  type HumanPurchaseAttemptResult,
-} from "./purchase-types.js";
-import { uuid } from "./publication-validation-primitives.js";
-import type { ValidatedHumanPurchaseAttempt } from "./purchase-validation.js";
+import { PurchasePersistenceError } from "./purchase-types.js";
 
 export type PurchaseAggregateRow = Readonly<{
   attemptId: string;
@@ -85,93 +79,14 @@ export async function findPurchaseAggregate(
   return result.rows[0];
 }
 
-function timestamp(value: unknown): string {
-  if (!(value instanceof Date) || !Number.isFinite(value.getTime())) {
-    throw new PurchasePersistenceError();
-  }
-  return value.toISOString();
-}
-
-function exactStoredIdentity(
-  row: PurchaseAggregateRow,
-  expected: ValidatedHumanPurchaseAttempt,
-): void {
-  const identities = [
-    [row.attemptId, expected.attemptId],
-    [row.operationId, expected.operationId],
-    [row.requestHash, expected.requestHash],
-    [row.ownerId, expected.ownerId],
-    [row.resourceRevisionId, expected.resourceRevisionId],
-    [row.authorizationMode, expected.authorizationMode],
-    [row.commitmentVersion, expected.commitmentVersion],
-    [row.requestCommitment, expected.requestCommitment],
-    [row.challengeId, expected.challengeId],
-    [row.purchaseCommitment, expected.purchaseCommitment],
-    [row.commandId, expected.commandId],
-    [row.beginExclusive, String(expected.beginExclusive)],
-    [timestamp(row.executeBefore), expected.executeBefore],
-    [row.sourceCommit, expected.sourceCommit],
-    [row.state, expected.state],
-    [row.eventSequence, String(expected.eventSequence)],
-    [row.eventType, expected.eventType],
-    [row.eventHash, expected.eventHash],
-    [row.previousEventHash, null],
-    [row.jobDedupeKey, expected.jobDedupeKey],
-    [row.jobKind, expected.jobKind],
-    [row.jobState, expected.jobState],
-  ];
-  if (identities.some(([actual, wanted]) => actual !== wanted)) {
-    throw row.requestHash === expected.requestHash
-      ? new PurchasePersistenceError()
-      : new PurchaseConflictError();
-  }
-}
-
-export function purchaseAggregateResult(
-  row: PurchaseAggregateRow,
-  expected: ValidatedHumanPurchaseAttempt,
-  outcome: "created" | "replayed",
-): HumanPurchaseAttemptResult {
-  exactStoredIdentity(row, expected);
-  if (
-    row.jobId === null ||
-    row.eventRecordedAt === null ||
-    row.jobAvailableAt === null ||
-    row.jobCreatedAt === null
-  ) {
-    throw new PurchasePersistenceError();
-  }
-  return Object.freeze({
-    outcome,
-    operationId: expected.operationId,
-    attemptId: expected.attemptId,
-    ownerId: expected.ownerId,
-    resourceRevisionId: expected.resourceRevisionId,
-    authorizationMode: expected.authorizationMode,
-    commitmentVersion: expected.commitmentVersion,
-    requestCommitment: expected.requestCommitment,
-    challengeId: expected.challengeId,
-    purchaseCommitment: expected.purchaseCommitment,
-    commandId: expected.commandId,
-    beginExclusive: expected.beginExclusive,
-    executeBefore: expected.executeBefore,
-    sourceCommit: expected.sourceCommit,
-    state: expected.state,
-    createdAt: timestamp(row.createdAt),
-    event: Object.freeze({
-      sequence: expected.eventSequence,
-      type: expected.eventType,
-      eventHash: expected.eventHash,
-      previousEventHash: null,
-      recordedAt: timestamp(row.eventRecordedAt),
-    }),
-    job: Object.freeze({
-      jobId: uuid(row.jobId, "stored purchase job ID"),
-      dedupeKey: expected.jobDedupeKey,
-      kind: expected.jobKind,
-      state: expected.jobState,
-      availableAt: timestamp(row.jobAvailableAt),
-      createdAt: timestamp(row.jobCreatedAt),
-    }),
-  });
+export async function findPurchaseAggregateByAttemptId(
+  client: PoolClient,
+  attemptId: string,
+): Promise<PurchaseAggregateRow | undefined> {
+  const result = await client.query<PurchaseAggregateRow>(
+    `${AGGREGATE_SELECT} WHERE attempt.attempt_id = $1`,
+    [attemptId],
+  );
+  if (result.rows.length > 1) throw new PurchasePersistenceError();
+  return result.rows[0];
 }

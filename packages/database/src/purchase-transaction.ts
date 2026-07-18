@@ -12,12 +12,25 @@ function databaseCode(error: unknown): string | undefined {
     : undefined;
 }
 
+function databaseConstraint(error: unknown): string | undefined {
+  return typeof error === "object" && error !== null && "constraint" in error
+    ? String(error.constraint)
+    : undefined;
+}
+
 function publicError(error: unknown): Error {
   if (
     error instanceof PurchaseConflictError ||
     error instanceof PurchasePersistenceError
   ) {
     return error;
+  }
+  const constraint = databaseConstraint(error);
+  if (
+    constraint?.startsWith("private_prepare_authorities_") === true ||
+    constraint === "outbox_jobs_prepare_authority_fk"
+  ) {
+    return new PurchasePersistenceError();
   }
   return CONFLICT_CODES.has(databaseCode(error) ?? "")
     ? new PurchaseConflictError()

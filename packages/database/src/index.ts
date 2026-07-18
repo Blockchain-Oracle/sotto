@@ -4,6 +4,11 @@ export {
 } from "./migrate.js";
 export { createCatalogRepository } from "./catalog.js";
 export { createPurchaseRepository } from "./purchase.js";
+export { createPrepareAuthorityKeyring } from "./private-prepare-authority-keyring.js";
+export {
+  type PrepareAuthorityKeyring,
+  type PrepareAuthorityKeyringInput,
+} from "./private-prepare-authority-types.js";
 export {
   CatalogConflictError,
   CatalogPersistenceError,

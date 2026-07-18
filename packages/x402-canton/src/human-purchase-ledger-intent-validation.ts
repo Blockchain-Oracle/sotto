@@ -1,4 +1,5 @@
 import {
+  assertAuthenticHumanPurchase,
   HUMAN_PURCHASE_COMMITMENT_VERSION,
   type HumanPurchaseCommitment,
 } from "./human-purchase-commitment.js";
@@ -22,7 +23,7 @@ import {
 } from "./purchase-commitment-primitives.js";
 import { REQUEST_BINDING_VERSION } from "./request-binding.js";
 
-export function projectHumanPurchaseLedgerIntent(
+function projectValidatedHumanPurchaseLedgerIntent(
   commitment: HumanPurchaseCommitment,
   authority: HumanPurchaseCommandAuthority,
 ): HumanPurchaseLedgerIntent {
@@ -178,4 +179,19 @@ export function projectHumanPurchaseLedgerIntent(
     },
     packageSelection,
   };
+}
+
+export function projectRestoredHumanPurchaseLedgerIntent(
+  commitment: HumanPurchaseCommitment,
+  authority: HumanPurchaseCommandAuthority,
+): HumanPurchaseLedgerIntent {
+  return projectValidatedHumanPurchaseLedgerIntent(commitment, authority);
+}
+
+export function projectHumanPurchaseLedgerIntent(
+  commitment: HumanPurchaseCommitment,
+  authority: HumanPurchaseCommandAuthority,
+): HumanPurchaseLedgerIntent {
+  assertAuthenticHumanPurchase(commitment);
+  return projectValidatedHumanPurchaseLedgerIntent(commitment, authority);
 }

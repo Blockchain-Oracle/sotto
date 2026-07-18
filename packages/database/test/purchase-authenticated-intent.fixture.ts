@@ -9,16 +9,16 @@ import {
   createHumanWalletConnectorPreflight,
   HUMAN_PURCHASE_APPROVAL_VERSION,
   readHumanPurchaseLedgerIntent,
+  type AuthenticatedHumanWalletConnectorPreflight,
   type HumanPurchaseLedgerIntent,
   type HumanWalletConnector,
 } from "@sotto/x402-canton";
 import { validClosureInput } from "../../x402-canton/test/package-preference-closure.fixtures.js";
-
 const PAYER_FINGERPRINT = `1220${"a".repeat(64)}`;
-const PAYER = `sotto-external-payer::${PAYER_FINGERPRINT}`;
-const PROVIDER = "sotto-provider::1220provider";
-const ADMIN = "DSO::1220dso";
-const SYNCHRONIZER = `global-domain::1220${"b".repeat(64)}`;
+export const PAYER = `sotto-external-payer::${PAYER_FINGERPRINT}`;
+export const PROVIDER = "sotto-provider::1220provider";
+export const ADMIN = "DSO::1220dso";
+export const SYNCHRONIZER = `global-domain::1220${"b".repeat(64)}`;
 export type JournalChallenge = {
   resource: { url: string };
   accepts: Array<
@@ -28,7 +28,7 @@ export type JournalChallenge = {
     } & Record<string, unknown>
   >;
 } & Record<string, unknown>;
-function spliceClosure() {
+export function spliceClosure() {
   const input = validClosureInput();
   input.artifacts = input.artifacts.filter(
     ({ name }) => name === "splice-amulet",
@@ -61,8 +61,9 @@ function payerObserver() {
     }),
   });
 }
-
-async function walletPreflight(packageId: string) {
+export async function walletPreflight(
+  packageId: string,
+): Promise<AuthenticatedHumanWalletConnectorPreflight> {
   const capabilities = Object.freeze({
     version: "sotto-human-wallet-capabilities-v1" as const,
     approvalVersions: [HUMAN_PURCHASE_APPROVAL_VERSION],
@@ -103,7 +104,6 @@ async function walletPreflight(packageId: string) {
   }
   return result;
 }
-
 export async function authenticatedCatalogHumanPurchaseIntent(
   resourceUrl: string,
   mutateChallenge: (challenge: JournalChallenge) => void = () => undefined,

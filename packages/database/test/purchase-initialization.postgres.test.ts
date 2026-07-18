@@ -8,6 +8,7 @@ import {
 import {
   createPurchaseTestRuntime,
   purchaseJournalCounts,
+  testPrepareAuthorityKeyring,
 } from "./purchase-postgres.fixtures.js";
 
 let context: Awaited<ReturnType<typeof createPurchaseTestRuntime>>;
@@ -21,6 +22,7 @@ afterAll(async () => context?.database.drop());
 function repository() {
   return context.runtime.createPurchaseRepository({
     databaseUrl: context.database.databaseUrl,
+    prepareAuthorityKeyring: testPrepareAuthorityKeyring(context.runtime),
     sourceCommit: PURCHASE_SOURCE_COMMIT,
     resolveHumanPurchaseBinding: purchaseBindingResolver(),
   });
@@ -57,6 +59,7 @@ describe("durable authenticated human purchase initialization", () => {
       expect(await purchaseJournalCounts(context.database.databaseUrl)).toEqual(
         {
           attempts: "1",
+          authorities: "1",
           events: "1",
           jobs: "1",
         },
@@ -81,6 +84,7 @@ describe("durable authenticated human purchase initialization", () => {
       expect(await purchaseJournalCounts(context.database.databaseUrl)).toEqual(
         {
           attempts: "2",
+          authorities: "2",
           events: "2",
           jobs: "2",
         },

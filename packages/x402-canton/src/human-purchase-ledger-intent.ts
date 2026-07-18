@@ -11,10 +11,15 @@ import {
 import type { HumanPurchaseLedgerIntent } from "./human-purchase-ledger-intent-types.js";
 import { projectHumanPurchaseLedgerIntent } from "./human-purchase-ledger-intent-validation.js";
 import { MIN_HUMAN_SIGNING_RESERVE_MS } from "./human-purchase-commitment-validation.js";
+import {
+  sameStableHumanPackageSelection,
+  sameStableHumanPayerIdentity,
+} from "./human-prepare-authority-stable.js";
 
 const intentsByCommitment = new WeakMap<object, HumanPurchaseLedgerIntent>();
 type AuthenticHumanIntentState = Readonly<{
   authority: HumanPurchaseCommandAuthority;
+  commitment: HumanPurchaseCommitment;
   intent: HumanPurchaseLedgerIntent;
 }>;
 
@@ -63,7 +68,7 @@ export function readHumanPurchaseLedgerIntent(
     projectHumanPurchaseLedgerIntent(commitment, authority),
   );
   intentsByCommitment.set(commitment, intent);
-  authenticIntents.set(intent, { authority, intent });
+  authenticIntents.set(intent, { authority, commitment, intent });
   return intent;
 }
 
@@ -74,26 +79,14 @@ export function readAuthenticatedHumanPurchaseLedgerIntent(
   return readIntentState(candidate).intent;
 }
 
-function canonicalPackageAuthority(authority: HumanPurchaseCommandAuthority) {
-  const value = authority.packageSelectionAuthority;
-  return {
-    version: value.version,
-    closureHash: value.closureHash,
-    references: [
-      {
-        packageId: value.references[0].packageId,
-        packageName: value.references[0].packageName,
-        packageVersion: value.references[0].packageVersion,
-        artifactIds: value.references[0].artifactIds,
-      },
-    ],
-    packageIds: value.packageIds,
-    parties: value.parties,
-    synchronizerId: value.synchronizerId,
-    vettingValidAt: value.vettingValidAt,
-    acquiredAt: value.acquiredAt,
-    subjectHash: value.subjectHash,
-  };
+/** @internal Authenticated prepare-authority persistence only. */
+export function readHumanPurchaseIntentPersistenceState(candidate: unknown) {
+  const state = readIntentState(candidate);
+  return Object.freeze({
+    authority: state.authority,
+    commitment: state.commitment,
+    intent: state.intent,
+  });
 }
 
 function requireFreshCommandAuthority(
@@ -110,9 +103,11 @@ function requireFreshCommandAuthority(
     now,
   );
   if (
-    JSON.stringify(identity) !== JSON.stringify(intent.payerIdentity) ||
-    JSON.stringify(canonicalPackageAuthority(authority)) !==
-      JSON.stringify(intent.packageSelection)
+    !sameStableHumanPayerIdentity(identity, intent.payerIdentity) ||
+    !sameStableHumanPackageSelection(
+      authority.packageSelectionAuthority,
+      intent.packageSelection,
+    )
   ) {
     throw new Error("human purchase command authority does not match");
   }
