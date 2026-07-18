@@ -2,7 +2,12 @@ import { createHash, randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { runner } from "node-pg-migrate";
 import { Client } from "pg";
-import type { PurchaseRepository } from "../src/index.js";
+import type { HashVerifiedHumanPreparedPurchase } from "@sotto/x402-canton";
+import type {
+  HumanExecutionStartInput,
+  HumanPurchaseAttemptResult,
+  PurchaseRepository,
+} from "../src/index.js";
 import {
   catalogHumanPurchaseIntent,
   PURCHASE_SOURCE_COMMIT,
@@ -127,7 +132,14 @@ async function databaseTime(databaseUrl: string): Promise<string> {
 export async function createExecutionStartedAttempt(
   context: ReconciliationTestContext,
   windowSeconds: number,
-) {
+): Promise<
+  Readonly<{
+    execution: HumanExecutionStartInput;
+    initialized: HumanPurchaseAttemptResult;
+    prepared: HashVerifiedHumanPreparedPurchase;
+    purchase: PurchaseRepository;
+  }>
+> {
   const intent = await catalogHumanPurchaseIntent((challenge) => {
     challenge.accepts[0]!.maxTimeoutSeconds = windowSeconds;
     challenge.accepts[0]!.extra.executeBeforeSeconds = windowSeconds;

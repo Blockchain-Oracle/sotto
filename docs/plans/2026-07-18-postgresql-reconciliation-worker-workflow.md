@@ -16,7 +16,7 @@ max_iterations: 3
 verify: corepack pnpm test:postgres
 gate: human
 
-- [ ] **Step 2: Add generation-fenced reconciliation claim and requeue**
+- [x] **Step 2: Add generation-fenced reconciliation claim and requeue**
 action: Add RED real-PostgreSQL tests in `packages/database/test/human-reconciliation-lease.postgres.test.ts` for one `SKIP LOCKED` winner, expired-generation reclaim, stale-generation rejection, exact authenticated scope restoration, monotonic absent cursor advancement, database-time backoff, and a one-connection pool released during external work. Implement narrow claim/defer repository operations in new `purchase-reconcile-lease.ts` and `purchase-reconcile-checkpoint.ts` modules and expose them only through `PurchaseRepository`.
 loop: until the lease and requeue tests pass
 max_iterations: 3

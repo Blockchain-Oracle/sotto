@@ -11,6 +11,7 @@ import type {
 } from "@sotto/x402-canton/internal/human-prepare-authority-persistence";
 import type { PrepareAuthorityKeyring } from "./private-prepare-authority-types.js";
 import type { HumanPurchaseAttemptResult } from "./purchase-result-types.js";
+import type { HumanReconciliationRepository } from "./purchase-reconciliation-types.js";
 
 export type { HumanPurchaseAttemptResult };
 
@@ -193,7 +194,8 @@ export type PurchaseRepository = Readonly<{
     attemptId: Sha256Identifier,
   ): Promise<HumanPurchaseLifecycle>;
   close(): Promise<void>;
-}>;
+}> &
+  HumanReconciliationRepository;
 
 export class PurchaseConflictError extends Error {
   readonly code = "PURCHASE_CONFLICT";

@@ -67,3 +67,12 @@ export {
   type PurchaseRepository,
   type PurchaseRepositoryInput,
 } from "./purchase-types.js";
+export {
+  type HumanReconciliationClaimInput,
+  type HumanReconciliationClaimResult,
+  type HumanReconciliationDeferInput,
+  type HumanReconciliationDeferResult,
+  type HumanReconciliationLease,
+  type HumanReconciliationRepository,
+  type HumanReconciliationScope,
+} from "./purchase-reconciliation-types.js";
