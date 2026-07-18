@@ -20,6 +20,7 @@ import {
   type ValidatedProviderOrigin,
 } from "./catalog-validation.js";
 import { createCatalogPoolRuntime } from "./catalog-pool.js";
+import { createPublicationMethods } from "./publication.js";
 
 async function rowByRegistration(
   client: PoolClient,
@@ -137,6 +138,7 @@ export function createCatalogRepository(
   input: CatalogRepositoryInput,
 ): CatalogRepository {
   const runtime = createCatalogPoolRuntime(input);
+  const publication = createPublicationMethods(runtime);
 
   const registerProviderOrigin = async (
     candidate: ProviderOriginRegistration,
@@ -165,6 +167,7 @@ export function createCatalogRepository(
   return Object.freeze({
     registerProviderOrigin,
     findProviderOrigin,
+    ...publication,
     close: runtime.close,
   });
 }

@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import type { ProviderOriginRegistration } from "./catalog-types.js";
+import { hasUnsafeText } from "./text-validation.js";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u;
 const HOSTNAME =
@@ -25,14 +26,6 @@ function uuid(value: unknown, label: string): string {
   return value;
 }
 
-function hasControlCharacter(value: string): boolean {
-  for (const character of value) {
-    const codePoint = character.codePointAt(0)!;
-    if (codePoint <= 31 || codePoint === 127) return true;
-  }
-  return false;
-}
-
 function boundedText(
   value: unknown,
   label: string,
@@ -44,8 +37,7 @@ function boundedText(
     value.trim() !== value ||
     value.length === 0 ||
     Buffer.byteLength(value, "utf8") > maximumBytes ||
-    hasControlCharacter(value) ||
-    (!allowSpaces && /\s/u.test(value))
+    hasUnsafeText(value, allowSpaces)
   ) {
     throw new Error(`${label} is invalid`);
   }

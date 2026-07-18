@@ -1,3 +1,12 @@
+import type {
+  OriginProofInput,
+  ProbeObservationInput,
+  PublicationOperationResult,
+  PublicationRecordResult,
+  PublicPublishedResource,
+  PublishVerifiedResourceInput,
+} from "./publication-types.js";
+
 export type ProviderOriginRegistration = Readonly<{
   registrationId: string;
   ownerId: string;
@@ -37,6 +46,14 @@ export type CatalogRepository = Readonly<{
     input: ProviderOriginRegistration,
   ): Promise<ProviderOriginRegistrationResult>;
   findProviderOrigin(originUrl: string): Promise<ProviderOriginRecord | null>;
+  recordOriginProof(input: OriginProofInput): Promise<PublicationRecordResult>;
+  recordProbeObservation(
+    input: ProbeObservationInput,
+  ): Promise<PublicationRecordResult>;
+  publishVerifiedResource(
+    input: PublishVerifiedResourceInput,
+  ): Promise<PublicationOperationResult>;
+  listPublishedResources(): Promise<readonly PublicPublishedResource[]>;
   close(): Promise<void>;
 }>;
 

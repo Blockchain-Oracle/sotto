@@ -91,6 +91,7 @@ describe("PostgreSQL migrations", () => {
       expect(migrations.rows).toEqual([
         { name: "0001_catalog" },
         { name: "0002_provider_origins" },
+        { name: "0003_resource_publication" },
       ]);
     } finally {
       await client.end();

@@ -26,7 +26,7 @@ beforeAll(async () => {
 
 afterAll(async () => database?.drop());
 
-it("upgrades a populated production 0001 database to 0002", async () => {
+it("upgrades a populated production 0001 database through publication", async () => {
   await migrations.applyDatabaseMigrationSet({
     databaseUrl: database.databaseUrl,
     directory: fileURLToPath(new URL("../migrations/", import.meta.url)),
@@ -65,6 +65,7 @@ it("upgrades a populated production 0001 database to 0002", async () => {
     expect(history.rows).toEqual([
       { name: "0001_catalog" },
       { name: "0002_provider_origins" },
+      { name: "0003_resource_publication" },
     ]);
   } finally {
     await verified.end();
