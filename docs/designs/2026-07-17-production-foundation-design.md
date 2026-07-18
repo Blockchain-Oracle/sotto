@@ -192,6 +192,30 @@ Production key storage, rotation, backup, and recovery remain release gates.
 Real ephemeral-key cryptographic and PostgreSQL tests prove the code boundary;
 they do not by themselves prove production custody.
 
+### Leased Prepare Worker Checkpoint
+
+The prepare worker uses the generation-bound `purchase-prepare` lease only for
+fresh holdings and registry acquisition, command construction, participant
+preparation, complete effect inspection, and official hash recomputation. Those
+network calls run outside PostgreSQL transactions. The worker then uses one
+short transaction to recheck the exact unexpired lease generation and owner,
+append `prepared-hash-verified`, advance the attempt, terminalize the prepare
+job, and retire its encrypted prepare authority. A stale worker cannot commit
+after another worker reclaims the lease.
+
+PostgreSQL stores the verified prepared-transaction hash, event chain, and
+terminal job result, but not prepared transaction bytes. The authenticated
+verified object remains process-local and may proceed immediately to the wallet
+connector. The prepare lease is never held or renewed while waiting for human
+approval.
+
+Until the external connector supports a durable idempotent approval-session
+handoff, a process loss after this checkpoint leaves the attempt explicitly at
+`prepared-hash-verified`; it does not automatically reprepare, request another
+approval, or claim restart-safe wallet handoff. The user may start a fresh
+attempt. Closing that handoff gap remains a production `GO` criterion and does
+not justify Redis or prepared-byte persistence for the hackathon path.
+
 ## Transaction And Idempotency Boundary
 
 - Attempt creation, its first event, and its first outbox job commit atomically.
