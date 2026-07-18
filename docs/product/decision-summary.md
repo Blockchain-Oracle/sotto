@@ -108,16 +108,26 @@
   execution-started transitions, with the exact execution fence and one
   reconciliation job committed before the execute request. Disposable PostgreSQL
   plus a compiled Wallet SDK child proves this local process path and
-  same-process repository reopen. External key custody, deployed connectors and
-  processes, true process-loss approval/reconciliation recovery, durable
-  settlement/delivery recovery, and release evidence remain unproven.
+  same-process repository reopen. A separate database-only worker now proves
+  post-fence reconciliation across actual killed and replacement Node processes:
+  generation-fenced reclaim, stale-worker rejection, exact provider-settlement
+  verification, and one durable event-6 terminal checkpoint, without wallet,
+  signing, prepare, dispatch, or execute authority. This uses real local
+  PostgreSQL and bounded loopback HTTP with a synthetic Canton transaction.
+  External key custody, pre-fence wallet-handoff recovery, deployed connectors
+  and reconciliation transport, live Five North execution through this worker,
+  durable delivery recovery, and release evidence remain unproven.
 
 ## Open Gates
 
 - Production wallet connector deployment and custody boundary.
 - Production prepare-authority key storage, rotation, backup, and recovery.
-- A restartable reconciliation worker plus durable delivery, unknown-outcome
-  recovery, and replay state.
+- A deployed authenticated reconciliation adapter and a live Five North
+  post-execution recovery proof.
+- A reviewed definitive-absence oracle before any settlement retry; an
+  unresolved execution remains reconciliation-only.
+- Durable paid delivery, unknown-delivery recovery, and exact response replay
+  across process replacement.
 - Implemented and deployed web/API/MCP/worker/database/Coolify topology plus a
   reviewed production `GO`.
 

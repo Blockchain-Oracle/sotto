@@ -49,7 +49,7 @@ loop: until the complete PostgreSQL integration gate passes
 max_iterations: 3
 verify: corepack pnpm test:postgres
 
-- [ ] **Step 7: Review claims, performance shape, and repository documentation**
+- [x] **Step 7: Review claims, performance shape, and repository documentation**
 action: Update `docs/designs/2026-07-17-production-foundation-design.md`, `docs/product/decision-summary.md`, and `README.md` with only implemented evidence, explicitly separating local integration from Five North evidence and settlement from delivery. Run an independent security/concurrency review over migration 0010, repository fencing, verifier provenance, and the worker dependency surface; resolve every BLOCK finding through a focused RED/GREEN correction.
 loop: until documentation checks and independent review have no BLOCK findings
 max_iterations: 3

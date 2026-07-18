@@ -275,12 +275,50 @@ Wallet SDK companion in a child process with a generated Ed25519 test key, and a
 bounded local HTTP execute endpoint. It proves one approval, cryptographic
 signature verification, fence-before-HTTP ordering, one execute request, one
 reconcile job/event, repository reopen, and redacted child output. It does not
-prove a new OS process can restore the one-use wallet handoff, that the
-reconciliation job is processed, that delivery is durable, or that this
-database-backed path has executed on Five North. Those remain release gates.
-Redis is not used by this authority path.
+prove a new OS process can restore the one-use wallet handoff, that the delivery
+path is durable, or that this database-backed execution path has run on Five
+North. The separate read-only reconciliation proof below begins only after the
+durable execution fence. Redis is not used by this authority path.
+
+### Durable Read-Only Settlement Reconciliation
+
+Migration `0010_human_reconciliation` and the dedicated reconciliation worker
+now implement the post-execution recovery boundary. The worker claims only a
+`purchase-reconcile` job and receives only three generation-fenced repository
+operations plus one read-only Ledger/provider-view adapter called under the
+lease deadline. Its public dependency and runtime surfaces contain no wallet,
+key, approval, signature, prepare, dispatch, or execute capability.
+
+The worker uses the exact durable command, submission, user, synchronizer,
+payer, provider, settlement-expectation, and reconciliation-cursor state. An
+absent completion advances the cursor monotonically and requeues the job. A
+rejection must match the submission and synchronizer and commits the exact
+status and completion offset. A success must additionally pass the promoted
+provider-settlement verifier: exact update, synchronizer, expected SendV2,
+provider holding, amount, instrument, and purchase identities, with the
+transaction offset equal to the completion offset. A terminal checkpoint then
+atomically appends event 6, updates the attempt and settlement, and completes
+the same generation's job. Changed replays, stale generations, conflicting
+terminal outcomes, or malformed/forged success evidence fail closed.
+
+The real local integration gate uses disposable PostgreSQL 18, a bounded
+loopback HTTP endpoint, and separate OS child processes. It proves one lease
+winner, release of a one-connection pool during blocked external I/O, pending
+requeue, expired-generation reclaim, stale-generation rejection, process death
+before completion, process death immediately after the terminal commit, and a
+fresh process observing the single committed result without a third read. The
+HTTP response contains a deterministic synthetic Canton transaction. Therefore
+this is genuine PostgreSQL, TCP, and process-replacement evidence, but it is not
+a new Five North execution, a production-authenticated/TLS adapter, a latency or
+throughput benchmark, or paid-delivery recovery. The deployed adapter must
+separately prove authentication, authorization, TLS, request/response byte
+limits, and transport timeouts.
 
 ## Transaction And Idempotency Boundary
+
+The following bullets define the target release contract. The current
+implementation closes the execution fence and read-only settlement-
+reconciliation portion; delivery claims and response replay remain unproven.
 
 - Attempt creation, its first event, and its first outbox job commit atomically.
 - Deterministic command/submission identifiers and `execution-started` commit
@@ -304,6 +342,9 @@ delivery.
 
 ## Failure And Recovery Contract
 
+The following bullets are release criteria, not a claim that every recovery path
+is implemented at the current checkpoint.
+
 - Two workers cannot execute the same live lease concurrently.
 - Restart at every lifecycle boundary preserves the exact attempt state.
 - Restart never causes a second wallet approval, signature, or Ledger submission
@@ -315,23 +356,31 @@ delivery.
 - Web liveness, web readiness, database readiness, and worker heartbeat are
   separate signals.
 
-The current checkpoint implements these rules through the durable
-`execution-started` fence and same-process repository reopen. A future DB-leased
-reconciliation worker must recover a true OS-process loss from the trusted
-`purchase-reconcile` outbox row and settlement journal without signing or
-executing again. Process loss before that fence still requires a fresh attempt
-unless a production connector supplies a separately proven durable, idempotent
-approval handoff.
+The current checkpoint implements post-fence settlement recovery through a
+database-leased, read-only reconciliation worker. Real local process tests prove
+that a replacement process recovers the trusted `purchase-reconcile` row,
+rejects an older lease generation, and preserves one terminal result without a
+second wallet, signature, prepare, dispatch, or execute call. Process loss
+before the execution fence still requires a fresh attempt unless a production
+connector supplies a separately proven durable, idempotent approval handoff.
+Settlement recovery also does not imply paid-delivery recovery.
 
 ## Performance Contract
 
-The database path uses bounded queries, explicit indexes, connection-pool
-limits, and short transactions. Network I/O never occurs while a row lock is
-held. Queue lag, query plans, pool saturation, end-to-end latency, and response
-storage are measured in the deployed environment before Redis or additional
-services are considered. The one-shot worker uses one short claim transaction
-and one short checkpoint transaction; the intervening network stages are
-sequential because each authenticates input for the next.
+The database path uses bounded result sets, explicit indexes, statement and lock
+timeouts, connection-pool limits, and short transactions. Network I/O never
+occurs while a row lock is held. Queue lag, query plans, eligible-job scan cost,
+pool saturation, end-to-end latency, and response storage are measured in the
+deployed environment before Redis or additional services are considered. The
+one-shot worker uses one short claim transaction and one short checkpoint
+transaction; the intervening network stages are sequential because each
+authenticates input for the next.
+
+The reconciliation process test proves connection release functionally with a
+pool size of one: while its HTTP read is blocked, the same child can claim and
+defer another job. It deliberately does not publish p50/p95/p99 latency,
+throughput, or capacity claims from a disposable local database and synthetic
+transaction.
 
 ## Implementation Sequence
 

@@ -41,10 +41,10 @@ The research spike has now produced:
 
 The spike's signer/funding-authority and public-settlement-visibility blockers
 are closed. The production gate is still `NO_GO`: production wallet and
-prepare-authority key custody, connector deployment, deployed worker execution,
-durable delivery and unknown-outcome recovery, and release evidence for the
-approved production topology remain open. Receipt audience Q-004 and topology
-Q-006 are selected but not yet proven in production. The
+prepare-authority key custody, connector deployment, deployed reconciliation
+transport and worker execution, durable paid-delivery recovery, and release
+evidence for the approved production topology remain open. Receipt audience
+Q-004 and topology Q-006 are selected but not yet proven in production. The
 [redacted spike result](docs/architecture/devnet-spike-result.md) records the
 evidence and remaining blockers.
 
@@ -75,15 +75,23 @@ integration test runs disposable PostgreSQL, the compiled Wallet SDK reference
 companion with a generated test key, and a bounded HTTP execute endpoint. It
 proves one explicit approval, one verified signature, one execute request after
 the fence, redacted process output, and repository reopen without a second
-wallet or HTTP call. Redis is not used.
+wallet or HTTP call. A separate database-only reconciliation worker now claims
+the durable post-execution job, advances an absent-result cursor, and commits an
+exact verified settlement or rejection without wallet, key, signing, prepare,
+dispatch, or execute authority. Its real local integration gate uses disposable
+PostgreSQL 18, bounded loopback HTTP, and killed/replacement Node child
+processes. It proves one lease winner, release of a one-connection pool during
+the external read, generation-fenced crash recovery, and one terminal event
+surviving a second process death. Redis is not used.
 
 This is still a library/integration checkpoint, not a deployed marketplace or a
-new live Five North execution. A true OS-process restart cannot yet restore the
-process-local wallet handoff; the durable reconciliation job has not yet been
-processed by a restartable worker; and settlement completion, paid delivery,
-delivery recovery, production connector/key custody, web/MCP/worker deployment,
-external HTTPS smoke evidence, backup/restore, and release rollback remain open.
-Production therefore remains `NO_GO`.
+new live Five North execution. The local reconciliation endpoint serves a
+deterministic synthetic Canton transaction; it does not prove the deployed Five
+North adapter, production authentication/TLS, or network performance. A process
+restart before the execution fence still cannot restore the process-local wallet
+handoff. Paid delivery and delivery recovery, production connector/key custody,
+web/MCP/worker deployment, external HTTPS smoke evidence, backup/restore, and
+release rollback remain open. Production therefore remains `NO_GO`.
 
 No mocked payment or fixture transaction can satisfy those gates.
 
