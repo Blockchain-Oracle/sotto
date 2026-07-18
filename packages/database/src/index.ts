@@ -70,6 +70,9 @@ export {
 export {
   type HumanReconciliationClaimInput,
   type HumanReconciliationClaimResult,
+  type HumanReconciliationCheckpointInput,
+  type HumanReconciliationCheckpointResult,
+  type HumanReconciliationCompletion,
   type HumanReconciliationDeferInput,
   type HumanReconciliationDeferResult,
   type HumanReconciliationLease,

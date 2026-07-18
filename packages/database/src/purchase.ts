@@ -16,8 +16,7 @@ import {
   recordSignatureVerified,
 } from "./purchase-human-execution.js";
 import { readHumanLifecycle } from "./purchase-human-lifecycle.js";
-import { deferHumanReconciliationLease } from "./purchase-reconcile-checkpoint.js";
-import { claimHumanReconciliationLease } from "./purchase-reconcile-lease.js";
+import { createHumanReconciliationRepository } from "./purchase-reconciliation-repository.js";
 import { claimPurchasePrepareAuthorityLease } from "./purchase-prepare-authority-lease.js";
 import { restorePurchasePrepareAuthority } from "./purchase-prepare-authority-restore.js";
 import { createPurchasePoolRuntime } from "./purchase-pool.js";
@@ -166,21 +165,10 @@ export function createPurchaseRepository(
   const readHumanPurchaseLifecycle: PurchaseRepository["readHumanPurchaseLifecycle"] =
     async (attemptId) =>
       transition(() => readHumanLifecycle(runtime.pool, attemptId));
-  const reconciliation = <Result>(operation: () => Promise<Result>) => {
-    const release = runtime.admit();
-    return Promise.resolve()
-      .then(operation)
-      .catch(() => {
-        throw new PurchasePersistenceError();
-      })
-      .finally(release);
-  };
-  const claimHumanReconciliation: PurchaseRepository["claimHumanReconciliation"] =
-    async (value) =>
-      reconciliation(() => claimHumanReconciliationLease(runtime.pool, value));
-  const deferHumanReconciliation: PurchaseRepository["deferHumanReconciliation"] =
-    async (value) =>
-      reconciliation(() => deferHumanReconciliationLease(runtime.pool, value));
+  const reconciliation = createHumanReconciliationRepository(
+    runtime.pool,
+    runtime.admit,
+  );
   return Object.freeze({
     initializeHumanPurchaseAttempt,
     claimHumanPrepareAuthority,
@@ -189,8 +177,7 @@ export function createPurchaseRepository(
     recordHumanWalletDecision,
     recordHumanSignatureVerified,
     beginHumanExecution,
-    claimHumanReconciliation,
-    deferHumanReconciliation,
+    ...reconciliation,
     readHumanPurchaseLifecycle,
     readHumanSettlementExpectation,
     close: runtime.close,

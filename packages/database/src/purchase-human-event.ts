@@ -122,6 +122,56 @@ export function reconcileJobDedupe(
     executionEventHash,
   ]);
 }
+type TerminalHashInput = Readonly<{
+  attemptId: string;
+  commandId: string;
+  submissionId: string;
+  executionUserId: string;
+  expectationDigest: string;
+  reconciliationOffset: number;
+  completionOffset: number;
+}>;
+
+export function reconciledEventHash(
+  input: TerminalHashInput & Readonly<{ updateId: string }>,
+  reconciledAt: string,
+  previous: string,
+): `sha256:${string}` {
+  return humanTransitionEventHash(
+    "sotto-human-settlement-reconciled-event-v1",
+    [
+      input.attemptId,
+      input.commandId,
+      input.submissionId,
+      input.executionUserId,
+      input.expectationDigest,
+      String(input.reconciliationOffset),
+      String(input.completionOffset),
+      input.updateId,
+      reconciledAt,
+      previous,
+    ],
+  );
+}
+
+export function rejectedSettlementEventHash(
+  input: TerminalHashInput & Readonly<{ statusCode: number }>,
+  reconciledAt: string,
+  previous: string,
+): `sha256:${string}` {
+  return humanTransitionEventHash("sotto-human-settlement-rejected-event-v1", [
+    input.attemptId,
+    input.commandId,
+    input.submissionId,
+    input.executionUserId,
+    input.expectationDigest,
+    String(input.reconciliationOffset),
+    String(input.completionOffset),
+    String(input.statusCode),
+    reconciledAt,
+    previous,
+  ]);
+}
 
 export function transitionResult(
   event: HumanEventTransitionRow,

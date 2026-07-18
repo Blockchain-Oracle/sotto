@@ -3,6 +3,7 @@ import {
   type HumanJournalOracle,
 } from "./purchase-human-journal-oracle.js";
 import { validateReconcileJob } from "./purchase-human-reconcile-job-oracle.js";
+import { validateHumanTerminalState } from "./purchase-human-terminal-oracle.js";
 import type {
   HumanEventTransitionRow,
   HumanTransitionState,
@@ -167,10 +168,22 @@ export async function validateHumanTransitionState(
     validatePreparedSettlement(state);
   } else if (journal.latest.type === "execution-started") {
     validateExecutionState(state, journal);
+  } else if (
+    journal.latest.type === "settlement-reconciled" ||
+    journal.latest.type === "settlement-rejected"
+  ) {
+    validateHumanTerminalState(state, journal);
   } else {
     throw new PurchasePersistenceError();
   }
-  if (journal.latest.type !== "execution-started" && state.jobs.length !== 0) {
+  if (
+    ![
+      "execution-started",
+      "settlement-reconciled",
+      "settlement-rejected",
+    ].includes(journal.latest.type) &&
+    state.jobs.length !== 0
+  ) {
     throw new PurchasePersistenceError();
   }
   return journal;

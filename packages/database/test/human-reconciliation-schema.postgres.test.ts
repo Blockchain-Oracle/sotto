@@ -134,7 +134,7 @@ it("stores one coherent terminal settlement event and completed job", async () =
       `INSERT INTO sotto.attempt_events
         (attempt_id, sequence, event_type, event_hash, previous_event_hash,
          completion_offset, update_id, reconciled_at, recorded_at)
-       VALUES ($1, 6, 'settlement-reconciled', $2, $3, 42, $4, $5, $5)`,
+       VALUES ($1, 6, 'settlement-reconciled', $2, $3, 43, $4, $5, $5)`,
       [
         attempt.initialized.attemptId,
         `sha256:${"f".repeat(64)}`,
@@ -150,7 +150,7 @@ it("stores one coherent terminal settlement event and completed job", async () =
     );
     await client.query(
       `UPDATE sotto.settlements SET state = 'settlement-reconciled',
-         reconciliation_offset = 42, completion_offset = 42,
+         reconciliation_offset = 42, completion_offset = 43,
          update_id = $2, reconciled_at = $3
        WHERE attempt_id = $1`,
       [attempt.initialized.attemptId, RECONCILIATION_UPDATE_ID, reconciledAt],

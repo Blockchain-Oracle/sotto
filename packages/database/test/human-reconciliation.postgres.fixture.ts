@@ -10,6 +10,7 @@ import type {
 } from "../src/index.js";
 import {
   catalogHumanPurchaseIntent,
+  humanPurchaseBinding,
   PURCHASE_SOURCE_COMMIT,
   purchaseBindingResolver,
 } from "./purchase-journal.fixtures.js";
@@ -27,12 +28,16 @@ export const RECONCILIATION_UPDATE_ID = `1220${"a".repeat(64)}`;
 export function reconciliationRepository(
   context: ReconciliationTestContext,
   maxConnections = 1,
+  beginExclusive = humanPurchaseBinding.beginExclusive,
 ): PurchaseRepository {
   return context.runtime.createPurchaseRepository({
     databaseUrl: context.database.databaseUrl,
     prepareAuthorityKeyring: testPrepareAuthorityKeyring(context.runtime),
     sourceCommit: PURCHASE_SOURCE_COMMIT,
-    resolveHumanPurchaseBinding: purchaseBindingResolver(),
+    resolveHumanPurchaseBinding: purchaseBindingResolver({
+      ...humanPurchaseBinding,
+      beginExclusive,
+    }),
     maxConnections,
   });
 }
@@ -132,6 +137,7 @@ async function databaseTime(databaseUrl: string): Promise<string> {
 export async function createExecutionStartedAttempt(
   context: ReconciliationTestContext,
   windowSeconds: number,
+  beginExclusive = humanPurchaseBinding.beginExclusive,
 ): Promise<
   Readonly<{
     execution: HumanExecutionStartInput;
@@ -144,7 +150,7 @@ export async function createExecutionStartedAttempt(
     challenge.accepts[0]!.maxTimeoutSeconds = windowSeconds;
     challenge.accepts[0]!.extra.executeBeforeSeconds = windowSeconds;
   });
-  const purchase = reconciliationRepository(context);
+  const purchase = reconciliationRepository(context, 1, beginExclusive);
   const initialized = await purchase.initializeHumanPurchaseAttempt(intent);
   const claim = await purchase.claimHumanPrepareAuthority({
     leaseOwner: `reconcile-setup-${windowSeconds}`,

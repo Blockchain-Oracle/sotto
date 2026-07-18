@@ -10,6 +10,10 @@ import type {
   HumanEventTransitionRow,
   HumanTransitionState,
 } from "./purchase-human-transition-types.js";
+import {
+  validateHumanTerminalEvent,
+  type HumanTerminalEvent,
+} from "./purchase-human-terminal-event.js";
 import { legacyPreparedEventHash } from "./purchase-prepare-event.js";
 import { readStoredSettlementAuthority } from "./purchase-settlement-row.js";
 import { PurchasePersistenceError } from "./purchase-types.js";
@@ -18,6 +22,7 @@ export type HumanJournalOracle = Readonly<{
   event(type: string): HumanEventTransitionRow | undefined;
   executionEligible: boolean;
   latest: HumanEventTransitionRow;
+  terminal: HumanTerminalEvent | null;
 }>;
 
 function iso(value: Date | null): string {
@@ -177,7 +182,7 @@ export async function validateHumanJournal(
   state: HumanTransitionState,
 ): Promise<HumanJournalOracle> {
   const { events, attempt } = state;
-  if (events.length < 2 || events.length > 5)
+  if (events.length < 2 || events.length > 6)
     throw new PurchasePersistenceError();
   const initial = events[0]!;
   requireBase(initial, state, 1, null);
@@ -213,9 +218,19 @@ export async function validateHumanJournal(
   ) {
     throw new PurchasePersistenceError();
   }
+  let terminal: HumanTerminalEvent | null = null;
   for (let index = 2; index < events.length; index += 1) {
     const event = events[index]!;
     const previous = events[index - 1]!;
+    if (index === 5 && storedSettlement !== null) {
+      terminal = validateHumanTerminalEvent(
+        event,
+        previous,
+        state,
+        storedSettlement.digest,
+      );
+      continue;
+    }
     requireBase(event, state, index + 1, previous);
     if (index === 2 && event.type === "approval-requested") {
       validateApproval(event, state, previous);
@@ -237,5 +252,6 @@ export async function validateHumanJournal(
       events.find((candidate) => candidate.type === type),
     executionEligible: storedSettlement !== null,
     latest,
+    terminal,
   });
 }

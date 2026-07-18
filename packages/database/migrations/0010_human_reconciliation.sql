@@ -205,7 +205,7 @@ ALTER TABLE sotto.settlements
       AND execution_user_id IS NOT NULL
       AND execution_started_at IS NOT NULL
       AND execution_started_at >= created_at
-      AND completion_offset >= reconciliation_offset
+      AND completion_offset > reconciliation_offset
       AND update_id ~ '^1220[0-9a-f]{64}$'
       AND rejection_status_code IS NULL
       AND reconciled_at >= execution_started_at
@@ -216,7 +216,7 @@ ALTER TABLE sotto.settlements
       AND execution_user_id IS NOT NULL
       AND execution_started_at IS NOT NULL
       AND execution_started_at >= created_at
-      AND completion_offset >= reconciliation_offset
+      AND completion_offset > reconciliation_offset
       AND update_id IS NULL
       AND rejection_status_code BETWEEN 1 AND 16
       AND reconciled_at >= execution_started_at

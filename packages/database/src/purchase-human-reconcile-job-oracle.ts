@@ -46,8 +46,6 @@ export function validateReconcileJob(
       reconcileJobDedupe(state.attempt.attemptId, execution.eventHash) ||
     job.eventSequence !== "5" ||
     job.kind !== "purchase-reconcile" ||
-    job.resultEventSequence !== null ||
-    job.completedAt !== null ||
     availableAt === null ||
     createdAt === null ||
     Date.parse(availableAt) < Date.parse(createdAt)
@@ -56,6 +54,8 @@ export function validateReconcileJob(
   }
   if (job.state === "ready") {
     if (
+      job.resultEventSequence !== null ||
+      job.completedAt !== null ||
       job.leaseOwner !== null ||
       job.leaseExpiresAt !== null ||
       job.claimedAt !== null ||
@@ -68,7 +68,6 @@ export function validateReconcileJob(
   const claimedAt = timestamp(job.claimedAt);
   const leaseExpiresAt = timestamp(job.leaseExpiresAt);
   if (
-    job.state !== "leased" ||
     leaseGeneration < 1 ||
     typeof job.leaseOwner !== "string" ||
     !LEASE_OWNER.test(job.leaseOwner) ||
@@ -76,6 +75,26 @@ export function validateReconcileJob(
     leaseExpiresAt === null ||
     Date.parse(claimedAt) < Date.parse(availableAt) ||
     Date.parse(leaseExpiresAt) <= Date.parse(claimedAt)
+  ) {
+    throw new PurchasePersistenceError();
+  }
+  if (job.state === "leased") {
+    if (job.resultEventSequence !== null || job.completedAt !== null) {
+      throw new PurchasePersistenceError();
+    }
+    return;
+  }
+  const completedAt = timestamp(job.completedAt);
+  const terminal = state.events[5];
+  if (
+    job.state !== "completed" ||
+    job.resultEventSequence !== "6" ||
+    completedAt === null ||
+    terminal === undefined ||
+    terminal.sequence !== "6" ||
+    completedAt !== timestamp(terminal.recordedAt) ||
+    Date.parse(completedAt) < Date.parse(claimedAt) ||
+    Date.parse(completedAt) >= Date.parse(leaseExpiresAt)
   ) {
     throw new PurchasePersistenceError();
   }

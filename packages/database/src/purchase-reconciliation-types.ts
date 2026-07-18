@@ -50,6 +50,47 @@ export type HumanReconciliationDeferResult = Readonly<{
   }>;
 }>;
 
+export type HumanReconciliationCompletion =
+  | Readonly<{
+      classification: "SUCCEEDED";
+      completionOffset: number;
+      updateId: string;
+    }>
+  | Readonly<{
+      classification: "REJECTED";
+      completionOffset: number;
+      statusCode: number;
+    }>;
+
+export type HumanReconciliationCheckpointInput = Readonly<{
+  lease: HumanReconciliationLease;
+  expectedReconciliationOffset: number;
+  completion: HumanReconciliationCompletion;
+}>;
+
+export type HumanReconciliationCheckpointResult = Readonly<{
+  outcome: "created" | "replayed";
+  attemptId: Sha256Identifier;
+  state: "settlement-reconciled" | "settlement-rejected";
+  completion: HumanReconciliationCompletion;
+  reconciliationOffset: number;
+  reconciledAt: string;
+  event: Readonly<{
+    sequence: 6;
+    type: "settlement-reconciled" | "settlement-rejected";
+    eventHash: Sha256Identifier;
+    previousEventHash: Sha256Identifier;
+    recordedAt: string;
+  }>;
+  job: Readonly<{
+    jobId: string;
+    state: "completed";
+    leaseGeneration: number;
+    resultEventSequence: 6;
+    completedAt: string;
+  }>;
+}>;
+
 export type HumanReconciliationRepository = Readonly<{
   claimHumanReconciliation(
     input: HumanReconciliationClaimInput,
@@ -57,4 +98,7 @@ export type HumanReconciliationRepository = Readonly<{
   deferHumanReconciliation(
     input: HumanReconciliationDeferInput,
   ): Promise<HumanReconciliationDeferResult>;
+  completeHumanReconciliation(
+    input: HumanReconciliationCheckpointInput,
+  ): Promise<HumanReconciliationCheckpointResult>;
 }>;

@@ -23,7 +23,7 @@ max_iterations: 3
 verify: corepack pnpm test:postgres
 gate: human
 
-- [ ] **Step 3: Add atomic terminal reconciliation checkpoints**
+- [x] **Step 3: Add atomic terminal reconciliation checkpoints**
 action: Add RED PostgreSQL tests in `packages/database/test/human-reconciliation-fence.postgres.test.ts` for exact rejection, exact settlement, concurrent terminal checkpoint, exact replay, changed-result conflict, injected transaction rollback, stale lease, and append-only event hash validation. Implement one generation-fenced transaction that appends event 6, updates attempt and settlement, and completes the reconcile job against event 6.
 loop: until terminal checkpoint tests pass
 max_iterations: 3
