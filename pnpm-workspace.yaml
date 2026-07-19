@@ -10,7 +10,8 @@ catalog:
   "@canton-network/core-ledger-proto": 1.7.0
   "@canton-network/core-provider-dapp": 1.8.0
   "@canton-network/core-tx-visualizer": 1.7.0
-  "@canton-network/wallet-sdk": 1.4.0
+  # @canton-network/wallet-sdk stays a literal pin in spikes/capability-wallet;
+  # its provenance test locks the exact specifier and artifact integrity.
   "@eslint/js": 10.0.1
   "@secretlint/secretlint-rule-preset-recommend": 13.0.2
   "@types/node": 24.13.3
