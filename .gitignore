@@ -40,3 +40,6 @@ test-results/
 tmp/
 .hotl/
 *.tsbuildinfo
+
+# Design QA screenshots (scripts/shoot.mjs)
+.shots/

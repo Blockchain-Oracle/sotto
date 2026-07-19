@@ -122,6 +122,7 @@ function fake402(): Response {
  */
 export async function startApiPostgresHarness(
   databaseName: string,
+  options: Readonly<{ publicAppOrigin?: string; port?: number }> = {},
 ): Promise<ApiPostgresHarness> {
   const context = await createPurchaseTestRuntime(databaseName);
   const databaseUrl = context.database.databaseUrl;
@@ -156,7 +157,7 @@ export async function startApiPostgresHarness(
   const signer = await startFakeSigner();
   const catalog = createCatalogReads(pool);
   const server = await buildServer({
-    publicAppOrigin: "http://127.0.0.1:4400",
+    publicAppOrigin: options.publicAppOrigin ?? "http://127.0.0.1:4400",
     sessionSecret: "postgres-test-session-secret-0123456789",
     sourceCommit: PURCHASE_SOURCE_COMMIT,
     cantonExplorerBaseUrl: undefined,
@@ -189,7 +190,7 @@ export async function startApiPostgresHarness(
     composeAssist: undefined,
     eventPollMilliseconds: 50,
   });
-  await server.listen({ host: "127.0.0.1", port: 0 });
+  await server.listen({ host: "127.0.0.1", port: options.port ?? 0 });
 
   return Object.freeze({
     server,

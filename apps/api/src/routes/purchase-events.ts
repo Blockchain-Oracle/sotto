@@ -50,9 +50,15 @@ export function registerPurchaseEventRoutes(
             "No purchase attempt with this ID belongs to your owner session.",
         });
       }
+      // Raw streaming bypasses the reply lifecycle, so @fastify/cors never
+      // decorates this response; the app origin must be granted here or
+      // the browser discards the stream despite the valid session cookie.
       reply.raw.writeHead(200, {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": deps.publicAppOrigin,
         "cache-control": "no-cache",
         "content-type": "text/event-stream",
+        vary: "origin",
         "x-accel-buffering": "no",
       });
       reply.raw.write(": stream-open\n\n");
