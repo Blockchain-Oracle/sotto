@@ -21,6 +21,7 @@ let database: Awaited<ReturnType<typeof createPostgresTestDatabase>>;
 let runtime: RuntimeModule;
 
 const publicResource = Object.freeze({
+  listingId: publication.listingId,
   resourceId: publication.resourceId,
   resourceRevisionId: publication.resourceRevisionId,
   listingVersion: 1,

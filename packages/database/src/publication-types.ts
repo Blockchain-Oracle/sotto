@@ -54,6 +54,7 @@ export type PublishVerifiedResourceInput = Readonly<{
 }>;
 
 export type PublicPublishedResource = Readonly<{
+  listingId: string;
   resourceId: string;
   resourceRevisionId: string;
   listingVersion: number;

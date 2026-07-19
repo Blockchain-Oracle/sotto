@@ -3,6 +3,7 @@ import { CatalogPersistenceError } from "./catalog-types.js";
 import type { PublicPublishedResource } from "./publication-types.js";
 
 type PublicResourceRow = Readonly<{
+  listingId: string;
   resourceId: string;
   resourceRevisionId: string;
   listingVersion: string;
@@ -25,6 +26,7 @@ type PublicResourceRow = Readonly<{
 
 const PUBLIC_RESOURCE_SELECT = `
   SELECT
+    listing.listing_id AS "listingId",
     resource.id AS "resourceId",
     revision.revision_id AS "resourceRevisionId",
     listing.version::text AS "listingVersion",
@@ -99,6 +101,7 @@ export async function publicResourceByPublication(
 ): Promise<PublicPublishedResource> {
   const result = await client.query<PublicResourceRow>(
     `SELECT
+       operation.listing_id AS "listingId",
        resource.id AS "resourceId",
        revision.revision_id AS "resourceRevisionId",
        operation.listing_version::text AS "listingVersion",

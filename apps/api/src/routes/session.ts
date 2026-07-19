@@ -70,7 +70,9 @@ export function registerSessionRoutes(
         linked.status === 201 && typeof linked.body.linkUrl === "string"
           ? linked.body.linkUrl
           : null,
-      session: { expiresAt: session.session.expiresAt },
+      // The opaque token is returned once to the authenticated creator so
+      // the CLI/MCP copy-token flow works; it is never readable again.
+      session: { expiresAt: session.session.expiresAt, token: session.token },
     });
   });
 
@@ -158,7 +160,7 @@ export function registerSessionRoutes(
     setSessionCookie(reply, session.token, secure);
     return reply.status(201).send({
       partyId: verification.partyId,
-      session: { expiresAt: session.session.expiresAt },
+      session: { expiresAt: session.session.expiresAt, token: session.token },
       proof: {
         proven: [
           "ed25519-signature-over-one-use-challenge",

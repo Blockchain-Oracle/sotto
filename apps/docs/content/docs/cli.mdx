@@ -1,47 +1,83 @@
 ---
 title: CLI
 description:
-  The thin CLI interface contract — command grammar for the shipping surface of
-  the current build cycle.
+  The shipped @sotto/cli commands — thin over the shared purchasing core, with a
+  human wallet approving every spend.
 ---
 
-<Callout type="warn" title="Interface contract, not captured output">
-  The CLI ships in the current build cycle. Everything on this page is the
-  command grammar it is contracted to implement — no execution output is shown,
-  because none exists to show yet.
-</Callout>
+The CLI is deliberately thin: `@sotto/cli` wraps the same purchasing core
+(`@sotto/purchase-client`), catalog, validation, journal, and error taxonomy as
+the web app and the MCP server. One core, several mouths. It never reads,
+stores, or transmits a wallet key.
 
-The CLI is deliberately thin: it reuses the same purchasing core, catalog,
-validation, receipt, and error semantics as the web Composer and the MCP server.
-One core, several mouths.
+## Connect a session
 
-## Command grammar
+There is no device-authorization grant yet; the honest flow is copy-token.
+Establish an owner session in the Sotto app, copy the one-time session token
+from the session response, then:
 
 ```
+sotto login --api-origin <api-url> --token <token>
+sotto whoami
+sotto logout
+```
+
+The token is stored with `0600` permissions in `~/.config/sotto/config.json` and
+sent only as an `Authorization: Bearer` header to that API origin.
+`SOTTO_API_ORIGIN` and `SOTTO_SESSION_TOKEN` override the file.
+
+## Discover
+
+```
+sotto search [query] [--method GET] [--max-price <atomic>]
+sotto inspect <listingId|resource-url>
 sotto try <resource-url>
 ```
 
-Resolve the verified listing for the canonical URL, replay its live `402`,
-prepare **one** bounded paid call, and hand it to the configured wallet for
-approval. The CLI displays settlement and delivery as separate outcomes, exactly
-as the journal records them.
+Discovery reads the same verified catalog the marketplace serves. `inspect`
+shows the fresh server-observed price with its observation timestamp; `try`
+resolves a canonical URL to its listing and prints the exact `sotto buy`
+command. An empty catalog answers an honest empty result. `--tag` is refused
+with an explanation: the catalog carries no tags yet.
+
+## Purchase
 
 ```
-sotto search <query>
-sotto show <resource-url>
+sotto buy <listingId> [--max-price <atomic>] [--no-wait]
+sotto status <attemptId> [--follow]
+sotto evidence <attemptId>
+sotto stats [--window 24h|7d|30d|all]
 ```
 
-Discovery against the same catalog the marketplace serves: verified listings
-only, with the pinned price, network, and `lastVerifiedAt` from the most recent
-successful probe.
+`buy` initiates one exact purchase (the server re-observes the live 402 and
+stops on a changed price), prints the prepared call, request commitment, and —
+once verified — the prepared transaction hash, then follows the journal SSE as a
+text rail with one timestamped station per committed event. When the journal
+records `approval-requested`, the CLI prints the human-approval block
+prominently: a human approves at the wallet; the CLI cannot sign.
 
-## Guarantees carried over from the core
+`--max-price` is a local policy stop, labeled as such — not a ledger-enforced
+limit.
 
-- **No raw key.** The CLI never reads, stores, or transmits a wallet key; it
-  talks to the same wallet connectors as every other surface.
-- **Stable error categories.** A failed origin probe, an incompatible `402`, a
-  wallet rejection, a settlement rejection, and a delivery failure are distinct,
-  named outcomes — the same taxonomy documented in [Add an API](/docs/add-api)
-  and the [Composer lifecycle](/docs/composer).
-- **No generic success.** `settled` and `delivered` are printed as two facts,
-  including the honest `settled-undelivered` case.
+## Exit codes
+
+| Code | Meaning                                                            |
+| ---- | ------------------------------------------------------------------ |
+| 0    | Read succeeded, or the purchase settled **and** delivered          |
+| 1    | Transport or API failure                                           |
+| 2    | Usage error                                                        |
+| 3    | No usable owner session                                            |
+| 4    | Wallet rejected the exact prepared call                            |
+| 5    | Wallet cannot sign this transaction shape                          |
+| 6    | Canton rejected the settlement                                     |
+| 7    | Execute-before passed without a terminal journal event             |
+| 8    | Settled but not delivered, or otherwise ambiguous — reconcile only |
+
+Ambiguous outcomes are never auto-retried: the CLI prints reconcile guidance
+(`sotto status`, `sotto evidence`) instead of risking a second payment.
+
+## Machine output
+
+Every read command takes `--json` and returns full untruncated values.
+`NO_COLOR` or a non-TTY stream disables all styling. The session token is never
+printed by any command.

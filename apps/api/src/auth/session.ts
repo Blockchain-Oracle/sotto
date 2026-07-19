@@ -13,12 +13,26 @@ declare module "fastify" {
   }
 }
 
+const BEARER_TOKEN = /^[0-9a-f]{64}$/u;
+
+/**
+ * One opaque session token, two carriers: the signed browser cookie, or an
+ * `authorization: Bearer <token>` header for the CLI and MCP surfaces. Both
+ * resolve against the same `sotto.sessions` row — there is no separate
+ * token class, scope, or lifetime for non-browser clients.
+ */
 export function readSessionToken(request: FastifyRequest): string | undefined {
   const raw = request.cookies[SESSION_COOKIE];
-  if (raw === undefined) return undefined;
-  const unsigned = request.unsignCookie(raw);
-  if (!unsigned.valid || unsigned.value === null) return undefined;
-  return unsigned.value;
+  if (raw !== undefined) {
+    const unsigned = request.unsignCookie(raw);
+    if (unsigned.valid && unsigned.value !== null) return unsigned.value;
+  }
+  const header = request.headers.authorization;
+  if (typeof header === "string" && header.startsWith("Bearer ")) {
+    const bearer = header.slice("Bearer ".length);
+    if (BEARER_TOKEN.test(bearer)) return bearer;
+  }
+  return undefined;
 }
 
 export function setSessionCookie(

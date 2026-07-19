@@ -1,42 +1,48 @@
 ---
 title: MCP
 description:
-  The buyer MCP server interface contract — tool surface for the shipping cycle,
+  The shipped buyer MCP server — stdio tools over the shared purchasing core,
   with the key kept away from the model.
 ---
 
-<Callout type="warn" title="Interface contract, not a shipped server">
-  The buyer MCP server ships in the current build cycle. This page is its
-  tool-surface contract; names are the working schema and may still settle
-  during implementation.
-</Callout>
+The buyer MCP server ships inside `@sotto/cli`:
 
-The MCP server is a thin stdio adapter over the same purchasing core as the CLI
-and the web Composer. The design constraint that matters: **the model never
-receives a raw wallet key or an unrestricted generic signing tool.** Tools
-expose discovery and bounded purchasing, and every real spend still terminates
-at a wallet boundary outside the process.
+```
+sotto mcp serve
+```
 
-## Tool surface (schema)
+It speaks newline-delimited JSON-RPC 2.0 over stdio — stdout carries protocol
+frames only; every log goes to stderr. Auth is the same stored session token the
+CLI uses (`sotto login`, or the `SOTTO_SESSION_TOKEN` environment variable),
+configured by the human out of band. The design constraint that matters: **the
+model never receives a raw wallet key or a generic signing tool.** Every real
+spend still terminates at the human wallet boundary outside the process.
 
-| Tool            | Contract                                                                                                      |
-| --------------- | ------------------------------------------------------------------------------------------------------------- |
-| `sotto_search`  | Find verified Canton x402 resources in the catalog; returns listings with pinned price and verification time. |
-| `sotto_prepare` | Prepare **one** exact bounded paid call for a resource; returns the exact summary that will be approved.      |
-| `sotto_status`  | Read a purchase's journal state — settlement and delivery reported separately, never merged.                  |
+## Tool surface (shipped)
+
+| Tool               | Contract                                                                                                                           |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `search_resources` | Read-only catalog search (query, method, max price). An empty catalog answers an honest empty list.                                |
+| `inspect_resource` | One resource by listing ID or canonical URL: method, route, fresh server-observed price with timestamp, latest health.             |
+| `purchase`         | Initiates **one** exact purchase. Annotated non-read-only; its result states that a HUMAN must approve at the wallet. Never signs. |
+| `purchase_status`  | Full journal state — settlement and delivery as separate facts, including settled-undelivered with reconcile guidance.             |
+| `get_evidence`     | Paired outcome, source-labeled timeline, update ID, and public explorer URL when indexed.                                          |
+
+Tool failures return `isError: true` with the API's error code verbatim — the
+same taxonomy as the CLI and the web app.
 
 ## Authority model
 
-An agent purchase runs under a **bounded capability**, not the payer's open
-authority. The recorded Five North result is the contract's floor: the external
-agent alone exercised a payer-signed `BoundedPurchaseCapability` (per-call
-limit, remaining allowance, expiry, revocation enforced in Daml), while the
-matched prepare-only control proved the same agent could not prepare a direct
-payer transfer. Bounds that live only in process configuration are labeled local
-policy — see the [security model](/docs/security).
+An agent purchase runs under the owner session's authority plus explicit human
+wallet approval per call. `maxPriceAtomic` on `purchase` is a client-side policy
+stop and is labeled local policy — the recorded Five North bounded- capability
+result is the only ledger-enforced control proven so far, and it is not wired
+into this server. Bounds that live only in process configuration are never
+presented as ledger enforcement — see the [security model](/docs/security).
 
 ## Error semantics
 
 MCP tools report the same stable categories as every other surface: incompatible
 resource, wallet rejection, settlement rejection, delivery failure. A tool
-result never claims delivery when only settlement is proven.
+result never claims delivery when only settlement is proven, and the server
+instructs agents not to retry ambiguous or settled attempts.

@@ -1,0 +1,47 @@
+{
+  "name": "@sotto/cli",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "license": "Apache-2.0",
+  "description": "Sotto CLI and buyer MCP server for Canton x402 APIs — search, inspect, purchase with human wallet approval, and audit evidence. Never holds a key.",
+  "bin": {
+    "sotto": "dist/bin.js"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Blockchain-Oracle/sotto-x402.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://usesotto.xyz",
+  "keywords": [
+    "canton",
+    "x402",
+    "mcp",
+    "payments",
+    "cli"
+  ],
+  "scripts": {
+    "build": "tsup && node ../../scripts/verify-package.mjs"
+  },
+  "devDependencies": {
+    "@sotto/purchase-client": "workspace:*",
+    "tsup": "catalog:"
+  }
+}
