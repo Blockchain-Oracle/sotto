@@ -22,7 +22,9 @@ if (
   attemptId === undefined ||
   !attemptPattern.test(attemptId)
 ) {
-  throw new Error("Usage: pnpm spike:reconcile <update-id> <attempt-id>");
+  throw new Error(
+    "Usage: pnpm --filter @sotto/devnet-payment-spike run reconcile <update-id> <attempt-id>",
+  );
 }
 
 const config = readSpikeConfig(process.env);

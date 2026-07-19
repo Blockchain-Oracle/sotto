@@ -20,7 +20,7 @@ if (
   !attemptPattern.test(attemptId)
 ) {
   throw new Error(
-    "Usage: pnpm spike:atomic:reconcile <atomic-update> <attempt> <policy-create-update>",
+    "Usage: pnpm --filter @sotto/devnet-payment-spike run atomic:reconcile <atomic-update> <attempt> <policy-create-update>",
   );
 }
 

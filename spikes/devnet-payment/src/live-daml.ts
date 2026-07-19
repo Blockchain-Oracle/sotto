@@ -23,7 +23,9 @@ if (
   attemptId === undefined ||
   !attemptPattern.test(attemptId)
 ) {
-  throw new Error("Usage: pnpm spike:daml <payment-update-id> <attempt-id>");
+  throw new Error(
+    "Usage: pnpm --filter @sotto/devnet-payment-spike run daml <payment-update-id> <attempt-id>",
+  );
 }
 
 const config = readSpikeConfig(process.env);
