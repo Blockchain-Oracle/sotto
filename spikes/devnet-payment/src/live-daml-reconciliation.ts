@@ -21,7 +21,7 @@ if (
   !attemptPattern.test(attemptId)
 ) {
   throw new Error(
-    "Usage: pnpm spike:daml:reconcile <payment-update> <attempt> <create-update> <consume-update>",
+    "Usage: pnpm --filter @sotto/devnet-payment-spike run daml:reconcile <payment-update> <attempt> <create-update> <consume-update>",
   );
 }
 

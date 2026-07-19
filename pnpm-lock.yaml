@@ -4,42 +4,102 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+catalogs:
+  default:
+    '@canton-network/core-ledger-proto':
+      specifier: 1.7.0
+      version: 1.7.0
+    '@canton-network/core-provider-dapp':
+      specifier: 1.8.0
+      version: 1.8.0
+    '@canton-network/core-tx-visualizer':
+      specifier: 1.7.0
+      version: 1.7.0
+    '@eslint/js':
+      specifier: 10.0.1
+      version: 10.0.1
+    '@secretlint/secretlint-rule-preset-recommend':
+      specifier: 13.0.2
+      version: 13.0.2
+    '@types/node':
+      specifier: 24.13.3
+      version: 24.13.3
+    '@types/pg':
+      specifier: 8.20.0
+      version: 8.20.0
+    eslint:
+      specifier: 10.7.0
+      version: 10.7.0
+    globals:
+      specifier: 17.7.0
+      version: 17.7.0
+    node-pg-migrate:
+      specifier: 8.0.4
+      version: 8.0.4
+    pg:
+      specifier: 8.22.0
+      version: 8.22.0
+    prettier:
+      specifier: 3.9.5
+      version: 3.9.5
+    secretlint:
+      specifier: 13.0.2
+      version: 13.0.2
+    tsx:
+      specifier: 4.23.0
+      version: 4.23.0
+    turbo:
+      specifier: 2.10.5
+      version: 2.10.5
+    typescript:
+      specifier: 6.0.3
+      version: 6.0.3
+    typescript-eslint:
+      specifier: 8.63.0
+      version: 8.63.0
+    vitest:
+      specifier: 4.1.10
+      version: 4.1.10
+
 importers:
 
   .:
     devDependencies:
       '@eslint/js':
-        specifier: 10.0.1
+        specifier: 'catalog:'
         version: 10.0.1(eslint@10.7.0(jiti@2.7.0))
       '@secretlint/secretlint-rule-preset-recommend':
-        specifier: 13.0.2
+        specifier: 'catalog:'
         version: 13.0.2
       '@types/node':
-        specifier: 24.13.3
+        specifier: 'catalog:'
         version: 24.13.3
       eslint:
-        specifier: 10.7.0
+        specifier: 'catalog:'
         version: 10.7.0(jiti@2.7.0)
       globals:
-        specifier: 17.7.0
+        specifier: 'catalog:'
         version: 17.7.0
       prettier:
-        specifier: 3.9.5
+        specifier: 'catalog:'
         version: 3.9.5
       secretlint:
-        specifier: 13.0.2
+        specifier: 'catalog:'
         version: 13.0.2
       tsx:
-        specifier: 4.23.0
+        specifier: 'catalog:'
         version: 4.23.0
+      turbo:
+        specifier: 'catalog:'
+        version: 2.10.5
       typescript:
-        specifier: 6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
       typescript-eslint:
-        specifier: 8.63.0
+        specifier: 'catalog:'
         version: 8.63.0(eslint@10.7.0(jiti@2.7.0))(typescript@6.0.3)
       vitest:
-        specifier: 4.1.10
+        specifier: 'catalog:'
         version: 4.1.10(@types/node@24.13.3)(vite@8.1.4(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/catalog-probe:
@@ -57,14 +117,14 @@ importers:
         specifier: workspace:*
         version: link:../x402-canton
       node-pg-migrate:
-        specifier: 8.0.4
+        specifier: 'catalog:'
         version: 8.0.4(@types/pg@8.20.0)(pg@8.22.0)
       pg:
-        specifier: 8.22.0
+        specifier: 'catalog:'
         version: 8.22.0
     devDependencies:
       '@types/pg':
-        specifier: 8.20.0
+        specifier: 'catalog:'
         version: 8.20.0
 
   packages/evidence: {}
@@ -81,16 +141,16 @@ importers:
   packages/x402-canton:
     dependencies:
       '@canton-network/core-ledger-proto':
-        specifier: 1.7.0
+        specifier: 'catalog:'
         version: 1.7.0
       '@canton-network/core-tx-visualizer':
-        specifier: 1.7.0
+        specifier: 'catalog:'
         version: 1.7.0
 
   spikes/capability-wallet:
     dependencies:
       '@canton-network/core-ledger-proto':
-        specifier: 1.7.0
+        specifier: 'catalog:'
         version: 1.7.0
       '@canton-network/wallet-sdk':
         specifier: 1.4.0
@@ -98,11 +158,15 @@ importers:
       '@sotto/x402-canton':
         specifier: workspace:*
         version: link:../../packages/x402-canton
+    devDependencies:
+      tsx:
+        specifier: 'catalog:'
+        version: 4.23.0
 
   spikes/devnet-payment:
     dependencies:
       '@canton-network/core-provider-dapp':
-        specifier: 1.8.0
+        specifier: 'catalog:'
         version: 1.8.0
       '@sotto/capability-wallet':
         specifier: workspace:*
@@ -115,8 +179,11 @@ importers:
         version: link:../../packages/x402-canton
     devDependencies:
       '@canton-network/core-ledger-proto':
-        specifier: 1.7.0
+        specifier: 'catalog:'
         version: 1.7.0
+      tsx:
+        specifier: 'catalog:'
+        version: 4.23.0
 
 packages:
 
@@ -664,6 +731,36 @@ packages:
 
   '@textlint/types@15.7.1':
     resolution: {integrity: sha512-Vye/GmFNBTgVzZFtIFJTmLB+s2A7oIADxNG6r9UhfPuY+Czv0z5G3xeyFZZudPlfxURsKUyPIU5XsjOFqVp33A==}
+
+  '@turbo/darwin-64@2.10.5':
+    resolution: {integrity: sha512-ENvPwy3x5yS7MwNYHeWjqOBXkwIMp39Pd+/zXC6PoiNzF8EIvvLZOZZ+ny6L9x4WgS5vxUii2LM5gM+zjPdnWw==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@turbo/darwin-arm64@2.10.5':
+    resolution: {integrity: sha512-rqROo9zsF/P9RqsdtbLD1nFJicjSrYyvQ9kNJC38AbxA3pAs6VAlATvtvOFx7bqOv6vicf20SP9kF33avJjy2w==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@turbo/linux-64@2.10.5':
+    resolution: {integrity: sha512-RoSSiNFUxi27zLJuM9F6GyWWjHgLch9t6nwD6K0FkXRirZkTLlzIj6IhFnK8H9++nefLtdFqylE4vGjZAv6AAA==}
+    cpu: [x64]
+    os: [linux]
+
+  '@turbo/linux-arm64@2.10.5':
+    resolution: {integrity: sha512-4ZComcpzmHGmVynQqvvi+iZOSq/tBvY1SltXB8g4NZRsrA01W8E+yRL8RNM+PLoyWsrCnJa8xa+DkWkv+xg4iQ==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@turbo/windows-64@2.10.5':
+    resolution: {integrity: sha512-eL2Iyj4DbMINq1Sr1w0iAi6nAiZOF16KSlRGwCJpVh+IWZeY33MAsLHVOBMj1xoFtncVJXclCVpTPL2nBoYkFg==}
+    cpu: [x64]
+    os: [win32]
+
+  '@turbo/windows-arm64@2.10.5':
+    resolution: {integrity: sha512-sog+wP+8YSJrdWZ/rUJg8xghVTrwoG+BrSlDQpnK5fzSgJHn1INRWXbVWRH0d3vX8dBI01E3yxXRre9Dn+OXQA==}
+    cpu: [arm64]
+    os: [win32]
 
   '@tybys/wasm-util@0.10.3':
     resolution: {integrity: sha512-F3fo1MYrRJYL3zER0OUOmkutjr1Vp23m7OsSgp7nq4SP6OqX6C/56XFIPAl5bt3zaBRjmW7SGz3u/6LwFpYcOg==}
@@ -1675,6 +1772,10 @@ packages:
     engines: {node: '>=18.0.0'}
     hasBin: true
 
+  turbo@2.10.5:
+    resolution: {integrity: sha512-07Y/C7OUp23l4P92PJoYtFNbHjLhftrZH5Ce7dbczS4kX2Re+wtbXvZLoxn/pUtzgsQaRCBaRuZPJp4zmAn0WQ==}
+    hasBin: true
+
   tweetnacl-util@0.15.1:
     resolution: {integrity: sha512-RKJBIj8lySrShN4w6i/BonWp2Z/uxwC3h4y7xsRrpP59ZboCd0GpEVsOnMDYLMmKBpYhb5TgHzZXy7wTfYFBRw==}
 
@@ -2520,6 +2621,24 @@ snapshots:
     dependencies:
       '@textlint/ast-node-types': 15.7.1
 
+  '@turbo/darwin-64@2.10.5':
+    optional: true
+
+  '@turbo/darwin-arm64@2.10.5':
+    optional: true
+
+  '@turbo/linux-64@2.10.5':
+    optional: true
+
+  '@turbo/linux-arm64@2.10.5':
+    optional: true
+
+  '@turbo/windows-64@2.10.5':
+    optional: true
+
+  '@turbo/windows-arm64@2.10.5':
+    optional: true
+
   '@tybys/wasm-util@0.10.3':
     dependencies:
       tslib: 2.8.1
@@ -2558,7 +2677,7 @@ snapshots:
 
   '@types/pg@8.20.0':
     dependencies:
-      '@types/node': 24.13.3
+      '@types/node': 25.9.5
       pg-protocol: 1.15.0
       pg-types: 2.2.0
 
@@ -3528,6 +3647,15 @@ snapshots:
       esbuild: 0.28.1
     optionalDependencies:
       fsevents: 2.3.3
+
+  turbo@2.10.5:
+    optionalDependencies:
+      '@turbo/darwin-64': 2.10.5
+      '@turbo/darwin-arm64': 2.10.5
+      '@turbo/linux-64': 2.10.5
+      '@turbo/linux-arm64': 2.10.5
+      '@turbo/windows-64': 2.10.5
+      '@turbo/windows-arm64': 2.10.5
 
   tweetnacl-util@0.15.1: {}
 

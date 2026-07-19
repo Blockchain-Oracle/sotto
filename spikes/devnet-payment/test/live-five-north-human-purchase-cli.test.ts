@@ -162,17 +162,14 @@ describe("live Five North human purchase CLI", () => {
 
   it("registers the exact start and recovery scripts", async () => {
     const packageJson = JSON.parse(
-      await readFile(
-        resolve(import.meta.dirname, "../../../package.json"),
-        "utf8",
-      ),
+      await readFile(resolve(import.meta.dirname, "../package.json"), "utf8"),
     );
 
-    expect(packageJson.scripts["spike:human:live"]).toBe(
-      "tsx spikes/devnet-payment/src/live-five-north-human-purchase-cli.ts start",
+    expect(packageJson.scripts["human:live"]).toBe(
+      "tsx src/live-five-north-human-purchase-cli.ts start",
     );
-    expect(packageJson.scripts["spike:human:recover"]).toBe(
-      "tsx spikes/devnet-payment/src/live-five-north-human-purchase-cli.ts recover",
+    expect(packageJson.scripts["human:recover"]).toBe(
+      "tsx src/live-five-north-human-purchase-cli.ts recover",
     );
   });
 });

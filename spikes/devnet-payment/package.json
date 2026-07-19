@@ -5,16 +5,36 @@
   "type": "module",
   "license": "Apache-2.0",
   "dependencies": {
-    "@canton-network/core-provider-dapp": "1.8.0",
+    "@canton-network/core-provider-dapp": "catalog:",
     "@sotto/capability-wallet": "workspace:*",
     "@sotto/evidence": "workspace:*",
     "@sotto/x402-canton": "workspace:*"
   },
   "devDependencies": {
-    "@canton-network/core-ledger-proto": "1.7.0"
+    "@canton-network/core-ledger-proto": "catalog:",
+    "tsx": "catalog:"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "start": "tsx src/main.ts"
+    "start": "tsx src/main.ts",
+    "preflight": "tsx src/main.ts",
+    "live": "tsx src/live-payment.ts",
+    "reconcile": "tsx src/live-reconciliation.ts",
+    "daml": "tsx src/live-daml.ts",
+    "daml:reconcile": "tsx src/live-daml-reconciliation.ts",
+    "atomic": "tsx src/live-atomic-purchase.ts",
+    "atomic:reconcile": "tsx src/live-atomic-reconciliation.ts",
+    "authority:direct": "tsx src/live-five-north-direct-transfer-authority-control.ts",
+    "prepare:local": "tsx src/local-prepare-smoke-cli.ts",
+    "preapproval": "tsx src/live-provider-preapproval.ts start",
+    "preapproval:recover": "tsx src/live-provider-preapproval.ts recover",
+    "capability:factory": "tsx src/live-capability-factory-observation.ts",
+    "capability:start": "tsx src/live-capability-bootstrap.ts start",
+    "capability:recover": "tsx src/live-capability-bootstrap.ts recover",
+    "wallet:preflight": "tsx src/live-five-north-wallet-preflight.ts",
+    "human:prepare": "tsx src/live-five-north-human-prepare-cli.ts",
+    "human:live": "tsx src/live-five-north-human-purchase-cli.ts start",
+    "human:recover": "tsx src/live-five-north-human-purchase-cli.ts recover",
+    "package": "tsx src/live-sotto-control-package.ts"
   }
 }

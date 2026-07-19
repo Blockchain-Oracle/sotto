@@ -363,7 +363,7 @@ action, not a marketplace or purchase hot-path operation. Run it only from a
 clean committed source tree with the ignored `.env.local` values:
 
 ```text
-pnpm spike:package
+pnpm --filter @sotto/devnet-payment-spike run package
 ```
 
 The command rebuilds no authority from caller input. It loads only the Five

@@ -22,14 +22,18 @@ Five North DevNet spike. No production runtime exists yet.
 
 ## Commands
 
-The application toolchain does not exist yet. Current valid checks are:
+Use Node 24.18.0 and pnpm 11.12.0. The single deterministic gate is:
 
 ```text
-node scripts/context-sync.mjs verify --source <archive-root>
-git diff --check
+pnpm install --frozen-lockfile
+pnpm verify
 ```
 
-Do not invent commands before the repository provides them.
+Focused commands are `pnpm build`, `pnpm test`, `pnpm typecheck`, `pnpm lint`,
+and `pnpm format:check`. Spike CLIs live in the owning spike package:
+`pnpm --filter @sotto/devnet-payment-spike run <name>` (see
+`spikes/*/package.json`). DevNet diagnostics live in `scripts/diagnostics/`.
+Live DevNet execution is intentionally outside `pnpm verify`.
 
 ## Project Context
 

@@ -1,9 +1,32 @@
 packages:
+  - apps/*
   - packages/*
   - spikes/*
 
 allowBuilds:
   esbuild: true
+
+catalog:
+  "@canton-network/core-ledger-proto": 1.7.0
+  "@canton-network/core-provider-dapp": 1.8.0
+  "@canton-network/core-tx-visualizer": 1.7.0
+  # @canton-network/wallet-sdk stays a literal pin in spikes/capability-wallet;
+  # its provenance test locks the exact specifier and artifact integrity.
+  "@eslint/js": 10.0.1
+  "@secretlint/secretlint-rule-preset-recommend": 13.0.2
+  "@types/node": 24.13.3
+  "@types/pg": 8.20.0
+  eslint: 10.7.0
+  globals: 17.7.0
+  node-pg-migrate: 8.0.4
+  pg: 8.22.0
+  prettier: 3.9.5
+  secretlint: 13.0.2
+  tsx: 4.23.0
+  turbo: 2.10.5
+  typescript: 6.0.3
+  typescript-eslint: 8.63.0
+  vitest: 4.1.10
 
 saveExact: true
 strictPeerDependencies: true
