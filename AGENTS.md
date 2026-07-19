@@ -1,8 +1,10 @@
 # Sotto - Agent Router
 
 Sotto is the Canton-focused marketplace, execution surface, and evidence layer
-for x402-paid APIs. The repository currently exists to run the real Five North
-payment and authority spike before production implementation begins.
+for x402-paid APIs. The Five North spike proved the real payment path
+(`402 -> wallet-sign -> Canton settle -> authentic 200`); the repository is now
+in product build-out on that proven core. `DESIGN.md` is the binding visual
+authority for every surface.
 
 ## Required Source Order
 
@@ -18,12 +20,17 @@ context being present.
 
 ## Current Stage
 
-- Fresh repository and curated context split.
-- No production runtime exists.
-- Do not translate the UI prototype into runtime code during the split/spike
-  plan.
-- The next implementation is the minimal quality workspace and real DevNet
-  evidence path described by the accepted plan.
+- Product build-out on the proven spike core (see the takeover amendments in
+  `docs/product/decision-summary.md`).
+- Workspace: `packages/` (x402-canton, canton-client, database, purchase-worker,
+  catalog-probe, ui) + `apps/` (worker, signer, and the growing product
+  surfaces) + `spikes/` (evidence-reproduction CLIs only — apps and packages
+  must never import from spikes).
+- The accepted prototype and
+  `.thoughts/design/2026-07-12-sotto-x402-surface-map/` remain the screen/state
+  truth; `DESIGN.md` governs look, motion, and copy.
+- Nothing user-facing ships without its full state matrix (loading, honest zero,
+  error, and the product-specific states named in the surface map).
 
 ## Product Rules
 

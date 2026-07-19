@@ -145,6 +145,37 @@ decisions. Code, prototypes, and research cannot approve themselves.
 - Multi-network x402scan clone or facilitator leaderboard.
 - Fake transactions, metrics, explorer evidence, or successful settlement.
 
+## Takeover Amendments (2026-07-19, product owner)
+
+Recorded from the product owner's explicit direction at the takeover planning
+gate. Where these conflict with earlier entries, the amendment wins; everything
+else above stands.
+
+1. A marketing site (apex `usesotto.xyz`) and a documentation site
+   (`docs.usesotto.xyz`) exist as separate apps. The earlier "no marketing
+   landing, no public docs route" rule continues to govern the product app
+   itself: inside `app.usesotto.xyz`, `/` is the working marketplace and no
+   `/docs` route exists. The marketing site is bound by the same anti-slop and
+   no-fabrication rules as every surface.
+2. Judge funding is sanctioned scope: real DevNet tap funding with real update
+   identifiers, testnet-only, idempotent, inside the hosted-wallet onboarding
+   flow. Never a separate page; never simulated.
+3. The Composer model provider is OpenRouter, held server-side only. The model
+   translates natural-language task input into the selected resource's request
+   schema and nothing else: it never sees keys or sessions, never triggers
+   payment, and never supplies URLs.
+4. The CLI is published as `@sotto/cli` (npm name availability confirmed
+   2026-07-19; organization and token provisioned by the product owner at
+   publish time).
+5. The visual identity is "Sotto Voce" per `DESIGN.md` (identity gate C0), and
+   the product mark is the approved "undertone" mark implemented in
+   `packages/ui/src/marks/sotto-mark.tsx`.
+6. Hosted judge wallets run as an isolated signer service (`apps/signer`, "Sotto
+   Reference Wallet") hosting the proven wallet-neutral reference connector. It
+   is honestly framed as a hosted reference deployment; wallet sessions, Sotto
+   sessions, and autonomous signer authority remain distinct. Production custody
+   still requires the open-gate work above.
+
 ## Repository Decision
 
 - Local active workspace: `sotto-x402`.
