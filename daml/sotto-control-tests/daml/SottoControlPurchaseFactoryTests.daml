@@ -1,0 +1,40 @@
+module SottoControlPurchaseFactoryTests where
+
+import DA.Time (addRelTime, hours)
+import Daml.Script
+import Splice.Api.Token.TransferInstructionV1 qualified as Transfer
+import Sotto.Control.PurchaseCapability
+import SottoControlPurchaseTestSupport
+import SottoControlTokenStandardMock
+
+nestedFactoryAdminMustMatch : Script ()
+nestedFactoryAdminMustMatch = do
+  fixture <- createPurchaseFixture Complete "Amulet"
+  wrongAdmin <- allocateParty "sotto-wrong-factory-admin"
+  wrongFactoryCid <- submit wrongAdmin do
+    createCmd MockTransferFactory with admin = wrongAdmin; mode = Complete
+  let wrongFactoryInterfaceCid =
+        toInterfaceContractId @Transfer.TransferFactory wrongFactoryCid
+
+  Some original <- queryContractId fixture.payer fixture.capabilityCid
+  mismatchedCid <- submit fixture.payer do
+    createCmd original with transferFactoryCid = wrongFactoryInterfaceCid
+  Some factoryDisclosure <- queryDisclosure wrongAdmin wrongFactoryCid
+  Some holdingDisclosure <- queryDisclosure fixture.holdingOwner fixture.holdingCid
+  let options = actAs fixture.agent <>
+        discloseMany [factoryDisclosure, holdingDisclosure]
+
+  submitMustFail options $ purchaseAt
+    fixture
+    mismatchedCid
+    fixture.holdingInterfaceCid
+    fixture.now
+    (addRelTime fixture.now (hours 1))
+    0
+  Some _ <- queryContractId fixture.payer mismatchedCid
+  Some _ <- queryContractId fixture.holdingOwner fixture.holdingCid
+  contexts <- query @PurchaseContext fixture.payer
+  receiverHoldings <- query @MockHolding fixture.provider
+  assert (null contexts)
+  assert (null receiverHoldings)
+  pure ()

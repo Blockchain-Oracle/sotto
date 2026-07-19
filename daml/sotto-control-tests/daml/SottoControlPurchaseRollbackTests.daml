@@ -1,0 +1,22 @@
+module SottoControlPurchaseRollbackTests where
+
+import Daml.Script
+import SottoControlPurchaseTestSupport
+import SottoControlTokenStandardMock
+
+pendingFailedAndWrongInstrumentRollback : Script ()
+pendingFailedAndWrongInstrumentRollback = do
+  pending <- createPurchaseFixture Pending "Amulet"
+  pendingOptions <- purchaseOptions pending
+  submitMustFail pendingOptions (purchaseCommands pending)
+  assertPurchaseUnchanged pending
+
+  failed <- createPurchaseFixture Failed "Amulet"
+  failedOptions <- purchaseOptions failed
+  submitMustFail failedOptions (purchaseCommands failed)
+  assertPurchaseUnchanged failed
+
+  wrongInstrument <- createPurchaseFixture Complete "WrongInstrument"
+  wrongInstrumentOptions <- purchaseOptions wrongInstrument
+  submitMustFail wrongInstrumentOptions (purchaseCommands wrongInstrument)
+  assertPurchaseUnchanged wrongInstrument

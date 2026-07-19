@@ -25,6 +25,7 @@ test-results/
 *.dalf
 .ledger-state/
 .evidence-private/
+.capability-wallet/
 
 # Tooling and operating system
 .DS_Store
@@ -32,3 +33,5 @@ test-results/
 .pnpm-store/
 .turbo/
 .cache/
+tmp/
+.hotl/

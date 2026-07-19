@@ -1,0 +1,93 @@
+module Sotto.Control.PrivacyProbe where
+
+template PurchaseContextProbe
+  with
+    owner : Party
+    agent : Party
+    payer : Party
+    provider : Party
+    attemptId : Text
+    requestCommitment : Text
+    resourceHash : Text
+    policyRevision : Int
+    amount : Decimal
+  where
+    signatory payer
+    observer owner, agent, provider
+    ensure
+      attemptId /= ""
+        && requestCommitment /= ""
+        && resourceHash /= ""
+        && policyRevision >= 0
+        && amount > 0.0
+
+data ConsumeResult = ConsumeResult with
+  policyCid : ContractId PurchasePolicyProbe
+  contextCid : ContractId PurchaseContextProbe
+    deriving (Eq, Show)
+
+template PurchasePolicyProbe
+  with
+    owner : Party
+    agent : Party
+    payer : Party
+    allowedResourceHash : Text
+    allowedRecipient : Party
+    perCallLimit : Decimal
+    remainingLimit : Decimal
+    expiresAt : Time
+    revision : Int
+    paused : Bool
+    usedAttemptIds : [Text]
+  where
+    signatory payer
+    observer owner, agent
+    ensure
+      allowedResourceHash /= ""
+        && perCallLimit > 0.0
+        && remainingLimit >= 0.0
+        && revision >= 0
+
+    choice Consume : ConsumeResult
+      with
+        attemptId : Text
+        requestCommitment : Text
+        resourceHash : Text
+        recipient : Party
+        amount : Decimal
+      controller agent, payer
+      do
+        now <- getTime
+        assertMsg "policy is paused" (not paused)
+        assertMsg "policy is expired" (now < expiresAt)
+        assertMsg "resource does not match" (resourceHash == allowedResourceHash)
+        assertMsg "recipient does not match" (recipient == allowedRecipient)
+        assertMsg "amount must be positive" (amount > 0.0)
+        assertMsg "amount exceeds per-call limit" (amount <= perCallLimit)
+        assertMsg "amount exceeds remaining limit" (amount <= remainingLimit)
+        assertMsg "attempt was already consumed" (not (elem attemptId usedAttemptIds))
+        contextCid <- create PurchaseContextProbe with
+          owner
+          agent
+          payer
+          provider = recipient
+          attemptId
+          requestCommitment
+          resourceHash
+          policyRevision = revision
+          amount
+        policyCid <- create this with
+          remainingLimit = remainingLimit - amount
+          revision = revision + 1
+          usedAttemptIds = attemptId :: usedAttemptIds
+        pure ConsumeResult with policyCid; contextCid
+
+    choice Pause : ContractId PurchasePolicyProbe
+      controller owner, payer
+      do
+        assertMsg "policy is already paused" (not paused)
+        create this with paused = True; revision = revision + 1
+
+    choice Revoke : ()
+      controller owner
+      do pure ()

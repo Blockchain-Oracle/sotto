@@ -4,9 +4,42 @@
   "private": true,
   "type": "module",
   "license": "Apache-2.0",
-  "exports": "./dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./internal/capability-wallet-signature": {
+      "types": "./dist/capability-wallet-signature.d.ts",
+      "import": "./dist/capability-wallet-signature.js"
+    },
+    "./internal/human-wallet-signing-session": {
+      "types": "./dist/human-wallet-signing-session-claim.d.ts",
+      "import": "./dist/human-wallet-signing-session-claim.js"
+    },
+    "./internal/human-settlement-expectation-journal": {
+      "types": "./dist/human-settlement-expectation-journal.d.ts",
+      "import": "./dist/human-settlement-expectation-journal.js"
+    },
+    "./internal/human-prepare-authority-persistence": {
+      "types": "./dist/human-prepare-authority-persistence.d.ts",
+      "import": "./dist/human-prepare-authority-persistence.js"
+    },
+    "./internal/human-delivery-request-persistence": {
+      "types": "./dist/human-delivery-request-persistence.d.ts",
+      "import": "./dist/human-delivery-request-persistence.js"
+    },
+    "./internal/bounded-capability-bootstrap-prepare": {
+      "types": "./dist/bounded-capability-bootstrap-prepare.d.ts",
+      "import": "./dist/bounded-capability-bootstrap-prepare.js"
+    }
+  },
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.build.json"
+  },
+  "dependencies": {
+    "@canton-network/core-ledger-proto": "1.7.0",
+    "@canton-network/core-tx-visualizer": "1.7.0"
   }
 }

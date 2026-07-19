@@ -6,23 +6,92 @@ for x402-paid APIs.
 Developers publish APIs that already return a valid Canton x402 payment
 challenge. Buyers and agents discover those resources, execute paid calls, and
 inspect settlement and delivery as separate facts. Sotto's Canton-specific goal
-is private, bounded agent-purchase authority, but that claim remains gated by a
-real Five North DevNet authority spike.
+is private, bounded agent-purchase authority. The Five North DevNet spike proved
+that research boundary; production remains gated by the implementation and
+release evidence below.
 
 ## Current Status
 
-This repository has fresh history and is currently the spike workspace. It does
-not yet contain a shipping marketplace, facilitator, wallet, MCP server, CLI, or
-production deployment.
+This repository has fresh history and is implementing the production foundation
+after the completed Five North spike. It does not yet contain a shipping
+marketplace, facilitator, wallet, MCP server, CLI, or production deployment.
 
-The immediate work is:
+The research spike has now produced:
 
-1. prove one real Canton DevNet `402 -> payment -> 200` request;
-2. deploy and exercise a new Sotto Daml package;
-3. test live-price binding, atomic policy consumption, rollback, and signer
-   bypass resistance;
-4. compare public Canton Coin settlement evidence with private Sotto context;
-5. issue an explicit `GO` or `NO_GO` before production implementation.
+1. a real Five North `402 -> settle -> 200` purchase in which an external agent
+   alone exercised a payer-signed bounded capability;
+2. one accepted update that paid the provider 0.25 Canton Coin, returned 0.75 to
+   the payer, and created a revision-1 capability with 0.075 remaining;
+3. a byte-identical cached `200` retry with no second Ledger submission;
+4. a prepare-only direct-transfer control in which the agent was rejected for
+   missing payer authority, the payer control prepared, and execution remained
+   disabled; and
+5. party-scoped private-context visibility for payer, agent, and provider, with
+   an outsider seeing no context and receiving `404`, while the accepted
+   settlement is independently visible through the public Lighthouse explorer;
+   and
+6. a real policy-free Five North human prepare-only path whose complete Token
+   effects and participant-provided hash passed independent verification, with
+   no wallet approval, signature, execution, settlement, or Canton Coin debit;
+   and
+7. a real policy-free human-wallet purchase in which an isolated reference
+   wallet approved the exact request and debit bounds, signed outside the Sotto
+   process, settled on Five North, reconciled from the provider view, and
+   unlocked the authentic JSON `200`.
+
+The spike's signer/funding-authority and public-settlement-visibility blockers
+are closed. The production gate is still `NO_GO`: production wallet and
+prepare-authority key custody, connector deployment, deployed reconciliation
+transport and worker execution, durable paid-delivery recovery, and release
+evidence for the approved production topology remain open. Receipt audience
+Q-004 and topology Q-006 are selected but not yet proven in production. The
+[redacted spike result](docs/architecture/devnet-spike-result.md) records the
+evidence and remaining blockers.
+
+The production foundation now applies bounded, advisory-locked migrations from
+its compiled artifact and durably records provider/origin registration, origin
+proof, immutable resource revisions, publication, and latest resource health.
+Its server-side catalog probe is currently `GET`-only: it loads the trusted
+origin from PostgreSQL, rejects non-public DNS answers, pins the selected
+address through HTTPS/TLS, parses a bounded server-observed Canton x402
+challenge, and atomically records the probe plus health result. Disposable
+digest-pinned PostgreSQL tests prove migration replay, conflict rollback, and
+restart persistence. The same private database can now atomically initialize an
+authenticated human-wallet purchase attempt, its first append-only event, a
+short-lived encrypted prepare-authority envelope, and one prepare-only outbox
+job. Real PostgreSQL and ephemeral-key tests prove exact replay, concurrency,
+tamper and corruption rejection, signing-reserve rollback, migration failure for
+legacy ready jobs, generation-bound worker leasing, and lease-gated restart
+reauthentication. The one-shot prepare worker now claims one PostgreSQL job,
+runs the real holding, TransferFactory, participant-prepare, full-effect, and
+official-hash pipeline outside database transactions, and atomically records the
+verified checkpoint before returning process-local wallet material. Real
+PostgreSQL tests also prove that blocked external work does not block unrelated
+database work. The human-wallet execution worker now durably records approval,
+rejection or incompatibility, verified-signature, and `execution-started`
+events; commits the exact submission fence and one reconciliation job before the
+execute call; and never stores prepared bytes or raw signatures. A real local
+integration test runs disposable PostgreSQL, the compiled Wallet SDK reference
+companion with a generated test key, and a bounded HTTP execute endpoint. It
+proves one explicit approval, one verified signature, one execute request after
+the fence, redacted process output, and repository reopen without a second
+wallet or HTTP call. A separate database-only reconciliation worker now claims
+the durable post-execution job, advances an absent-result cursor, and commits an
+exact verified settlement or rejection without wallet, key, signing, prepare,
+dispatch, or execute authority. Its real local integration gate uses disposable
+PostgreSQL 18, bounded loopback HTTP, and killed/replacement Node child
+processes. It proves one lease winner, release of a one-connection pool during
+the external read, generation-fenced crash recovery, and one terminal event
+surviving a second process death. Redis is not used.
+
+This is still a library/integration checkpoint, not a deployed marketplace or a
+new live Five North execution. The local reconciliation endpoint serves a
+deterministic synthetic Canton transaction; it does not prove the deployed Five
+North adapter, production authentication/TLS, or network performance. A process
+restart before the execution fence still cannot restore the process-local wallet
+handoff. Paid delivery and delivery recovery, production connector/key custody,
+web/MCP/worker deployment, external HTTPS smoke evidence, backup/restore, and
+release rollback remain open. Production therefore remains `NO_GO`.
 
 No mocked payment or fixture transaction can satisfy those gates.
 

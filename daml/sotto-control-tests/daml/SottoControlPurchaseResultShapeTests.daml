@@ -1,0 +1,17 @@
+module SottoControlPurchaseResultShapeTests where
+
+import Daml.Script
+import SottoControlPurchaseTestSupport
+import SottoControlTokenStandardMock
+
+completedReceiverCidShape : Script ()
+completedReceiverCidShape = do
+  emptyReceiver <- createPurchaseFixture CompleteEmptyReceiver "Amulet"
+  emptyOptions <- purchaseOptions emptyReceiver
+  submitMustFail emptyOptions (purchaseCommands emptyReceiver)
+  assertPurchaseUnchanged emptyReceiver
+
+  duplicateReceiver <- createPurchaseFixture CompleteDuplicateReceiver "Amulet"
+  duplicateOptions <- purchaseOptions duplicateReceiver
+  submitMustFail duplicateOptions (purchaseCommands duplicateReceiver)
+  assertPurchaseUnchanged duplicateReceiver

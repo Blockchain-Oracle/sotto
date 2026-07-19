@@ -1,0 +1,545 @@
+{
+  "schemaVersion": 2,
+  "recordedAt": "2026-07-17T14:33:16Z",
+  "verdict": "NO_GO",
+  "source": {
+    "implementationCommit": "711a0dec066c3d9a78f0f8366d0570ce0073bfda",
+    "implementationCommits": {
+      "externalAgentPurchaseHardening": "d0d2d40d24b07784355ae2557a972b63a1d73130",
+      "pinnedFiveNorthHoldingAcceptance": "3780b220de9b44b20c2cdcab92314c706721236c",
+      "humanPrepareOnlyVerification": "d5a0cf30c01af05b349dc0910f3bd46d6a16aa93",
+      "humanWalletPurchase": "711a0dec066c3d9a78f0f8366d0570ce0073bfda"
+    },
+    "historicalImplementationCommit": "ba1173c92f6bca30abd2692365671e00344c845b",
+    "initialPostRunCommit": "01d2d2acad4596fdae9c55601399902fb95543e7",
+    "walletCapabilityRemediationCommit": "ac2c60907ee020757f0daf8c2512322630d73227",
+    "liveRunSourceCommit": "not-available",
+    "trackedSourceCommitAtExternalAgentRun": "d12363f42e5bc2d56108986aa93187e764642372",
+    "verifierChangesUncommittedAtExternalAgentRun": true,
+    "relationshipToExternalAgentRun": "the live purchase began from tracked commit d12363f42e5bc2d56108986aa93187e764642372 with verifier changes still uncommitted; d0d2d40d24b07784355ae2557a972b63a1d73130 and 3780b220de9b44b20c2cdcab92314c706721236c are reviewed post-run implementation snapshots, not retroactive live-run source commits",
+    "relationshipToLiveRun": "historical phase-three evidence used a post-run hardened snapshot; the exact pre-run uncommitted worktree cannot be reconstructed as an immutable commit",
+    "cleanCloneVerification": {
+      "cacheDisabled": true,
+      "damlScriptSuitesPassed": 5,
+      "frozenInstall": "passed",
+      "testFilesPassed": 17,
+      "testsPassed": 104,
+      "verdict": "passed",
+      "appliesToCommit": "ba1173c92f6bca30abd2692365671e00344c845b"
+    },
+    "externalAgentRemediationCleanCloneVerification": {
+      "appliesToCommit": "0f1d872ec59ca5fb9c8dc07e67043ece2e0e1e10",
+      "nonLocalClone": true,
+      "gitObjectAlternatesAbsent": true,
+      "privateArtifactsAbsent": true,
+      "emptyDependencyStore": true,
+      "frozenInstall": "passed",
+      "testFilesPassed": 172,
+      "testsPassed": 1487,
+      "freshDamlBuild": "passed",
+      "repositoryGuards": "passed",
+      "verdict": "passed"
+    },
+    "humanWalletVerification": {
+      "appliesToCommit": "711a0dec066c3d9a78f0f8366d0570ce0073bfda",
+      "testFilesPassed": 292,
+      "testsPassed": 2252,
+      "damlScriptSuitesPassed": 23,
+      "repositoryGuards": "passed",
+      "independentReview": "READY",
+      "verdict": "passed"
+    },
+    "toolchain": {
+      "damlSdk": "3.5.2",
+      "dpm": "1.0.21",
+      "java": "21.0.11",
+      "node": "24.18.0",
+      "pnpm": "11.12.0"
+    }
+  },
+  "environment": {
+    "network": "Five North Canton DevNet",
+    "participant": "shared 5n sandbox validator",
+    "synchronizerId": "global-domain::1220be58c29e65de40bf273be1dc2b266d43a9a002ea5b18955aeef7aac881bb471a",
+    "serviceHosts": {
+      "explorer": "lighthouse.devnet.cantonloop.com",
+      "issuer": "auth.sandbox.fivenorth.io",
+      "ledgerApi": "ledger-api.validator.devnet.sandbox.fivenorth.io",
+      "validatorApi": "wallet.validator.devnet.sandbox.fivenorth.io"
+    },
+    "credentialBoundary": "shared participant-admin M2M credential with read-any and named actAs rights",
+    "payerBoundary": "participant-hosted Sotto payer",
+    "providerBoundary": "participant-hosted Sotto provider",
+    "externalAgentPurchaseBoundary": {
+      "payer": "external-party wallet key outside the Sotto application",
+      "agent": "external-party wallet key with agent authority and no payer actAs",
+      "provider": "participant-hosted Sotto provider"
+    },
+    "humanWalletPurchaseBoundary": {
+      "payer": "external-party key held by the isolated wallet process",
+      "application": "no payer key and no payer actAs authority",
+      "provider": "participant-hosted Sotto provider"
+    }
+  },
+  "compatibility": {
+    "httpChallenge": "x402 v2-compatible exact canton:devnet challenge",
+    "settlementAdapter": "direct Ledger API v2 AmuletRules_Transfer",
+    "preparedTransactionVerification": {
+      "historicalBaseline": "not-used; the original spike submitted a typed direct Ledger API command",
+      "externalAgentPurchase": "used; the dirty live verifier decoded and checked the actual prepared transaction before the external agent signed it, while stricter post-run false-acceptance coverage is preserved in d0d2d40d24b07784355ae2557a972b63a1d73130",
+      "humanPrepareOnly": "used at d5a0cf30c01af05b349dc0910f3bd46d6a16aa93; complete real Five North Token effects and the independently recomputed Canton V2 hash matched before any wallet approval or signing",
+      "humanWalletPurchase": "used at 711a0dec066c3d9a78f0f8366d0570ce0073bfda; the same complete effects and independently recomputed Canton V2 hash matched before the isolated wallet approved and signed"
+    },
+    "liveBridgeRoutePreservation": "not-proven during the July 13 execution; fixed and unit-tested in the post-run implementation commit",
+    "relayUsed": false,
+    "upstreamRelayEquivalence": "not-proven",
+    "externalPartySigner": "proven for one payer-wallet-signed capability create, one external-agent-only bounded purchase, and one policy-free human-wallet purchase; production connector custody remains unproven",
+    "nonCustody": "the payer key remained outside the Sotto application for the external-agent and human-wallet purchases; the isolated reference-wallet process held the payer key, and production wallet custody is not proven"
+  },
+  "request": {
+    "method": "GET",
+    "bindingVersion": "sotto-http-request-v1",
+    "requestCommitment": "sha256:690dd4f7d5b10a786516602e70bc90e11883ee0f16ea1c8b4cf0976fb904e1ad",
+    "resourceHash": "sha256:378ffac76ed18ec41008ada186fc638c2d97d1340281a17b13ae1f9c2fd00046",
+    "canonicalUrl": "redacted",
+    "challengeHash": "not-captured",
+    "paidResponseHash": "not-captured for the July 13 payment; the July 17 human-wallet response is recorded separately"
+  },
+  "baselinePayment": {
+    "attemptId": "sha256:0b12cd116a897ad29b99d8f1ef9a70fc0c8aa0e721c33f13e84dfde74e4a1204",
+    "amountAtomic": "2500000000",
+    "amountCantonCoin": "0.2500000000",
+    "commandId": "sotto-settle-0d51d8c5697bc6c78e0fdca1fd4032e38f521a78f89bfba04bfbbec73861bc79",
+    "workflowId": "sotto-x402-settlement-v1",
+    "updateId": "12208b5fae8a0600ead0fbca599484b4b44f43f9d3fde063dd0ebea2abd6966bde75",
+    "offset": 4289456,
+    "effectiveAt": "2026-07-13T06:37:38.265649Z",
+    "recordTime": "2026-07-13T06:37:38.471765Z",
+    "initialHttpStatuses": [402, 200],
+    "proofReplayHttpStatuses": [200, 200],
+    "settlementReconciled": true,
+    "attemptMutationRejected": true,
+    "recipientMutationRejected": true,
+    "requestCommitmentMutationRejected": true,
+    "updateMutationRejected": true,
+    "secondPaymentSubmitted": false,
+    "sameCommandSubmissionReplay": "not-run",
+    "unknownSubmissionOutcome": "not-live-proven",
+    "authoritativeBalanceDelta": "not-captured"
+  },
+  "damlPackage": {
+    "name": "sotto-control",
+    "version": "0.1.0",
+    "sdkVersion": "3.5.2",
+    "packageId": "f72d7eb34869dc6de68db89ecb1b1d11bef9ed1379e6a1903590f9e735cb963e",
+    "uploadMethod": "Ledger API v2 POST /v2/dars",
+    "packagePresence": "confirmed on participant",
+    "vettingMethod": "participant package presence and successful live create/exercise",
+    "localDamlTestMatrix": [
+      "controller-authorization",
+      "expiry",
+      "revocation",
+      "pause",
+      "per-call-limit",
+      "remaining-limit",
+      "duplicate-attempt",
+      "stale-contract-id",
+      "rollback",
+      "concurrent-consumption",
+      "stakeholder-visibility"
+    ],
+    "firstPolicyCreateUpdate": {
+      "commandId": "sotto-policy-create-0b12cd116a897ad29b99d8f1ef9a70fc0c8aa0e721c33f13e84dfde74e4a1204",
+      "updateId": "122028174e1f5e80933ee80366f63ca278c6134e0a77e29b8ff133ea9fd2431f58cf",
+      "recordTime": "2026-07-13T07:03:49.483950Z"
+    },
+    "firstPolicyConsumeUpdate": {
+      "commandId": "sotto-policy-consume-0b12cd116a897ad29b99d8f1ef9a70fc0c8aa0e721c33f13e84dfde74e4a1204",
+      "updateId": "12200427f26233c7f5be019d9785a28ff63e1d341ae98915d11e5cf97efed85af1b4",
+      "recordTime": "2026-07-13T07:03:52.479815Z"
+    }
+  },
+  "walletCapabilityRemediation": {
+    "schema": "sotto-live-wallet-capability-bootstrap-v1",
+    "observedAt": "2026-07-16T09:50:40.917Z",
+    "sourceCommit": "ac2c60907ee020757f0daf8c2512322630d73227",
+    "connector": "wallet-sdk-reference",
+    "payerKind": "external-party-wallet-key",
+    "policyAuthorization": "sha256:8d683d4776b36aa0bf4b3c6f643af92040bac35681cb45ac2ec88f31a8e2cc61",
+    "commandId": "sotto-capability-bootstrap-v1-0b3d3f62f58573f4a8ee79d4df55cb7917ec5c8d88fc1aacb7ddb59738612909",
+    "updateId": "12203c28c0e7986e52e2198b1b3401deccbdb5897f7b4a27ade589d2b2d396494496",
+    "offset": 4392791,
+    "capabilityContractId": "0025b865a38a3a1cea1c730549e2c281f9b8073cdc3b1bf3b1199f7aa48057f877ca121220380798b67236d566550aed355fd3688d0df4f1f5369215726d92753f121b8e4e",
+    "completionClassification": "SUCCEEDED",
+    "activeMatchingCapabilities": 1,
+    "rawPayerKeyEnteredApplication": false,
+    "oneUsePolicyClaimed": true,
+    "replayedAfterAmbiguity": false,
+    "purchaseCommands": 0,
+    "settlementCommands": 0,
+    "tokenTransferCommands": 0,
+    "proves": "one externally signed bounded capability create on Five North",
+    "doesNotProve": [
+      "agent-only capability purchase",
+      "matched direct-transfer authorization rejection",
+      "Loop compatibility",
+      "production wallet custody",
+      "funding",
+      "settlement"
+    ]
+  },
+  "humanPrepareOnly": {
+    "schema": "sotto-live-human-prepare-only-evidence-v1",
+    "recordedDate": "2026-07-17",
+    "sourceCommit": "d5a0cf30c01af05b349dc0910f3bd46d6a16aa93",
+    "network": "Five North Canton DevNet",
+    "connectorPreflight": "wallet-sdk-reference payer identity and topology matched; approval was not requested",
+    "status": "prepared-hash-verified-not-signed",
+    "liveInputs": [
+      "fresh provider 402",
+      "payer-scoped active holdings",
+      "current authenticated package preference",
+      "current TransferFactory choice context",
+      "participant interactive preparation"
+    ],
+    "verification": [
+      "complete prepared transaction roots and descendant effects",
+      "exact package, party, contract, instrument, recipient, and amount identity",
+      "bounded fee and total-debit accounting",
+      "authoritative x402 metadata and time bounds",
+      "independent official Canton V2 prepared-transaction hash recomputation"
+    ],
+    "officialHashVerified": true,
+    "walletApprovalRequests": 0,
+    "signingOperations": 0,
+    "executeCalls": 0,
+    "settlementSubmitted": false,
+    "paidRetryAttempted": false,
+    "cantonCoinDebitOccurred": false,
+    "proves": [
+      "one real policy-free human transfer preparation on Five North",
+      "complete effect and accounting verification before wallet approval or signing",
+      "participant hash agreement with independent official recomputation"
+    ],
+    "doesNotProve": [
+      "human wallet approval",
+      "wallet-held signature",
+      "execution or settlement",
+      "authentic paid delivery",
+      "Loop compatibility",
+      "production wallet custody"
+    ]
+  },
+  "humanWalletPurchase": {
+    "schema": "sotto-live-human-wallet-purchase-evidence-v1",
+    "recordedDate": "2026-07-17",
+    "sourceCommit": "711a0dec066c3d9a78f0f8366d0570ce0073bfda",
+    "connector": "wallet-sdk-reference",
+    "authorizationMode": "human-wallet",
+    "status": "paid-resource-delivered",
+    "operationId": "sha256:8495604bb388be8265b9563195dec07f12ee6ca75dacfc38324a691e9b298f0d",
+    "commandId": "sotto-human-purchase-v1-951e210f7825a35b5ea0eed25e68fe82968efb24a90d4441c1f68333228b04d6",
+    "attemptId": "sha256:ca80ac1736ddff1a92f5ed9ebc71c67c2e3f7b2c3f2223dc15c41c6645006c2e",
+    "challengeId": "sha256:f0da40ea656d78974e4df72e306a7ec70949ece1c4be116f53e47928de838c21",
+    "requestCommitment": "sha256:d30769aff14fdf9404b34e29eb8e130a722b071ca847512516224159869650fc",
+    "purchaseCommitment": "sha256:951e210f7825a35b5ea0eed25e68fe82968efb24a90d4441c1f68333228b04d6",
+    "transferContextHash": "sha256:b50eb375514525bd46eae76acd13db93dcfd516fae4c06c4820a541ecfb984ea",
+    "preparedTransactionHash": "sha256:db63af228d25cc190829052b647bf3ee2d1daf1418e69e7035fed54b8f50a552",
+    "amountAtomic": "2500000000",
+    "maximumFeeAtomic": "750000000",
+    "maximumTotalDebitAtomic": "3250000000",
+    "selectedPackage": {
+      "packageId": "73e9ffdb6b0bc19a5f67372b118103926da11547ab9109eccae47e4e4cc35d6f",
+      "packageName": "splice-amulet",
+      "packageVersion": "0.1.21"
+    },
+    "wallet": {
+      "approvalRequests": 1,
+      "signingOperations": 1,
+      "rawPayerKeyEnteredApplication": false,
+      "exactSummaryApproved": true,
+      "oneTimeHandoffIdIncluded": false
+    },
+    "completion": {
+      "classification": "SUCCEEDED",
+      "offset": 4424017,
+      "updateId": "1220a2a5b72959666535582010566f00153f8b60a0a72f75c2f65579aeb0950aca37"
+    },
+    "providerSettlement": {
+      "reconciled": true,
+      "providerCommandIdVisibility": "redacted-empty",
+      "exactUpdateAndSynchronizer": true,
+      "exactSendV2AuthorityAndMetadata": true,
+      "exactLinkedProviderHolding": true
+    },
+    "delivery": {
+      "status": 200,
+      "bodyByteCount": 251,
+      "bodySha256": "sha256:5bd8cc6d4fe24ca9b674b9bd778394184da1c79ea2c12e212ff50c793decbcca",
+      "bodyIncluded": false,
+      "secondSubmissionForThisOperation": false
+    },
+    "journal": {
+      "stages": [
+        "intent",
+        "approval-requested",
+        "signature-verified",
+        "execution-started",
+        "completion",
+        "settlement-reconciled",
+        "delivery"
+      ],
+      "directoryMode": "0700",
+      "recordMode": "0600",
+      "terminalRecovery": "delivered"
+    },
+    "precedingSettledUndeliveredOperation": {
+      "sourceCommit": "85cb16e54c4253c7b68c9767c17d6cfbc342d930",
+      "operationId": "sha256:1fe4760aa7c66acebda2bf898c3deace878a229cf9dd34e904cf4467099ed41a",
+      "completionOffset": 4423778,
+      "updateId": "1220bd602df1ef8b5e817988aabf2713800577f5b2a31ded8054dd39e845cf3a6b21",
+      "recoveredStatus": "settled-undelivered",
+      "paidRetryAttempted": false,
+      "cause": "provider-scoped command ID was privacy-redacted and the over-strict verifier closed the ephemeral provider before delivery",
+      "replayed": false
+    },
+    "proves": [
+      "one policy-free wallet-neutral human purchase on Five North",
+      "exact wallet approval and external signing without the payer key entering Sotto",
+      "provider-scoped settlement reconciliation and authentic paid JSON delivery",
+      "durable honest separation between successful settlement and delivery"
+    ],
+    "doesNotProve": [
+      "Loop compatibility",
+      "production wallet connector custody",
+      "public explorer visibility for this later human update; indexing was still pending at the July 17 recheck",
+      "PostgreSQL-backed delivery recovery",
+      "upstream relay interoperability",
+      "production topology"
+    ]
+  },
+  "externalAgentPurchase": {
+    "schema": "sotto-live-external-agent-purchase-evidence-v1",
+    "damlPackage": {
+      "name": "sotto-control",
+      "version": "0.2.0",
+      "packageId": "4d614496ec9b30b22545fd350ecb9ec999164cfb0b5953f46dbbf937f8918f57",
+      "templateId": "4d614496ec9b30b22545fd350ecb9ec999164cfb0b5953f46dbbf937f8918f57:Sotto.Control.PurchaseCapability:BoundedPurchaseCapability"
+    },
+    "parties": {
+      "payer": "sotto-external-payer::1220e5e6be928d5264069d480d0c30198236a71e2af7d42f519841483fc83fe8b012",
+      "agent": "sotto-external-agent::12206e0e95b6aa27cfb8836e30d432e19ab918a01a5507eb1601004ac2a007d5cdbf",
+      "provider": "sotto-spike-provider-20260713::1220a14ca128063b8dc9d1ebb0bd22633be9f2168500f4dbc1ecaeb1855b14e5acf8"
+    },
+    "commandId": "sotto-purchase-v3-84f4985631a7d1f99c122f55d2c7f17bfcb35e8f0da5d22a3a5c948fec534e42",
+    "updateId": "1220a389588fc2b677ce956c03af93f65ce537b29aea244e815022cde54b492811e3",
+    "offset": 4404758,
+    "completionClassification": "SUCCEEDED",
+    "reconciledAt": "2026-07-16T13:05:59.000Z",
+    "synchronizerId": "global-domain::1220be58c29e65de40bf273be1dc2b266d43a9a002ea5b18955aeef7aac881bb471a",
+    "purchaseCommitment": "sha256:84f4985631a7d1f99c122f55d2c7f17bfcb35e8f0da5d22a3a5c948fec534e42",
+    "attemptId": "sha256:b2bfdc417cb1de5ee12bc3cb15b024ff6f99f691661ae891bd16355679631efa",
+    "challengeId": "sha256:84a0414589be83f03f12972361bce4279bc1067a8a5588cd2506b03791b26f76",
+    "requestCommitment": "sha256:433bf6865292680d4110afefb16d9281721da2cd86476fa2e2a3759673372fe8",
+    "resourceHash": "sha256:047401110fced14522cb54ee647802040f579befd40c7b1647438d31d5e3c1bc",
+    "authority": {
+      "purchaseRoot": "agent-only",
+      "payerActAsGrantedToAgent": false,
+      "payerKeyEnteredApplication": false
+    },
+    "completionReconciliation": {
+      "beginExclusive": 4404757,
+      "earlyObservation": {
+        "classification": "ABSENT_COMPLETE",
+        "offset": 4404757,
+        "terminal": false,
+        "authoritative": false
+      },
+      "authoritativeObservation": {
+        "classification": "SUCCEEDED",
+        "offset": 4404758,
+        "terminal": true,
+        "authoritative": true
+      },
+      "implementationRule": "absence is non-terminal; only an exact success or rejection is terminal"
+    },
+    "effects": {
+      "consumedCapabilityContractId": "0064787984bb73e373a06f5ae135ed5ef65306a0338e74332ffcdbb396841ec0ebca12122058dadf777c2a587d942576b976ab83bf9d932662ffc98e56731853e2d9a2a705",
+      "contextContractId": "0045489cef9040083ab47b7eca5c96e19de7fe1c16a408045aa0b68dd62eff34cbca121220b4985be823bd87c69df4ec645d58f321d7f5b3051a596bef7e0c5f1bd1174846",
+      "replacementCapability": {
+        "contractId": "00e1e9a1448e74338e64518e192bccbf8e16219d5148b8807943240ed527ee7d70ca1212206aacb2c64230641268bcf687b2ea81b38029ec183a25443a207844d09f7d1fa2",
+        "revision": "1",
+        "remainingAllowanceCantonCoin": "0.0750000000"
+      },
+      "providerHolding": {
+        "contractId": "0007ac3633e627b1f627e2bf154f214eccd661964216611e715eee4682c1ebd8bbca1212201bae50e4661e76983c86eff5622035b030923ac9283bc63df964c86480b82968",
+        "amountCantonCoin": "0.2500000000"
+      },
+      "payerChangeHolding": {
+        "contractId": "000675f60b5ef9db29be91ef263a9e149491b0c1670d16a6a9dbab758bea3a756fca1212203217c6ce6f3484aac0ec30c980fd8f3644a0c660b58f0a81a33a753165c185f8",
+        "amountCantonCoin": "0.7500000000"
+      }
+    },
+    "delivery": {
+      "ledgerReconciled": true,
+      "initialHttpStatus": 200,
+      "exactProofHttpStatus": 200,
+      "mutatedAttemptHttpStatus": 402,
+      "cachedReplayHttpStatus": 200,
+      "cachedResponseIdentical": true,
+      "secondPaymentSubmitted": false,
+      "storageDurability": "process-memory-spike-only; production-requires-postgresql",
+      "unknownDeliveryOutcomeBoundary": "retained in process and never automatically retried; process restart durability is not proven"
+    },
+    "directAuthorityControl": {
+      "mode": "prepare-only",
+      "agent": "MISSING_PAYER_AUTHORITY",
+      "payer": "PREPARED",
+      "executeCalls": 0,
+      "holdingCount": 1,
+      "offset": 4406019,
+      "commandId": "sotto-direct-authority-control-v1-e0dcf8e5a266e4254df4a46c760e0144f0764f5bcb2df32e91a9b22d8cfb7611",
+      "trackedSourceCommit": "d0d2d40d24b07784355ae2557a972b63a1d73130",
+      "holdingParserChangesUncommittedAtRun": true,
+      "postRunImplementationCommit": "3780b220de9b44b20c2cdcab92314c706721236c",
+      "proves": "the external agent cannot prepare the exact direct payer transfer that the payer can prepare",
+      "doesNotProve": "an executed direct-transfer rejection; neither variant was signed or executed"
+    },
+    "sourceProvenance": {
+      "trackedSourceCommit": "d12363f42e5bc2d56108986aa93187e764642372",
+      "verifierChangesUncommittedAtRun": true,
+      "postRunImplementationCommits": [
+        "d0d2d40d24b07784355ae2557a972b63a1d73130",
+        "3780b220de9b44b20c2cdcab92314c706721236c"
+      ]
+    },
+    "proves": [
+      "one real external-agent-only bounded purchase on Five North",
+      "one Canton transaction containing capability consumption, payer transfer, private context, and replacement capability",
+      "exact paid delivery and byte-identical in-process replay without a second payment",
+      "prepare-only direct payer-transfer authority separation",
+      "anonymous public Lighthouse visibility for the accepted settlement"
+    ],
+    "doesNotProve": [
+      "production wallet custody",
+      "one-call human wallet approval",
+      "durable delivery recovery across process restart",
+      "production topology"
+    ]
+  },
+  "atomicPurchase": {
+    "attemptId": "sha256:ddf4c78367ab53edb38f73f76270ff42cfe2512e527b31afc35342a20114ea64",
+    "policyCreateCommandId": "sotto-atomic-policy-ddf4c78367ab53edb38f73f76270ff42cfe2512e527b31afc35342a20114ea64",
+    "policyCreateUpdateId": "12201d95dd4825992c4033700d8256f0755f5bd5679a60ed9fa141470c307d4eaa2c",
+    "policyCreateRecordTime": "2026-07-13T07:17:26.127217Z",
+    "commandId": "sotto-purchase-2da23155ed2c0ddde14bc8dd349993f275df4f1bbf486fd4bb94dc19ad70f2e2",
+    "workflowId": "sotto-atomic-purchase-v1",
+    "updateId": "1220a32bf2bc1e922dc6afab829b8d04de41630d23548df495cd78d75273595da7e7",
+    "offset": 4290922,
+    "effectiveAt": "2026-07-13T07:17:30.415694Z",
+    "recordTime": "2026-07-13T07:17:30.848955Z",
+    "httpStatuses": [402, 200, 200],
+    "effectsInOneUpdate": [
+      "policy-consumption",
+      "reduced-policy-creation",
+      "private-context-creation",
+      "canton-coin-transfer"
+    ],
+    "rollbackStatePreserved": true,
+    "rollbackReasonDurablyCaptured": false,
+    "reducedPolicyContractId": "00e32e7e431d20e4466fea529293d086e43bfeac5e7185a708104a21d8e935bd88ca1212208f5964421a15cf31097c298f0d6e17ea17273263e80c4c7c6c1047b51b5d0462",
+    "privateContextContractId": "001a9e05a9616f0cdde67eebadbeb1321261690642bfe15888e06debf94071e361ca12122022d61e5456ec74dd464e61b0b101a1826697e90cc8062e0a31868be49ce5bd6d"
+  },
+  "visibility": {
+    "partyScopedAcs": {
+      "agent": { "policy": 1, "context": 1 },
+      "owner": { "policy": 1, "context": 1 },
+      "payer": { "policy": 1, "context": 1 },
+      "provider": { "policy": 0, "context": 1 },
+      "outsider": { "policy": 0, "context": 0 }
+    },
+    "externalAgentPurchase": {
+      "activeAtOffset": 4405009,
+      "updateId": "1220a389588fc2b677ce956c03af93f65ce537b29aea244e815022cde54b492811e3",
+      "agent": { "context": 1, "transaction": "VISIBLE" },
+      "payer": { "context": 1, "transaction": "VISIBLE" },
+      "provider": { "context": 1, "transaction": "VISIBLE" },
+      "outsider": { "context": 0, "transaction": "ABSENT_HTTP_404" },
+      "publicExplorer": {
+        "host": "lighthouse.devnet.cantonloop.com",
+        "queriedAt": "2026-07-17T15:00:36Z",
+        "transactionHttpStatus": 200,
+        "transactionRecordTime": "2026-07-16T12:55:47.113641Z",
+        "latestIndexedUpdateId": "1220bbc15c8fd25b8f2fca1cac34f875b95be4cbd212d4e6424acbac2c59af11206e",
+        "latestIndexedRecordTime": "2026-07-17T02:57:48.73869Z",
+        "indexState": "indexed",
+        "verdict": "PUBLICLY_VISIBLE"
+      }
+    },
+    "provesStakeholderSemantics": true,
+    "provesCredentialIsolation": false,
+    "historicalOutsiderEventLookup": "not-run",
+    "historicalOutsiderDirectLookup": "not-run",
+    "historicalPublicExplorerSettlement": "not-proven",
+    "outsiderEventLookup": "external-agent update returned HTTP 404 to the outsider",
+    "outsiderDirectLookup": "external-agent private context count was zero for the outsider",
+    "publicExplorerSettlement": "proven for the accepted external-agent update; anonymous Lighthouse lookup returned HTTP 200 after its index advanced"
+  },
+  "deliveryFailure": {
+    "providerUnavailableAfterPriorSuccessfulDeliveries": true,
+    "settlementStillReconciled": true,
+    "allowanceRestored": false,
+    "secondPaymentSubmitted": false,
+    "firstDeliveryFailure": "one human settlement was durably classified settled-undelivered before any paid retry; a provider 5xx or timeout after retry dispatch remains unproven",
+    "humanWalletRecovery": {
+      "settledUndeliveredRecoveredAcrossProcess": true,
+      "deliveredTerminalRecoveredAcrossProcess": true,
+      "ledgerResubmittedByRecovery": false,
+      "walletResignedByRecovery": false,
+      "productionDurability": "owner-only filesystem journal only; production requires PostgreSQL"
+    },
+    "externalAgentReplay": {
+      "exactProofHttpStatus": 200,
+      "cachedResponseIdentical": true,
+      "mutatedAttemptHttpStatus": 402,
+      "secondPaymentSubmitted": false,
+      "durability": "process-memory-spike-only; production-requires-postgresql"
+    }
+  },
+  "negativeControls": {
+    "genericTransferWithoutPolicySucceeded": true,
+    "sharedCredentialRejectedForBoundedAuthority": true,
+    "externalAgentDirectTransfer": {
+      "mode": "prepare-only",
+      "agentResult": "MISSING_PAYER_AUTHORITY",
+      "payerControlResult": "PREPARED",
+      "executeCalls": 0,
+      "offset": 4406019
+    },
+    "completeLiveFailureMatrix": false,
+    "historicalExactLiveRejectionReasonsRetained": false,
+    "externalAgentDirectAuthorityReasonRetained": true,
+    "exactLiveRejectionReasonsRetained": false
+  },
+  "historicalBlockingGatesAtSchemaVersion1": [
+    "agent-only constrained purchase and matched direct-transfer bypass oracle",
+    "live complete challenge and policy commitment at the constrained signer",
+    "Five North-compatible Loop human approval",
+    "public settlement visibility with outsider-private-context absence",
+    "explicit Q-003 through Q-006 decisions"
+  ],
+  "blockingGates": [
+    "production wallet connector deployment and custody boundary; the wallet-neutral reference connector is proven only for the spike",
+    "durable PostgreSQL-backed delivery, unknown-outcome recovery, and idempotency across process restart",
+    "implementation and deployment evidence for the approved production custody and service topology",
+    "final independent production GO review"
+  ],
+  "redaction": {
+    "rawKeysIncluded": false,
+    "clientSecretsIncluded": false,
+    "accessTokensIncluded": false,
+    "preparedTransactionsIncluded": false,
+    "requestBodiesIncluded": false,
+    "paidResponseBodiesIncluded": false
+  }
+}

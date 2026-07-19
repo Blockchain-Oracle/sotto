@@ -1,0 +1,57 @@
+module SottoControlPurchaseAllowanceTests where
+
+import Daml.Script
+import Splice.Api.Token.HoldingV1 qualified as Holding
+import Sotto.Control.PurchaseCapability
+import SottoControlPurchaseTestSupport
+import SottoControlPurchaseValidationTests
+import SottoControlTokenStandardMock
+
+purchaseFor
+  : PurchaseFixture
+  -> ContractId BoundedPurchaseCapability
+  -> ContractId Holding.Holding
+  -> Int
+  -> Decimal
+  -> Text
+  -> Commands PurchaseResult
+purchaseFor fixture capabilityCid holdingCid revision amount suffix =
+  purchaseCase fixture capabilityCid $ (validCase fixture) with
+    attemptId = "sha256:attempt-" <> suffix
+    purchaseCommitment = "sha256:purchase-" <> suffix
+    requestCommitment = "sha256:request-" <> suffix
+    challengeId = "sha256:challenge-" <> suffix
+    inputHoldingCids = [holdingCid]
+    expectedRevision = revision
+    amount
+
+allowanceExhaustion : Script ()
+allowanceExhaustion = do
+  fixture <- createPurchaseFixture Complete "Amulet"
+  firstOptions <- purchaseOptions fixture
+  first <- submit firstOptions $ purchaseFor fixture fixture.capabilityCid
+    fixture.holdingInterfaceCid 0 2.0 "one"
+
+  [(secondHolding, secondInterface)] <- createAdditionalInputs fixture 1 2.0
+  secondOptions <- purchaseOptionsForHoldings fixture [secondHolding]
+  second <- submit secondOptions $ purchaseFor fixture first.capabilityCid
+    secondInterface 1 2.0 "two"
+
+  [(thirdHolding, thirdInterface)] <- createAdditionalInputs fixture 1 1.0
+  thirdOptions <- purchaseOptionsForHoldings fixture [thirdHolding]
+  third <- submit thirdOptions $ purchaseFor fixture second.capabilityCid
+    thirdInterface 2 1.0 "three"
+  Some exhausted <- queryContractId fixture.payer third.capabilityCid
+  assert (exhausted.remainingAllowance == 0.0)
+  assert (exhausted.revision == 3)
+
+  [(blockedHolding, blockedInterface)] <- createAdditionalInputs fixture 1 0.1
+  blockedOptions <- purchaseOptionsForHoldings fixture [blockedHolding]
+  submitMustFail blockedOptions $ purchaseFor fixture third.capabilityCid
+    blockedInterface 3 0.1 "four"
+  Some stillExhausted <- queryContractId fixture.payer third.capabilityCid
+  Some _ <- queryContractId fixture.payer blockedHolding
+  contexts <- query @PurchaseContext fixture.payer
+  assert (stillExhausted.remainingAllowance == 0.0)
+  assert (length contexts == 3)
+  pure ()

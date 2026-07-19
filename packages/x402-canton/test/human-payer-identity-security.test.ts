@@ -1,0 +1,167 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  claimHumanPayerIdentity,
+  createHumanPayerIdentityObserver,
+  readAuthenticatedHumanPayerIdentity,
+} from "../src/human-payer-identity.js";
+
+const FINGERPRINT = `1220${"a".repeat(64)}`;
+const PARTY = `sotto-external-payer::${FINGERPRINT}`;
+const SYNCHRONIZER = `global-domain::1220${"b".repeat(64)}`;
+
+function identity() {
+  return {
+    keyPurpose: "SIGNING",
+    network: "canton:devnet",
+    party: PARTY,
+    publicKeyFormat: "PUBLIC_KEY_FORMAT_RAW",
+    publicKeyFingerprint: FINGERPRINT,
+    signatureFormat: "SIGNATURE_FORMAT_CONCAT",
+    signingAlgorithm: "SIGNING_ALGORITHM_SPEC_ED25519",
+    synchronizerId: SYNCHRONIZER,
+    topologyHash: `1220${"c".repeat(64)}`,
+  };
+}
+
+function reader(candidate: unknown = identity()) {
+  return {
+    readAuthenticatedSubject: vi.fn(async () => "validator-devnet-m2m"),
+    readPayerIdentity: vi.fn(async () => candidate),
+  };
+}
+
+describe("human payer identity security", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ now: new Date("2026-07-16T15:00:00.000Z") });
+  });
+
+  afterEach(() => vi.useRealTimers());
+
+  it("redacts private upstream failures", async () => {
+    for (const phase of ["subject", "topology"] as const) {
+      const source = reader();
+      const secret = `private-${phase}-token`;
+      if (phase === "subject") {
+        source.readAuthenticatedSubject.mockRejectedValue(new Error(secret));
+      } else {
+        source.readPayerIdentity.mockRejectedValue(new Error(secret));
+      }
+
+      let failure: unknown;
+      try {
+        await createHumanPayerIdentityObserver(source)();
+      } catch (error) {
+        failure = error;
+      }
+      expect(failure).toBeInstanceOf(Error);
+      expect((failure as Error).message).toMatch(/payer identity.*failed/iu);
+      expect((failure as Error).message).not.toContain(secret);
+    }
+  });
+
+  it("enforces one deadline while the first trusted read hangs", async () => {
+    let readerSignal: AbortSignal | undefined;
+    const topology = vi.fn();
+    const source = {
+      readAuthenticatedSubject: vi.fn(
+        async (options?: Readonly<{ signal: AbortSignal }>) => {
+          readerSignal = options?.signal;
+          return new Promise<never>(() => undefined);
+        },
+      ),
+      readPayerIdentity: topology,
+    };
+    const pending = createHumanPayerIdentityObserver(source)({
+      timeoutMilliseconds: 10,
+    } as never);
+    let rejection: unknown;
+    void pending.catch((error: unknown) => {
+      rejection = error;
+    });
+
+    await vi.advanceTimersByTimeAsync(10);
+
+    expect(rejection).toEqual(
+      new Error("human payer identity deadline exceeded"),
+    );
+    expect(readerSignal?.aborted).toBe(true);
+    expect(topology).not.toHaveBeenCalled();
+  });
+
+  it("rejects acquisition overrun, stale claims, and clock rollback", async () => {
+    const delayed = reader();
+    delayed.readPayerIdentity.mockImplementation(async () => {
+      vi.advanceTimersByTime(10_001);
+      return identity();
+    });
+    await expect(createHumanPayerIdentityObserver(delayed)()).rejects.toThrow(
+      /deadline exceeded/iu,
+    );
+
+    vi.setSystemTime(new Date("2026-07-16T15:00:00.000Z"));
+    const stale = await createHumanPayerIdentityObserver(reader())();
+    vi.advanceTimersByTime(60_001);
+    expect(() => claimHumanPayerIdentity(stale)).toThrow(/stale/iu);
+
+    vi.setSystemTime(new Date("2026-07-16T15:00:00.000Z"));
+    const claimed = await createHumanPayerIdentityObserver(reader())();
+    const authenticated = claimHumanPayerIdentity(claimed);
+    vi.advanceTimersByTime(60_001);
+    expect(() => readAuthenticatedHumanPayerIdentity(authenticated)).toThrow(
+      /stale/iu,
+    );
+
+    vi.setSystemTime(new Date("2026-07-16T15:00:00.000Z"));
+    const rollback = await createHumanPayerIdentityObserver(reader())();
+    vi.setSystemTime(new Date("2026-07-16T14:59:54.999Z"));
+    expect(() => claimHumanPayerIdentity(rollback)).toThrow(/clock/iu);
+  });
+
+  it.each([
+    ["extra member", { ...identity(), extra: true }],
+    ["wrong network", { ...identity(), network: "eip155:8453" }],
+    ["empty Canton network", { ...identity(), network: "canton:" }],
+    ["non-Sotto Party", { ...identity(), party: `payer::${FINGERPRINT}` }],
+    [
+      "uppercase fingerprint",
+      { ...identity(), publicKeyFingerprint: FINGERPRINT.toUpperCase() },
+    ],
+    ["blank synchronizer", { ...identity(), synchronizerId: "" }],
+    ["blank topology hash", { ...identity(), topologyHash: "" }],
+    ["wrong key purpose", { ...identity(), keyPurpose: "ENCRYPTION" }],
+    [
+      "mismatched signature scheme",
+      {
+        ...identity(),
+        signatureFormat: "SIGNATURE_FORMAT_DER",
+        signingAlgorithm: "SIGNING_ALGORITHM_SPEC_ED25519",
+      },
+    ],
+    [
+      "mismatched public-key format",
+      { ...identity(), publicKeyFormat: "PUBLIC_KEY_FORMAT_DER_SPKI" },
+    ],
+  ])("rejects %s", async (_name, candidate) => {
+    await expect(
+      createHumanPayerIdentityObserver(reader(candidate))(),
+    ).rejects.toThrow();
+  });
+
+  it("snapshots the response and never exposes the raw subject", async () => {
+    const candidate = identity();
+    const observation = await createHumanPayerIdentityObserver(
+      reader(candidate),
+    )();
+    candidate.party = `sotto-external-payer::1220${"d".repeat(64)}`;
+    const claimed = claimHumanPayerIdentity(observation);
+
+    expect(claimed.party).toBe(PARTY);
+    expect(JSON.stringify({ observation, claimed })).not.toContain(
+      "validator-devnet-m2m",
+    );
+    expect(Object.keys(observation).sort()).toEqual([
+      "observationId",
+      "observedAt",
+    ]);
+  });
+});

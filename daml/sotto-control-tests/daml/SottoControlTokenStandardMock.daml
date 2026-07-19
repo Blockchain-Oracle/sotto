@@ -1,0 +1,191 @@
+module SottoControlTokenStandardMock where
+
+import Splice.Api.Token.HoldingV1 qualified as Holding
+import Splice.Api.Token.MetadataV1 qualified as Metadata
+import Splice.Api.Token.TransferInstructionV1 qualified as Transfer
+import DA.Foldable (forA_)
+
+data FactoryMode
+  = Complete
+  | CompleteEmptyReceiver
+  | CompleteDuplicateReceiver
+  | CompleteWrongAmount
+  | CompleteWrongReceiver
+  | CompleteWithChange with changeAmount : Decimal
+  | CompleteWithWrongChangeInstrument with changeAmount : Decimal
+  | CompleteWithWrongChangeOwner with changeAmount : Decimal
+  | CompleteWithDuplicateChange with changeAmount : Decimal
+  | CompleteWithOverlappingChange
+  | CompleteWithInputAsReceiver
+  | CompleteWithReceiverCount with receiverCount : Int
+  | CompleteWithChangeCount with changeCount : Int; changeAmount : Decimal
+  | Pending
+  | Failed
+  deriving (Eq, Show)
+
+template MockHolding
+  with
+    admin : Party
+    owner : Party
+    instrumentId : Holding.InstrumentId
+    amount : Decimal
+  where
+    signatory admin
+    observer owner
+
+    interface instance Holding.Holding for MockHolding where
+      view = Holding.HoldingView with
+        owner
+        instrumentId
+        amount
+        lock = None
+        meta = Metadata.emptyMetadata
+
+createMockHoldings
+  : Party
+  -> Party
+  -> Holding.InstrumentId
+  -> Decimal
+  -> Int
+  -> Update [ContractId Holding.Holding]
+createMockHoldings admin owner instrumentId amount count =
+  if count <= 0 then pure [] else do
+    holdingCid <- create MockHolding with admin; owner; instrumentId; amount
+    rest <- createMockHoldings admin owner instrumentId amount (count - 1)
+    pure (toInterfaceContractId @Holding.Holding holdingCid :: rest)
+
+failedResult : Transfer.TransferInstructionResult
+failedResult = Transfer.TransferInstructionResult with
+  output = Transfer.TransferInstructionResult_Failed
+  senderChangeCids = []
+  meta = Metadata.emptyMetadata
+
+template MockTransferInstruction
+  with
+    admin : Party
+    transfer : Transfer.Transfer
+  where
+    signatory admin
+    observer transfer.sender, transfer.receiver
+
+    interface instance Transfer.TransferInstruction for MockTransferInstruction where
+      view = Transfer.TransferInstructionView with
+        originalInstructionCid = None
+        transfer
+        status = Transfer.TransferPendingReceiverAcceptance
+        meta = Metadata.emptyMetadata
+
+      transferInstruction_acceptImpl _ _ = pure failedResult
+      transferInstruction_rejectImpl _ _ = pure failedResult
+      transferInstruction_withdrawImpl _ _ = pure failedResult
+      transferInstruction_updateImpl _ _ = pure failedResult
+
+template MockTransferFactory
+  with
+    admin : Party
+    mode : FactoryMode
+  where
+    signatory admin
+
+    interface instance Transfer.TransferFactory for MockTransferFactory where
+      view = Transfer.TransferFactoryView with
+        admin
+        meta = Metadata.emptyMetadata
+
+      transferFactory_transferImpl _ arg = do
+        now <- getTime
+        assertMsg "unexpected transfer factory admin" (arg.expectedAdmin == admin)
+        assertMsg "requested time is not in the past"
+          (arg.transfer.requestedAt < now)
+        assertMsg "execution window is closed"
+          (now < arg.transfer.executeBefore)
+        case mode of
+          Failed -> pure failedResult
+          Pending -> do
+            instructionCid <- create MockTransferInstruction with
+              admin
+              transfer = arg.transfer
+            pure Transfer.TransferInstructionResult with
+              output = Transfer.TransferInstructionResult_Pending with
+                transferInstructionCid = toInterfaceContractId @Transfer.TransferInstruction instructionCid
+              senderChangeCids = []
+              meta = Metadata.emptyMetadata
+          Complete -> complete arg.transfer.receiver arg.transfer.amount None
+          CompleteEmptyReceiver -> do
+            archiveInputs
+            completed [] []
+          CompleteDuplicateReceiver -> do
+            archiveInputs
+            receiverCid <- createHolding arg.transfer.receiver arg.transfer.amount
+            completed [receiverCid, receiverCid] []
+          CompleteWrongAmount -> complete arg.transfer.receiver (arg.transfer.amount + 1.0) None
+          CompleteWrongReceiver -> complete arg.transfer.sender arg.transfer.amount None
+          CompleteWithChange{changeAmount} ->
+            complete arg.transfer.receiver arg.transfer.amount (Some changeAmount)
+          CompleteWithWrongChangeInstrument{changeAmount} -> do
+            archiveInputs
+            receiverCid <- createHolding arg.transfer.receiver arg.transfer.amount
+            let wrongInstrument = Holding.InstrumentId with admin; id = "WrongInstrument"
+            changeCid <- createHoldingWithInstrument arg.transfer.sender wrongInstrument changeAmount
+            completed [receiverCid] [changeCid]
+          CompleteWithWrongChangeOwner{changeAmount} -> do
+            archiveInputs
+            receiverCid <- createHolding arg.transfer.receiver arg.transfer.amount
+            changeCid <- createHolding arg.transfer.receiver changeAmount
+            completed [receiverCid] [changeCid]
+          CompleteWithDuplicateChange{changeAmount} -> do
+            archiveInputs
+            receiverCid <- createHolding arg.transfer.receiver arg.transfer.amount
+            changeCid <- createHolding arg.transfer.sender changeAmount
+            completed [receiverCid] [changeCid, changeCid]
+          CompleteWithOverlappingChange -> do
+            archiveInputs
+            receiverCid <- createHolding arg.transfer.receiver arg.transfer.amount
+            completed [receiverCid] [receiverCid]
+          CompleteWithInputAsReceiver -> do
+            archiveInputs
+            completed arg.transfer.inputHoldingCids []
+          CompleteWithReceiverCount{receiverCount} -> do
+            archiveInputs
+            receiverCids <- createMockHoldings admin arg.transfer.receiver
+              arg.transfer.instrumentId arg.transfer.amount receiverCount
+            completed receiverCids []
+          CompleteWithChangeCount{changeCount; changeAmount} -> do
+            archiveInputs
+            receiverCid <- createHolding arg.transfer.receiver arg.transfer.amount
+            changeCids <- createMockHoldings admin arg.transfer.sender
+              arg.transfer.instrumentId changeAmount changeCount
+            completed [receiverCid] changeCids
+        where
+          archiveInputs = forA_ arg.transfer.inputHoldingCids $ \holdingCid ->
+            exercise holdingCid Archive
+          createHolding owner amount =
+            createHoldingWithInstrument owner arg.transfer.instrumentId amount
+          createHoldingWithInstrument owner holdingInstrument amount = do
+            holdingCid <- create MockHolding with
+              admin
+              owner
+              instrumentId = holdingInstrument
+              amount
+            pure (toInterfaceContractId @Holding.Holding holdingCid)
+          completed receiverHoldingCids senderChangeCids =
+            pure Transfer.TransferInstructionResult with
+              output = Transfer.TransferInstructionResult_Completed with
+                receiverHoldingCids
+              senderChangeCids
+              meta = Metadata.emptyMetadata
+          complete receiver amount changeAmount = do
+            archiveInputs
+            receiverCid <- createHolding receiver amount
+            senderChangeCids <- case changeAmount of
+              None -> pure []
+              Some senderChangeAmount -> do
+                senderChangeCid <- createHolding arg.transfer.sender senderChangeAmount
+                pure [senderChangeCid]
+            completed [receiverCid] senderChangeCids
+
+      transferFactory_publicFetchImpl _ arg = do
+        assertMsg "unexpected transfer factory admin" (arg.expectedAdmin == admin)
+        pure Transfer.TransferFactoryView with
+          admin
+          meta = Metadata.emptyMetadata

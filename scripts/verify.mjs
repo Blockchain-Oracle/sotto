@@ -31,9 +31,10 @@ const runPnpm = (label, ...args) => run(label, pnpm[0], [...pnpm[1], ...args]);
 runPnpm("toolchain", "check:toolchain");
 runPnpm("format", "format:check");
 runPnpm("lint", "lint");
-runPnpm("typecheck", "typecheck");
-runPnpm("unit tests", "test");
 runPnpm("build", "build");
+runPnpm("typecheck", "typecheck");
+runPnpm("unit tests", "test:unit");
+runPnpm("PostgreSQL integration", "test:postgres");
 for (const check of [
   "check:files",
   "check:source",
@@ -62,10 +63,11 @@ const sdkVersion = capture(dpm, ["version", "--active"], toolEnv);
 if (sdkVersion !== "3.5.2") {
   throw new Error(`Expected Daml SDK 3.5.2, got ${sdkVersion}`);
 }
+runPnpm("Daml dependencies", "daml:deps");
 run("Daml build", dpm, ["build", "--all"], { cwd: "daml", env: toolEnv });
 run("Daml tests", dpm, ["test"], {
   cwd: "daml/sotto-control-tests",
   env: toolEnv,
 });
 run("whitespace", "git", ["diff", "--check"]);
-process.stdout.write("\nAll deterministic Phase 2 gates passed.\n");
+process.stdout.write("\nAll deterministic workspace gates passed.\n");

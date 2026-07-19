@@ -1,0 +1,191 @@
+module SottoControlPurchaseTestSupport where
+
+import DA.Time (addRelTime, hours, seconds)
+import Daml.Script
+import Splice.Api.Token.HoldingV1 qualified as Holding
+import Splice.Api.Token.MetadataV1 qualified as Metadata
+import Splice.Api.Token.TransferInstructionV1 qualified as Transfer
+import Sotto.Control.PurchaseCapability
+import SottoControlTokenStandardMock
+
+data HoldingOwnerMode = PayerOwned | OutsiderOwned
+  deriving (Eq, Show)
+
+data PurchaseFixture = PurchaseFixture with
+  payer : Party
+  agent : Party
+  provider : Party
+  admin : Party
+  outsider : Party
+  now : Time
+  instrumentId : Holding.InstrumentId
+  factoryCid : ContractId MockTransferFactory
+  holdingCid : ContractId MockHolding
+  holdingInterfaceCid : ContractId Holding.Holding
+  holdingOwner : Party
+  capabilityCid : ContractId BoundedPurchaseCapability
+
+createPurchaseFixture : FactoryMode -> Text -> Script PurchaseFixture
+createPurchaseFixture mode holdingInstrument =
+  createPurchaseFixtureWith mode holdingInstrument 2.0 2.0
+
+createPurchaseFixtureWith : FactoryMode -> Text -> Decimal -> Decimal -> Script PurchaseFixture
+createPurchaseFixtureWith mode holdingInstrument holdingAmount maximumTotalDebit =
+  createPurchaseFixtureWithOwner
+    mode holdingInstrument holdingAmount maximumTotalDebit PayerOwned
+
+createPurchaseFixtureWithOwner
+  : FactoryMode
+  -> Text
+  -> Decimal
+  -> Decimal
+  -> HoldingOwnerMode
+  -> Script PurchaseFixture
+createPurchaseFixtureWithOwner
+    mode holdingInstrument holdingAmount maximumTotalDebit ownerMode = do
+  payer <- allocateParty "sotto-fixture-payer"
+  agent <- allocateParty "sotto-fixture-agent"
+  provider <- allocateParty "sotto-fixture-provider"
+  admin <- allocateParty "sotto-fixture-admin"
+  outsider <- allocateParty "sotto-fixture-outsider"
+  now <- getTime
+  let instrumentId = Holding.InstrumentId with admin; id = "Amulet"
+  let actualHoldingInstrument = Holding.InstrumentId with admin; id = holdingInstrument
+  let holdingOwner = case ownerMode of
+        PayerOwned -> payer
+        OutsiderOwned -> outsider
+  factoryCid <- submit admin do
+    createCmd MockTransferFactory with admin; mode
+  holdingCid <- submit admin do
+    createCmd MockHolding with
+      admin
+      owner = holdingOwner
+      instrumentId = actualHoldingInstrument
+      amount = holdingAmount
+  let factoryInterfaceCid =
+        toInterfaceContractId @Transfer.TransferFactory factoryCid
+  let holdingInterfaceCid = toInterfaceContractId @Holding.Holding holdingCid
+  capabilityCid <- submit payer do
+    createCmd BoundedPurchaseCapability with
+      payer
+      agent
+      resourceBindingVersion = "sotto-resource-v1"
+      allowedResourceHash = "sha256:resource"
+      allowedRecipient = provider
+      instrumentId
+      perCallLimit = 2.0
+      remainingAllowance = 5.0
+      maximumTotalDebit
+      expiresAt = addRelTime now (hours 2)
+      revision = 0
+      paused = False
+      transferFactoryCid = factoryInterfaceCid
+      expectedAdmin = admin
+  passTime (seconds 1)
+  pure PurchaseFixture with
+    payer
+    agent
+    provider
+    admin
+    outsider
+    now
+    instrumentId
+    factoryCid
+    holdingCid
+    holdingInterfaceCid
+    holdingOwner
+    capabilityCid
+
+purchaseOptions : PurchaseFixture -> Script SubmitOptions
+purchaseOptions fixture@PurchaseFixture{holdingCid} =
+  purchaseOptionsForHoldings fixture [holdingCid]
+
+purchaseOptionsForHoldings
+  : PurchaseFixture
+  -> [ContractId MockHolding]
+  -> Script SubmitOptions
+purchaseOptionsForHoldings
+    PurchaseFixture{agent; admin; factoryCid; holdingOwner} holdingCids = do
+  Some factoryDisclosure <- queryDisclosure admin factoryCid
+  holdingDisclosures <- mapA (\holdingCid -> do
+    Some disclosure <- queryDisclosure holdingOwner holdingCid
+    pure disclosure) holdingCids
+  pure (actAs agent <> discloseMany (factoryDisclosure :: holdingDisclosures))
+
+createAdditionalInputs
+  : PurchaseFixture
+  -> Int
+  -> Decimal
+  -> Script [(ContractId MockHolding, ContractId Holding.Holding)]
+createAdditionalInputs fixture count amount =
+  if count <= 0 then pure [] else do
+    holdingCid <- submit fixture.admin do
+      createCmd MockHolding with
+        admin = fixture.admin
+        owner = fixture.holdingOwner
+        instrumentId = fixture.instrumentId
+        amount
+    rest <- createAdditionalInputs fixture (count - 1) amount
+    pure ((holdingCid, toInterfaceContractId @Holding.Holding holdingCid) :: rest)
+
+purchaseCommands : PurchaseFixture -> Commands PurchaseResult
+purchaseCommands fixture = purchaseAt
+  fixture
+  fixture.capabilityCid
+  fixture.holdingInterfaceCid
+  fixture.now
+  (addRelTime fixture.now (hours 1))
+  0
+
+purchaseAt
+  : PurchaseFixture
+  -> ContractId BoundedPurchaseCapability
+  -> ContractId Holding.Holding
+  -> Time
+  -> Time
+  -> Int
+  -> Commands PurchaseResult
+purchaseAt fixture capabilityCid holdingCid requestedAt executeBefore expectedRevision =
+  purchaseWithInputs fixture capabilityCid [holdingCid]
+    requestedAt executeBefore expectedRevision
+
+purchaseWithInputs
+  : PurchaseFixture
+  -> ContractId BoundedPurchaseCapability
+  -> [ContractId Holding.Holding]
+  -> Time
+  -> Time
+  -> Int
+  -> Commands PurchaseResult
+purchaseWithInputs
+    fixture capabilityCid inputHoldingCids requestedAt executeBefore expectedRevision =
+  exerciseCmd capabilityCid Purchase with
+    attemptId = "sha256:attempt"
+    purchaseCommitment = "sha256:purchase"
+    requestCommitment = "sha256:request"
+    challengeId = "sha256:challenge"
+    resourceHash = "sha256:resource"
+    recipient = fixture.provider
+    amount = 2.0
+    requestedAt
+    executeBefore
+    inputHoldingCids
+    extraArgs = Metadata.ExtraArgs with
+      context = Metadata.emptyChoiceContext
+      meta = Metadata.emptyMetadata
+    expectedRevision
+
+assertPurchaseUnchanged : PurchaseFixture -> Script ()
+assertPurchaseUnchanged
+    PurchaseFixture{payer; provider; capabilityCid; holdingCid; holdingOwner} = do
+  Some capability <- queryContractId payer capabilityCid
+  assert (capability.revision == 0)
+  assert (capability.remainingAllowance == 5.0)
+  Some _ <- queryContractId holdingOwner holdingCid
+  contexts <- query @PurchaseContext payer
+  receiverHoldings <- query @MockHolding provider
+  pendingInstructions <- query @MockTransferInstruction payer
+  assert (null contexts)
+  assert (null receiverHoldings)
+  assert (null pendingInstructions)
+  pure ()

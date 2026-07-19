@@ -17,6 +17,13 @@
 - No ledger-enforced claim ships before live-price, funding, atomicity, and
   bypass proof.
 - Coolify is the eventual application host; Five North is the mandatory ledger.
+- The first production topology is one `web-api` process, one restartable
+  worker, one private PostgreSQL authority, and wallet connectors outside the
+  application/database trust boundary. Redis is deferred until measurements
+  justify it.
+- Enriched private receipts are limited to the authenticated owner/payer and the
+  initiating agent. Providers receive only the minimum settlement/delivery
+  reference; operators and public views receive redacted evidence.
 - Product research, specification, stories/design, planning, implementation, and
   verification remain separate Context Engineering stages.
 - The accepted x402 prototype is design evidence only.
@@ -34,13 +41,95 @@
 - Canton Coin settlement may be public through Scan; separate Sotto context can
   remain party-scoped.
 - x402scan is a behavioral/design reference but has no repository-level license.
+- Five North accepts one command transaction containing Sotto policy
+  consumption, private context creation, and the standard Canton Coin transfer.
+- The shared Five North machine credential can also submit the transfer without
+  consuming policy, so it is not a bounded signer or funding boundary.
+- A later Five North run used an external agent that alone exercised a
+  payer-signed `Purchase` capability. The accepted update paid the provider,
+  returned payer change, and reduced the capability in one transaction.
+- An otherwise identical direct-transfer preparation failed for the external
+  agent with the exact missing-payer-authority oracle, while the payer control
+  prepared. Execution was disabled for both controls, so this is not claimed as
+  an executed rejection.
+- A later policy-free human prepare-only run used a real Five North `402`, payer
+  holdings, package preference, TransferFactory context, and interactive
+  preparation. Its complete effects and official Canton V2 hash verified, with
+  no wallet approval, signature, execution, settlement, delivery, or Canton Coin
+  debit.
+- A subsequent policy-free human-wallet run used the wallet-neutral reference
+  connector. The isolated payer wallet displayed and approved the exact GET,
+  recipient, 0.25 CC principal, 0.075 CC fee ceiling, 0.325 CC debit ceiling,
+  network, synchronizer, package, and expiry; it then signed outside the Sotto
+  process. Five North accepted the transaction, the provider independently
+  reconciled its exact SendV2 and holding, and the identical paid retry returned
+  the authentic JSON `200`.
+- The immediately preceding human attempt also settled but lost delivery after
+  an over-strict provider-view `commandId` check closed its ephemeral tunnel.
+  Its owner-only journal recovered the exact successful update as
+  `settled-undelivered`; it was not replayed or mislabeled as delivered.
+- Seaport Personal supports custom DAR upload but currently has no configured
+  validator; its Loop party is not hosted by the Five North spike participant.
+- The original July 13 paid path used Sotto's direct Five North adapter and
+  temporary provider, not an upstream FTPtech relay/provider. The later
+  external-agent run establishes that signer boundary, but neither run
+  establishes upstream interoperability.
+- Lighthouse now returns the accepted external-agent settlement anonymously at
+  its public transaction endpoint. Its public index had advanced beyond that
+  transaction when rechecked on July 17. The later human-wallet settlement was
+  still ahead of the public cursor and remains indexing-pending rather than
+  failed.
+
+## Spike Decision Inputs
+
+- Q-003: resolved for the spike. Reject the shared M2M credential, and use the
+  externally controlled payer plus agent-only bounded capability. The live
+  purchase succeeded with only external-agent authority; the matched direct
+  prepare control failed for missing payer authority while the payer control
+  prepared, with zero execute calls.
+- Q-004: resolved. The enriched receipt is readable only by the authenticated
+  owner/payer and initiating agent. The provider receives the minimum
+  settlement/delivery reference, public and operator views are redacted, and
+  unauthorized lookup is existence-hiding.
+- Q-005: resolved for the spike through the wallet-neutral reference connector.
+  One exact Five North human purchase was approved, signed, executed,
+  reconciled, and delivered as `200` without the payer key entering the Sotto
+  process. This does not prove Loop compatibility, production wallet custody, or
+  a deployed connector service.
+- Q-006: resolved as a design decision. One `web-api` process, one restartable
+  worker, one private PostgreSQL authority, an explicit migration job, and
+  wallet connectors outside the application boundary form the first-release
+  topology. The PostgreSQL catalog, purchase journal, and encrypted internal
+  prepare-authority checkpoint with generation-bound worker leases now implement
+  part of this topology. A one-shot worker library now runs the authenticated
+  prepare pipeline outside database transactions and commits the exact fenced
+  checkpoint before wallet handoff. The journal and one-shot execution worker
+  now also persist approval, wallet decision, verified-signature, and
+  execution-started transitions, with the exact execution fence and one
+  reconciliation job committed before the execute request. Disposable PostgreSQL
+  plus a compiled Wallet SDK child proves this local process path and
+  same-process repository reopen. A separate database-only worker now proves
+  post-fence reconciliation across actual killed and replacement Node processes:
+  generation-fenced reclaim, stale-worker rejection, exact provider-settlement
+  verification, and one durable event-6 terminal checkpoint, without wallet,
+  signing, prepare, dispatch, or execute authority. This uses real local
+  PostgreSQL and bounded loopback HTTP with a synthetic Canton transaction.
+  External key custody, pre-fence wallet-handoff recovery, deployed connectors
+  and reconciliation transport, live Five North execution through this worker,
+  durable delivery recovery, and release evidence remain unproven.
 
 ## Open Gates
 
-- Agent signer, funding, mandate lifecycle, atomicity, and bypass model.
-- Private receipt reader set.
-- Compatible human one-call approval path.
-- Final web/API/MCP/worker/database/queue/Coolify topology.
+- Production wallet connector deployment and custody boundary.
+- Production prepare-authority key storage, rotation, backup, and recovery.
+- A deployed authenticated reconciliation adapter and a live Five North
+  post-execution recovery proof.
+- A reviewed definitive-absence oracle before any settlement retry; an
+  unresolved execution remains reconciliation-only.
+- Durable paid delivery, unknown-delivery recovery, and exact response replay
+  across process replacement.
+- Implemented and deployed web/API/MCP/worker/database/Coolify topology plus a
+  reviewed production `GO`.
 
 These questions are resolved only from the DevNet spike and explicit product
 decisions. Code, prototypes, and research cannot approve themselves.

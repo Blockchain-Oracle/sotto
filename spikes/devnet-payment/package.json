@@ -4,6 +4,15 @@
   "private": true,
   "type": "module",
   "license": "Apache-2.0",
+  "dependencies": {
+    "@canton-network/core-provider-dapp": "1.8.0",
+    "@sotto/capability-wallet": "workspace:*",
+    "@sotto/evidence": "workspace:*",
+    "@sotto/x402-canton": "workspace:*"
+  },
+  "devDependencies": {
+    "@canton-network/core-ledger-proto": "1.7.0"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "start": "tsx src/main.ts"

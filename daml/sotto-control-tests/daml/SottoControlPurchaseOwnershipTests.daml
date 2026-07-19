@@ -1,0 +1,36 @@
+module SottoControlPurchaseOwnershipTests where
+
+import Daml.Script
+import SottoControlPurchaseTestSupport
+import SottoControlTokenStandardMock
+
+holdingOwnershipAndAccounting : Script ()
+holdingOwnershipAndAccounting = do
+  foreignInput <- createPurchaseFixtureWithOwner
+    Complete "Amulet" 2.0 2.25 OutsiderOwned
+  foreignInputOptions <- purchaseOptions foreignInput
+  submitMustFail foreignInputOptions (purchaseCommands foreignInput)
+  assertPurchaseUnchanged foreignInput
+
+  wrongChangeOwner <- createPurchaseFixtureWith
+    (CompleteWithWrongChangeOwner with changeAmount = 0.1)
+    "Amulet"
+    2.25
+    2.25
+  wrongChangeOwnerOptions <- purchaseOptions wrongChangeOwner
+  submitMustFail wrongChangeOwnerOptions (purchaseCommands wrongChangeOwner)
+  assertPurchaseUnchanged wrongChangeOwner
+
+  negativeChange <- createPurchaseFixtureWith
+    (CompleteWithChange with changeAmount = -0.1)
+    "Amulet"
+    2.0
+    2.25
+  negativeChangeOptions <- purchaseOptions negativeChange
+  submitMustFail negativeChangeOptions (purchaseCommands negativeChange)
+  assertPurchaseUnchanged negativeChange
+
+  overlapping <- createPurchaseFixture CompleteWithOverlappingChange "Amulet"
+  overlappingOptions <- purchaseOptions overlapping
+  submitMustFail overlappingOptions (purchaseCommands overlapping)
+  assertPurchaseUnchanged overlapping

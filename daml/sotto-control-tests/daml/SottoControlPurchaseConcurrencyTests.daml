@@ -1,0 +1,45 @@
+module SottoControlPurchaseConcurrencyTests where
+
+import Daml.Script
+import Sotto.Control.PurchaseCapability
+import SottoControlPurchaseTestSupport
+import SottoControlPurchaseValidationTests
+import SottoControlTokenStandardMock
+
+concurrentConsumptionHasOneWinner : Script ()
+concurrentConsumptionHasOneWinner = do
+  fixture <- createPurchaseFixture Complete "Amulet"
+  options <- purchaseOptions fixture
+  let firstPurchase = (validCase fixture) with
+        attemptId = "sha256:concurrent-a"
+        purchaseCommitment = "sha256:purchase-a"
+  let secondPurchase = (validCase fixture) with
+        attemptId = "sha256:concurrent-b"
+        purchaseCommitment = "sha256:purchase-b"
+
+  (first, second) <- concurrently $
+    (,)
+      <$> trySubmit options
+        (purchaseCase fixture fixture.capabilityCid firstPurchase)
+      <*> trySubmit options
+        (purchaseCase fixture fixture.capabilityCid secondPurchase)
+  winner <- case (first, second) of
+    (Right result, Left _) -> pure result
+    (Left _, Right result) -> pure result
+    _ -> abort "concurrent purchase must accept exactly one command"
+
+  None <- queryContractId fixture.payer fixture.capabilityCid
+  None <- queryContractId fixture.payer fixture.holdingCid
+  Some replacement <- queryContractId fixture.payer winner.capabilityCid
+  assert (replacement.revision == 1)
+  assert (replacement.remainingAllowance == 3.0)
+
+  capabilities <- query @BoundedPurchaseCapability fixture.payer
+  contexts <- query @PurchaseContext fixture.payer
+  receiverHoldings <- query @MockHolding fixture.provider
+  pendingInstructions <- query @MockTransferInstruction fixture.payer
+  assert (length capabilities == 1)
+  assert (length contexts == 1)
+  assert (length receiverHoldings == 1)
+  assert (null pendingInstructions)
+  pure ()

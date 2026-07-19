@@ -1,0 +1,71 @@
+import type { Exercise } from "@canton-network/core-ledger-proto";
+import {
+  preparedContractIds,
+  preparedIdentifier,
+  preparedRecord,
+} from "./prepared-purchase-effect-values.js";
+import { preparedMetadata } from "./prepared-purchase-metadata-values.js";
+import { MAX_PREPARED_HOLDING_OUTPUTS } from "./prepared-purchase-resource-envelope.js";
+import type { PreparedTokenTransferIntent } from "./prepared-token-transfer-types.js";
+
+export type PreparedFactoryResult = Readonly<{
+  receiverHoldingCids: readonly string[];
+  senderChangeCids: readonly string[];
+}>;
+
+export function validatePreparedFactoryResult(
+  exercise: Exercise,
+  intent: PreparedTokenTransferIntent,
+): PreparedFactoryResult {
+  const packageId = intent.tokenFactory.interfaceId.split(":")[0]!;
+  const result = preparedRecord(
+    exercise.exerciseResult,
+    ["output", "senderChangeCids", "meta"],
+    "TransferFactory result",
+    `${packageId}:Splice.Api.Token.TransferInstructionV1:TransferInstructionResult`,
+  );
+  const output = result.get("output");
+  if (
+    output?.sum.oneofKind !== "variant" ||
+    output.sum.variant.constructor !== "TransferInstructionResult_Completed"
+  ) {
+    throw new Error("prepared TransferFactory effect result is not Completed");
+  }
+  preparedIdentifier(
+    output.sum.variant.variantId,
+    `${packageId}:Splice.Api.Token.TransferInstructionV1:TransferInstructionResult_Output`,
+    "TransferFactory result variant",
+  );
+  const completed = preparedRecord(
+    output.sum.variant.value,
+    ["receiverHoldingCids"],
+    "TransferFactory Completed result",
+    `${packageId}:Splice.Api.Token.TransferInstructionV1:TransferInstructionResult_Output.TransferInstructionResult_Completed`,
+  );
+  const receiverHoldingCids = preparedContractIds(
+    completed.get("receiverHoldingCids"),
+    "TransferFactory receiver holdings",
+  );
+  if (receiverHoldingCids.length === 0) {
+    throw new Error("prepared TransferFactory effect has no receiver holding");
+  }
+  if (receiverHoldingCids.length > MAX_PREPARED_HOLDING_OUTPUTS) {
+    throw new Error(
+      "prepared TransferFactory receiver output effects exceed limit",
+    );
+  }
+  const senderChangeCids = preparedContractIds(
+    result.get("senderChangeCids"),
+    "TransferFactory sender change",
+  );
+  if (senderChangeCids.length > MAX_PREPARED_HOLDING_OUTPUTS) {
+    throw new Error(
+      "prepared TransferFactory change output effects exceed limit",
+    );
+  }
+  preparedMetadata(result.get("meta"), "TransferFactory result metadata");
+  return Object.freeze({
+    receiverHoldingCids: Object.freeze(receiverHoldingCids),
+    senderChangeCids: Object.freeze(senderChangeCids),
+  });
+}

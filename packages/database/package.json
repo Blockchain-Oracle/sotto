@@ -1,0 +1,20 @@
+{
+  "name": "@sotto/database",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "exports": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json"
+  },
+  "dependencies": {
+    "@sotto/x402-canton": "workspace:*",
+    "node-pg-migrate": "8.0.4",
+    "pg": "8.22.0"
+  },
+  "devDependencies": {
+    "@types/pg": "8.20.0"
+  }
+}
