@@ -4,7 +4,7 @@ import { createSignerServer } from "./server.js";
 async function main(): Promise<void> {
   const env = readSignerEnvironment(process.env);
   const server = await createSignerServer({ env });
-  const address = await server.listen({ host: "127.0.0.1", port: env.port });
+  const address = await server.listen({ host: env.host, port: env.port });
   // Never log secrets or key material; the address and gate state only.
   process.stdout.write(
     `sotto-signer listening on ${address} (Five North ${

@@ -17,6 +17,7 @@ export type SignerFiveNorthEnvironment = Readonly<{
 
 export type SignerEnvironment = Readonly<{
   fiveNorth: SignerFiveNorthEnvironment | undefined;
+  host: string;
   keyDirectory: string;
   port: number;
   publicWalletOrigin: string;
@@ -104,6 +105,17 @@ function requirePublicWalletOrigin(source: SignerEnvironmentSource): string {
   return value;
 }
 
+function readHost(source: SignerEnvironmentSource): string {
+  const value = source.SIGNER_HOST;
+  if (value === undefined || value === "") return "127.0.0.1";
+  // Only loopback (the default custody posture) and all-interfaces (required
+  // behind a container reverse proxy such as Coolify) are meaningful here.
+  if (value !== "127.0.0.1" && value !== "0.0.0.0") {
+    invalid("SIGNER_HOST must be 127.0.0.1 or 0.0.0.0");
+  }
+  return value;
+}
+
 function readPort(source: SignerEnvironmentSource): number {
   const value = source.SIGNER_PORT;
   if (value === undefined || value === "") return 4402;
@@ -160,6 +172,7 @@ export function readSignerEnvironment(
 ): SignerEnvironment {
   return Object.freeze({
     fiveNorth: readFiveNorth(source),
+    host: readHost(source),
     keyDirectory: requireKeyDirectory(source),
     port: readPort(source),
     publicWalletOrigin: requirePublicWalletOrigin(source),

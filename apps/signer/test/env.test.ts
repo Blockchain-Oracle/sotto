@@ -38,7 +38,27 @@ describe("signer environment", () => {
     expect(env.keyDirectory).toBe(directory);
     expect(env.fiveNorth).toBeUndefined();
     expect(env.port).toBe(4402);
+    expect(env.host).toBe("127.0.0.1");
     expect(env.publicWalletOrigin).toBe("http://127.0.0.1:4402");
+  });
+
+  it("binds all interfaces only when SIGNER_HOST is 0.0.0.0", () => {
+    const directory = keyDirectory();
+    const env = readSignerEnvironment({
+      ...environmentSource(directory),
+      SIGNER_HOST: "0.0.0.0",
+    });
+    expect(env.host).toBe("0.0.0.0");
+  });
+
+  it("rejects an arbitrary SIGNER_HOST", () => {
+    const directory = keyDirectory();
+    expect(() =>
+      readSignerEnvironment({
+        ...environmentSource(directory),
+        SIGNER_HOST: "10.0.0.5",
+      }),
+    ).toThrow(/SIGNER_HOST/);
   });
 
   it("creates a missing key directory with mode 0700", () => {
