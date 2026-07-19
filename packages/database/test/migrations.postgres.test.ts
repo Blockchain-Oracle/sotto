@@ -100,6 +100,8 @@ describe("PostgreSQL migrations", () => {
         { name: "0009_human_execution_boundary" },
         { name: "0010_human_reconciliation" },
         { name: "0011_paid_delivery" },
+        { name: "0012_sotto_sessions" },
+        { name: "0013_worker_heartbeats" },
       ]);
     } finally {
       await client.end();

@@ -122,6 +122,28 @@ export async function findPurchaseAggregate(
   return result.rows[0];
 }
 
+export async function listPurchaseAggregates(
+  client: PoolClient,
+  input: Readonly<{ ownerId: string; limit: number; createdBefore?: Date }>,
+): Promise<readonly PurchaseAggregateRow[]> {
+  if (!Number.isInteger(input.limit) || input.limit < 1 || input.limit > 100) {
+    throw new PurchasePersistenceError();
+  }
+  const values: unknown[] = [input.ownerId, input.limit];
+  let filter = "attempt.owner_id::text = $1";
+  if (input.createdBefore !== undefined) {
+    values.push(input.createdBefore);
+    filter += " AND attempt.created_at < $3";
+  }
+  const result = await client.query<PurchaseAggregateRow>(
+    `${AGGREGATE_SELECT} WHERE ${filter}
+     ORDER BY attempt.created_at DESC, attempt.attempt_id
+     LIMIT $2`,
+    values,
+  );
+  return Object.freeze(result.rows);
+}
+
 export async function findPurchaseAggregateByAttemptId(
   client: PoolClient,
   attemptId: string,
