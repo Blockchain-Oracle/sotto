@@ -4,5 +4,9 @@
     "noEmit": true,
     "types": ["node", "vitest/globals"]
   },
-  "include": ["packages/**/*.ts", "spikes/**/*.ts"]
+  "include": [
+    "packages/**/*.ts",
+    "scripts/diagnostics/**/*.ts",
+    "spikes/**/*.ts"
+  ]
 }
