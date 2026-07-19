@@ -1,0 +1,53 @@
+# Nixpacks build for Sotto — ONE config, many Coolify services, selected by the
+# APP_NAME env var (set per service in Coolify). Mirrors the proven ZK Freighter
+# APP_NAME-dispatch pattern.
+#
+# Set APP_NAME in the Coolify service. Base Directory = / (repo root) for ALL
+# services so pnpm's workspace resolution sees every member.
+#
+#   Service          APP_NAME          Domain (usesotto.xyz)   Port    Ingress
+#   ───────────────  ────────────────  ──────────────────────  ─────   ───────
+#   site (default)   @sotto/site       usesotto.xyz            4101    yes
+#   app              @sotto/app        app.usesotto.xyz        4102    yes
+#   docs             @sotto/docs       docs.usesotto.xyz       4103    yes
+#   api              @sotto/api        api.usesotto.xyz        4104    yes
+#   signer           @sotto/signer     wallet.usesotto.xyz     4105    yes
+#   worker           @sotto/worker     (background)            —       no
+#
+# The Next apps (site/app) bake NEXT_PUBLIC_* env at BUILD time — set those on
+# the service so they reach this build phase. Node services (api/signer/worker)
+# read env at runtime. See docs/deploy/coolify.md for the per-service env matrix.
+
+[phases.setup]
+# nodejs_24 matches the repo's pinned engines (>=24.18.0 <25).
+nixPkgs = ["nodejs_24"]
+nixpkgsArchive = "nixos-25.11"
+
+[phases.install]
+# Dev deps (next / tsc / esbuild) are needed to BUILD, so install with
+# NODE_ENV=development even though services run in production.
+# COREPACK_INTEGRITY_KEYS=0 works around corepack's stale-signing-key bug
+# ("Cannot find matching keyid") when it fetches the pinned pnpm on fresh images.
+#
+# Unlike ZK Freighter we do NOT set onlyIncludeFiles: @sotto/docs runs a
+# `fumadocs-mdx` postinstall that reads content/docs, which must be present
+# during the install phase — restricting the copied files breaks that step.
+cmds = [
+  "COREPACK_INTEGRITY_KEYS=0 corepack enable",
+  "COREPACK_INTEGRITY_KEYS=0 NODE_ENV=development pnpm install --frozen-lockfile",
+]
+cacheDirectories = [".pnpm-store"]
+
+[phases.build]
+# `<pkg>...` builds the target AND its workspace deps in topological order.
+dependsOn = ["install"]
+cmds = ['pnpm --filter "${APP_NAME:-@sotto/site}..." build']
+
+[start]
+# Next apps pin their own --port; api/signer read API_PORT/SIGNER_PORT; the
+# port each service listens on must match its Coolify "Ports Exposes".
+cmd = 'pnpm --filter "${APP_NAME:-@sotto/site}" start'
+
+[variables]
+NODE_ENV = "production"
+COREPACK_INTEGRITY_KEYS = "0"
