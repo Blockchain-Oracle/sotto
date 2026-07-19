@@ -1,0 +1,25 @@
+{
+  "name": "@sotto/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "exports": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json"
+  },
+  "dependencies": {
+    "@fastify/cookie": "catalog:",
+    "@fastify/cors": "catalog:",
+    "@sotto/canton-client": "workspace:*",
+    "@sotto/catalog-probe": "workspace:*",
+    "@sotto/database": "workspace:*",
+    "@sotto/x402-canton": "workspace:*",
+    "fastify": "catalog:",
+    "pg": "catalog:"
+  },
+  "devDependencies": {
+    "@types/pg": "catalog:"
+  }
+}

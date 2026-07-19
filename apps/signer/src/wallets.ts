@@ -1,3 +1,4 @@
+import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 import {
   ensureOwnerOnlyDirectory,
@@ -34,6 +35,7 @@ export type WalletRecord = Readonly<{
 
 export type WalletDirectory = Readonly<{
   read: (walletId: string) => Promise<WalletRecord | undefined>;
+  findByPartyId: (partyId: string) => Promise<WalletRecord | undefined>;
   write: (record: WalletRecord) => Promise<void>;
 }>;
 
@@ -74,6 +76,19 @@ export async function createWalletDirectory(
     return value;
   };
 
+  const findByPartyId = async (
+    partyId: string,
+  ): Promise<WalletRecord | undefined> => {
+    if (partyId === "" || partyId.trim() !== partyId) return undefined;
+    const entries = await readdir(directory, { withFileTypes: true });
+    for (const entry of entries) {
+      if (!entry.isFile() || !entry.name.endsWith(".json")) continue;
+      const record = await read(entry.name.slice(0, -".json".length));
+      if (record !== undefined && record.partyId === partyId) return record;
+    }
+    return undefined;
+  };
+
   const write = async (record: WalletRecord): Promise<void> => {
     if (!isWalletRecord(record)) {
       throw new Error("signer wallet record is invalid");
@@ -81,5 +96,5 @@ export async function createWalletDirectory(
     await writeOwnerJson(directory, `${record.walletId}.json`, record);
   };
 
-  return Object.freeze({ read, write });
+  return Object.freeze({ findByPartyId, read, write });
 }

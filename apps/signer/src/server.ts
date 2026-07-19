@@ -18,6 +18,7 @@ import {
 } from "./five-north.js";
 import { createSignerKeystore } from "./keystore.js";
 import { registerOnboardingRoutes } from "./onboarding.js";
+import { registerProfileRoutes } from "./profile.js";
 import { registerWalletSessionRoutes } from "./wallet-session.js";
 import { createWalletDirectory } from "./wallets.js";
 
@@ -92,6 +93,7 @@ export async function createSignerServer(
 
   registerApprovalRoutes(server, context);
   registerOnboardingRoutes(server, context);
+  registerProfileRoutes(server, context);
   await registerWalletSessionRoutes(server, context);
   registerApprovalPageRoutes(server, context);
 

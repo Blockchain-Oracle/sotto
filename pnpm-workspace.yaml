@@ -20,6 +20,7 @@ catalog:
   # its provenance test locks the exact specifier and artifact integrity.
   "@eslint/js": 10.0.1
   "@fastify/cookie": 11.1.2
+  "@fastify/cors": 11.3.0
   "@radix-ui/react-dialog": 1.1.19
   "@radix-ui/react-select": 2.3.3
   "@radix-ui/react-tabs": 1.1.17
