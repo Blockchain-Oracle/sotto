@@ -1,0 +1,37 @@
+{
+  "name": "@sotto/purchase-client",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "license": "Apache-2.0",
+  "description": "Typed client for the Sotto Canton x402 purchasing API — catalog, purchases, lifecycle events, evidence, and stats. No signing capability.",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Blockchain-Oracle/sotto-x402.git",
+    "directory": "packages/purchase-client"
+  },
+  "homepage": "https://usesotto.xyz",
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup && node ../../scripts/verify-package.mjs"
+  },
+  "devDependencies": {
+    "tsup": "catalog:"
+  }
+}

@@ -12,6 +12,7 @@ const containerName = `sotto-postgres-${process.pid}-${randomBytes(4).toString("
 const postgresTests = [
   ["apps/api/test", "../apps/api/test/"],
   ["apps/worker/test", "../apps/worker/test/"],
+  ["packages/cli/test", "../packages/cli/test/"],
   ["packages/database/test", "../packages/database/test/"],
   ["packages/purchase-worker/test", "../packages/purchase-worker/test/"],
 ]

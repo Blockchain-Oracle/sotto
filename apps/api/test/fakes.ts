@@ -48,6 +48,7 @@ export function publishedResource(
   overrides: Partial<PublicPublishedResource> = {},
 ): PublicPublishedResource {
   return Object.freeze({
+    listingId: "018f3f24-7d4a-7e2c-a421-0f3473b96021",
     resourceId: "018f3f24-7d4a-7e2c-a421-0f3473b96005",
     resourceRevisionId: "018f3f24-7d4a-7e2c-a421-0f3473b96006",
     listingVersion: 1,
