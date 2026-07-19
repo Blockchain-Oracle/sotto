@@ -8,11 +8,16 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "test": "vitest run test"
+    "test": "vitest run test",
+    "wallet:tap": "tsx src/five-north-external-payer-tap-cli.ts",
+    "wallet:revoke": "tsx src/five-north-capability-revoke-cli.ts"
   },
   "dependencies": {
-    "@canton-network/core-ledger-proto": "1.7.0",
-    "@canton-network/wallet-sdk": "1.4.0",
+    "@canton-network/core-ledger-proto": "catalog:",
+    "@canton-network/wallet-sdk": "catalog:",
     "@sotto/x402-canton": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "catalog:"
   }
 }
