@@ -1,0 +1,102 @@
+/* Gallery page chrome only — tokens from theme.css, no raw hex. */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 14px;
+}
+
+.g-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.g-header h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-weight: 560;
+  font-size: 20px;
+}
+
+.g-header .g-controls {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.g-note {
+  padding: 8px 24px;
+  font-size: 12px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+}
+
+.g-main {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 24px 24px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+.g-section > h2 {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 6px;
+  margin: 0 0 14px;
+}
+
+.g-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.g-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.g-caption {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 6px;
+}
+
+.g-voice-display {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-weight: 560;
+  font-size: 28px;
+  text-wrap: balance;
+  margin: 0;
+}
+
+.g-voice-mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+}

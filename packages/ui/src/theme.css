@@ -1,0 +1,159 @@
+/*
+ * Sotto Voce — design tokens (DESIGN.md §2, §4).
+ *
+ * This is the ONLY file in the repository allowed to contain raw hex.
+ * The single sanctioned exception outside this file is the unmodified
+ * official partner mark assets under src/marks/assets/, governed by
+ * packages/ui/ASSET-MANIFEST.md.
+ *
+ * Themes: Carta (light) is the default; Notte (dark) is first-class and
+ * applies via prefers-color-scheme or an explicit [data-theme] stamp.
+ * An explicit [data-theme] always wins over the media query.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* Carta */
+  --canvas: #f6f5f1;
+  --surface: #fffefb;
+  --ink: #16181f;
+  --muted: #63666f;
+  --line: #e3e1d8;
+  --lapis: #2b3fc4;
+  --verde: #0e7a45;
+  --ametista: #7a4694;
+  --ambra: #9a6a00;
+  --rosso: #b3261e;
+
+  /* Type voices (DESIGN.md §3) */
+  --font-display: "Fraunces Variable", "Iowan Old Style", Georgia, serif;
+  --font-sans:
+    "Geist Sans", system-ui, -apple-system, "Segoe UI", Helvetica, Arial,
+    sans-serif;
+  --font-mono:
+    "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Motion — cue → sound → decay (DESIGN.md §4). One-shot, total ≤ 550ms. */
+  --dur-cue: 240ms;
+  --dur-sound: 340ms;
+  --dur-decay: 180ms;
+  --ease-draw: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-land: cubic-bezier(0.2, 0.9, 0.3, 1);
+  --ease-decay: cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    /* Notte — "the quiet room" */
+    --canvas: #10131a;
+    --surface: #171b24;
+    --ink: #ececed;
+    --muted: #8e91a0;
+    --line: #252a36;
+    --lapis: #6d7df2;
+    --verde: #3fc98a;
+    --ametista: #b98cd1;
+    --ambra: #d9a03f;
+    --rosso: #ef6a5f;
+  }
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Notte — "the quiet room" */
+  --canvas: #10131a;
+  --surface: #171b24;
+  --ink: #ececed;
+  --muted: #8e91a0;
+  --line: #252a36;
+  --lapis: #6d7df2;
+  --verde: #3fc98a;
+  --ametista: #b98cd1;
+  --ambra: #d9a03f;
+  --rosso: #ef6a5f;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* Carta */
+  --canvas: #f6f5f1;
+  --surface: #fffefb;
+  --ink: #16181f;
+  --muted: #63666f;
+  --line: #e3e1d8;
+  --lapis: #2b3fc4;
+  --verde: #0e7a45;
+  --ametista: #7a4694;
+  --ambra: #9a6a00;
+  --rosso: #b3261e;
+}
+
+/*
+ * Motion gate.
+ *
+ * The one-shot cue → sound → decay classes below are applied by primitives
+ * exactly when a REAL event lands (never on a timer). Two gates disable
+ * them: the user's prefers-reduced-motion setting, and an explicit
+ * data-motion="off" stamp on any ancestor. Under either gate, final states
+ * render with opacity-only changes (DESIGN.md §4).
+ */
+
+.sv-cue {
+  transform-origin: left center;
+  animation: sv-cue var(--dur-cue) var(--ease-draw) both;
+}
+
+@keyframes sv-cue {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.sv-sound {
+  animation: sv-sound var(--dur-sound) var(--ease-land) both;
+}
+
+@keyframes sv-sound {
+  0% {
+    transform: scale(1.5);
+    opacity: 0.35;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.sv-decay {
+  animation: sv-decay var(--dur-decay) var(--ease-decay) both;
+}
+
+@keyframes sv-decay {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sv-cue,
+  .sv-sound {
+    animation: sv-decay var(--dur-decay) linear both;
+  }
+}
+
+[data-motion="off"] .sv-cue,
+[data-motion="off"] .sv-sound,
+[data-motion="off"] .sv-decay {
+  animation: none;
+}
