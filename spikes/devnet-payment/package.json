@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "license": "Apache-2.0",
+  "exports": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "dependencies": {
     "@canton-network/core-provider-dapp": "catalog:",
     "@sotto/capability-wallet": "workspace:*",
