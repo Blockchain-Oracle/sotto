@@ -1,0 +1,55 @@
+---
+title: Security model
+description:
+  No raw keys, wallets outside the process boundary, replay-safe sessions, and
+  honest labeling of local policy.
+---
+
+## The key never enters Sotto
+
+The payer key lives in a wallet process outside the Sotto application — your own
+Canton wallet through the wallet-neutral connector, or the hosted reference
+wallet (`apps/signer`), which is itself a separate process with an owner-only
+key store. In the recorded DevNet purchases the application received **only a
+verified signature**; it held no payer key and no payer `actAs` authority, and a
+matched prepare-only control proved the agent could not prepare the direct payer
+transfer that the payer could.
+
+## What a signature authorizes
+
+Exactly one prepared transaction, verified before approval:
+
+- complete decoded effects — recipient, instrument, amount, fee ceiling,
+  total-debit ceiling, time bounds;
+- the official Canton V2 prepared-transaction hash, recomputed independently and
+  matched against the participant;
+- an execute-before deadline and an approval expiry.
+
+There is no blanket allowance, no standing session that can spend, and no
+signing tool exposed to a model.
+
+## Sessions
+
+Wallet sessions, Sotto owner sessions, human approval, and autonomous signer
+authority are distinct by design. Sotto owner sessions use replay-safe
+party-control proof — a challenge signed to prove control of the owner's Canton
+party — not email OTP. The phrase "this signature does not move funds" appears
+only on session login, never on a payment approval, because a payment approval
+_does_ move funds and is labeled as exactly that.
+
+## Local policy is labeled local policy
+
+Process-local guards — one-use policy files, journal file modes (`0700`
+directories, `0600` records), connector-side checks — are real controls, but
+they are **not** ledger enforcement, and Sotto never presents them as such.
+Ledger-enforced bounds are exactly the recorded `BoundedPurchaseCapability`
+semantics proven on Five North: per-call limit, remaining allowance, expiry,
+revocation, and duplicate rejection, enforced by Daml on the ledger. Anything
+weaker is named "local policy" wherever it appears.
+
+## What remains open
+
+Production wallet connector custody, durable PostgreSQL-backed delivery recovery
+in a deployed topology, and upstream relay equivalence are recorded as open
+gates in `docs/architecture/devnet-spike-result.md`. This page will change when
+they close — not before.

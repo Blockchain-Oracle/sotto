@@ -6,6 +6,12 @@ packages:
 allowBuilds:
   esbuild: true
 
+# next lists sharp (and its LGPL libvips binaries) as an optional image
+# optimizer; no surface here uses next/image optimization, and the LGPL
+# artifact fails the repository license gate, so it is never installed.
+ignoredOptionalDependencies:
+  - sharp
+
 catalog:
   "@canton-network/core-ledger-proto": 1.7.0
   "@canton-network/core-provider-dapp": 1.8.0
@@ -26,9 +32,17 @@ catalog:
   "@types/react": 19.2.17
   "@types/react-dom": 19.2.3
   "@vitejs/plugin-react": 6.0.3
+  "@types/mdx": 2.0.14
   eslint: 10.7.0
   fastify: 5.10.0
+  fumadocs-core: 16.11.5
+  # fumadocs-mdx stays on 14.x: 15.x adds the yuku-analyzer native binding,
+  # whose platform package publishes no license field and fails the
+  # repository license gate.
+  fumadocs-mdx: 14.3.2
+  fumadocs-ui: 16.11.5
   globals: 17.7.0
+  next: 16.2.10
   happy-dom: 20.11.0
   node-pg-migrate: 8.0.4
   pg: 8.22.0

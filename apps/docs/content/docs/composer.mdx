@@ -1,0 +1,52 @@
+---
+title: Composer lifecycle
+description:
+  Every journal state of a human purchase, from intent to settlement and
+  delivery — including settled-undelivered.
+---
+
+Composer is the execution surface: it turns a verified listing into one exact
+paid call. Its spine is the **owner-only purchase journal** in
+`packages/database` — an append-only, hash-chained sequence of events. A
+purchase is never "done" because a spinner finished; it is in exactly the state
+its latest durable event says.
+
+## The journal, event by event
+
+| #   | Event / state            | Meaning                                                                                                    |
+| --- | ------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| 1   | `intent`                 | The exact call is recorded: resource revision, request commitment, amount, ceilings.                       |
+| 2   | `prepared-hash-verified` | One transaction was prepared; its complete effects and the official Canton V2 hash verified independently. |
+| 3   | `approval-requested`     | The wallet was asked to display and approve the exact summary.                                             |
+| 3   | `wallet-rejected`        | The human declined. Terminal; nothing was signed.                                                          |
+| 3   | `wallet-unsupported`     | The connector cannot satisfy the request. Terminal; nothing was signed.                                    |
+| 4   | `signature-verified`     | The wallet returned a signature and Sotto verified it against the prepared-transaction hash.               |
+| 5   | `execution-started`      | The exact fenced execution intent (command ID, submission ID, user) was committed **before** dispatch.     |
+| 6   | `settlement-reconciled`  | A reconciliation job proved the exact accepted Canton update at an exact offset. The verde double barline. |
+| 6   | `settlement-rejected`    | The command completed with an exact rejection. No payment happened.                                        |
+
+## Reconciling: absence is non-terminal
+
+Between `execution-started` and either terminal settlement event, the purchase
+is **reconciling**. The rule, proven live on Five North: an early ledger lookup
+that finds nothing is _not_ an answer. Only an exact success or an exact
+rejection is terminal; the reconciliation worker re-observes until it has one,
+and it survives process restarts with generation-fenced leases so a stale worker
+can never write the terminal event.
+
+## Delivery is its own outcome
+
+After `settlement-reconciled`, the paid retry runs and delivery is recorded
+separately:
+
+- **`delivered`** — the identical paid request returned the authentic response;
+  the journal keeps the status, byte count, and body hash.
+- **`settled-undelivered`** — settlement is proven but the response never
+  arrived. This is a real recorded state, not a hypothetical: the settlement
+  immediately preceding the proven DevNet purchase lost its delivery when the
+  provider closed, was recovered as `settled-undelivered`, and was never
+  replayed or relabeled.
+
+Composer therefore never shows a generic "Success". Settlement and delivery each
+carry their own mark, and a delivered response can be re-read from the journal
+without a second submission or a second payment.

@@ -1,0 +1,51 @@
+---
+title: Evidence and visibility
+description:
+  Who can read what — party-scoped Daml visibility, public explorer settlement,
+  and the redaction rules.
+---
+
+Every purchase produces evidence at three visibility levels. The boundaries
+below are not policy prose — they are the recorded visibility result of the Five
+North spike (`docs/architecture/devnet-spike-result.md`).
+
+## Public here
+
+The Canton Coin settlement is a network fact. For the recorded external-agent
+purchase, an **anonymous** query to the public Lighthouse explorer
+(`lighthouse.devnet.cantonloop.com`) returned HTTP `200` for the exact accepted
+update. Public indexing is asynchronous: the later human-wallet update was still
+ahead of the explorer's cursor at the last recheck and is classified
+_indexing-pending_, not failed.
+
+What the public view contains: the accepted update and its Canton Coin transfer.
+Nothing else.
+
+## Not public here
+
+The purchase context is a private Daml contract. In the recorded result:
+
+- The **outsider** party-scoped ACS read found **zero** purchase contexts.
+- The outsider's direct transaction lookup returned **404** — unauthorized
+  lookup is existence-hiding, not a redacted stub.
+- The request body, response body, and canonical URL never enter the public
+  record; the tracked evidence bundle keeps the paid response only as a byte
+  count and SHA-256 hash.
+
+## Who reads the receipt
+
+| Reader           | Sees                                                                               |
+| ---------------- | ---------------------------------------------------------------------------------- |
+| Owner / payer    | The full enriched receipt: journal, request commitment, amounts, update, delivery. |
+| Initiating agent | The same enriched receipt for purchases it initiated.                              |
+| Provider         | Only its settlement and delivery reference — the update and its own holding.       |
+| Operator, public | Redacted evidence only.                                                            |
+| Anyone else      | Nothing; lookups are existence-hiding.                                             |
+
+## Redaction rules
+
+Withheld fields are veiled with their exact reason (for example, "Private
+resource context") — never silently omitted, and never rendered beneath a
+decorative blur that could be lifted. Truncated identifiers (party IDs, update
+IDs) are display conventions only; copy actions always return the full value,
+and the full values live in the tracked evidence bundle.

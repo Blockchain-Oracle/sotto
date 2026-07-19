@@ -1,0 +1,61 @@
+---
+title: x402 on Canton
+description:
+  How an HTTP 402 challenge becomes one exact Canton settlement — challenge,
+  authorization, settlement, paid retry.
+---
+
+x402 turns HTTP `402 Payment Required` into a machine-payable protocol: the
+server answers with a structured payment challenge, the client pays, and the
+client retries the request with proof of payment. Sotto speaks the x402 v2
+`exact` scheme on `canton:*` networks.
+
+Canton x402 infrastructure predates Sotto: **FTPtech already ships the Canton
+x402 facilitator, payer, middleware, MCP, and reference integration packages**,
+and Sotto's accepted product decision is to reuse and credit that existing
+infrastructure rather than pretend to invent the rail. The recorded spike flows
+used Sotto's direct Five North adapter and temporary providers, so upstream
+relay interoperability is explicitly _not yet established_ — that boundary is
+recorded, not hidden.
+
+## The flow
+
+```
+GET /resource            → 402 + challenge (scheme, network, asset,
+                            recipient, amountAtomic, transfer method)
+prepare                  → one token transfer on Five North, verified
+                            effect-by-effect + official hash recomputation
+authorize                → the wallet displays the exact summary and
+                            signs once, outside the Sotto process
+execute + reconcile      → one accepted Canton update at an exact offset
+GET /resource (paid)     → authentic 200, recorded as delivery
+```
+
+### 1. Challenge
+
+The fresh `402` binds the exact request — method and canonical URL — into a
+request commitment. A mutated request does not match the commitment; in the
+recorded spike, a mutated attempt was answered `402`, not `200`.
+
+### 2. Authorization
+
+Preparation happens before approval, verification before signing. The verifier
+decodes the complete prepared transaction graph — roots, descendants, packages,
+parties, input contracts, recipient, instrument, amount, fee and total-debit
+accounting, metadata, time bounds — and independently recomputes the official
+Canton V2 prepared-transaction hash. Only then does the wallet see an approval
+request.
+
+### 3. Canton settlement
+
+The signed transaction settles as **one** Canton update. In the recorded agent
+flow, a single update consumed the bounded capability, paid the provider 0.25
+CC, returned 0.75 CC change to the payer, and created the reduced replacement
+capability — atomically.
+
+### 4. Paid retry
+
+The identical request is retried with proof of settlement and the authentic
+response is recorded as delivery. Replaying the same proof returns the same
+response **without a second submission** — one payment, one settlement, however
+many honest re-reads.

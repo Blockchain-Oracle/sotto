@@ -1,0 +1,143 @@
+/*
+ * Sotto docs — fumadocs variables mapped onto the Sotto Voce tokens.
+ * The values live in @sotto/ui/theme.css (the only raw-hex file); this
+ * file only routes them. next-themes stamps BOTH `.dark` (fumadocs
+ * internals) and [data-theme] (Sotto tokens), so var(--…) references
+ * below resolve per theme automatically.
+ */
+
+:root,
+.dark {
+  --color-fd-background: var(--canvas);
+  --color-fd-foreground: var(--ink);
+  --color-fd-card: var(--surface);
+  --color-fd-card-foreground: var(--ink);
+  --color-fd-popover: var(--surface);
+  --color-fd-popover-foreground: var(--ink);
+  --color-fd-muted: color-mix(in srgb, var(--line) 42%, var(--canvas));
+  --color-fd-muted-foreground: var(--muted);
+  --color-fd-border: var(--line);
+  --color-fd-primary: var(--lapis);
+  --color-fd-primary-foreground: var(--surface);
+  --color-fd-secondary: color-mix(in srgb, var(--line) 34%, var(--canvas));
+  --color-fd-secondary-foreground: var(--ink);
+  --color-fd-accent: color-mix(in srgb, var(--lapis) 10%, transparent);
+  --color-fd-accent-foreground: var(--ink);
+  --color-fd-ring: var(--lapis);
+  --color-fd-info: var(--lapis);
+  --color-fd-warning: var(--ambra);
+  --color-fd-error: var(--rosso);
+  --color-fd-success: var(--verde);
+}
+
+/* fumadocs' neutral theme restates sidebar grays on .dark; keep tokens. */
+.dark #nd-sidebar {
+  --color-fd-muted: color-mix(in srgb, var(--line) 42%, var(--canvas));
+  --color-fd-secondary: color-mix(in srgb, var(--line) 34%, var(--canvas));
+  --color-fd-muted-foreground: var(--muted);
+}
+
+body {
+  font-family: var(--font-sans);
+  letter-spacing: 0.002em;
+}
+
+code,
+kbd,
+pre,
+samp {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The speaking voice appears once per page: the document title. */
+article h1 {
+  font-family: var(--font-display);
+  font-weight: 560;
+  font-variation-settings: "opsz" 60;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--lapis) 22%, transparent);
+}
+
+/* ---- loading / error / not-found boundaries --------------------------- */
+
+.docs-loading {
+  padding: 48px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 720px;
+}
+
+.docs-loading-title,
+.docs-loading-line {
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--line) 55%, var(--canvas));
+}
+
+.docs-loading-title {
+  height: 34px;
+  width: 55%;
+  margin-bottom: 10px;
+}
+
+.docs-loading-line {
+  height: 14px;
+  width: 100%;
+}
+
+.docs-loading-line-short {
+  width: 62%;
+}
+
+.docs-error,
+.docs-notfound {
+  padding: 64px 32px;
+  max-width: 640px;
+}
+
+.docs-error-title {
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+
+.docs-error-detail {
+  color: var(--muted);
+  margin: 0 0 16px;
+}
+
+.docs-error-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.docs-error-actions button {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  padding: 6px 14px;
+  cursor: pointer;
+}
+
+.docs-error-actions a,
+.docs-notfound a {
+  color: var(--lapis);
+}
+
+.docs-notfound-code {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin: 0 0 10px;
+}

@@ -1,0 +1,14 @@
+{
+  "title": "Sotto",
+  "pages": [
+    "index",
+    "getting-started",
+    "add-api",
+    "composer",
+    "evidence",
+    "x402-on-canton",
+    "security",
+    "cli",
+    "mcp"
+  ]
+}
