@@ -26,7 +26,7 @@
     "spike": "echo 'spike CLIs moved: pnpm --filter @sotto/devnet-payment-spike run <name> (see spikes/*/package.json)'",
     "test": "node scripts/build-workspaces.mjs && corepack pnpm test:unit",
     "test:postgres": "corepack pnpm --filter @sotto/catalog-probe... --filter @sotto/purchase-worker... --filter @sotto/capability-wallet... build && node scripts/run-postgres-integration.mjs",
-    "test:unit": "vitest run --exclude '**/*.postgres.test.ts'",
+    "test:unit": "vitest run --exclude '**/*.postgres.test.ts' --exclude '**/*.live.test.ts'",
     "turbo:build": "turbo run build",
     "turbo:test": "turbo run test",
     "typecheck": "tsc --noEmit --pretty false",
