@@ -10,6 +10,7 @@ const username = "sotto_test";
 const password = randomBytes(24).toString("hex");
 const containerName = `sotto-postgres-${process.pid}-${randomBytes(4).toString("hex")}`;
 const postgresTests = [
+  ["apps/worker/test", "../apps/worker/test/"],
   ["packages/database/test", "../packages/database/test/"],
   ["packages/purchase-worker/test", "../packages/purchase-worker/test/"],
 ]
@@ -147,7 +148,7 @@ async function main() {
       "--hookTimeout=120000",
       "--maxWorkers=1",
     ],
-    { env: testEnvironment, stdio: "inherit", timeout: 150_000 },
+    { env: testEnvironment, stdio: "inherit", timeout: 240_000 },
   );
   if (test.error !== undefined) throw test.error;
   process.exitCode = test.status ?? 1;

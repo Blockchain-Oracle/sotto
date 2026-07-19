@@ -9,6 +9,7 @@ export {
   CAPABILITY_COMPLETION_QUERY,
   createFiveNorthCapabilityCompletionPageReader,
 } from "./five-north-capability-completion-transport.js";
+export { createFiveNorthHumanPackageSelectionClaimer } from "./five-north-human-package-preference.js";
 export {
   createFiveNorthHumanPurchaseReaders,
   type FiveNorthHumanPurchaseReaders,
