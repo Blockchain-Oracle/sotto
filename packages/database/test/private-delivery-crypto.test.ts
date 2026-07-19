@@ -90,13 +90,14 @@ describe("private delivery AEAD", () => {
       }),
     ).toThrow("private delivery key configuration is invalid");
     const maximum = new Uint8Array(MAX_PRIVATE_DELIVERY_PAYLOAD_BYTES).fill(3);
-    expect(
-      openPrivateDeliveryPayload(
-        keyring(),
-        sealPrivateDeliveryPayload(keyring(), maximum, aad),
-        aad,
-      ),
-    ).toEqual(maximum);
+    const roundTrip = openPrivateDeliveryPayload(
+      keyring(),
+      sealPrivateDeliveryPayload(keyring(), maximum, aad),
+      aad,
+    );
+    expect(Buffer.compare(Buffer.from(roundTrip), Buffer.from(maximum))).toBe(
+      0,
+    );
     expect(() =>
       sealPrivateDeliveryPayload(
         keyring(),
