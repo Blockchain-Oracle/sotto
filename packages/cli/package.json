@@ -1,5 +1,5 @@
 {
-  "name": "@sotto/cli",
+  "name": "@usesotto/cli",
   "version": "0.1.0",
   "private": false,
   "type": "module",
@@ -26,7 +26,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Blockchain-Oracle/sotto-x402.git",
+    "url": "git+https://github.com/Blockchain-Oracle/sotto.git",
     "directory": "packages/cli"
   },
   "homepage": "https://usesotto.xyz",

@@ -89,7 +89,7 @@ afterAll(async () => {
   await harness?.close();
 });
 
-describe("packed @sotto/cli against a real API + PostgreSQL", () => {
+describe("packed @usesotto/cli against a real API + PostgreSQL", () => {
   it("reports its version from the installed tarball", async () => {
     const result = await runCli(["--version"], {});
     expect(result.status).toBe(0);

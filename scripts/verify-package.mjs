@@ -34,7 +34,7 @@ for (const [label, candidate] of [
     fail(`the packaged ${label} entry exports nothing`);
   }
 }
-if (manifest.name === "@sotto/cli") {
+if (manifest.name === "@usesotto/cli") {
   for (const candidate of [esm, cjs]) {
     if (typeof candidate.run !== "function") fail("run() export missing");
     if (candidate.CLI_VERSION !== manifest.version) {
