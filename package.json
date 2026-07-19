@@ -29,11 +29,12 @@
     "test:unit": "vitest run --exclude '**/*.postgres.test.ts' --exclude '**/*.live.test.ts'",
     "turbo:build": "turbo run build",
     "turbo:test": "turbo run test",
-    "typecheck": "tsc --noEmit --pretty false && corepack pnpm --filter @sotto/site --filter @sotto/docs typecheck",
+    "typecheck": "tsc --noEmit --pretty false && corepack pnpm --filter @sotto/site --filter @sotto/docs --filter @sotto/app typecheck",
     "verify": "node scripts/verify.mjs"
   },
   "devDependencies": {
     "@eslint/js": "catalog:",
+    "@playwright/test": "catalog:",
     "@secretlint/secretlint-rule-preset-recommend": "catalog:",
     "@types/node": "catalog:",
     "eslint": "catalog:",

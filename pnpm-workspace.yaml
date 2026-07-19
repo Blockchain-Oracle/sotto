@@ -19,6 +19,9 @@ catalog:
   # @canton-network/wallet-sdk stays a literal pin in spikes/capability-wallet;
   # its provenance test locks the exact specifier and artifact integrity.
   "@eslint/js": 10.0.1
+  # Design QA only (scripts/shoot.mjs). Browser binaries are NOT downloaded
+  # by install; shoot.mjs falls back to the system Chrome channel.
+  "@playwright/test": 1.61.1
   "@fastify/cookie": 11.1.2
   "@fastify/cors": 11.3.0
   "@radix-ui/react-dialog": 1.1.19
