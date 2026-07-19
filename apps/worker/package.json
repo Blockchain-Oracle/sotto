@@ -1,0 +1,23 @@
+{
+  "name": "@sotto/worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "exports": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json"
+  },
+  "dependencies": {
+    "@sotto/canton-client": "workspace:*",
+    "@sotto/catalog-probe": "workspace:*",
+    "@sotto/database": "workspace:*",
+    "@sotto/purchase-worker": "workspace:*",
+    "@sotto/x402-canton": "workspace:*",
+    "pg": "catalog:"
+  },
+  "devDependencies": {
+    "@types/pg": "catalog:"
+  }
+}

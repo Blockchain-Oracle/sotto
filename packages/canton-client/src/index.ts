@@ -4,6 +4,7 @@ export {
   CAPABILITY_COMPLETION_QUERY,
   createFiveNorthCapabilityCompletionPageReader,
   createFiveNorthClient,
+  createFiveNorthHumanPackageSelectionClaimer,
   createFiveNorthHumanPurchaseReaders,
   createFiveNorthHumanWalletExecuteTransport,
   createFiveNorthPrepareTransport,
