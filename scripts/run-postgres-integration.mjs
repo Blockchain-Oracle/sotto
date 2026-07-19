@@ -10,6 +10,7 @@ const username = "sotto_test";
 const password = randomBytes(24).toString("hex");
 const containerName = `sotto-postgres-${process.pid}-${randomBytes(4).toString("hex")}`;
 const postgresTests = [
+  ["apps/api/test", "../apps/api/test/"],
   ["apps/worker/test", "../apps/worker/test/"],
   ["packages/database/test", "../packages/database/test/"],
   ["packages/purchase-worker/test", "../packages/purchase-worker/test/"],
