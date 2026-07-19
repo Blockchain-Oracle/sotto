@@ -27,7 +27,7 @@ it("installs the exact terminal reconciliation schema and indexes", async () => 
       "SELECT name FROM public.sotto_migrations ORDER BY id",
     );
     expect(history.rows.at(-1)).toEqual({
-      name: "0011_paid_delivery",
+      name: "0013_worker_heartbeats",
     });
     const columns = await client.query<{ columnName: string }>(
       `SELECT column_name AS "columnName" FROM information_schema.columns

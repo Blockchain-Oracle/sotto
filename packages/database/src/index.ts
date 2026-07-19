@@ -4,6 +4,25 @@ export {
 } from "./migrate.js";
 export { createCatalogRepository } from "./catalog.js";
 export { createPurchaseRepository } from "./purchase.js";
+export {
+  listPublicResources,
+  publicResourceByListing,
+  publicResourceByPublication,
+} from "./publication-public-query.js";
+export { publishVerifiedResource } from "./publication-publish.js";
+export {
+  findPurchaseAggregate,
+  findPurchaseAggregateByAttemptId,
+  listPurchaseAggregates,
+  type PurchaseAggregateRow,
+} from "./purchase-query.js";
+export { purchaseLifecycle } from "./purchase-query-lifecycle.js";
+export {
+  findLatestResourceHealth,
+  recordHealthObservation,
+  recordProbeHealth,
+} from "./resource-health.js";
+export { findProbeHealthById } from "./resource-health-recovery.js";
 export { createHumanReconciliationRepositoryRuntime } from "./human-reconciliation-postgres.js";
 export { createPrepareAuthorityKeyring } from "./private-prepare-authority-keyring.js";
 export { createPrivateDeliveryKeyring } from "./private-delivery-keyring.js";

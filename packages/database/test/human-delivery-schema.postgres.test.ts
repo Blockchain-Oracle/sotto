@@ -20,7 +20,7 @@ it("installs the durable private payload, delivery claim, and response schema", 
     const history = await client.query<{ name: string }>(
       "SELECT name FROM public.sotto_migrations ORDER BY id",
     );
-    expect(history.rows.at(-1)).toEqual({ name: "0011_paid_delivery" });
+    expect(history.rows.at(-1)).toEqual({ name: "0013_worker_heartbeats" });
 
     const tables = await client.query<{
       claims: string | null;
@@ -87,7 +87,7 @@ it("blocks migration rollback while private delivery material exists", async () 
       databaseUrl: context.database.databaseUrl,
       dir: fileURLToPath(new URL("../migrations/", import.meta.url)),
       direction: "down",
-      count: 1,
+      count: 3,
       migrationsTable: "sotto_migrations",
       migrationsSchema: "public",
       schema: "public",

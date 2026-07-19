@@ -186,7 +186,7 @@ it("upgrades event-1/event-2 attempts into the human execution boundary", async 
         "SELECT name FROM public.sotto_migrations ORDER BY id",
       );
       expect(history.rows.at(-1)).toEqual({
-        name: "0011_paid_delivery",
+        name: "0013_worker_heartbeats",
       });
 
       const settlement = await client.query<{
