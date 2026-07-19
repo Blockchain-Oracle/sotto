@@ -188,6 +188,19 @@ it("blocks rollback after the reconciliation cursor advances", async () => {
   } finally {
     await attempt.purchase.close();
   }
+  const client = new Client({ connectionString: context.database.databaseUrl });
+  await client.connect();
+  try {
+    await client.query(
+      "ALTER TABLE sotto.private_attempt_payloads DISABLE TRIGGER private_attempt_payloads_immutable",
+    );
+    await client.query("DELETE FROM sotto.private_attempt_payloads");
+    await client.query(
+      "ALTER TABLE sotto.private_attempt_payloads ENABLE TRIGGER private_attempt_payloads_immutable",
+    );
+  } finally {
+    await client.end();
+  }
   await expect(rollbackLatestReconciliationMigration(context)).rejects.toThrow(
     /reconciliation records must be archived/iu,
   );

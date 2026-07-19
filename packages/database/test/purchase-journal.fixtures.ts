@@ -1,4 +1,5 @@
 import type {
+  HttpRequestBindingInput,
   HumanPurchaseJournalIntent,
   HumanPurchaseLedgerIntent,
 } from "@sotto/x402-canton";
@@ -23,10 +24,12 @@ export const humanPurchaseBinding: HumanPurchasePersistenceBinding =
 
 export async function catalogHumanPurchaseIntent(
   mutateChallenge: (challenge: JournalChallenge) => void = () => undefined,
+  request?: HttpRequestBindingInput,
 ): Promise<HumanPurchaseLedgerIntent> {
   return authenticatedCatalogHumanPurchaseIntent(
     PURCHASE_RESOURCE_URL,
     mutateChallenge,
+    request,
   );
 }
 

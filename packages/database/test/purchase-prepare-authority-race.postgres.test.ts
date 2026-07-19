@@ -8,6 +8,7 @@ import {
 import {
   createPurchaseTestRuntime,
   restorePurchasePrepareAuthorityForTest,
+  testPrivateDeliveryKeyring,
   testPrepareAuthorityKeyring,
 } from "./purchase-postgres.fixtures.js";
 import { freshHumanPrepareAuthority } from "./purchase-prepare-authority.fixture.js";
@@ -27,6 +28,7 @@ it("revalidates durable state before minting restored authority", async () => {
   });
   const purchase = context.runtime.createPurchaseRepository({
     databaseUrl: context.database.databaseUrl,
+    privateDeliveryKeyring: testPrivateDeliveryKeyring(context.runtime),
     prepareAuthorityKeyring: testPrepareAuthorityKeyring(context.runtime),
     sourceCommit: PURCHASE_SOURCE_COMMIT,
     resolveHumanPurchaseBinding: purchaseBindingResolver(),

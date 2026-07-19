@@ -7,6 +7,7 @@ import {
 } from "./purchase-journal.fixtures.js";
 import {
   createPurchaseTestRuntime,
+  testPrivateDeliveryKeyring,
   testPrepareAuthorityKeyring,
 } from "./purchase-postgres.fixtures.js";
 
@@ -28,6 +29,7 @@ it("drains admitted initialization and rejects work after close begins", async (
   );
   const purchase = context.runtime.createPurchaseRepository({
     databaseUrl: context.database.databaseUrl,
+    privateDeliveryKeyring: testPrivateDeliveryKeyring(context.runtime),
     prepareAuthorityKeyring: testPrepareAuthorityKeyring(context.runtime),
     sourceCommit: PURCHASE_SOURCE_COMMIT,
     resolveHumanPurchaseBinding: async () => {

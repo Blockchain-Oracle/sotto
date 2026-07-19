@@ -1,8 +1,11 @@
+import { timingSafeEqual } from "node:crypto";
 import {
   projectHumanPurchaseJournalIntent,
   type HumanPurchaseLedgerIntent,
 } from "@sotto/x402-canton";
 import { exportHumanPrepareAuthorityPlaintext } from "@sotto/x402-canton/internal/human-prepare-authority-persistence";
+import { exportHumanDeliveryRequestPlaintext } from "@sotto/x402-canton/internal/human-delivery-request-persistence";
+import { readPrivateDeliveryActiveKeyId } from "./private-delivery-keyring.js";
 import { readPrivatePrepareAuthorityActiveKeyId } from "./private-prepare-authority-keyring.js";
 import { initializePurchaseAttempt } from "./purchase-initialize.js";
 import { checkpointHumanPreparedPurchase } from "./purchase-prepare-checkpoint.js";
@@ -32,9 +35,7 @@ import {
 } from "./purchase-validation.js";
 
 function sameBytes(left: Uint8Array, right: Uint8Array): boolean {
-  return (
-    left.byteLength === right.byteLength && Buffer.compare(left, right) === 0
-  );
+  return left.byteLength === right.byteLength && timingSafeEqual(left, right);
 }
 
 export function createPurchaseRepository(
@@ -44,6 +45,7 @@ export function createPurchaseRepository(
     throw new Error("purchase binding resolver is required");
   }
   readPrivatePrepareAuthorityActiveKeyId(input.prepareAuthorityKeyring);
+  readPrivateDeliveryActiveKeyId(input.privateDeliveryKeyring);
   const sourceCommit = validatePurchaseSourceCommit(input.sourceCommit);
   const runtime = createPurchasePoolRuntime(input);
   const initializeHumanPurchaseAttempt = async (
@@ -51,9 +53,11 @@ export function createPurchaseRepository(
   ) => {
     const release = runtime.admit();
     let plaintext: Uint8Array | undefined;
+    let deliveryPlaintext: Uint8Array | undefined;
     try {
       const intent = projectHumanPurchaseJournalIntent(candidate);
       plaintext = exportHumanPrepareAuthorityPlaintext(candidate);
+      deliveryPlaintext = exportHumanDeliveryRequestPlaintext(candidate);
       let binding: Awaited<
         ReturnType<typeof input.resolveHumanPurchaseBinding>
       >;
@@ -84,9 +88,12 @@ export function createPurchaseRepository(
         attempt,
         plaintext,
         input.prepareAuthorityKeyring,
+        deliveryPlaintext,
+        input.privateDeliveryKeyring,
       );
     } finally {
       plaintext?.fill(0);
+      deliveryPlaintext?.fill(0);
       release();
     }
   };

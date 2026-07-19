@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { hasControlCharacter } from "./purchase-commitment-primitives.js";
+import { isForbiddenRequestAuthorityHeader } from "./request-header-policy.js";
 
 export const REQUEST_BINDING_VERSION = "sotto-http-request-v1" as const;
 export const MAX_REQUEST_BODY_BYTES = 1_048_576;
@@ -14,14 +15,6 @@ const baseHeaders = [
   "idempotency-key",
 ] as const;
 const ignoredHeaders = new Set(["payment-signature"]);
-const forbiddenHeaders = new Set([
-  "authorization",
-  "cookie",
-  "payment-signature",
-  "proxy-authorization",
-  "x-payment",
-  "x-payment-signature",
-]);
 const httpToken = /^[!#$%&'*+\-.^_`|~0-9A-Z]+$/;
 const headerToken = /^[!#$%&'*+\-.^_`|~0-9a-z]+$/;
 
@@ -54,7 +47,7 @@ function authoritativeNames(additional: ReadonlyArray<string>): string[] {
     if (!headerToken.test(name)) {
       throw new Error(`Invalid authoritative header name: ${rawName}`);
     }
-    if (forbiddenHeaders.has(name)) {
+    if (isForbiddenRequestAuthorityHeader(name)) {
       throw new Error(`Authoritative header is forbidden: ${name}`);
     }
     if (names.has(name)) {

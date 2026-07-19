@@ -28,6 +28,7 @@ function publicError(error: unknown): Error {
   const constraint = databaseConstraint(error);
   if (
     constraint?.startsWith("private_prepare_authorities_") === true ||
+    constraint?.startsWith("private_attempt_payloads_") === true ||
     constraint === "outbox_jobs_prepare_authority_fk"
   ) {
     return new PurchasePersistenceError();

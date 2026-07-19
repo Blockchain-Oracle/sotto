@@ -13,11 +13,13 @@ import {
   type PaymentRequiredObservation,
 } from "./payment-observation.js";
 import type { HttpRequestCommitment } from "./request-binding.js";
+import type { HumanPaymentDeliveryRequest } from "./human-delivery-request-types.js";
 
 export const MAX_HUMAN_PAYMENT_FETCH_MS = 10_000;
 
 type ObservationState = Readonly<{
   binding: HttpRequestCommitment;
+  deliveryRequest: HumanPaymentDeliveryRequest;
   paymentObservation: PaymentRequiredObservation;
 }>;
 
@@ -113,16 +115,19 @@ export function createHumanPaymentObserver(
     });
     observations.set(observation, {
       binding: snapshot.binding,
+      deliveryRequest: Object.freeze({
+        bindingCanonicalBytes: Uint8Array.from(snapshot.binding.canonicalBytes),
+        ...(snapshot.body === undefined
+          ? {}
+          : { body: Uint8Array.from(snapshot.body) }),
+      }),
       paymentObservation,
     });
     return observation;
   };
 }
 
-/** @internal Human purchase construction only. */
-export function readHumanPaymentAuthority(
-  candidate: unknown,
-): HumanPaymentAuthority {
+function readObservationState(candidate: unknown): ObservationState {
   if (typeof candidate !== "object" || candidate === null) {
     throw new Error("human payment observation is not authenticated");
   }
@@ -131,12 +136,33 @@ export function readHumanPaymentAuthority(
     throw new Error("human payment observation is not authenticated");
   }
   readPaymentRequiredObservation(state.paymentObservation);
+  return state;
+}
+
+/** @internal Human purchase construction only. */
+export function readHumanPaymentAuthority(
+  candidate: unknown,
+): HumanPaymentAuthority {
+  const state = readObservationState(candidate);
   return Object.freeze({
     binding: Object.freeze({
       ...state.binding,
       canonicalBytes: Uint8Array.from(state.binding.canonicalBytes),
     }),
     paymentObservation: state.paymentObservation,
+  });
+}
+
+/** @internal Initial private delivery persistence only. */
+export function readHumanPaymentDeliveryRequest(
+  candidate: unknown,
+): HumanPaymentDeliveryRequest {
+  const request = readObservationState(candidate).deliveryRequest;
+  return Object.freeze({
+    bindingCanonicalBytes: Uint8Array.from(request.bindingCanonicalBytes),
+    ...(request.body === undefined
+      ? {}
+      : { body: Uint8Array.from(request.body) }),
   });
 }
 

@@ -10,6 +10,7 @@ import type {
   HumanPrepareAuthorityRestoreScope,
 } from "@sotto/x402-canton/internal/human-prepare-authority-persistence";
 import type { PrepareAuthorityKeyring } from "./private-prepare-authority-types.js";
+import type { PrivateDeliveryKeyring } from "./private-delivery-types.js";
 import type { HumanPurchaseAttemptResult } from "./purchase-result-types.js";
 import type { HumanReconciliationRepository } from "./purchase-reconciliation-types.js";
 
@@ -156,6 +157,7 @@ export type PurchaseOperationalEvent = Readonly<{
 export type PurchaseRepositoryInput = Readonly<{
   databaseUrl: string;
   prepareAuthorityKeyring: PrepareAuthorityKeyring;
+  privateDeliveryKeyring: PrivateDeliveryKeyring;
   sourceCommit: string;
   resolveHumanPurchaseBinding: HumanPurchaseBindingResolver;
   maxConnections?: number;

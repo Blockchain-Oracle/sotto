@@ -10,6 +10,7 @@ import {
   HUMAN_PURCHASE_APPROVAL_VERSION,
   readHumanPurchaseLedgerIntent,
   type AuthenticatedHumanWalletConnectorPreflight,
+  type HttpRequestBindingInput,
   type HumanPurchaseLedgerIntent,
   type HumanWalletConnector,
 } from "@sotto/x402-canton";
@@ -107,13 +108,14 @@ export async function walletPreflight(
 export async function authenticatedCatalogHumanPurchaseIntent(
   resourceUrl: string,
   mutateChallenge: (challenge: JournalChallenge) => void = () => undefined,
+  requestInput?: HttpRequestBindingInput,
 ): Promise<HumanPurchaseLedgerIntent> {
   const closure = spliceClosure();
   const packageReference = closure.graphPackages.find(
     ({ name }) => name === "splice-amulet",
   )!;
   const preflight = await walletPreflight(packageReference.packageId);
-  const request = { method: "GET", url: resourceUrl };
+  const request = requestInput ?? { method: "GET", url: resourceUrl };
   const binding = commitHttpRequest(request);
   const challenge: JournalChallenge = {
     x402Version: 2,

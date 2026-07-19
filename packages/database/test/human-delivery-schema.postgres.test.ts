@@ -62,67 +62,25 @@ it("does not make identical application response hashes globally exclusive", asy
   }
 });
 
-it("rejects delivery request nonce reuse under one encryption key", async () => {
-  const first = await createExecutionStartedAttempt(context, 570);
-  const second = await createExecutionStartedAttempt(context, 569);
+it("enforces delivery request nonce uniqueness within each encryption key", async () => {
   const client = new Client({ connectionString: context.database.databaseUrl });
   await client.connect();
-  const insert = (attemptId: string, requestCommitment: string) =>
-    client.query(
-      `INSERT INTO sotto.private_attempt_payloads
-        (attempt_id, request_commitment, payload_schema, aead_algorithm,
-         key_id, encryption_generation, nonce, authentication_tag, ciphertext)
-       VALUES ($1, $2, 'sotto-private-delivery-request-v1', 'aes-256-gcm',
-         'delivery-key-2026-07', 1, $3, $4, $5)`,
-      [
-        attemptId,
-        requestCommitment,
-        Buffer.alloc(12, 7),
-        Buffer.alloc(16, 8),
-        Buffer.from("{}"),
-      ],
-    );
   try {
-    await insert(
-      first.initialized.attemptId,
-      first.initialized.requestCommitment,
+    const constraint = await client.query<{ definition: string }>(
+      `SELECT pg_get_constraintdef(oid) AS definition
+       FROM pg_constraint
+       WHERE conrelid = 'sotto.private_attempt_payloads'::regclass
+         AND conname = 'private_attempt_payloads_key_nonce_unique'`,
     );
-    await expect(
-      insert(
-        second.initialized.attemptId,
-        second.initialized.requestCommitment,
-      ),
-    ).rejects.toMatchObject({ code: "23505" });
+    expect(constraint.rows).toEqual([{ definition: "UNIQUE (key_id, nonce)" }]);
   } finally {
     await client.end();
-    await first.purchase.close();
-    await second.purchase.close();
   }
 });
 
 it("blocks migration rollback while private delivery material exists", async () => {
   const attempt = await createExecutionStartedAttempt(context, 566);
-  const client = new Client({ connectionString: context.database.databaseUrl });
-  await client.connect();
-  try {
-    await client.query(
-      `INSERT INTO sotto.private_attempt_payloads
-        (attempt_id, request_commitment, payload_schema, aead_algorithm,
-         key_id, encryption_generation, nonce, authentication_tag, ciphertext)
-       VALUES ($1, $2, 'sotto-private-delivery-request-v1', 'aes-256-gcm',
-         'delivery-key-2026-07', 1, $3, $4, $5)`,
-      [
-        attempt.initialized.attemptId,
-        attempt.initialized.requestCommitment,
-        Buffer.from(attempt.initialized.attemptId.slice(7, 31), "hex"),
-        Buffer.alloc(16, 6),
-        Buffer.from("{}"),
-      ],
-    );
-  } finally {
-    await client.end();
-    await attempt.purchase.close();
-  }
+  await attempt.purchase.close();
 
   await expect(
     runner({

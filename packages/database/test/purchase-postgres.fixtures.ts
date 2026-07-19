@@ -4,6 +4,8 @@ import type { HumanPurchaseLedgerIntent } from "@sotto/x402-canton";
 import type {
   CatalogRepository,
   CatalogRepositoryInput,
+  PrivateDeliveryKeyring,
+  PrivateDeliveryKeyringInput,
   PrepareAuthorityKeyring,
   PrepareAuthorityKeyringInput,
   PurchaseRepository,
@@ -20,6 +22,9 @@ export type PurchaseRuntime = Readonly<{
   createPrepareAuthorityKeyring(
     input: PrepareAuthorityKeyringInput,
   ): PrepareAuthorityKeyring;
+  createPrivateDeliveryKeyring(
+    input: PrivateDeliveryKeyringInput,
+  ): PrivateDeliveryKeyring;
   createPurchaseRepository(input: PurchaseRepositoryInput): PurchaseRepository;
 }>;
 
@@ -29,6 +34,22 @@ export function testPrepareAuthorityKeyring(
   keyId = "prepare-key-2026-07",
 ): PrepareAuthorityKeyring {
   return runtime.createPrepareAuthorityKeyring({
+    activeKeyId: keyId,
+    keys: [
+      {
+        id: keyId,
+        key: createSecretKey(Buffer.alloc(32, marker)),
+      },
+    ],
+  });
+}
+
+export function testPrivateDeliveryKeyring(
+  runtime: PurchaseRuntime,
+  marker = 13,
+  keyId = "delivery-key-2026-07",
+): PrivateDeliveryKeyring {
+  return runtime.createPrivateDeliveryKeyring({
     activeKeyId: keyId,
     keys: [
       {

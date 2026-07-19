@@ -7,6 +7,7 @@ import {
 import {
   createPurchaseTestRuntime,
   purchaseJournalCounts,
+  testPrivateDeliveryKeyring,
   testPrepareAuthorityKeyring,
 } from "./purchase-postgres.fixtures.js";
 import { freshHumanPrepareAuthority } from "./purchase-prepare-authority.fixture.js";
@@ -23,6 +24,7 @@ afterAll(async () => context?.database.drop());
 function repository(marker = 7, keyId = "prepare-key-2026-07") {
   return context.runtime.createPurchaseRepository({
     databaseUrl: context.database.databaseUrl,
+    privateDeliveryKeyring: testPrivateDeliveryKeyring(context.runtime),
     prepareAuthorityKeyring: testPrepareAuthorityKeyring(
       context.runtime,
       marker,

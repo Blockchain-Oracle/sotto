@@ -9,6 +9,7 @@ import {
 import {
   createPurchaseTestRuntime,
   purchaseJournalCounts,
+  testPrivateDeliveryKeyring,
   testPrepareAuthorityKeyring,
 } from "./purchase-postgres.fixtures.js";
 
@@ -36,6 +37,7 @@ it("does not commit a ready job after lock wait consumes its reserve", async () 
   ]);
   const purchase = context.runtime.createPurchaseRepository({
     databaseUrl: context.database.databaseUrl,
+    privateDeliveryKeyring: testPrivateDeliveryKeyring(context.runtime),
     prepareAuthorityKeyring: testPrepareAuthorityKeyring(context.runtime),
     sourceCommit: PURCHASE_SOURCE_COMMIT,
     resolveHumanPurchaseBinding: purchaseBindingResolver(),

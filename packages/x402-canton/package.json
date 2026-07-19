@@ -25,6 +25,10 @@
       "types": "./dist/human-prepare-authority-persistence.d.ts",
       "import": "./dist/human-prepare-authority-persistence.js"
     },
+    "./internal/human-delivery-request-persistence": {
+      "types": "./dist/human-delivery-request-persistence.d.ts",
+      "import": "./dist/human-delivery-request-persistence.js"
+    },
     "./internal/bounded-capability-bootstrap-prepare": {
       "types": "./dist/bounded-capability-bootstrap-prepare.d.ts",
       "import": "./dist/bounded-capability-bootstrap-prepare.js"

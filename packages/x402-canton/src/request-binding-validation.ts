@@ -10,26 +10,20 @@ import {
   objectValue,
   RAW_SHA256_PATTERN,
 } from "./purchase-commitment-primitives.js";
+import { isForbiddenRequestAuthorityHeader } from "./request-header-policy.js";
 
 const BASE_HEADERS = new Set([
   "content-encoding",
   "content-type",
   "idempotency-key",
 ]);
-const FORBIDDEN_HEADERS = new Set([
-  "authorization",
-  "cookie",
-  "payment-signature",
-  "proxy-authorization",
-  "x-payment",
-  "x-payment-signature",
-]);
 const HTTP_TOKEN = /^[!#$%&'*+\-.^_`|~0-9A-Z]+$/;
 const HEADER_TOKEN = /^[!#$%&'*+\-.^_`|~0-9a-z]+$/;
 
-type ValidatedHeader = Readonly<{ name: string; value: string }>;
+export type ValidatedHeader = Readonly<{ name: string; value: string }>;
 
 export type ValidatedRequestBinding = Readonly<{
+  headers: ReadonlyArray<ValidatedHeader>;
   method: string;
   url: URL;
 }>;
@@ -50,7 +44,7 @@ function validateHeaders(value: unknown): ReadonlyArray<ValidatedHeader> {
       typeof name !== "string" ||
       !HEADER_TOKEN.test(name) ||
       name.length > 128 ||
-      FORBIDDEN_HEADERS.has(name) ||
+      isForbiddenRequestAuthorityHeader(name) ||
       typeof headerValue !== "string" ||
       headerValue.trim() !== headerValue ||
       hasControlCharacter(headerValue) ||
@@ -58,7 +52,7 @@ function validateHeaders(value: unknown): ReadonlyArray<ValidatedHeader> {
     ) {
       throw new Error("request binding headers are invalid");
     }
-    return { name, value: headerValue };
+    return Object.freeze({ name, value: headerValue });
   });
   const names = headers.map(({ name }) => name);
   if (
@@ -68,7 +62,7 @@ function validateHeaders(value: unknown): ReadonlyArray<ValidatedHeader> {
   ) {
     throw new Error("request binding headers must be unique and sorted");
   }
-  return headers;
+  return Object.freeze(headers);
 }
 
 export function validateRequestBindingCanonical(
@@ -97,7 +91,12 @@ export function validateRequestBindingCanonical(
   if (typeof request.url !== "string") {
     throw new Error("request binding URL is invalid");
   }
-  const url = new URL(request.url);
+  let url: URL;
+  try {
+    url = new URL(request.url);
+  } catch {
+    throw new Error("request binding URL is invalid");
+  }
   if (
     url.protocol !== "https:" ||
     url.username !== "" ||
@@ -121,5 +120,5 @@ export function validateRequestBindingCanonical(
   if (source !== canonical) {
     throw new Error("request binding must use the canonical encoding");
   }
-  return Object.freeze({ method: request.method, url });
+  return Object.freeze({ headers, method: request.method, url });
 }

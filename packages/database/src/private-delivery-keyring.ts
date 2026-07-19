@@ -76,6 +76,12 @@ export function readPrivateDeliveryKeyring(
   return state;
 }
 
+export function readPrivateDeliveryActiveKeyId(
+  keyring: PrivateDeliveryKeyring,
+): string {
+  return readPrivateDeliveryKeyring(keyring).activeKeyId;
+}
+
 export function safePrivateDeliveryKeyId(value: unknown): value is string {
   return typeof value === "string" && KEY_ID.test(value);
 }

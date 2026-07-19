@@ -17,32 +17,6 @@ beforeAll(async () => {
 
 afterAll(async () => context?.database.drop());
 
-async function insertPrivatePayload(
-  attemptId: string,
-  requestCommitment: string,
-): Promise<void> {
-  const client = new Client({ connectionString: context.database.databaseUrl });
-  await client.connect();
-  try {
-    await client.query(
-      `INSERT INTO sotto.private_attempt_payloads
-        (attempt_id, request_commitment, payload_schema, aead_algorithm,
-         key_id, encryption_generation, nonce, authentication_tag, ciphertext)
-       VALUES ($1, $2, 'sotto-private-delivery-request-v1', 'aes-256-gcm',
-         'delivery-key-2026-07', 1, $3, $4, $5)`,
-      [
-        attemptId,
-        requestCommitment,
-        Buffer.from(attemptId.slice(7, 31), "hex"),
-        Buffer.alloc(16, 8),
-        Buffer.from("{}"),
-      ],
-    );
-  } finally {
-    await client.end();
-  }
-}
-
 async function deliveryRows(attemptId: string) {
   const client = new Client({ connectionString: context.database.databaseUrl });
   await client.connect();
@@ -68,10 +42,6 @@ async function deliveryRows(attemptId: string) {
 it("atomically schedules one exact delivery after successful settlement", async () => {
   const attempt = await claimTerminalAttempt(context, 568, "delivery-success");
   try {
-    await insertPrivatePayload(
-      attempt.initialized.attemptId,
-      attempt.initialized.requestCommitment,
-    );
     await attempt.terminal.completeHumanReconciliation(
       succeededCheckpoint(attempt.claim),
     );
@@ -107,10 +77,6 @@ it("atomically schedules one exact delivery after successful settlement", async 
 it("never schedules delivery after rejected settlement", async () => {
   const attempt = await claimTerminalAttempt(context, 567, "delivery-rejected");
   try {
-    await insertPrivatePayload(
-      attempt.initialized.attemptId,
-      attempt.initialized.requestCommitment,
-    );
     await attempt.terminal.completeHumanReconciliation(
       rejectedCheckpoint(attempt.claim),
     );

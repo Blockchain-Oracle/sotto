@@ -16,6 +16,7 @@ import {
 import {
   createPurchaseTestRuntime,
   purchaseJournalCounts,
+  testPrivateDeliveryKeyring,
   testPrepareAuthorityKeyring,
 } from "../../database/test/purchase-postgres.fixtures.js";
 import { freshHumanPrepareAuthority } from "../../database/test/purchase-prepare-authority.fixture.js";
@@ -43,6 +44,7 @@ afterAll(async () => context?.database.drop());
 function repository(maxConnections?: number) {
   return context.runtime.createPurchaseRepository({
     databaseUrl: context.database.databaseUrl,
+    privateDeliveryKeyring: testPrivateDeliveryKeyring(context.runtime),
     prepareAuthorityKeyring: testPrepareAuthorityKeyring(context.runtime),
     sourceCommit: PURCHASE_SOURCE_COMMIT,
     resolveHumanPurchaseBinding: purchaseBindingResolver(),

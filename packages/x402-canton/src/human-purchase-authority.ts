@@ -7,6 +7,8 @@ import type { AuthenticatedHumanPayerIdentity } from "./human-payer-identity.js"
 import type { AuthenticatedHumanPackagePreference } from "./human-package-preference-types.js";
 import { createHumanAuthorizationReplayStore } from "./human-authorization-replay.js";
 import { readHumanPaymentAuthority } from "./human-payment-observation.js";
+import { readHumanPaymentDeliveryRequest } from "./human-payment-observation.js";
+import { bindHumanDeliveryRequestAuthority } from "./human-delivery-request-authority.js";
 import { readPaymentRequiredObservation } from "./payment-observation.js";
 import { prepareHumanWalletConnectorPreflightBinding } from "./human-wallet-connector-preflight-state.js";
 import { readHumanWalletConnectorPreflightAuthority } from "./human-wallet-connector-preflight-state.js";
@@ -85,6 +87,14 @@ export function bindHumanPurchaseAuthorities(
   );
   const paymentState = readPaymentRequiredObservation(
     paymentAuthority.paymentObservation,
+  );
+  bindHumanDeliveryRequestAuthority(
+    result,
+    readHumanPaymentDeliveryRequest(authorities.paymentObservation),
+    {
+      bodyHash: `sha256:${input.binding.bodySha256}`,
+      requestCommitment: result.requestCommitment,
+    },
   );
   authorizationBindings.reserve(
     authorizationInstanceId,

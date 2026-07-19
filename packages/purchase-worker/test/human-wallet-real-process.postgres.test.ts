@@ -5,6 +5,7 @@ import { claimVerifiedHumanWalletSigningSession } from "@sotto/x402-canton/inter
 import {
   createPurchaseTestRuntime,
   humanExecutionFenceCounts,
+  testPrivateDeliveryKeyring,
   testPrepareAuthorityKeyring,
 } from "../../database/test/purchase-postgres.fixtures.js";
 import {
@@ -34,6 +35,7 @@ afterAll(async () => context?.database.drop());
 function repository(): PurchaseRepository {
   return context.runtime.createPurchaseRepository({
     databaseUrl: context.database.databaseUrl,
+    privateDeliveryKeyring: testPrivateDeliveryKeyring(context.runtime),
     prepareAuthorityKeyring: testPrepareAuthorityKeyring(context.runtime),
     sourceCommit: PURCHASE_SOURCE_COMMIT,
     resolveHumanPurchaseBinding: purchaseBindingResolver(),

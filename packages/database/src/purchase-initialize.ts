@@ -2,16 +2,14 @@ import { randomUUID } from "node:crypto";
 import { MIN_HUMAN_SIGNING_RESERVE_MS } from "@sotto/x402-canton/internal/human-prepare-authority-persistence";
 import type { Pool, PoolClient } from "pg";
 import type { PrepareAuthorityKeyring } from "./private-prepare-authority-types.js";
+import type { PrivateDeliveryKeyring } from "./private-delivery-types.js";
 import {
-  findPurchaseAggregate,
-  type PurchaseAggregateRow,
-} from "./purchase-query.js";
+  assertInitialDeliveryRequest,
+  assertInitialPrepareAuthority,
+  insertInitialPrivateMaterial,
+} from "./purchase-initialize-private.js";
+import { findPurchaseAggregate } from "./purchase-query.js";
 import { purchaseAggregateResult } from "./purchase-query-result.js";
-import {
-  assertPurchasePrepareAuthority,
-  insertPurchasePrepareAuthority,
-  sealPurchasePrepareAuthority,
-} from "./purchase-prepare-authority-store.js";
 import {
   lockPurchaseOperation,
   purchaseTransaction,
@@ -130,23 +128,13 @@ async function requireResource(
   }
 }
 
-function authoritySource(row: PurchaseAggregateRow) {
-  return {
-    attemptId: row.attemptId,
-    operationId: row.operationId,
-    ownerId: row.ownerId,
-    purchaseCommitment: row.purchaseCommitment,
-    requestHash: row.requestHash,
-    resourceRevisionId: row.resourceRevisionId,
-    sourceCommit: row.sourceCommit,
-  };
-}
-
 export async function initializePurchaseAttempt(
   pool: Pool,
   attempt: ValidatedHumanPurchaseAttempt,
   plaintext: Uint8Array,
   keyring: PrepareAuthorityKeyring,
+  deliveryPlaintext: Uint8Array,
+  deliveryKeyring: PrivateDeliveryKeyring,
 ): Promise<HumanPurchaseAttemptResult> {
   return purchaseTransaction(pool, async (client) => {
     await lockPurchaseOperation(client, attempt.operationId);
@@ -163,11 +151,17 @@ export async function initializePurchaseAttempt(
         "replayed",
         settlement,
       );
+      await assertInitialDeliveryRequest(
+        client,
+        existing,
+        deliveryPlaintext,
+        deliveryKeyring,
+      );
       if (replay.state === "intent-created") {
         await requirePrepareSigningReserve(client, attempt.executeBefore);
-        await assertPurchasePrepareAuthority(
+        await assertInitialPrepareAuthority(
           client,
-          authoritySource(existing),
+          existing,
           plaintext,
           keyring,
         );
@@ -176,19 +170,20 @@ export async function initializePurchaseAttempt(
       return replay;
     }
     await requirePrepareSigningReserve(client, attempt.executeBefore);
-    const sealed = sealPurchasePrepareAuthority(attempt, plaintext, keyring);
     await insertAttempt(client, attempt);
-    await insertPurchasePrepareAuthority(client, attempt.attemptId, sealed);
+    await insertInitialPrivateMaterial(
+      client,
+      attempt,
+      plaintext,
+      keyring,
+      deliveryPlaintext,
+      deliveryKeyring,
+    );
     await insertInitialEvent(client, attempt);
     await insertInitialJob(client, attempt);
     const created = await findPurchaseAggregate(client, attempt.operationId);
     if (created === undefined) throw new Error("purchase aggregate is absent");
-    await assertPurchasePrepareAuthority(
-      client,
-      authoritySource(created),
-      plaintext,
-      keyring,
-    );
+    await assertInitialPrepareAuthority(client, created, plaintext, keyring);
     await requirePrepareSigningReserve(client, attempt.executeBefore);
     return purchaseAggregateResult(created, attempt, "created");
   });

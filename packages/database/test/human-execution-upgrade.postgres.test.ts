@@ -15,8 +15,13 @@ import {
 import { createPostgresTestDatabase } from "./postgres-test-database.js";
 import {
   type PurchaseRuntime,
+  testPrivateDeliveryKeyring,
   testPrepareAuthorityKeyring,
 } from "./purchase-postgres.fixtures.js";
+import {
+  readLegacyHumanPurchase,
+  seedLegacyHumanPurchase,
+} from "./human-execution-legacy.fixture.js";
 import { freshHumanPrepareAuthority } from "./purchase-prepare-authority.fixture.js";
 import { verifiedHumanPrepare } from "./purchase-prepare-checkpoint.fixture.js";
 import { originRegistration, verifiedProbe } from "./publication.fixtures.js";
@@ -132,6 +137,7 @@ it("upgrades event-1/event-2 attempts into the human execution boundary", async 
     const openRepository = () =>
       runtime.createPurchaseRepository({
         databaseUrl: database.databaseUrl,
+        privateDeliveryKeyring: testPrivateDeliveryKeyring(runtime),
         prepareAuthorityKeyring: testPrepareAuthorityKeyring(runtime),
         sourceCommit: PURCHASE_SOURCE_COMMIT,
         resolveHumanPurchaseBinding: purchaseBindingResolver(),
@@ -144,11 +150,10 @@ it("upgrades event-1/event-2 attempts into the human execution boundary", async 
       challenge.accepts[0]!.maxTimeoutSeconds = 598;
       challenge.accepts[0]!.extra.executeBeforeSeconds = 598;
     });
-    const beforeUpgrade = openRepository();
-    let eventOneLifecycle: unknown;
     let eventTwoLifecycle: unknown;
+    await seedLegacyHumanPurchase(database.databaseUrl, eventTwoIntent);
+    const beforeUpgrade = openRepository();
     try {
-      await beforeUpgrade.initializeHumanPurchaseAttempt(eventTwoIntent);
       const claim = await beforeUpgrade.claimHumanPrepareAuthority({
         leaseOwner: "human-execution-upgrade",
         leaseMilliseconds: 60_000,
@@ -160,12 +165,12 @@ it("upgrades event-1/event-2 attempts into the human execution boundary", async 
         claim!.lease,
         await verifiedHumanPrepare(claim!.intent),
       );
-      eventTwoLifecycle =
-        await beforeUpgrade.initializeHumanPurchaseAttempt(eventTwoIntent);
-
-      await beforeUpgrade.initializeHumanPurchaseAttempt(eventOneIntent);
-      eventOneLifecycle =
-        await beforeUpgrade.initializeHumanPurchaseAttempt(eventOneIntent);
+      eventTwoLifecycle = await readLegacyHumanPurchase(
+        database.databaseUrl,
+        eventTwoIntent,
+      );
+      await seedLegacyHumanPurchase(database.databaseUrl, eventOneIntent);
+      await readLegacyHumanPurchase(database.databaseUrl, eventOneIntent);
     } finally {
       await beforeUpgrade.close();
     }
@@ -237,10 +242,10 @@ it("upgrades event-1/event-2 attempts into the human execution boundary", async 
     try {
       await expect(
         afterUpgrade.initializeHumanPurchaseAttempt(eventOneIntent),
-      ).resolves.toEqual(eventOneLifecycle);
+      ).rejects.toMatchObject({ code: "PURCHASE_PERSISTENCE" });
       await expect(
         afterUpgrade.initializeHumanPurchaseAttempt(eventTwoIntent),
-      ).resolves.toEqual(eventTwoLifecycle);
+      ).rejects.toMatchObject({ code: "PURCHASE_PERSISTENCE" });
       const legacy = eventTwoLifecycle as {
         attemptId: `sha256:${string}`;
         prepared: { preparedTransactionHash: `sha256:${string}` };

@@ -7,15 +7,9 @@ import {
   type HttpRequestCommitment,
 } from "./request-binding.js";
 import { hasControlCharacter } from "./purchase-commitment-primitives.js";
+import { isForbiddenRequestAuthorityHeader } from "./request-header-policy.js";
+import { validateRequestBindingCanonical } from "./request-binding-validation.js";
 
-const forbiddenTransportHeaders = new Set([
-  "authorization",
-  "cookie",
-  "payment-signature",
-  "proxy-authorization",
-  "x-payment",
-  "x-payment-signature",
-]);
 const transportHeaderName = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/u;
 
 function transportHeaders(
@@ -47,7 +41,7 @@ function transportHeaders(
       ) {
         throw new Error("human payment transport header is invalid");
       }
-      if (forbiddenTransportHeaders.has(name.toLowerCase())) {
+      if (isForbiddenRequestAuthorityHeader(name)) {
         throw new Error(`forbidden human payment transport header: ${name}`);
       }
       return Object.freeze([name, value] as const);
@@ -76,7 +70,7 @@ export function snapshotHumanPaymentRequest(input: HttpRequestBindingInput) {
     throw new Error("Request exceeds 64 authoritative headers");
   }
   const body =
-    bodyCandidate === undefined
+    bodyCandidate === undefined || bodyCandidate.byteLength === 0
       ? undefined
       : bodyCandidate instanceof Uint8Array
         ? Uint8Array.from(bodyCandidate)
@@ -92,14 +86,27 @@ export function snapshotHumanPaymentRequest(input: HttpRequestBindingInput) {
     method,
     url,
   });
+  const canonicalSource = new TextDecoder("utf-8", { fatal: true }).decode(
+    binding.canonicalBytes,
+  );
+  const canonical = validateRequestBindingCanonical(
+    JSON.parse(canonicalSource) as unknown,
+    canonicalSource,
+    binding,
+  );
+  const semanticHeaders = Object.freeze(
+    canonical.headers
+      .filter(({ value }) => value !== "")
+      .map(({ name, value }) => Object.freeze([name, value] as const)),
+  );
   return Object.freeze({
     binding: Object.freeze({
       ...binding,
       canonicalBytes: Uint8Array.from(binding.canonicalBytes),
     }) as HttpRequestCommitment,
     body,
-    headers,
-    method: method.toUpperCase(),
-    url: new URL(url).toString(),
+    headers: semanticHeaders,
+    method: canonical.method,
+    url: canonical.url.toString(),
   });
 }
