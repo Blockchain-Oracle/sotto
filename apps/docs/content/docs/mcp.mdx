@@ -1,0 +1,42 @@
+---
+title: MCP
+description:
+  The buyer MCP server interface contract — tool surface for the shipping cycle,
+  with the key kept away from the model.
+---
+
+<Callout type="warn" title="Interface contract, not a shipped server">
+  The buyer MCP server ships in the current build cycle. This page is its
+  tool-surface contract; names are the working schema and may still settle
+  during implementation.
+</Callout>
+
+The MCP server is a thin stdio adapter over the same purchasing core as the CLI
+and the web Composer. The design constraint that matters: **the model never
+receives a raw wallet key or an unrestricted generic signing tool.** Tools
+expose discovery and bounded purchasing, and every real spend still terminates
+at a wallet boundary outside the process.
+
+## Tool surface (schema)
+
+| Tool            | Contract                                                                                                      |
+| --------------- | ------------------------------------------------------------------------------------------------------------- |
+| `sotto_search`  | Find verified Canton x402 resources in the catalog; returns listings with pinned price and verification time. |
+| `sotto_prepare` | Prepare **one** exact bounded paid call for a resource; returns the exact summary that will be approved.      |
+| `sotto_status`  | Read a purchase's journal state — settlement and delivery reported separately, never merged.                  |
+
+## Authority model
+
+An agent purchase runs under a **bounded capability**, not the payer's open
+authority. The recorded Five North result is the contract's floor: the external
+agent alone exercised a payer-signed `BoundedPurchaseCapability` (per-call
+limit, remaining allowance, expiry, revocation enforced in Daml), while the
+matched prepare-only control proved the same agent could not prepare a direct
+payer transfer. Bounds that live only in process configuration are labeled local
+policy — see the [security model](/docs/security).
+
+## Error semantics
+
+MCP tools report the same stable categories as every other surface: incompatible
+resource, wallet rejection, settlement rejection, delivery failure. A tool
+result never claims delivery when only settlement is proven.

@@ -10,5 +10,8 @@
     "packages/**/*.tsx",
     "scripts/diagnostics/**/*.ts",
     "spikes/**/*.ts"
-  ]
+  ],
+  // The Next.js apps typecheck with their own bundler-mode tsconfigs via the
+  // root typecheck script; NodeNext resolution cannot host them.
+  "exclude": ["apps/site", "apps/docs"]
 }

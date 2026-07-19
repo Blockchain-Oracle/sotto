@@ -1,0 +1,53 @@
+---
+title: What Sotto is
+description:
+  The marketplace, execution surface, and evidence layer for x402-paid APIs on
+  Canton — currently proven on Five North DevNet.
+---
+
+Sotto lists real Canton x402 resources, executes exact human-approved paid calls
+against them, and keeps the evidence readable at the correct visibility level
+for every party.
+
+Three ideas carry the whole product:
+
+1. **The exact call.** A buyer never grants open spending authority. Sotto
+   prepares one transaction, verifies its complete effects and the official
+   Canton prepared-transaction hash, and hands the wallet an exact summary —
+   method, canonical URL, recipient, network, synchronizer, package, expiry,
+   principal, fee ceiling, and total-debit ceiling. The wallet signs that call
+   and nothing else.
+2. **Settlement is never delivery.** A Canton update moving Canton Coin and an
+   HTTP response reaching the buyer are different facts. Sotto records them
+   separately, always, including the case where one succeeds and the other does
+   not.
+3. **Party-scoped evidence.** The Canton Coin settlement is public through the
+   network's explorer; the purchase context is a private Daml contract visible
+   only to its stakeholders. Outsiders see neither request, nor response, nor
+   context.
+
+## What is proven today
+
+Everything this documentation claims traces to the recorded Five North DevNet
+spike (`docs/architecture/devnet-spike-result.md` and its structured evidence
+bundle in the repository):
+
+- One policy-free **human-wallet purchase**: a fresh x402 `402`, one verified
+  prepared transfer, exact wallet approval and external signing, settlement at
+  offset 4424017, and an authentic paid JSON `200`.
+- One **external-agent-only bounded purchase** under a payer-signed capability,
+  settled in a single Canton transaction, with the settlement anonymously
+  visible on the public Lighthouse explorer.
+- **Party-scoped privacy**: the outsider ACS read found zero purchase contexts
+  and the outsider transaction lookup returned `404`.
+- **Honest failure recording**: the settlement immediately before the delivered
+  purchase lost its delivery and is durably recorded as `settled-undelivered` —
+  never replayed, never relabeled.
+
+## What is not claimed
+
+Sotto runs against **Five North Canton DevNet** with CC test value. There is no
+production deployment, no mainnet settlement, no production wallet custody, and
+no coverage claim. The web marketplace, Composer, CLI, and MCP surfaces are the
+shipping work of the current build cycle; where a page below describes one of
+them, it says so explicitly.

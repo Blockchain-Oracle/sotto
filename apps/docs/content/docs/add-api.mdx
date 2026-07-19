@@ -1,0 +1,67 @@
+---
+title: Add an API
+description:
+  Origin audit, live 402 validation, ownership proof, and publication — with the
+  real failure taxonomy.
+---
+
+Sotto does not "make any API payable". Adding a resource means proving, by live
+observation, that your endpoint already speaks x402 on Canton — and proving that
+you control the origin it lives on. The pipeline below is the publication model
+implemented in `packages/database` (publication tables, probe validation, and
+publish transaction).
+
+## 1. Origin audit
+
+Every resource belongs to a normalized origin. Before anything is listed, the
+origin gets an **origin proof**: a challenge bound to your owner account, with
+recorded evidence, a verification time, and an expiry. Expired proofs make the
+resource ineligible for publication until renewed.
+
+## 2. Live 402 validation
+
+Sotto probes the exact method and route you declare and records a probe
+observation with the HTTP status and an evidence hash. The result is one of two
+kinds:
+
+**Verified x402** — the challenge parsed and matched the supported profile. The
+stored revision pins every field the marketplace later displays:
+
+| Field            | Requirement                       |
+| ---------------- | --------------------------------- |
+| `x402Version`    | `2`                               |
+| `scheme`         | `exact`                           |
+| `network`        | `canton:*`                        |
+| `asset`          | the settlement instrument         |
+| `recipient`      | the provider party paid on Canton |
+| `amountAtomic`   | the exact price, atomic units     |
+| `transferMethod` | `transfer-factory`                |
+
+**Non-x402** — the probe failed with exactly one recorded reason:
+
+| Reason                     | Meaning                                                              |
+| -------------------------- | -------------------------------------------------------------------- |
+| `HTTP_200`                 | The route answered `200` — it is not payment-gated.                  |
+| `MISSING_PAYMENT_REQUIRED` | No usable `402` payment challenge was presented.                     |
+| `UNSUPPORTED_REQUIREMENT`  | A challenge exists but demands a scheme/profile Sotto cannot verify. |
+
+## 3. Ownership proof, then publish
+
+Publication requires a current origin proof and a verified probe revision,
+checked inside one transaction against the expected listing version. Failures
+are explicit, never silent:
+
+- `PUBLICATION_INELIGIBLE` — the resource is not eligible (no valid origin proof
+  or no verified revision).
+- `PUBLICATION_STALE` — the listing changed since you read it; re-read and retry
+  with the current version.
+
+A published listing exposes the provider, normalized origin, method, route
+template, the pinned x402 fields above, and `lastVerifiedAt` — the honest
+timestamp of the most recent successful live probe.
+
+## Re-verification
+
+Verification is an observation, not a blessing. Probe observations and
+resource-health records accumulate against each listing, and `lastVerifiedAt`
+only ever reflects a real successful probe — it is never back-dated or invented.

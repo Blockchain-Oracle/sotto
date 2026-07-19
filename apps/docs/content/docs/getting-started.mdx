@@ -1,0 +1,79 @@
+---
+title: Getting started
+description:
+  Connect a Canton wallet or use the hosted reference wallet, fund it with
+  DevNet Canton Coin, and approve your first exact paid call.
+---
+
+Everything here runs against **Five North Canton DevNet** with CC test value.
+The buyer-facing web surface is shipping in the current build cycle; the wallet
+custody service, purchase journal, and worker runtime described below already
+exist in the repository (`apps/signer`, `apps/worker`, `packages/database`).
+
+## 1. Choose how your key is held
+
+Sotto never holds a payer key and never receives payer `actAs` authority. Two
+paths exist:
+
+- **Your own Canton wallet**, attached through the wallet-neutral connector. The
+  connector independently decodes the prepared transaction, recomputes the
+  official Canton V2 hash, and asks your wallet for exactly one signature. This
+  is the path the recorded DevNet purchase used.
+- **The hosted reference wallet** (`apps/signer` — built for judges and
+  evaluation). It is a separate process that creates an external Canton party
+  for you, keeps the key in its own owner-only store, and serves a human
+  approval page. Sotto talks to it over HTTP and only ever receives a verified
+  signature.
+
+## 2. Onboard and fund (hosted reference wallet)
+
+The reference wallet onboards your party on Five North and funds it with a
+DevNet Canton Coin **tap** — the network faucet for test value. The wallet
+record moves through real recorded states:
+
+```
+created → onboarding-started → onboarded
+funding: tap-submitted → funded
+```
+
+Each funding record keeps the tap amount, submission ID, and — once observed —
+the Canton update ID. If Five North is unreachable the service answers
+`503 five-north-unavailable` rather than pretending.
+
+## 3. Make your first purchase
+
+<Steps>
+  <Step>
+    **Pick a verified resource.** Every listing in the marketplace was probed
+    live and answered a well-formed x402 `402` challenge (see [Add an
+    API](/docs/add-api) for what "verified" requires).
+  </Step>
+  <Step>
+    **Sotto prepares one exact call.** It replays the live `402`, prepares one
+    token transfer on Five North, verifies the complete effects — recipient,
+    instrument, amount, fee and total-debit accounting, time bounds — and
+    independently recomputes the official prepared-transaction hash.
+  </Step>
+  <Step>
+    **You approve the exact call.** The approval page shows the request (method,
+    origin, path), provider party, principal, fee ceiling, total-debit ceiling,
+    network, synchronizer, package, and the execute-before deadline, with an
+    explicit expiry. The signature authorizes exactly this payment — nothing
+    else can be spent.
+  </Step>
+  <Step>
+    **Settlement, then delivery — separately.** The signed transaction is
+    submitted; a reconciliation job proves the exact Canton update before
+    anything is called settled. Only then is the paid request retried, and the
+    delivered response is recorded as its own outcome. See the [Composer
+    lifecycle](/docs/composer) for every state.
+  </Step>
+</Steps>
+
+## Current honesty note
+
+The marketplace and Composer web pages are the shipping surface of the current
+build cycle. The recorded end-to-end purchase above was driven by the
+repository's runtime (connector, verifier, journal, reconciliation) on Five
+North — one settlement, one authentic paid `200`, and one honestly recorded
+`settled-undelivered` predecessor.

@@ -916,7 +916,11 @@
   padding: 1px 6px;
 }
 
-.sv-only-dark {
+/* img.sv-only-dark ties with `.sv-canton img { display: block }` at
+   (0,1,1) and is declared later, so the hide wins in light mode while the
+   (0,2,0) theme reveals below still win over it. */
+.sv-only-dark,
+img.sv-only-dark {
   display: none;
 }
 

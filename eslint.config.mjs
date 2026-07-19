@@ -4,7 +4,17 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    ignores: ["**/.daml/**", "**/dist/**", ".thoughts/**", "node_modules/**"],
+    ignores: [
+      "**/.daml/**",
+      "**/dist/**",
+      ".thoughts/**",
+      "node_modules/**",
+      // Generated Next.js / Fumadocs output only — never blanket-disable.
+      "**/.next/**",
+      "apps/docs/.source/**",
+      "apps/site/out/**",
+      "apps/*/next-env.d.ts",
+    ],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,

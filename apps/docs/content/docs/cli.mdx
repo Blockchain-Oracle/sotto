@@ -1,0 +1,47 @@
+---
+title: CLI
+description:
+  The thin CLI interface contract — command grammar for the shipping surface of
+  the current build cycle.
+---
+
+<Callout type="warn" title="Interface contract, not captured output">
+  The CLI ships in the current build cycle. Everything on this page is the
+  command grammar it is contracted to implement — no execution output is shown,
+  because none exists to show yet.
+</Callout>
+
+The CLI is deliberately thin: it reuses the same purchasing core, catalog,
+validation, receipt, and error semantics as the web Composer and the MCP server.
+One core, several mouths.
+
+## Command grammar
+
+```
+sotto try <resource-url>
+```
+
+Resolve the verified listing for the canonical URL, replay its live `402`,
+prepare **one** bounded paid call, and hand it to the configured wallet for
+approval. The CLI displays settlement and delivery as separate outcomes, exactly
+as the journal records them.
+
+```
+sotto search <query>
+sotto show <resource-url>
+```
+
+Discovery against the same catalog the marketplace serves: verified listings
+only, with the pinned price, network, and `lastVerifiedAt` from the most recent
+successful probe.
+
+## Guarantees carried over from the core
+
+- **No raw key.** The CLI never reads, stores, or transmits a wallet key; it
+  talks to the same wallet connectors as every other surface.
+- **Stable error categories.** A failed origin probe, an incompatible `402`, a
+  wallet rejection, a settlement rejection, and a delivery failure are distinct,
+  named outcomes — the same taxonomy documented in [Add an API](/docs/add-api)
+  and the [Composer lifecycle](/docs/composer).
+- **No generic success.** `settled` and `delivered` are printed as two facts,
+  including the honest `settled-undelivered` case.

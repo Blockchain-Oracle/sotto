@@ -29,7 +29,7 @@
     "test:unit": "vitest run --exclude '**/*.postgres.test.ts' --exclude '**/*.live.test.ts'",
     "turbo:build": "turbo run build",
     "turbo:test": "turbo run test",
-    "typecheck": "tsc --noEmit --pretty false",
+    "typecheck": "tsc --noEmit --pretty false && corepack pnpm --filter @sotto/site --filter @sotto/docs typecheck",
     "verify": "node scripts/verify.mjs"
   },
   "devDependencies": {
