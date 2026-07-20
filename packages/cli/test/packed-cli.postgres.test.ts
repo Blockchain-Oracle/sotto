@@ -79,9 +79,16 @@ beforeAll(async () => {
       `npm install of the packed tarball failed: ${install.stderr}`,
     );
   }
-  binPath = join(installDir, "node_modules", "@sotto", "cli", "dist", "bin.js");
+  binPath = join(
+    installDir,
+    "node_modules",
+    "@usesotto",
+    "cli",
+    "dist",
+    "bin.js",
+  );
   expect(
-    readdirSync(join(installDir, "node_modules", "@sotto", "cli")),
+    readdirSync(join(installDir, "node_modules", "@usesotto", "cli")),
   ).toContain("dist");
 }, 180_000);
 
@@ -89,7 +96,7 @@ afterAll(async () => {
   await harness?.close();
 });
 
-describe("packed @sotto/cli against a real API + PostgreSQL", () => {
+describe("packed @usesotto/cli against a real API + PostgreSQL", () => {
   it("reports its version from the installed tarball", async () => {
     const result = await runCli(["--version"], {});
     expect(result.status).toBe(0);

@@ -164,7 +164,7 @@ else above stands.
    translates natural-language task input into the selected resource's request
    schema and nothing else: it never sees keys or sessions, never triggers
    payment, and never supplies URLs.
-4. The CLI is published as `@sotto/cli` (npm name availability confirmed
+4. The CLI is published as `@usesotto/cli` (npm name availability confirmed
    2026-07-19; organization and token provisioned by the product owner at
    publish time).
 5. The visual identity is "Sotto Voce" per `DESIGN.md` (identity gate C0), and

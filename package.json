@@ -25,7 +25,7 @@
     "lint": "eslint . --max-warnings 0",
     "spike": "echo 'spike CLIs moved: pnpm --filter @sotto/devnet-payment-spike run <name> (see spikes/*/package.json)'",
     "test": "node scripts/build-workspaces.mjs && corepack pnpm test:unit",
-    "test:postgres": "corepack pnpm --filter @sotto/catalog-probe... --filter @sotto/purchase-worker... --filter @sotto/capability-wallet... --filter @sotto/worker... --filter @sotto/api... --filter @sotto/cli... build && node scripts/run-postgres-integration.mjs",
+    "test:postgres": "corepack pnpm --filter @sotto/catalog-probe... --filter @sotto/purchase-worker... --filter @sotto/capability-wallet... --filter @sotto/worker... --filter @sotto/api... --filter @usesotto/cli... build && node scripts/run-postgres-integration.mjs",
     "test:unit": "vitest run --exclude '**/*.postgres.test.ts' --exclude '**/*.live.test.ts'",
     "turbo:build": "turbo run build",
     "turbo:test": "turbo run test",
