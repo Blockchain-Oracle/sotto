@@ -6,9 +6,6 @@ import {
   humanPurchase,
   network,
   participant,
-  sottoControlPackageId,
-  sottoControlVersion,
-  synchronizerId,
 } from "../lib/evidence";
 import { CopyChip, DynamicMarking, SottoMark } from "./ui-client";
 
@@ -27,18 +24,6 @@ export function EvidenceColophon() {
           <dt>Network</dt>
           <dd>
             {network} · {participant}
-          </dd>
-        </div>
-        <div className="site-fact">
-          <dt>Synchronizer</dt>
-          <dd>
-            <CopyChip value={synchronizerId} kind="party" />
-          </dd>
-        </div>
-        <div className="site-fact">
-          <dt>sotto-control {sottoControlVersion}</dt>
-          <dd>
-            <CopyChip value={sottoControlPackageId} kind="update" />
           </dd>
         </div>
         <div className="site-fact">
