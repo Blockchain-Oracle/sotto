@@ -22,9 +22,9 @@ describe("signer wallet client — gateway failures never throw", () => {
     const result = await client.createWallet("judge", {
       signal: AbortSignal.timeout(1_000),
     });
-    expect(result.status).toBe(502);
+    expect(result.status).toBe(424);
     expect(result.body.error).toBe("wallet-service-unavailable");
-    expect(String(result.body.detail)).toContain("HTTP 502");
+    expect(String(result.body.detail)).toContain("upstream HTTP 502");
   });
 
   it("maps a transport failure to a 503 the route can pass through", async () => {
@@ -38,7 +38,7 @@ describe("signer wallet client — gateway failures never throw", () => {
     const result = await client.fundWallet("wallet-1", {
       signal: AbortSignal.timeout(1_000),
     });
-    expect(result.status).toBe(503);
+    expect(result.status).toBe(424);
     expect(result.body.error).toBe("wallet-service-unreachable");
   });
 
