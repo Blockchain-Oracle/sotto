@@ -125,10 +125,11 @@ export function createSignerWalletClient(
         ]),
       });
     } catch {
-      // The signer was unreachable (transport/timeout). Surface it as a clean
-      // 503 the route passes through, never a bare 500.
+      // The signer was unreachable (transport/timeout): a failed dependency,
+      // not this API's own error. 424 (not 5xx) so a fronting CDN passes the
+      // readable body through instead of substituting its own 502 page.
       return Object.freeze({
-        status: 503,
+        status: 424,
         body: Object.freeze({
           error: "wallet-service-unreachable",
           detail:
@@ -141,15 +142,15 @@ export function createSignerWalletClient(
     try {
       body = await readBoundedJson(response);
     } catch {
-      // A non-JSON body (e.g. a reverse-proxy 502 error page) is a gateway
-      // failure, not success. Return the upstream status with a readable
-      // reason so the caller never sees a bare "Internal Server Error".
+      // A non-JSON body (e.g. a reverse-proxy 502 error page) is a failed
+      // dependency, not success. 424 keeps the readable reason intact through a
+      // fronting CDN that would otherwise replace an origin 5xx with its own page.
       return Object.freeze({
-        status: response.status >= 400 ? response.status : 502,
+        status: 424,
         body: Object.freeze({
           error: "wallet-service-unavailable",
           detail:
-            `The wallet service returned an unreadable response (HTTP ${response.status}). ` +
+            `The wallet service could not complete onboarding (upstream HTTP ${response.status}). ` +
             "Onboarding is temporarily unavailable — please try again shortly.",
         }),
       });
