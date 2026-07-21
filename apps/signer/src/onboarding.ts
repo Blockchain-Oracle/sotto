@@ -6,7 +6,10 @@ import type { WalletRecord } from "./wallets.js";
 import { WALLET_RECORD_VERSION } from "./wallets.js";
 
 const OWNER_HINT = /^[\x20-\x7e]{1,64}$/u;
-const ONBOARD_TIMEOUT_MS = 240_000;
+// Bounded under the API's signer timeout (and a fronting proxy's ~100s limit):
+// a failing Five North party allocation must abort and answer, not retry for
+// minutes until the proxy returns a bare 502 to the browser.
+const ONBOARD_TIMEOUT_MS = 50_000;
 
 function fail(reply: FastifyReply, statusCode: number, error: string): null {
   void reply.status(statusCode).send({ error });
