@@ -3,7 +3,9 @@ import { readFileSync } from "node:fs";
 const readme = readFileSync("README.md", "utf8");
 const normalized = readme.replace(/\s+/g, " ");
 for (const required of [
-  "does not yet contain a shipping marketplace",
+  "Sotto runs on Canton Five North DevNet",
+  "unaudited DevNet software",
+  "production wallet custody, mainnet, and ledger-enforced limits are not claimed",
   "No mocked payment or fixture transaction can satisfy those gates.",
   "https://github.com/Blockchain-Oracle/sotto-payroll-archive",
 ]) {
