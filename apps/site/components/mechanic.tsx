@@ -29,10 +29,9 @@ export function Mechanic() {
       <p className="site-kicker">The mechanic</p>
       <h2 className="site-h2">One exact call, approved in your wallet.</h2>
       <p className="site-prose">
-        Sotto never holds the payer key and never receives payer authority. It
-        prepares one transaction, verifies the complete effects and the official
-        Canton hash, and hands the wallet an exact summary — the summary the
-        isolated wallet displayed before the proven DevNet purchase:
+        Sotto never holds your key. It prepares one bounded transaction and
+        hands your wallet the exact summary to approve — the summary shown
+        before the proven DevNet purchase:
       </p>
       <dl className="site-proposal">
         <Row name="Method">{humanPurchase.method}</Row>

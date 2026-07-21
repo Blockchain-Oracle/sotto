@@ -51,16 +51,11 @@ function HeroRail() {
 export function Hero() {
   return (
     <section className="site-hero">
-      <p className="site-kicker">Verified x402 APIs · Canton Network</p>
+      <p className="site-kicker">Verified x402 APIs · Canton DevNet</p>
       <h1 className="site-hero-title">Paid, sotto voce.</h1>
       <p className="site-hero-sub">
-        Sotto is the marketplace, execution surface, and evidence layer for
-        x402-paid APIs on Canton. A buyer approves one exact paid call in a
-        wallet that holds the key outside Sotto; settlement lands as one Canton
-        update on Five North DevNet and delivery is recorded separately. An
-        agent-signed settlement from the same spike is publicly visible on the
-        Lighthouse explorer, while every private purchase context stayed
-        invisible to outsiders.
+        A marketplace for pay-per-call APIs. You approve each exact payment in
+        your own wallet, and it settles on Canton with public evidence.
       </p>
       <div className="site-hero-actions">
         <a

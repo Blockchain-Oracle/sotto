@@ -55,11 +55,9 @@ export function Honesty() {
       </div>
       <p className="site-prose">
         A Canton update moving Canton Coin and an HTTP response reaching the
-        buyer are different facts, and Sotto refuses to merge them. The verde
-        double barline is earned only by a real settlement; delivery keeps its
-        own ametista mark. That separation is the spine of the product: it is
-        what makes a receipt from Sotto worth reading, because the one time
-        delivery failed, the record says so.
+        buyer are different facts, and Sotto refuses to merge them. That is what
+        makes a Sotto receipt worth reading: the one time delivery failed, the
+        record says so.
       </p>
     </section>
   );
