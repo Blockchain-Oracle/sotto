@@ -125,11 +125,38 @@ export function createSignerWalletClient(
         ]),
       });
     } catch {
-      throw new Error("signer service transport failed");
+      // The signer was unreachable (transport/timeout). Surface it as a clean
+      // 503 the route passes through, never a bare 500.
+      return Object.freeze({
+        status: 503,
+        body: Object.freeze({
+          error: "wallet-service-unreachable",
+          detail:
+            "The wallet service did not respond. Onboarding is temporarily " +
+            "unavailable — please try again shortly.",
+        }),
+      });
+    }
+    let body: Record<string, unknown>;
+    try {
+      body = await readBoundedJson(response);
+    } catch {
+      // A non-JSON body (e.g. a reverse-proxy 502 error page) is a gateway
+      // failure, not success. Return the upstream status with a readable
+      // reason so the caller never sees a bare "Internal Server Error".
+      return Object.freeze({
+        status: response.status >= 400 ? response.status : 502,
+        body: Object.freeze({
+          error: "wallet-service-unavailable",
+          detail:
+            `The wallet service returned an unreadable response (HTTP ${response.status}). ` +
+            "Onboarding is temporarily unavailable — please try again shortly.",
+        }),
+      });
     }
     return Object.freeze({
       status: response.status,
-      body: Object.freeze(await readBoundedJson(response)),
+      body: Object.freeze(body),
     });
   }
 

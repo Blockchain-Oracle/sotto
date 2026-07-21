@@ -43,3 +43,4 @@ tmp/
 
 # Design QA screenshots (scripts/shoot.mjs)
 .shots/
+.claude/worktrees/
