@@ -11,7 +11,11 @@ import {
 const OWNER_HINT = /^[\x20-\x7e]{1,64}$/u;
 const PARTY = /^[^\s:]{1,128}::1220[0-9a-f]{64}$/u;
 const WALLET_ID = /^[0-9a-f]{32}$/u;
-const SIGNER_TIMEOUT_MS = 300_000;
+// Bounded well under a fronting reverse proxy's ~100s request timeout: if the
+// signer is slow (e.g. a failing Five North party allocation retrying), the API
+// gives up and returns a clean wallet-service-unreachable error rather than
+// letting the proxy answer the browser with a bare 502.
+const SIGNER_TIMEOUT_MS = 60_000;
 
 function body(request: { body: unknown }): Record<string, unknown> {
   const value = request.body;
