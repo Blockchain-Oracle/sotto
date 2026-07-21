@@ -1,153 +1,187 @@
-# Sotto
+<h1 align="center">Sotto</h1>
 
-Sotto is the Canton-focused marketplace, execution surface, and evidence layer
-for x402-paid APIs.
+<p align="center"><b>The marketplace, execution surface, and evidence layer for x402-paid APIs on Canton.</b></p>
 
-Developers publish APIs that already return a valid Canton x402 payment
-challenge. Buyers and agents discover those resources, execute paid calls, and
-inspect settlement and delivery as separate facts. Sotto's Canton-specific goal
-is private, bounded agent-purchase authority. The Five North DevNet spike proved
-that research boundary; production remains gated by the implementation and
-release evidence below.
+<p align="center">
+  <a href="https://app.usesotto.xyz">App</a> ·
+  <a href="https://usesotto.xyz">Website</a> ·
+  <a href="https://docs.usesotto.xyz">Docs</a> ·
+  <a href="https://www.npmjs.com/package/@usesotto/cli">CLI</a> ·
+  <a href="https://github.com/Blockchain-Oracle/sotto">Source</a>
+</p>
 
-## Current Status
+Providers publish APIs that already return a valid Canton x402 payment
+challenge. Buyers and agents discover those resources, prepare an **exact** paid
+call, approve it in a wallet, and watch it settle on Canton — with **settlement
+and delivery kept as separate facts** the whole way. The public moments are
+named every time: the Canton Coin transfer is visible on the ledger; the task
+input, the paid response, and the enriched receipt stay party-scoped.
 
-This repository has fresh history and is implementing the production foundation
-after the completed Five North spike. It does not yet contain a shipping
-marketplace, facilitator, wallet, MCP server, CLI, or production deployment.
+⚠️ **Read this first.** Sotto runs on Canton Five North DevNet. This is
+unaudited DevNet software and every payment is test Canton Coin; production
+wallet custody, mainnet, and ledger-enforced limits are not claimed — see
+[What we do not claim](#what-we-do-not-claim).
 
-The research spike has now produced:
+It is not a general Canton block explorer, not a custodial bank, and not a
+mixer. It is a Canton x402 marketplace with honest boundaries: real settlement
+evidence where it exists, and a designed "not proven yet" state everywhere it
+does not.
 
-1. a real Five North `402 -> settle -> 200` purchase in which an external agent
-   alone exercised a payer-signed bounded capability;
-2. one accepted update that paid the provider 0.25 Canton Coin, returned 0.75 to
-   the payer, and created a revision-1 capability with 0.075 remaining;
-3. a byte-identical cached `200` retry with no second Ledger submission;
-4. a prepare-only direct-transfer control in which the agent was rejected for
-   missing payer authority, the payer control prepared, and execution remained
-   disabled; and
-5. party-scoped private-context visibility for payer, agent, and provider, with
-   an outsider seeing no context and receiving `404`, while the accepted
-   settlement is independently visible through the public Lighthouse explorer;
-   and
-6. a real policy-free Five North human prepare-only path whose complete Token
-   effects and participant-provided hash passed independent verification, with
-   no wallet approval, signature, execution, settlement, or Canton Coin debit;
-   and
-7. a real policy-free human-wallet purchase in which an isolated reference
-   wallet approved the exact request and debit bounds, signed outside the Sotto
-   process, settled on Five North, reconciled from the provider view, and
-   unlocked the authentic JSON `200`.
+## Live deployments
 
-The spike's signer/funding-authority and public-settlement-visibility blockers
-are closed. The production gate is still `NO_GO`: production wallet and
-prepare-authority key custody, connector deployment, deployed reconciliation
-transport and worker execution, durable paid-delivery recovery, and release
-evidence for the approved production topology remain open. Receipt audience
-Q-004 and topology Q-006 are selected but not yet proven in production. The
-[redacted spike result](docs/architecture/devnet-spike-result.md) records the
-evidence and remaining blockers.
+| Surface                | URL                                                                                     |
+| ---------------------- | --------------------------------------------------------------------------------------- |
+| Product site           | <https://usesotto.xyz>                                                                  |
+| Marketplace app        | <https://app.usesotto.xyz>                                                              |
+| Documentation          | <https://docs.usesotto.xyz>                                                             |
+| API                    | <https://api.usesotto.xyz> (`GET /healthz`)                                             |
+| Sotto Reference Wallet | <https://wallet.usesotto.xyz>                                                           |
+| CLI (npm)              | `npm install -g @usesotto/cli` — [package](https://www.npmjs.com/package/@usesotto/cli) |
+| Source code            | <https://github.com/Blockchain-Oracle/sotto>                                            |
 
-The production foundation now applies bounded, advisory-locked migrations from
-its compiled artifact and durably records provider/origin registration, origin
-proof, immutable resource revisions, publication, and latest resource health.
-Its server-side catalog probe is currently `GET`-only: it loads the trusted
-origin from PostgreSQL, rejects non-public DNS answers, pins the selected
-address through HTTPS/TLS, parses a bounded server-observed Canton x402
-challenge, and atomically records the probe plus health result. Disposable
-digest-pinned PostgreSQL tests prove migration replay, conflict rollback, and
-restart persistence. The same private database can now atomically initialize an
-authenticated human-wallet purchase attempt, its first append-only event, a
-short-lived encrypted prepare-authority envelope, and one prepare-only outbox
-job. Real PostgreSQL and ephemeral-key tests prove exact replay, concurrency,
-tamper and corruption rejection, signing-reserve rollback, migration failure for
-legacy ready jobs, generation-bound worker leasing, and lease-gated restart
-reauthentication. The one-shot prepare worker now claims one PostgreSQL job,
-runs the real holding, TransferFactory, participant-prepare, full-effect, and
-official-hash pipeline outside database transactions, and atomically records the
-verified checkpoint before returning process-local wallet material. Real
-PostgreSQL tests also prove that blocked external work does not block unrelated
-database work. The human-wallet execution worker now durably records approval,
-rejection or incompatibility, verified-signature, and `execution-started`
-events; commits the exact submission fence and one reconciliation job before the
-execute call; and never stores prepared bytes or raw signatures. A real local
-integration test runs disposable PostgreSQL, the compiled Wallet SDK reference
-companion with a generated test key, and a bounded HTTP execute endpoint. It
-proves one explicit approval, one verified signature, one execute request after
-the fence, redacted process output, and repository reopen without a second
-wallet or HTTP call. A separate database-only reconciliation worker now claims
-the durable post-execution job, advances an absent-result cursor, and commits an
-exact verified settlement or rejection without wallet, key, signing, prepare,
-dispatch, or execute authority. Its real local integration gate uses disposable
-PostgreSQL 18, bounded loopback HTTP, and killed/replacement Node child
-processes. It proves one lease winner, release of a one-connection pool during
-the external read, generation-fenced crash recovery, and one terminal event
-surviving a second process death. Redis is not used.
+The hosted app is built against these endpoints (`NEXT_PUBLIC_API_ORIGIN`,
+`NEXT_PUBLIC_DOCS_ORIGIN`). Local builds fall back to localhost services, so
+nothing below requires the hosted stack. Deployment topology and the full
+per-service environment matrix live in
+[`docs/deploy/coolify.md`](docs/deploy/coolify.md).
 
-This is still a library/integration checkpoint, not a deployed marketplace or a
-new live Five North execution. The local reconciliation endpoint serves a
-deterministic synthetic Canton transaction; it does not prove the deployed Five
-North adapter, production authentication/TLS, or network performance. A process
-restart before the execution fence still cannot restore the process-local wallet
-handoff. Paid delivery and delivery recovery, production connector/key custody,
-web/MCP/worker deployment, external HTTPS smoke evidence, backup/restore, and
-release rollback remain open. Production therefore remains `NO_GO`.
+## Install the CLI
 
-No mocked payment or fixture transaction can satisfy those gates.
-
-## Product Shape
-
-```mermaid
-flowchart LR
-  P["API provider"] --> A["x402-compatible API"]
-  A --> M["Sotto marketplace"]
-  B["Buyer or agent"] --> M
-  M --> C["Composer / Sotto client"]
-  C --> X["HTTP 402 challenge"]
-  X --> K["Bound payment authorization"]
-  K --> N["Canton settlement"]
-  N --> R["Paid HTTP response"]
-  N --> E["Sotto evidence"]
-```
-
-Planned product surfaces are the marketplace, provider/resource detail, Add API,
-Composer, Sotto Scan, transaction evidence, statistics/health, owner session,
-thin CLI, buyer MCP, skill, and internal listing moderation.
-
-## Hard Boundaries
-
-- Canton is the only first-release rail.
-- Sotto reuses existing Canton x402 infrastructure and does not claim to have
-  invented the facilitator or protocol.
-- Pasting an API URL does not make it payable.
-- Payment settlement and API delivery remain separate statuses.
-- Public Scan covers only reliably Sotto-attributed activity.
-- Canton Coin transfer facts may be public. Prompts, results, mandate state, and
-  private purchase context do not become public automatically.
-- Email OTP, organizations, teams, auditors, payroll, banking, withdrawals,
-  multi-network rankings, and public sample tenants are outside this product.
-
-## Repository Authority
-
-- [Product contract](docs/product/product-contract.md)
-- [Decision summary](docs/product/decision-summary.md)
-- [DevNet spike plan](docs/architecture/devnet-spike-plan.md)
-- [Quality contract](docs/quality/quality-contract.md)
-- [Agent router](AGENTS.md)
-
-The prior payroll product is preserved at commit `c29e4da` in the archived
-[Sotto payroll repository](https://github.com/Blockchain-Oracle/sotto-payroll-archive).
-Its code and deployed DAR are not evidence for this product.
-
-## Development
-
-The spike workspace pins Node 24.18.0, pnpm 11.12.0, Java 21.0.11, DPM 1.0.21,
-and Daml SDK 3.5.2. Run every deterministic local gate from the repository root:
+The command is `sotto`; the agent-facing MCP server ships inside the same
+package (`sotto mcp serve`).
 
 ```bash
-pnpm install --frozen-lockfile
-pnpm verify
+npm install -g @usesotto/cli
+sotto --help
+sotto search                       # browse the verified catalog
+sotto try https://<resource-url>   # inspect a resource and prepare a call
 ```
 
-Live Five North payment evidence is a separate manual gate and requires the
-credentials named, without values, in `.env.example`.
+The CLI never holds a key. A purchase requests human wallet approval and prints
+the wallet approval URL; ambiguous outcomes are reported for reconciliation,
+never blindly retried.
+
+## Quickstart (local)
+
+Prerequisites: **Node 24.18.0** and **pnpm 11.12.0** (`corepack enable`). The
+repo enforces the pinned toolchain.
+
+```bash
+pnpm install
+pnpm build            # builds every workspace
+pnpm verify           # the full deterministic gate (lint, typecheck, tests, Daml)
+```
+
+Run the surfaces:
+
+```bash
+pnpm --filter @sotto/site dev     # product site  → http://localhost:4101
+pnpm --filter @sotto/app dev      # marketplace   → http://localhost:4102
+pnpm --filter @sotto/docs dev     # documentation → http://localhost:4103
+```
+
+The backend (`@sotto/api`, `@sotto/signer`, `@sotto/worker`) needs a PostgreSQL
+and, for live settlement, the Five North credential set — see
+`docs/deploy/coolify.md`. Live DevNet execution is intentionally outside
+`pnpm verify`.
+
+## Repository layout
+
+```
+apps/
+  site/       marketing site (Next.js) — usesotto.xyz
+  app/        the product: marketplace, Composer, Scan, Add API — app.usesotto.xyz
+  docs/       Fumadocs documentation + llms.txt — docs.usesotto.xyz
+  api/        Fastify web-api composition root — api.usesotto.xyz
+  signer/     Sotto Reference Wallet — isolated custody service — wallet.usesotto.xyz
+  worker/     restartable prepare / execution / reconciliation / probe loops
+packages/
+  ui/               design system ("Sotto Voce" — tokens, marks, primitives)
+  x402-canton/      x402 challenge, request binding, human-purchase pipeline
+  canton-client/    real Five North transports + the reconciliation adapter
+  database/         PostgreSQL persistence + migrations + sotto-migrate
+  purchase-worker/  the durable prepare/execute/reconcile worker factories
+  catalog-probe/    cert-pinned server-side x402 probe
+  purchase-client/  typed REST+SSE client — the one purchasing core
+  cli/              @usesotto/cli + buyer MCP server (thin over purchase-client)
+daml/               the sotto-control DAR (Bootstrap, PurchaseCapability, PrivacyProbe)
+spikes/             evidence-reproduction CLIs (never imported by apps/packages)
+skills/sotto/       the Sotto agent skill (search / inspect / ask / purchase / reconcile / stop)
+docs/               product contract, decisions, architecture, deploy notes
+```
+
+## Architecture
+
+The purchase lifecycle is the spine, and every stage is a real, separately
+persisted fact:
+
+```
+provider 402  →  prepare exact call  →  human wallet approval  →  Canton settle  →  paid retry  →  deliver
+   (live)          (request binding)      (Reference Wallet)       (real update)    (200 or fail)   (or settled-undelivered)
+```
+
+- **`@sotto/api`** composes the catalog, probe, and purchase core into one
+  web-api process; it re-fetches the live 402 before every purchase so
+  browser-submitted price/recipient/network are never authority, and streams the
+  journal to the app over SSE (every event is a committed row).
+- **`@sotto/signer`** (the Sotto Reference Wallet) is the custody boundary: it
+  holds per-owner Ed25519 keys, independently recomputes the Canton V2 prepared
+  hash and the `sotto-http-request-v1` commitment, and signs **only** verified
+  prepared purchases — never a generic transfer. Raw keys never leave it.
+- **`@sotto/worker`** runs the prepare → approval → execute → reconcile loops
+  against the real Five North transports in `@sotto/canton-client`.
+- The **wallet session**, the **Sotto session**, and the **autonomous signer**
+  are three distinct authorities, kept separate by design.
+
+## Evidence
+
+The Five North DevNet spike proved a real
+`402 → wallet-sign → Canton settle → authentic 200` path. Selected accepted
+updates (test Canton Coin, 0.25 CC per call, synchronizer
+`global-domain::1220be58…471a`, package `sotto-control` `f72d7eb3…b963e`):
+
+| What                                                         | Accepted update  |
+| ------------------------------------------------------------ | ---------------- |
+| Human-wallet purchase, delivered `200`                       | `1220a2a5…aca37` |
+| External-agent bounded-capability purchase                   | `1220a389…811e3` |
+| Settled-but-undelivered (recovered honestly, never replayed) | `1220bd60…6b21`  |
+
+The external-agent settlement is independently visible on the public Lighthouse
+explorer; the outsider ACS read found zero private contexts. Full identifiers
+and provenance:
+[`docs/architecture/devnet-spike-result.md`](docs/architecture/devnet-spike-result.md).
+**No mocked payment or fixture transaction can satisfy those gates.**
+
+## What we do not claim
+
+- **Not production.** Production wallet custody, key rotation/recovery, a
+  deployed connector service, and a reviewed release `GO` remain open.
+- **Not mainnet.** Canton Five North DevNet only; every amount is test Canton
+  Coin.
+- **No ledger-enforced limits yet.** Local policy caps are labeled local policy;
+  a bounded-authority claim ships only after live bypass-resistance proof.
+- **Settlement is never delivery.** A settled payment whose delivery failed is
+  shown as `settled-undelivered`, never as success.
+- **No fabricated activity.** Metrics and Scan show honest zero until real
+  events exist.
+
+## Verification
+
+```bash
+pnpm verify           # toolchain, format, lint, build, typecheck, unit + real-Postgres
+                      # integration, repo guards, secretlint, audit, Daml build + tests
+```
+
+## Repository provenance
+
+Sotto has fresh history. The prior payroll product is archived separately at
+<https://github.com/Blockchain-Oracle/sotto-payroll-archive> and is not an
+implementation base for this repository.
+
+## Credits and licenses
+
+Sotto reuses and credits FTPtech's existing Canton x402 facilitator, payer, and
+middleware work. Canton, Canton Coin, and the Canton Network mark are property
+of Digital Asset (Switzerland) GmbH; see
+[`packages/ui/ASSET-MANIFEST.md`](packages/ui/ASSET-MANIFEST.md) for mark usage
+terms. Licensed under Apache-2.0.
